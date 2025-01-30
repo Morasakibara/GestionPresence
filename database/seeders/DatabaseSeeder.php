@@ -3,6 +3,14 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+
+use App\Models\Administrateur;
+use App\Models\Employer;
+use App\Models\Marquer;
+use App\Models\Presence;
+use App\Models\Rapport;
+use App\Models\Superviseur;
+use App\Models\Utilisateur;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -18,5 +26,12 @@ class DatabaseSeeder extends Seeder
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',
         // ]);
+        UtilisateurSeeder::class;
+        AdministrateurSeeder::class;
+        SuperviseurSeeder::class;
+        EmployerSeeder::class;
+        PresenceSeeder::class;
+        MarquerSeeder::class;
+        RapportSeeder::class;
     }
 }

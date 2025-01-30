@@ -1,6 +1,10 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+@import url('login.css');
 
 [x-cloak]{
     display: none!important;
