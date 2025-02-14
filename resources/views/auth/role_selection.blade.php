@@ -98,30 +98,20 @@
 
 <script>
     function showModal(userName) {
-            document.getElementById('userName').textContent = userName;
-            document.getElementById('roleModal').style.display = 'flex';
-        }
-
-    function selectRole(role) {
-        fetch('/select-role', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ role: role })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.redirect) {
-                window.location.href = data.redirect;
-            }
-        });
+        document.getElementById('userName').textContent = userName;
+        document.getElementById('roleModal').style.display = 'flex';
     }
 
-     // Appeler showModal() dès que la page est chargée
-     document.addEventListener('DOMContentLoaded', function() {
-            showModal("{{ $user->nom }}");
-        });
+    function selectRole(role) {
+        if (role === 'Superviseur') {
+            window.location.href = '/superviseur/supdashboard';
+        } else if (role === 'Employer') {
+            window.location.href = '/user/dashboard';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        showModal("{{ $user->nom }}");
+    });
 </script>
 @endsection

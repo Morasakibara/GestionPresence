@@ -67,24 +67,24 @@ Route::middleware(['isAdmin'])->group(function () {
 Route::middleware(['auth', 'check.role.and.network'])->group(function () {
     // Utilisateur routes
     Route::prefix('user')->group(function () {
-        Route::get('user/dashboard', [UtilisateurController::class, 'dashboard'])->name('user.dashboard');
-        Route::get('/user/profile', [UtilisateurController::class, 'profile'])->name('user.profile');
-        Route::put('/user/update', [UtilisateurController::class, 'update'])->name('user.update');
-        Route::get('/user/presence-report', [UtilisateurController::class, 'presenceReport'])->name('user.presence.report');
+        Route::get('/dashboard', [UtilisateurController::class, 'dashboard'])->name('user.dashboard');
+        Route::get('/profile', [UtilisateurController::class, 'profile'])->name('user.profile');
+        Route::put('/update', [UtilisateurController::class, 'update'])->name('user.update');
+        Route::get('/presence-report', [UtilisateurController::class, 'presenceReport'])->name('user.presence.report');
     });
 
     // Superviseur routes
     Route::prefix('superviseur')->group(function () {
-        Route::get('superviseur/supdashboard', [SuperviseurController::class, 'Supdashboard'])->name('superviseur.supdashboard');
-        Route::get('/superviseur/followPresence', [SuperviseurController::class, 'showFollowPresence'])->name('superviseur.showFollowPresence');
-        Route::get('/superviseur/generateReport', [SuperviseurController::class, 'generateReport'])->name('superviseur.generateReport');
+        Route::get('/supdashboard', [SuperviseurController::class, 'Supdashboard'])->name('superviseur.supdashboard');
+        Route::get('/followPresence', [SuperviseurController::class, 'showFollowPresence'])->name('superviseur.showFollowPresence');
+        Route::get('/generateReport', [SuperviseurController::class, 'generateReport'])->name('superviseur.generateReport');
         Route::get('/getUserDetails/{id}', [SuperviseurController::class, 'getUserDetails'])->name('superviseur.getUserDetails');
         Route::get('/viewUser/{id}', [SuperviseurController::class, 'viewUser'])->name('viewUser');
         Route::get('/showUser/{id}', [SuperviseurController::class, 'showUser'])->name('user.show');
-        Route::get('/superviseur/exportPDF', [SuperviseurController::class, 'exportPDF'])->name('export.pdf');
-        Route::get('/superviseur/showAddMember', [SuperviseurController::class, 'showAddMember'])->name('superviseur.showAddMember');
-        Route::post('/superviseur/addMemberToTeam/{id}', [SuperviseurController::class, 'addMemberToTeam'])->name('superviseur.addMemberToTeam');
-        Route::get('/superviseur/add-member', [SuperviseurController::class, 'showAddMemberForm'])->name('superviseur.showAddMemberForm');
+        Route::get('/exportPDF', [SuperviseurController::class, 'exportPDF'])->name('export.pdf');
+        Route::get('/showAddMember', [SuperviseurController::class, 'showAddMember'])->name('superviseur.showAddMember');
+        Route::post('/addMemberToTeam/{id}', [SuperviseurController::class, 'addMemberToTeam'])->name('superviseur.addMemberToTeam');
+        Route::get('/add-member', [SuperviseurController::class, 'showAddMemberForm'])->name('superviseur.showAddMemberForm');
     });
 
     // Shared routes for both user types

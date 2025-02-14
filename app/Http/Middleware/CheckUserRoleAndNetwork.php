@@ -31,7 +31,7 @@ class CheckUserRoleAndNetwork
 
         // Vérifier si l'URL correspond au rôle actuel
         $path = $request->path();
-        if ($currentRole === 'Employer' && !Str::startsWith($path, 'Employer')) {
+        if ($currentRole === 'Employer' && !Str::startsWith($path, 'user')) {
             return redirect('/user/dashboard');
         } elseif ($currentRole === 'Superviseur' && !Str::startsWith($path, 'Superviseur')) {
             return redirect('/superviseur/supdashboard');
