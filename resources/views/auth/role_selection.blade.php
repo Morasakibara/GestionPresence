@@ -104,7 +104,7 @@
 
     function selectRole(role) {
     // Au lieu de rediriger directement
-     window.location.href = '/superviseur/supdashboard';
+    // window.location.href = '/superviseur/supdashboard';
 
     // Utilisez AJAX pour envoyer la sélection au serveur
     fetch('/select-role', {

@@ -32,6 +32,11 @@ class CheckUserRoleAndNetwork
          // Vérifier si l'URL correspond au rôle actuel
          $path = $request->path();
 
+         // Ajouter des exceptions pour les chemins communs aux deux rôles
+        $commonPaths = ['presence', 'mark-arrival', 'mark-departure'];
+        if (in_array($path, $commonPaths)) {
+            return $next($request);
+        }
         // Ajouter une condition pour éviter de rediriger si on est déjà sur la page de sélection de rôle
         if ($path === 'Auth/role_selection') {
             return $next($request);
