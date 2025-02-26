@@ -30,17 +30,26 @@ class SuperviseurController extends Controller
         return view('superviseur/followPresence',compact('utilisateurs'));
     }
     public function getUserDetails($id)
-{
-    $utilisateur = Utilisateur::find($id);
+    {
+        $utilisateur = Utilisateur::find($id);
 
-    $detailsHtml = "
-        <p><strong>Nom:</strong> {$utilisateur->nom}</p>
-        <p><strong>Email:</strong> {$utilisateur->email}</p>
-        <img src='".asset('storage/avatars/'.$utilisateur->avatar)."' alt='{$utilisateur->nom}' width='100'>
-    ";
+        if (!$utilisateur) {
+            return response()->json(['error' => 'Utilisateur non trouvé'], 404);
+        }
 
-    return response()->json(['detailsHtml' => $detailsHtml]);
-}
+        $viewMoreUrl = route('viewUser', ['id' => $utilisateur->id]);
+
+        $detailsHtml = "
+            <p><strong>Nom:</strong> {$utilisateur->nom}</p>
+            <p><strong>Email:</strong> {$utilisateur->email}</p>
+            <img src='".asset('storage/avatars/'.($utilisateur->avatar ?: 'default.png'))."' alt='{$utilisateur->nom}' width='100'>
+        ";
+
+        return response()->json([
+            'detailsHtml' => $detailsHtml,
+            'viewMoreUrl' => $viewMoreUrl
+        ]);
+    }
 
 public function viewUser($id)
 {

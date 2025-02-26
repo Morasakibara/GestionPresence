@@ -16,7 +16,7 @@
             border-radius: 50%;
             object-fit: cover;
         }
-        
+
         /* Styles pour la modal */
         .modal {
             display: none;
@@ -231,20 +231,26 @@ h1 {
             <span class="close" onclick="closeModal()">&times;</span>
             <h2>Informations de l'utilisateur</h2>
             <div id="userDetails"></div>
-            <a id="viewMoreLink" class="button" href="#">Voir plus</a>
+            <a id="viewMoreLink" class="button" href="{{ route('viewUser', ['id' => ':id']) }}">Voir plus</a>
         </div>
     </div>
 
     <script>
     function openPopup(userId) {
+        $.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+    });
+
         $.ajax({
-            url: '/getUserDetails/' + userId,
+            url: '/superviseur/getUserDetails/' + userId,
             type: 'GET',
             success: function(data) {
-                $('#userDetails').html(data.detailsHtml);
-                $('#viewMoreLink').attr('href', '/viewUser/' + userId);
-                $('#userModal').css('display', 'block');
-            },
+            $('#userDetails').html(data.detailsHtml);
+            $('#viewMoreLink').attr('href', $('#viewMoreLink').attr('href').replace(':id', userId));  // Utilisation de l'URL générée par Laravel
+            $('#userModal').css('display', 'block');
+        },
             error: function(err) {
                 console.log('Erreur lors de la récupération des détails de l\'utilisateur:', err);
             }
