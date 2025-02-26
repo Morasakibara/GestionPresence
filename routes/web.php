@@ -41,7 +41,7 @@ Route::post('register', [RegisterController::class, 'register']);
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
 Route::post('/select-role', [LoginController::class, 'selectRole'])->name('select-role');
-Route::get('/Auth/role_section',[LoginController::class,'showRoleSelectionModal'])->name('auth.role_selection');
+Route::get('/Auth/role_selection',[LoginController::class,'showRoleSelectionModal'])->name('auth.role_selection');
 
 //Deconnexion de l'admin et superviseur
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
@@ -64,7 +64,7 @@ Route::middleware(['isAdmin'])->group(function () {
 
 
 
-Route::middleware(['auth', 'check.role.and.network'])->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])->group(function () {
     // Utilisateur routes
     Route::prefix('user')->group(function () {
         Route::get('/dashboard', [UtilisateurController::class, 'dashboard'])->name('user.dashboard');
@@ -77,7 +77,7 @@ Route::middleware(['auth', 'check.role.and.network'])->group(function () {
     Route::prefix('superviseur')->group(function () {
         Route::get('/supdashboard', [SuperviseurController::class, 'Supdashboard'])->name('superviseur.supdashboard');
         Route::get('/followPresence', [SuperviseurController::class, 'showFollowPresence'])->name('superviseur.showFollowPresence');
-        Route::get('/generateReport', [SuperviseurController::class, 'generateReport'])->name('superviseur.generateReport');
+        Route::get('/generateReport2', [SuperviseurController::class, 'generateReport'])->name('superviseur.generateReport2');
         Route::get('/getUserDetails/{id}', [SuperviseurController::class, 'getUserDetails'])->name('superviseur.getUserDetails');
         Route::get('/viewUser/{id}', [SuperviseurController::class, 'viewUser'])->name('viewUser');
         Route::get('/showUser/{id}', [SuperviseurController::class, 'showUser'])->name('user.show');

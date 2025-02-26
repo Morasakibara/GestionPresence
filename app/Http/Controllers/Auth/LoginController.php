@@ -40,15 +40,19 @@ class LoginController extends Controller
         return redirect('login')->withErrors(['email' => 'Email ou mot de passe incorrect.']);
     }
 
-    public function showRoleSelectionModal($user)
-    {
-        return view('auth.role_selection', compact('user'));
+    public function showRoleSelectionModal()
+{
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->with('error', 'Vous devez être connecté.');
     }
+    return view('auth.role_selection', compact('user'));
+}
 
     public function selectRole(Request $request)
     {
         $role = $request->input('role');
-        
+
         if ($role === 'Employer' || $role === 'Superviseur') {
             session(['current_role' => $role]);
             return response()->json([

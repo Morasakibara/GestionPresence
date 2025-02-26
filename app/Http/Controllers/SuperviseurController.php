@@ -19,9 +19,10 @@ class SuperviseurController extends Controller
     }
 
     public function showFollowPresence()
-    {
-        return view('superviseur.showFollowPresence');
-    }
+{
+    $utilisateurs = Utilisateur::whereIn('role', ['Superviseur', 'Employer'])->get();
+    return view('superviseur.followPresence', compact('utilisateurs'));
+}
 
     public function followPresence()
     {
@@ -202,7 +203,7 @@ public function showAddMemberForm(Request $request)
 
     // Récupérer les utilisateurs ayant le rôle 'employer' et qui correspondent à la recherche
     $query = Utilisateur::where('role', 'employer');
-    
+
     if ($search) {
         $query->where('nom', 'LIKE', '%' . $search . '%'); // Filtrer par nom si la recherche est présente
     }

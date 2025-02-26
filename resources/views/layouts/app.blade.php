@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Default Title')</title>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('css/navigation.css') }}">
@@ -280,7 +281,7 @@
                                         <a href="{{ route('user.presence.report') }}" class="menu-item">Bilan de présence</a>
                                     @elseif ($currentRole === 'Superviseur')
                                         <a href="{{ route('superviseur.supdashboard') }}" class="menu-item active">Tableau de bord</a>
-                                        <a href="{{ route('superviseur.followPresence') }}" class="menu-item">Suivre les présences</a>
+                                        <a href="{{ route('superviseur.showFollowPresence') }}" class="menu-item">Suivre les présences</a>
                                         <a href="{{ route('superviseur.generateReport2') }}" class="menu-item">Générer un rapport</a>
                                         <a href="{{ route('superviseur.showAddMember') }}" class="menu-item">Ajouter membre à l'équipe</a>
                                     @endif
@@ -322,7 +323,7 @@
                             <a href="{{ route('user.presence.report') }}" class="mobile-menu-item">Bilan de présence</a>
                         @elseif ($currentRole === 'Superviseur')
                             <a href="{{ route('superviseur.supdashboard') }}" class="mobile-menu-item active">Tableau de bord</a>
-                            <a href="{{ route('superviseur.followPresence') }}" class="mobile-menu-item">Suivre les présences</a>
+                            <a href="{{ route('superviseur.showFollowPresence') }}" class="mobile-menu-item">Suivre les présences</a>
                             <a href="{{ route('superviseur.generateReport2') }}" class="mobile-menu-item">Générer un rapport</a>
                             <a href="{{ route('superviseur.showAddMember') }}" class="mobile-menu-item">Ajouter membre à l'équipe</a>
                         @endif
@@ -399,7 +400,7 @@
                 }
             });
         });
-     
+
         </script>
     <footer class="site-footer">
         <div class="footer-content">

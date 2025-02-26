@@ -103,12 +103,28 @@
     }
 
     function selectRole(role) {
-        if (role === 'Superviseur') {
-            window.location.href = '/superviseur/supdashboard';
-        } else if (role === 'Employer') {
-            window.location.href = '/user/dashboard';
+    // Au lieu de rediriger directement
+     window.location.href = '/superviseur/supdashboard';
+
+    // Utilisez AJAX pour envoyer la sélection au serveur
+    fetch('/select-role', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ role: role })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.redirect) {
+            window.location.href = data.redirect;
         }
-    }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+    });
+}
 
     document.addEventListener('DOMContentLoaded', function() {
         showModal("{{ $user->nom }}");

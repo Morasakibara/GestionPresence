@@ -9,10 +9,10 @@
     <link rel="stylesheet" href="{{ asset('css/adminDashboard.css') }}" >
 </head>
 <body>
-    
-   
 
-    
+
+
+
     <div class="container">
         @yield('content')
     </div>

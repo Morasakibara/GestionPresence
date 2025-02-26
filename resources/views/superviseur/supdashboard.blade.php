@@ -10,42 +10,42 @@
     padding: 0;
     box-sizing: border-box;
   }
-  
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background-color: #f3f4f6;
     color: #1a202c;
     line-height: 1.5;
   }
-  
+
   .container {
     width: 100%;
     max-width: 1280px;
     margin: 0 auto;
     padding: 1rem;
   }
-  
+
   /* Navigation */
   .nav {
     background-color: #1f2937;
     padding: 1rem 0;
   }
-  
+
   .nav-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
-  
+
   .nav-logo img {
     height: 2rem;
     width: auto;
   }
-  
+
   .nav-links {
     display: none;
   }
-  
+
   .nav-links a {
     color: #d1d5db;
     text-decoration: none;
@@ -53,24 +53,24 @@
     border-radius: 0.375rem;
     transition: background-color 0.3s, color 0.3s;
   }
-  
+
   .nav-links a:hover,
   .nav-links a.active {
     background-color: #374151;
     color: #ffffff;
   }
-  
+
   .nav-profile {
     position: relative;
   }
-  
+
   .nav-profile-img {
     width: 2.5rem;
     height: 2.5rem;
     border-radius: 50%;
     cursor: pointer;
   }
-  
+
   .nav-profile-dropdown {
     display: none;
     position: absolute;
@@ -81,7 +81,7 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
   }
-  
+
   .nav-profile-dropdown a {
     display: block;
     padding: 0.5rem 1rem;
@@ -89,53 +89,53 @@
     text-decoration: none;
     transition: background-color 0.3s;
   }
-  
+
   .nav-profile-dropdown a:hover {
     background-color: #f3f4f6;
   }
-  
+
   /* Header */
   .header {
     background-color: #ffffff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     padding: 1.5rem 0;
   }
-  
+
   .header h1 {
     font-size: 1.875rem;
     font-weight: bold;
     color: #111827;
   }
-  
+
   /* Main content */
   .main-content {
     padding: 2rem 0;
   }
-  
+
   /* Tableau de bord */
   .dashboard h1 {
     font-size: 2rem;
     margin-bottom: 1.5rem;
   }
-  
+
   .alert {
     padding: 1rem;
     border-radius: 0.375rem;
     margin-bottom: 1.5rem;
   }
-  
+
   .alert-success {
     background-color: #d1fae5;
     color: #065f46;
   }
-  
+
   .buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
     margin-top: 1.5rem;
   }
-  
+
   .btn {
     display: inline-block;
     padding: 0.5rem 1rem;
@@ -144,68 +144,68 @@
     font-weight: 500;
     transition: background-color 0.3s;
   }
-  
+
   .btn-primary {
     background-color: #2563eb;
     color: #ffffff;
   }
-  
+
   .btn-primary:hover {
     background-color: #1d4ed8;
   }
-  
+
   .btn-danger {
     background-color: #2563eb;
     color: #ffffff;
   }
-  
+
   .btn-danger:hover {
     background-color: #1d4ed8;
   }
-  
+
   .btn-success {
     background-color: #2563eb;
     color: #ffffff;
   }
-  
+
   .btn-success:hover {
     background-color: #1d4ed8;
   }
-  
+
   .btn-info {
     background-color: #3b82f6;
     color: #ffffff;
   }
-  
+
   .btn-info:hover {
     background-color: #1d4ed8;
   }
-  
+
   /* Responsive design */
   @media (min-width: 768px) {
     .nav-links {
       display: flex;
     }
-  
+
     .nav-profile-img {
       width: 2rem;
       height: 2rem;
     }
-  
+
     .buttons {
       flex-wrap: nowrap;
     }
   }
-  
+
   @media (min-width: 1024px) {
     .container {
       padding: 2rem;
     }
-  
+
     .header h1 {
       font-size: 2.25rem;
     }
-  
+
     .dashboard h1 {
       font-size: 2.5rem;
     }
@@ -219,7 +219,7 @@
         <div class="nav-links">
             <a href="#" class="active">Tableau de bord</a>
             <a href="{{ route('superviseur.showAddMember') }}" class="">Ajout de membre a l'equipe</a>
-            <a href="{{ route('superviseur.followPresence') }}" class="">Suivre les presence</a>
+            <a href="{{ route('superviseur.showFollowPresence') }}" class="">Suivre les presence</a>
             <a href="{{ route('superviseur.generateReport2') }}" class="">Generer Rapports</a>
         </div>
         <div class="nav-profile">
@@ -234,7 +234,7 @@
 
 <header class="header">
     <div class="container">
-        <h1>Tableau de bord de l'administrateur</h1>
+        <h1>Tableau de bord du superviseur</h1>
     </div>
 </header>
 
@@ -247,7 +247,7 @@
         @endif
         <div class="buttons">
             <a href="{{ route('superviseur.showAddMember') }}" class="btn btn-primary">Ajout de membre a l'equipe</a>
-            <a href="{{ route('superviseur.followPresence') }}" class="btn btn-primary">Suivre les presence</a>
+            <a href="{{ route('superviseur.showFollowPresence') }}" class="btn btn-primary">Suivre les presence</a>
             <a href="{{ route('superviseur.generateReport2') }}" class="btn btn-danger">Generer Rapports</a>
     </div>
 </main>

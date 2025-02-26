@@ -26,16 +26,33 @@ class CheckUserRoleAndNetwork
         $currentRole = session('current_role', null);
         if (!$currentRole) {
             // Rediriger si aucun rôle n'a été sélectionné
-            return redirect()->route('role.selection');
+            return redirect()->route('auth.role_selection');
+        }
+
+         // Vérifier si l'URL correspond au rôle actuel
+         $path = $request->path();
+
+        // Ajouter une condition pour éviter de rediriger si on est déjà sur la page de sélection de rôle
+        if ($path === 'Auth/role_selection') {
+            return $next($request);
         }
 
         // Vérifier si l'URL correspond au rôle actuel
         $path = $request->path();
-        if ($currentRole === 'Employer' && !Str::startsWith($path, 'user')) {
-            return redirect('/user/dashboard');
-        } elseif ($currentRole === 'Superviseur' && !Str::startsWith($path, 'Superviseur')) {
-            return redirect('/superviseur/supdashboard');
+       // Pour le rôle Employer
+        if ($currentRole === 'Employer') {
+            // Si l'URL ne commence PAS par 'user' et n'est pas déjà '/user/dashboard'
+            if (!Str::startsWith($path, 'user') && $path !== 'user/dashboard') {
+                return redirect('/user/dashboard');
+            }
         }
+        // Pour le rôle Superviseur
+        elseif ($currentRole === 'Superviseur') {
+            // Si l'URL ne commence PAS par 'superviseur' et n'est pas déjà '/superviseur/supdashboard'
+            if (!Str::startsWith($path, 'superviseur') && $path !== 'superviseur/supdashboard') {
+                return redirect('/superviseur/supdashboard');
+            }
+}
 
         // (Optionnel) Vérification du réseau Wi-Fi (activer si nécessaire)
         /*
