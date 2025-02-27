@@ -191,18 +191,28 @@ public function addMemberToTeam(Request $request, $employerId)
         return redirect()->back()->with('error', 'Erreur : votre équipe n\'est pas renseignée.');
     }
 
-    // Récupérer l'employé à mettre à jour
+    // D'abord, vérifiez si l'utilisateur existe
+    $utilisateur = Utilisateur::where('id', $employerId)->where('role', 'Employer')->first();
+
+    if (!$utilisateur) {
+        return redirect()->back()->with('error', 'Utilisateur non trouvé ou n\'est pas un employé.');
+    }
+
+    // Ensuite, vérifiez si une entrée correspondante existe dans la table employer
     $employer = Employer::where('id', $employerId)->first();
 
     if (!$employer) {
-        return redirect()->back()->with('error', 'Employé introuvable.');
+        // Si l'entrée n'existe pas dans la table employer, créez-la
+        $employer = new Employer();
+        $employer->id = $employerId;
+        $employer->Sup_id = $superviseur->id;  // Définir le superviseur ID
+        $employer->poste = 'Employer';
     }
 
     // Mettre à jour le champ "equipe" de l'employé avec l'équipe du superviseur
     $employer->equipe = $superviseurData->equipe;
     $employer->save();
 
-    // Retourner un message de succès avec un message JavaScript si l'ajout a fonctionné
     return redirect()->back()->with('success', 'Employé ajouté avec succès à votre équipe.');
 }
 

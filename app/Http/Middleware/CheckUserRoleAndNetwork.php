@@ -33,7 +33,7 @@ class CheckUserRoleAndNetwork
          $path = $request->path();
 
          // Ajouter des exceptions pour les chemins communs aux deux rôles
-        $commonPaths = ['presence', 'mark-arrival', 'mark-departure'];
+        $commonPaths = ['presence', 'mark-arrival', 'mark-departure','role-switch'];
         if (in_array($path, $commonPaths)) {
             return $next($request);
         }

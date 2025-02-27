@@ -44,8 +44,16 @@ class LoginController extends Controller
 {
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login')->with('error', 'Vous devez être connecté.');
+        return redirect('/login');
     }
+
+    // Assurez-vous que l'utilisateur est bien un superviseur
+    if ($user->role !== 'Superviseur') {
+        // Si ce n'est pas un superviseur, rediriger vers le tableau de bord approprié
+        session(['current_role' => $user->role]);
+        return redirect()->intended($user->role === 'Employer' ? '/user/dashboard' : '/admin/dashboard');
+    }
+
     return view('auth.role_selection', compact('user'));
 }
 

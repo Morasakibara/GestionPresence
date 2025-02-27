@@ -1,274 +1,160 @@
 @extends('layouts.app')
 
+@section('title', 'Suivi des Présences')
+
 @section('content')
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suivi des Présences</title>
-    <link rel="stylesheet" href="{{ asset('css/employee-list-styles.css') }}">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        /* Styles pour la modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 500px;
-            border-radius: 8px;
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-    </style>
-    <style>
-        /* General styles */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f3f4f6;
-    color: #1f2937;
-    line-height: 1.5;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-h1 {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-}
-
-/* Search styles */
-.search-container {
-    margin-bottom: 20px;
-}
-
-.search-input {
-    width: 100%;
-    padding: 10px 15px;
-    font-size: 16px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    background-color: #ffffff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.search-input:focus {
-    outline: none;
-    border-color: #a78bfa;
-    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
-}
-
-/* Table styles */
-.employee-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background-color: #1f2937;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.employee-table th,
-.employee-table td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid #374151;
-}
-
-.employee-table th {
-    background-color: #111827;
-    color: #ffffff;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 12px;
-    letter-spacing: 0.05em;
-}
-
-.employee-table tbody tr {
-    transition: background-color 0.2s;
-}
-
-.employee-table tbody tr:hover {
-    background-color: #374151;
-}
-
-.employee-table td {
-    color: #e5e7eb;
-}
-
-/* Button styles */
-.button {
-    padding: 6px 12px;
-    background-color: #4f46e5;
-    color: #ffffff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
-}
-
-.button:hover {
-    background-color: #4338ca;
-}
-
-/* Role styles */
-.role {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 9999px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.role-member {
-    background-color: #10b981;
-    color: #064e3b;
-}
-
-.role-admin {
-    background-color: #f59e0b;
-    color: #78350f;
-}
-
-.role-owner {
-    background-color: #ef4444;
-    color: #7f1d1d;
-}
-
-/* Checkbox styles */
-.checkbox-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-.checkbox-input {
-    margin-right: 5px;
-}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Suivi des Présences</h1>
-
-        <table class="employee-table">
-            <thead>
-                <tr>
-                    <th>Photo de profil</th>
-                    <th>Nom</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($utilisateurs as $utilisateur)
-                <tr>
-                    <td>
-                        @if($utilisateur->avatar)
-                            <img src="{{ asset('storage/avatars/'.$utilisateur->avatar) }}" alt="{{ $utilisateur->nom }}" class="avatar">
-                        @else
-                            <img src="{{ asset('storage/avatars/default.png') }}" alt="Default Avatar" class="avatar">
-                        @endif
-                    </td>
-                    <td>{{ $utilisateur->nom }}</td>
-                    <td>
-                        <button class="button" onclick="openPopup('{{ $utilisateur->id }}')">Suivre</button>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+<div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Suivi des Présences</h1>
+        <p class="mt-2 text-sm text-gray-600">Consultez et gérez les présences des employés de votre équipe</p>
     </div>
 
-    <!-- Modal -->
-    <div id="userModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Informations de l'utilisateur</h2>
-            <div id="userDetails"></div>
-            <a id="viewMoreLink" class="button" href="{{ route('viewUser', ['id' => ':id']) }}">Voir plus</a>
+    <div class="mt-8 overflow-hidden rounded-lg bg-white shadow">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-3hcig-blue-dark">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Photo de profil</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    @foreach($utilisateurs as $utilisateur)
+                    <tr class="hover:bg-gray-50">
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <div class="h-12 w-12 flex-shrink-0">
+                                @if($utilisateur->avatar)
+                                    <img src="{{ asset('storage/avatars/'.$utilisateur->avatar) }}" alt="{{ $utilisateur->nom }}" class="h-12 w-12 rounded-full object-cover">
+                                @else
+                                    <img src="{{ asset('storage/avatars/default.png') }}" alt="Default Avatar" class="h-12 w-12 rounded-full object-cover">
+                                @endif
+                            </div>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <div class="font-medium text-gray-900">{{ $utilisateur->nom }}</div>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4 text-sm">
+                            <button type="button" onclick="openPopup('{{ $utilisateur->id }}')" class="inline-flex items-center rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                                <svg class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                Suivre
+                            </button>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
 
-    <script>
-    function openPopup(userId) {
-        $.ajaxSetup({
-    headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-    }
+<!-- Modal - Version corrigée -->
+<div id="userModal" class="modal hidden fixed inset-0 z-50 overflow-y-auto flex items-center justify-center" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Background overlay -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity modal-overlay"></div>
+    
+    <!-- Modal panel -->
+    <div class="relative bg-white rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 rounded-t-lg">
+            <div class="sm:flex sm:items-start">
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900" id="modal-title">
+                        Informations de l'utilisateur
+                    </h3>
+                    <div class="mt-4" id="userDetails">
+                        <!-- Dynamic content will be loaded here -->
+                        <div class="animate-pulse">
+                            <div class="flex items-center space-x-4">
+                                <div class="h-12 w-12 rounded-full bg-gray-200"></div>
+                                <div class="space-y-2">
+                                    <div class="h-4 w-36 rounded bg-gray-200"></div>
+                                    <div class="h-3 w-24 rounded bg-gray-200"></div>
+                                </div>
+                            </div>
+                            <div class="mt-4 space-y-2">
+                                <div class="h-4 w-full rounded bg-gray-200"></div>
+                                <div class="h-4 w-3/4 rounded bg-gray-200"></div>
+                                <div class="h-4 w-1/2 rounded bg-gray-200"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 rounded-b-lg">
+            <a id="viewMoreLink" href="{{ route('viewUser', ['id' => ':id']) }}" class="inline-flex w-full justify-center rounded-md border border-transparent bg-3hcig-blue px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">
+                Voir plus
+            </a>
+            <button type="button" class="close-modal mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de la fermeture de la modal
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', closeModal);
+    });
+    
+    // Fermer la modal si on clique sur l'overlay
+    document.querySelector('.modal-overlay').addEventListener('click', closeModal);
+    
+    // Fermer la modal avec la touche Escape
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && !document.getElementById('userModal').classList.contains('hidden')) {
+            closeModal();
+        }
+    });
+});
+
+function openPopup(userId) {
+    // Afficher la modal avec l'état de chargement
+    document.getElementById('userModal').classList.remove('hidden');
+    
+    // Configuration de l'en-tête CSRF pour les requêtes AJAX
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
     });
 
-        $.ajax({
-            url: '/superviseur/getUserDetails/' + userId,
-            type: 'GET',
-            success: function(data) {
-            $('#userDetails').html(data.detailsHtml);
-            $('#viewMoreLink').attr('href', $('#viewMoreLink').attr('href').replace(':id', userId));  // Utilisation de l'URL générée par Laravel
-            $('#userModal').css('display', 'block');
-        },
-            error: function(err) {
-                console.log('Erreur lors de la récupération des détails de l\'utilisateur:', err);
+    // Requête AJAX pour obtenir les détails de l'utilisateur
+    $.ajax({
+        url: '/superviseur/getUserDetails/' + userId,
+        type: 'GET',
+        success: function(data) {
+            // Vérifier si les données sont bien reçues
+            console.log('Données reçues:', data);
+            
+            // Afficher les données dans la modal
+            if (data.detailsHtml) {
+                $('#userDetails').html(data.detailsHtml);
+            } else {
+                $('#userDetails').html('<p class="text-red-500">Le format de données reçu n\'est pas correct.</p>');
+                console.error('Format de données incorrect:', data);
             }
-        });
-    }
-
-    function closeModal() {
-        $('#userModal').css('display', 'none');
-    }
-
-    // Fermer la modal si on clique en dehors
-    window.onclick = function(event) {
-        var modal = document.getElementById('userModal');
-        if (event.target == modal) {
-            modal.style.display = "none";
+            
+            // Mettre à jour le lien "Voir plus"
+            $('#viewMoreLink').attr('href', $('#viewMoreLink').attr('href').replace(':id', userId));
+        },
+        error: function(err) {
+            $('#userDetails').html('<div class="text-red-500 py-3">Erreur lors de la récupération des données. Veuillez réessayer.</div>');
+            console.error('Erreur AJAX:', err);
         }
-    }
-    </script>
-</body>
-</html>
+    });
+}
+
+function closeModal() {
+    document.getElementById('userModal').classList.add('hidden');
+}
+</script>
 @endsection

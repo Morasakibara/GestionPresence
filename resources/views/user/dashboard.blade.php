@@ -1,269 +1,113 @@
-@extends('layouts.logout')
+@extends('layouts.dashboard')
+
+@section('header')
+Tableau de bord Employé
+@endsection
+
+@section('navigation')
+<!-- Current: "bg-3hcig-blue text-white", Default: "text-gray-300 hover:bg-3hcig-blue hover:text-white" -->
+<a href="{{ route('user.dashboard') }}" class="rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white" aria-current="page">Tableau de bord</a>
+<a href="{{ route('presence.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Présence</a>
+<a href="{{ route('user.presence.report') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Bilan de présence</a>
+@endsection
+
+@section('mobile-navigation')
+<a href="{{ route('user.dashboard') }}" class="block rounded-md bg-3hcig-blue px-3 py-2 text-base font-medium text-white" aria-current="page">Tableau de bord</a>
+<a href="{{ route('presence.index') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Présence</a>
+<a href="{{ route('user.presence.report') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Bilan de présence</a>
+@endsection
 
 @section('content')
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div class="rounded-lg bg-white p-6 shadow-sm">
+        <h2 class="mb-4 text-xl font-semibold text-gray-900">Marquer la présence</h2>
 
-<style>
-  /* Styles de base et réinitialisation */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+        <div class="space-y-4">
+            <form action="{{ route('presence.arrival') }}" method="POST">
+                @csrf
+                <button type="submit" id="arrivalButton"
+                        class="w-full rounded-md bg-3hcig-blue px-4 py-2 font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        {{ Carbon\Carbon::now()->hour >= 7 && Carbon\Carbon::now()->hour < 10 ? '' : 'disabled' }}>
+                    Marquer l'arrivée
+                </button>
+            </form>
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: #f3f4f6;
-  color: #1a202c;
-  line-height: 1.5;
-}
-
-.container {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-/* Navigation */
-.nav {
-  background-color: #1f2937;
-  padding: 1rem 0;
-}
-
-.nav-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.nav-logo img {
-  height: 2rem;
-  width: auto;
-}
-
-.nav-links {
-  display: none;
-}
-
-.nav-links a {
-  color: #d1d5db;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  transition: background-color 0.3s, color 0.3s;
-}
-
-.nav-links a:hover,
-.nav-links a.active {
-  background-color: #374151;
-  color: #ffffff;
-}
-
-.nav-profile {
-  position: relative;
-}
-
-.nav-profile-img {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.nav-profile-dropdown {
-  display: none;
-  position: absolute;
-  right: 0;
-  top: 100%;
-  background-color: #ffffff;
-  border-radius: 0.375rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.nav-profile-dropdown a {
-  display: block;
-  padding: 0.5rem 1rem;
-  color: #4b5563;
-  text-decoration: none;
-  transition: background-color 0.3s;
-}
-
-.nav-profile-dropdown a:hover {
-  background-color: #f3f4f6;
-}
-
-/* Contenu principal */
-.main-content {
-  padding-top: 2rem;
-}
-
-h1 {
-  font-size: 2.25rem;
-  font-weight: bold;
-  color: #111827;
-  margin-bottom: 1.5rem;
-}
-
-h2 {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #374151;
-  margin-bottom: 1rem;
-}
-
-/* Grille */
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  margin: -1rem;
-}
-
-.col-md-6 {
-  width: 100%;
-  padding: 1rem;
-}
-
-/* Boutons */
-.btn {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  text-align: center;
-  text-decoration: none;
-  transition: background-color 0.3s, opacity 0.3s;
-  border: none;
-  cursor: pointer;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background-color: #3b82f6;
-  color: #ffffff;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: #2563eb;
-}
-
-.btn-secondary {
-  background-color: #6b7280;
-  color: #ffffff;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: #4b5563;
-}
-
-.mt-3 {
-  margin-top: 1rem;
-}
-
-
-
-/* Responsive */
-@media (min-width: 768px) {
-  .container {
-    padding: 2rem;
-  }
-
-  .nav-links {
-    display: flex;
-  }
-
-  .nav-profile-img {
-    width: 2rem;
-    height: 2rem;
-  }
-
-  .col-md-6 {
-    width: 50%;
-  }
-}
-</style>
-<nav class="nav">
-    <div class="container nav-content">
-        <div class="nav-logo">
-          <img class="logo-image" src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500" alt="Your Company">
-        <div class="nav-links">
-            <a href="#" class="active">Tableau de bord</a>
-            <a href="{{ route('presence.index') }}">Présence</a>
-            <a href="{{ route('user.presence.report') }}">Bilan de présence</a>
+            <form action="{{ route('presence.departure') }}" method="POST">
+                @csrf
+                <button type="submit" id="departureButton"
+                        class="w-full rounded-md bg-gray-600 px-4 py-2 font-medium text-white shadow-sm hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        {{ Carbon\Carbon::now()->hour >= 17 && Carbon\Carbon::now()->hour < 18 && Carbon\Carbon::now()->minute <= 30 ? '' : 'disabled' }}>
+                    Marquer le départ
+                </button>
+            </form>
         </div>
-        <div class="nav-profile">
-          <img src="{{ auth()->user()->avatar }}" alt="{{ auth()->user()->nom }}" class="nav-profile-img">
-            <div class="nav-profile-dropdown">
-              <a href="{{ route('user.profile') }}" class="">Mon Profil</a>
-                <a href="{{route('logouts')}}">Déconnexion</a>
+
+        <div class="mt-4 rounded-md bg-gray-50 p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-3hcig-blue" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3 text-sm text-gray-600">
+                    <p>L'arrivée peut être marquée entre 7h et 10h.</p>
+                    <p>Le départ peut être marqué entre 17h et 18h30.</p>
+                </div>
             </div>
         </div>
     </div>
-</nav>
 
-<main class="main-content">
-    <div class="container">
-        <h1>Tableau de bord</h1>
-        <div class="row">
-            <div class="col-md-6">
-                <h2>Marquer la présence</h2>
-                <form action="{{ route('presence.arrival') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-primary" id="arrivalButton" {{ Carbon\Carbon::now()->hour >= 7 && Carbon\Carbon::now()->hour < 10 ? '' : 'disabled' }}>
-                        Marquer l'arrivée
-                    </button>
-                </form>
-                <form action="{{ route('presence.departure') }}" method="POST" class="mt-3">
-                    @csrf
-                    <button type="submit" class="btn btn-secondary" id="departureButton" {{ Carbon\Carbon::now()->hour >= 17 && Carbon\Carbon::now()->hour < 18 && Carbon\Carbon::now()->minute <= 30 ? '' : 'disabled' }}>
-                        Marquer le départ
-                    </button>
-                </form>
+    <div class="rounded-lg bg-white p-6 shadow-sm">
+        <h2 class="mb-4 text-xl font-semibold text-gray-900">Résumé de présence</h2>
+
+        <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                <span class="text-sm font-medium text-gray-500">Présences ce mois-ci</span>
+                <span class="text-lg font-semibold text-3hcig-blue">{{ isset($presenceCount) ? $presenceCount : '0' }}</span>
             </div>
-        
+
+            <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                <span class="text-sm font-medium text-gray-500">Dernière arrivée</span>
+                <span class="text-gray-700">{{ isset($lastArrival) ? $lastArrival->format('d/m/Y H:i') : 'Aucune donnée' }}</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-500">Dernier départ</span>
+                <span class="text-gray-700">{{ isset($lastDeparture) ? $lastDeparture->format('d/m/Y H:i') : 'Aucune donnée' }}</span>
             </div>
         </div>
+
+        <div class="mt-6">
+            <a href="{{ route('user.presence.report') }}" class="inline-flex items-center text-sm font-medium text-3hcig-blue hover:text-3hcig-blue-light">
+                Voir le bilan complet
+                <svg class="ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </a>
+        </div>
     </div>
-</main>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-      const profileImg = document.querySelector('.nav-profile-img');
-      const dropdown = document.querySelector('.nav-profile-dropdown');
-  
-      profileImg.addEventListener('click', function() {
-          dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-      });
-  
-      // Fermer le menu déroulant si on clique en dehors
-      document.addEventListener('click', function(event) {
-          if (!profileImg.contains(event.target) && !dropdown.contains(event.target)) {
-              dropdown.style.display = 'none';
-          }
-      });
-  });
-  </script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        function updateButtons() {
-            var now = new Date();
-            var hour = now.getHours();
-            var minute = now.getMinutes();
-    
-            var arrivalButton = document.getElementById('arrivalButton');
-            var departureButton = document.getElementById('departureButton');
-    
-            arrivalButton.disabled = !(hour >= 7 && hour < 10);
-            departureButton.disabled = !(hour >= 17 && hour < 18 && minute <= 30);
-        }
-    
-        // Mettre à jour toutes les minutes
-        setInterval(updateButtons, 60000);
-        // Mettre à jour immédiatement au chargement de la page
-        updateButtons();
-    });
-    </script>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function updateButtons() {
+        var now = new Date();
+        var hour = now.getHours();
+        var minute = now.getMinutes();
+
+        var arrivalButton = document.getElementById('arrivalButton');
+        var departureButton = document.getElementById('departureButton');
+
+        arrivalButton.disabled = !(hour >= 7 && hour < 10);
+        departureButton.disabled = !(hour >= 17 && hour < 18 && minute <= 30);
+    }
+
+    // Mettre à jour toutes les minutes
+    setInterval(updateButtons, 60000);
+    // Mettre à jour immédiatement au chargement de la page
+    updateButtons();
+});
+</script>
+@endpush

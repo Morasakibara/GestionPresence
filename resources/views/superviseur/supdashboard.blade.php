@@ -1,264 +1,54 @@
+@extends('layouts.dashboard')
 
-@extends('layouts.logout')
+@section('header')
+Tableau de bord du superviseur
+@endsection
+
+@section('navigation')
+<!-- Current: "bg-3hcig-blue text-white", Default: "text-gray-300 hover:bg-3hcig-blue hover:text-white" -->
+<a href="{{ route('superviseur.supdashboard') }}" class="rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white" aria-current="page">Tableau de bord</a>
+<a href="{{ route('superviseur.showAddMember') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Ajout de membre</a>
+<a href="{{ route('superviseur.showFollowPresence') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Suivre les présences</a>
+<a href="{{ route('superviseur.generateReport2') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Générer Rapports</a>
+@endsection
+
+@section('mobile-navigation')
+<a href="{{ route('superviseur.supdashboard') }}" class="block rounded-md bg-3hcig-blue px-3 py-2 text-base font-medium text-white" aria-current="page">Tableau de bord</a>
+<a href="{{ route('superviseur.showAddMember') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Ajout de membre</a>
+<a href="{{ route('superviseur.showFollowPresence') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Suivre les présences</a>
+<a href="{{ route('superviseur.generateReport2') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Générer Rapports</a>
+@endsection
 
 @section('content')
-
-<style>
-  /* Réinitialisation et styles de base */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #f3f4f6;
-    color: #1a202c;
-    line-height: 1.5;
-  }
-
-  .container {
-    width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 1rem;
-  }
-
-  /* Navigation */
-  .nav {
-    background-color: #1f2937;
-    padding: 1rem 0;
-  }
-
-  .nav-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .nav-logo img {
-    height: 2rem;
-    width: auto;
-  }
-
-  .nav-links {
-    display: none;
-  }
-
-  .nav-links a {
-    color: #d1d5db;
-    text-decoration: none;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    transition: background-color 0.3s, color 0.3s;
-  }
-
-  .nav-links a:hover,
-  .nav-links a.active {
-    background-color: #374151;
-    color: #ffffff;
-  }
-
-  .nav-profile {
-    position: relative;
-  }
-
-  .nav-profile-img {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    cursor: pointer;
-  }
-
-  .nav-profile-dropdown {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background-color: #ffffff;
-    border-radius: 0.375rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-  }
-
-  .nav-profile-dropdown a {
-    display: block;
-    padding: 0.5rem 1rem;
-    color: #4b5563;
-    text-decoration: none;
-    transition: background-color 0.3s;
-  }
-
-  .nav-profile-dropdown a:hover {
-    background-color: #f3f4f6;
-  }
-
-  /* Header */
-  .header {
-    background-color: #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem 0;
-  }
-
-  .header h1 {
-    font-size: 1.875rem;
-    font-weight: bold;
-    color: #111827;
-  }
-
-  /* Main content */
-  .main-content {
-    padding: 2rem 0;
-  }
-
-  /* Tableau de bord */
-  .dashboard h1 {
-    font-size: 2rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .alert {
-    padding: 1rem;
-    border-radius: 0.375rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .alert-success {
-    background-color: #d1fae5;
-    color: #065f46;
-  }
-
-  .buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-
-  .btn {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background-color 0.3s;
-  }
-
-  .btn-primary {
-    background-color: #2563eb;
-    color: #ffffff;
-  }
-
-  .btn-primary:hover {
-    background-color: #1d4ed8;
-  }
-
-  .btn-danger {
-    background-color: #2563eb;
-    color: #ffffff;
-  }
-
-  .btn-danger:hover {
-    background-color: #1d4ed8;
-  }
-
-  .btn-success {
-    background-color: #2563eb;
-    color: #ffffff;
-  }
-
-  .btn-success:hover {
-    background-color: #1d4ed8;
-  }
-
-  .btn-info {
-    background-color: #3b82f6;
-    color: #ffffff;
-  }
-
-  .btn-info:hover {
-    background-color: #1d4ed8;
-  }
-
-  /* Responsive design */
-  @media (min-width: 768px) {
-    .nav-links {
-      display: flex;
-    }
-
-    .nav-profile-img {
-      width: 2rem;
-      height: 2rem;
-    }
-
-    .buttons {
-      flex-wrap: nowrap;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .container {
-      padding: 2rem;
-    }
-
-    .header h1 {
-      font-size: 2.25rem;
-    }
-
-    .dashboard h1 {
-      font-size: 2.5rem;
-    }
-  }
-</style>
-<nav class="nav">
-    <div class="container nav-content">
-        <div class="nav-logo">
-            <img src="{{ asset('/storage/avatars/default.png') }}" alt="Logo">
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{{ route('superviseur.showAddMember') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
         </div>
-        <div class="nav-links">
-            <a href="#" class="active">Tableau de bord</a>
-            <a href="{{ route('superviseur.showAddMember') }}" class="">Ajout de membre a l'equipe</a>
-            <a href="{{ route('superviseur.showFollowPresence') }}" class="">Suivre les presence</a>
-            <a href="{{ route('superviseur.generateReport2') }}" class="">Generer Rapports</a>
-        </div>
-        <div class="nav-profile">
-          <img src="{{ auth()->user()->avatar }}" alt="{{ auth()->user()->nom }}" class="nav-profile-img">
-            <div class="nav-profile-dropdown">
-                <a href="#">Votre Profil</a>
-                <a method="POST" href="{{route('logouts')}}">Déconnexion</a>
-            </div>
-        </div>
-    </div>
-</nav>
+        <h2 class="mt-4 text-lg font-medium text-gray-900">Ajout de membre à l'équipe</h2>
+        <p class="mt-1 text-sm text-gray-500">Ajouter un nouveau membre à votre équipe</p>
+    </a>
 
-<header class="header">
-    <div class="container">
-        <h1>Tableau de bord du superviseur</h1>
-    </div>
-</header>
-
-<main class="main-content">
-    <div class="container dashboard">
-        @if (session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
+    <a href="{{ route('superviseur.showFollowPresence') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div class="rounded-full bg-3hcig-green/10 p-3 text-3hcig-green">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
         </div>
-        @endif
-        <div class="buttons">
-            <a href="{{ route('superviseur.showAddMember') }}" class="btn btn-primary">Ajout de membre a l'equipe</a>
-            <a href="{{ route('superviseur.showFollowPresence') }}" class="btn btn-primary">Suivre les presence</a>
-            <a href="{{ route('superviseur.generateReport2') }}" class="btn btn-danger">Generer Rapports</a>
-    </div>
-</main>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const profileImg = document.querySelector('.nav-profile-img');
-    const dropdown = document.querySelector('.nav-profile-dropdown');
+        <h2 class="mt-4 text-lg font-medium text-gray-900">Suivre les présences</h2>
+        <p class="mt-1 text-sm text-gray-500">Superviser les présences de votre équipe</p>
+    </a>
 
-    profileImg.addEventListener('click', function() {
-        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-    });
-});
-</script>
+    <a href="{{ route('superviseur.generateReport2') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        </div>
+        <h2 class="mt-4 text-lg font-medium text-gray-900">Générer Rapports</h2>
+        <p class="mt-1 text-sm text-gray-500">Créer des rapports détaillés sur votre équipe</p>
+    </a>
+</div>
 @endsection

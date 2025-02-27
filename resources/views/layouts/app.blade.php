@@ -1,411 +1,236 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-gray-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Default Title')</title>
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/navigation.css') }}">
+    <title>{{ config('app.name', '3HCIG COOP-CA') }}</title>
+    @vite('resources/css/app.css')
     @yield('additional_css')
 </head>
-<body>
-    <style>
-        .nav-main {
-    background-color: #1f2937;
-        }
-
-        .nav-container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-
-        .nav-content {
-            display: flex;
-            height: 4rem;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .mobile-menu-button {
-            display: flex;
-            align-items: center;
-        }
-
-        .mobile-menu-button button {
-            padding: 0.5rem;
-            color: #9ca3af;
-            background-color: transparent;
-            border: none;
-            border-radius: 0.375rem;
-            cursor: pointer;
-        }
-
-        .mobile-menu-button button:hover {
-            background-color: #374151;
-            color: #ffffff;
-        }
-
-        .menu-icon, .close-icon {
-            width: 1.5rem;
-            height: 1.5rem;
-        }
-
-        .close-icon {
-            display: none;
-        }
-
-        .nav-logo-menu {
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-logo {
-            flex-shrink: 0;
-        }
-
-        .logo-image {
-            height: 2rem;
-            width: auto;
-        }
-
-        .desktop-menu {
-            display: none;
-        }
-
-        .menu-items {
-            display: flex;
-            space-x: 1rem;
-        }
-
-        .menu-item {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #d1d5db;
-            text-decoration: none;
-            border-radius: 0.375rem;
-        }
-
-        .menu-item:hover {
-            background-color: #374151;
-            color: #ffffff;
-        }
-
-        .menu-item.active {
-            background-color: #111827;
-            color: #ffffff;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-        }
-
-
-        .profile-dropdown {
-            position: relative;
-            margin-left: 0.75rem;
-        }
-
-        .profile-button {
-            display: flex;
-            background-color: #1f2937;
-            border: none;
-            border-radius: 9999px;
-            cursor: pointer;
-        }
-
-        .profile-image {
-            width: 2rem;
-            height: 2rem;
-            border-radius: 9999px;
-        }
-
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            right: 0;
-            z-index: 10;
-            margin-top: 0.5rem;
-            width: 12rem;
-            background-color: #ffffff;
-            border-radius: 0.375rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-
-        .dropdown-item {
-            display: block;
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-            color: #1f2937;
-            text-decoration: none;
-        }
-
-        .dropdown-item:hover {
-            background-color: #f3f4f6;
-        }
-
-        .mobile-menu {
-            display: none;
-        }
-
-        .mobile-menu-items {
-            padding: 0.5rem 1rem;
-            space-y: 0.25rem;
-        }
-
-        .mobile-menu-item {
-            display: block;
-            padding: 0.5rem 0.75rem;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #d1d5db;
-            text-decoration: none;
-            border-radius: 0.375rem;
-        }
-
-        .mobile-menu-item:hover {
-            background-color: #374151;
-            color: #ffffff;
-        }
-
-        .mobile-menu-item.active {
-            background-color: #111827;
-            color: #ffffff;
-        }
-
-        @media (min-width: 640px) {
-            .mobile-menu-button {
-                display: none;
-            }
-
-            .desktop-menu {
-                display: block;
-                margin-left: 1.5rem;
-            }
-
-            .mobile-menu {
-                display: none !important;
-            }
-        }
-        /* Reset de base */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        html, body {
-            height: 100%;
-        }
-
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        .site-footer {
-            background-color: #f8f9fa;
-            color: #6c757d;
-            text-align: center;
-            padding: 1rem 0;
-            margin-top: auto;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-
-        .site-footer p {
-            margin: 0;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-
-        /* Media queries pour la responsivité */
-        @media screen and (max-width: 600px) {
-            .site-footer {
-                padding: 0.75rem 0;
-            }
-
-            .site-footer p {
-                font-size: 0.8rem;
-            }
-        }
-
-        @media screen and (max-width: 400px) {
-            .site-footer {
-                padding: 0.5rem 0;
-            }
-
-            .site-footer p {
-                font-size: 0.7rem;
-            }
-        }
-    </style>
+<body class="h-full">
     @php
     $currentRole = session('current_role', null);
     $user = Auth::user();
     @endphp
     @if (Auth::check())
-    <header>
-        <nav class="nav-main">
-            <div class="nav-container">
-                <div class="nav-content">
-                    <div class="mobile-menu-button">
-                        <button type="button" aria-controls="mobile-menu" aria-expanded="false">
-                            <svg class="menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                            </svg>
-                            <svg class="close-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="nav-logo-menu">
-                        <div class="nav-logo">
-                            <img class="logo-image" src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500" alt="Your Company">
-                        </div>
-                        <div class="desktop-menu">
-                            <div class="menu-items">
-                                @if ($user->role === 'Superviseur')
-                                    @if ($currentRole === 'Employer')
-                                        <a href="{{ route('user.dashboard') }}" class="menu-item active">Tableau de bord</a>
-                                        <a href="{{ route('user.profile') }}" class="menu-item">Profil</a>
-                                        <a href="{{ route('presence.index') }}" class="menu-item">Présence</a>
-                                        <a href="{{ route('user.presence.report') }}" class="menu-item">Bilan de présence</a>
-                                    @elseif ($currentRole === 'Superviseur')
-                                        <a href="{{ route('superviseur.supdashboard') }}" class="menu-item active">Tableau de bord</a>
-                                        <a href="{{ route('superviseur.showFollowPresence') }}" class="menu-item">Suivre les présences</a>
-                                        <a href="{{ route('superviseur.generateReport2') }}" class="menu-item">Générer un rapport</a>
-                                        <a href="{{ route('superviseur.showAddMember') }}" class="menu-item">Ajouter membre à l'équipe</a>
-                                    @endif
-                                @elseif ($user->role === 'Employer')
-                                    <a href="{{ route('user.dashboard') }}" class="menu-item active">Tableau de bord</a>
-                                    <a href="{{ route('user.profile') }}" class="menu-item">Profil</a>
-                                    <a href="{{ route('presence.index') }}" class="menu-item">Présence</a>
-                                    <a href="{{ route('user.presence.report') }}" class="menu-item">Bilan de présence</a>
-                                @elseif ($user->role === 'administrateur')
-                                <a href="{{ route('admin.dashboard') }}" class="menu-item active">Tableau de bord</a>
-                                <a href="{{ route('admin.addEmployee') }}" class="menu-item">Ajouter employé</a>
-                                <a href="{{ route('admin.deleteEmployee') }}" class="menu-item">Supprimer employé</a>
-                                <a href="{{ route('admin.generateReport') }}" class="menu-item">Générer Bilan</a>
-                                <a href="{{ route('admin.showEmployeeList') }}" class="menu-item">Liste des Employés</a>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    <div class="nav-right">
-                        <div class="profile-dropdown">
-                            <button type="button" class="profile-button" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                                <img class="profile-image" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
-                            </button>
-                            <div class="dropdown-menu" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
-                                <a href="{{ route('user.profile') }}" class="dropdown-item" role="menuitem" tabindex="-1" id="user-menu-item-0">Mon Profile</a>
-                                <a href="{{ route('logouts') }}" class="dropdown-item" role="menuitem" tabindex="-1" id="user-menu-item-2">Deconnexion</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="fixed inset-y-0 left-0 z-50 w-64 bg-3hcig-blue-dark text-white">
+            <!-- Logo in Sidebar Header -->
+            <div class="flex h-16 items-center justify-center border-b border-3hcig-blue">
+                <img class="h-20 w-auto" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="3HCIG COOP-CA">
             </div>
-            <div class="mobile-menu" id="mobile-menu">
-                <div class="mobile-menu-items">
-                    @if ($user->role === 'Superviseur')
-                        @if ($currentRole === 'Employer')
-                            <a href="{{ route('user.dashboard') }}" class="mobile-menu-item active">Tableau de bord</a>
-                            <a href="{{ route('user.profile') }}" class="mobile-menu-item">Profil</a>
-                            <a href="{{ route('presence.index') }}" class="mobile-menu-item">Présence</a>
-                            <a href="{{ route('user.presence.report') }}" class="mobile-menu-item">Bilan de présence</a>
-                        @elseif ($currentRole === 'Superviseur')
-                            <a href="{{ route('superviseur.supdashboard') }}" class="mobile-menu-item active">Tableau de bord</a>
-                            <a href="{{ route('superviseur.showFollowPresence') }}" class="mobile-menu-item">Suivre les présences</a>
-                            <a href="{{ route('superviseur.generateReport2') }}" class="mobile-menu-item">Générer un rapport</a>
-                            <a href="{{ route('superviseur.showAddMember') }}" class="mobile-menu-item">Ajouter membre à l'équipe</a>
-                        @endif
-                    @elseif ($user->role === 'Employer')
-                        <a href="{{ route('user.dashboard') }}" class="mobile-menu-item active">Tableau de bord</a>
-                        <a href="{{ route('user.profile') }}" class="mobile-menu-item">Profil</a>
-                        <a href="{{ route('presence.index') }}" class="mobile-menu-item">Présence</a>
-                        <a href="{{ route('user.presence.report') }}" class="mobile-menu-item">Bilan de présence</a>
-                    @elseif ($user->role === 'administrateur')
-                    <a href="{{ route('admin.dashboard') }}" class="mobile-menu-item active">Tableau de bord</a>
-                    <a href="{{ route('admin.addEmployee') }}" class="mobile-menu-item">Ajouter employé</a>
-                    <a href="{{ route('admin.deleteEmployee') }}" class="mobile-menu-item">Supprimer employé</a>
-                    <a href="{{ route('admin.generateReport') }}" class="mobile-menu-item">Générer Bilan</a>
-                    <a href="{{ route('admin.showEmployeeList') }}" class="mobile-menu-item">Liste des Employés</a>
+            <!-- Nav Links -->
+            <nav class="mt-5 px-2">
+                @if ($user->role === 'Superviseur')
+                    @if ($currentRole === 'Employer')
+                        <a href="{{ route('user.dashboard') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('user.dashboard') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('user.dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            Tableau de bord
+                        </a>
+                        <a href="{{ route('user.profile') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('user.profile') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('user.profile') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Profil
+                        </a>
+                        <a href="{{ route('presence.index') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('presence.index') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('presence.index') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Présence
+                        </a>
+                        <a href="{{ route('user.presence.report') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('user.presence.report') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('user.presence.report') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Bilan de présence
+                        </a>
+                    @elseif ($currentRole === 'Superviseur')
+                        <a href="{{ route('superviseur.supdashboard') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('superviseur.supdashboard') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('superviseur.supdashboard') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            Tableau de bord
+                        </a>
+                        <a href="{{ route('superviseur.showFollowPresence') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('superviseur.showFollowPresence') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('superviseur.showFollowPresence') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
+                            Suivre les présences
+                        </a>
+                        <a href="{{ route('superviseur.generateReport2') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('superviseur.generateReport2') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('superviseur.generateReport2') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Générer un rapport
+                        </a>
+                        <a href="{{ route('superviseur.showAddMember') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('superviseur.showAddMember') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('superviseur.showAddMember') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                            </svg>
+                            Ajouter membre
+                        </a>
                     @endif
-                </div>
-        </nav>
-    </header>
-    @endif
+                @elseif ($user->role === 'Employer')
+                    <a href="{{ route('user.dashboard') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('user.dashboard') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                        <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('user.dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        Tableau de bord
+                    </a>
+                    <a href="{{ route('user.profile') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('user.profile') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                        <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('user.profile') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Profil
+                    </a>
+                    <a href="{{ route('presence.index') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('presence.index') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                        <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('presence.index') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Présence
+                    </a>
+                    <a href="{{ route('user.presence.report') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('user.presence.report') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                        <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('user.presence.report') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Bilan de présence
+                    </a>
+                @elseif ($user->role === 'administrateur')
+                    <a href="{{ route('admin.dashboard') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('admin.dashboard') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                        <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('admin.dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        Tableau de bord
+                    </a>
+                    <a href="{{ route('admin.addEmployee') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('admin.addEmployee') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                        <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('admin.addEmployee') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Ajouter employé
+                    </a>
+                    <a href="{{ route('admin.deleteEmployee') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('admin.deleteEmployee') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                        <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('admin.deleteEmployee') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Supprimer employé
+                    </a>
+                    <a href="{{ route('admin.generateReport') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('admin.generateReport') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                        <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('admin.generateReport') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Générer Bilan
+                    </a>
+                    <a href="{{ route('admin.showEmployeeList') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('admin.showEmployeeList') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
+                        <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('admin.showEmployeeList') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        Liste des Employés
+                    </a>
+                @endif
+            </nav>
+            
+            <!-- Settings at bottom -->
+            <div class="absolute bottom-0 w-full p-4">
+                @if(Auth::check() && Auth::user()->role === 'Superviseur')
+                <a href="{{ route('role.switch') }}" class="group flex w-full items-center rounded-md px-2 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">
+                    <svg class="mr-3 h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    Changer de rôle
+                </a>
+                @endif
+                <a href="{{ route('logouts') }}" class="group mt-2 flex w-full items-center rounded-md px-2 py-2 text-base font-medium text-gray-300 hover:bg-red-600 hover:text-white">
+                    <svg class="mr-3 h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Déconnexion
+                </a>
+            </div>
+        </div>
 
-    <div class="container">
+        <!-- Main Content -->
+        <div class="flex flex-1 flex-col pl-64">
+            <!-- Top Navigation Bar -->
+            <header class="bg-white shadow">
+                <div class="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+                    <h1 class="text-xl font-semibold text-3hcig-blue-dark">
+                        @yield('title', config('app.name', '3HCIG COOP-CA'))
+                    </h1>
+                    <div class="flex items-center">
+                        <!-- User Profile Menu -->
+                        <div class="ml-3 relative">
+                            <div>
+                                <button type="button" class="relative flex max-w-xs items-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                                    <span class="sr-only">Open user menu</span>
+                                    <img class="h-8 w-8 rounded-full" src="{{ $user->avatar ?? asset('storage/avatars/default.png') }}" alt="{{ $user->nom }}">
+                                </button>
+                            </div>
+                            <div class="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" id="user-dropdown-menu" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                                <a href="{{ route('user.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">
+                                    Mon Profil
+                                </a>
+                                <a href="{{ route('logouts') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">
+                                    Déconnexion
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <main class="flex-1 bg-gray-100 p-4 sm:p-6 lg:p-8">
+                @yield('content')
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-white py-4 px-4 sm:px-6 lg:px-8 shadow-inner text-center text-gray-500 text-sm">
+                <p>&copy; {{ date('Y') }} 3HCIG COOP-CA. Tous droits réservés.</p>
+            </footer>
+        </div>
+    </div>
+    @else
+    <div class="min-h-screen bg-gray-100">
         @yield('content')
     </div>
+    @endif
 
-    <script src="{{ asset('js/app.js') }}"></script>
     <script>
-                document.addEventListener('DOMContentLoaded', function() {
-            const userMenuButton = document.getElementById('user-menu-button');
-            const dropdownMenu = document.querySelector('.dropdown-menu');
-            const mobileMenuButton = document.querySelector('.mobile-menu-button button');
-            const mobileMenu = document.getElementById('mobile-menu');
-            const menuIcon = document.querySelector('.menu-icon');
-            const closeIcon = document.querySelector('.close-icon');
-
-            // Fonction pour basculer l'affichage du menu utilisateur
-            function toggleUserMenu() {
-                const expanded = userMenuButton.getAttribute('aria-expanded') === 'true';
-                userMenuButton.setAttribute('aria-expanded', !expanded);
-                dropdownMenu.style.display = expanded ? 'none' : 'block';
-            }
-
-            // Fonction pour basculer l'affichage du menu mobile
-            function toggleMobileMenu() {
-                const expanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
-                mobileMenuButton.setAttribute('aria-expanded', !expanded);
-                mobileMenu.style.display = expanded ? 'none' : 'block';
-                menuIcon.style.display = expanded ? 'block' : 'none';
-                closeIcon.style.display = expanded ? 'none' : 'block';
-            }
-
-            // Gestionnaire d'événements pour le clic sur le bouton du menu utilisateur
-            userMenuButton.addEventListener('click', function(event) {
-                event.stopPropagation();
-                toggleUserMenu();
+    document.addEventListener('DOMContentLoaded', function() {
+        // User profile dropdown toggle
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userDropdownMenu = document.getElementById('user-dropdown-menu');
+        
+        if (userMenuButton && userDropdownMenu) {
+            userMenuButton.addEventListener('click', function() {
+                userDropdownMenu.classList.toggle('hidden');
             });
-
-            // Gestionnaire d'événements pour le clic sur le bouton du menu mobile
-            mobileMenuButton.addEventListener('click', function(event) {
-                event.stopPropagation();
-                toggleMobileMenu();
-            });
-
-            // Fermer les menus si on clique en dehors
+            
+            // Close dropdown when clicking outside
             document.addEventListener('click', function(event) {
-                if (!userMenuButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
-                    dropdownMenu.style.display = 'none';
-                    userMenuButton.setAttribute('aria-expanded', 'false');
-                }
-                if (!mobileMenuButton.contains(event.target) && !mobileMenu.contains(event.target)) {
-                    mobileMenu.style.display = 'none';
-                    mobileMenuButton.setAttribute('aria-expanded', 'false');
-                    menuIcon.style.display = 'block';
-                    closeIcon.style.display = 'none';
+                if (!userMenuButton.contains(event.target) && !userDropdownMenu.contains(event.target)) {
+                    userDropdownMenu.classList.add('hidden');
                 }
             });
-        });
-
-        </script>
-    <footer class="site-footer">
-        <div class="footer-content">
-            <p>&copy; 2024 Timcone, Inc. All rights reserved.</p>
-        </div>
-    </footer>
+        }
+        
+        // Mobile sidebar toggle for smaller screens - if needed
+        const mobileSidebarButton = document.getElementById('mobile-sidebar-button');
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        
+        if (mobileSidebarButton && mobileSidebar) {
+            mobileSidebarButton.addEventListener('click', function() {
+                mobileSidebar.classList.toggle('hidden');
+            });
+        }
+    });
+    </script>
+    
+    @yield('scripts')
 </body>
 </html>

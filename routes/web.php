@@ -92,3 +92,10 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
     Route::post('/mark-arrival', [PreController::class, 'markArrival'])->name('presence.arrival');
     Route::post('/mark-departure', [PreController::class, 'markDeparture'])->name('presence.departure');
 });
+
+//route pour permettre au superviseur de pouvoir changer de rôle
+
+Route::get('/role-switch', function() {
+    session()->forget('current_role');
+    return redirect('/Auth/role_selection');
+})->name('role.switch');

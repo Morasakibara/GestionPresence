@@ -1,211 +1,130 @@
 @extends('layouts.app')
 
+@section('title', 'Liste des Employés')
+
 @section('content')
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste des Employés</title>
-    <link rel="stylesheet" href="{{ asset('css/employee-list-styles.css') }}">
-</head>
-<body>
-    <style>
-        /* General styles */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f3f4f6;
-    color: #1f2937;
-    line-height: 1.5;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-h1 {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-}
-
-/* Search styles */
-.search-container {
-    margin-bottom: 20px;
-}
-
-.search-input {
-    width: 100%;
-    padding: 10px 15px;
-    font-size: 16px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    background-color: #ffffff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.search-input:focus {
-    outline: none;
-    border-color: #a78bfa;
-    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
-}
-
-/* Table styles */
-.employee-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background-color: #1f2937;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.employee-table th,
-.employee-table td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid #374151;
-}
-
-.employee-table th {
-    background-color: #111827;
-    color: #ffffff;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 12px;
-    letter-spacing: 0.05em;
-}
-
-.employee-table tbody tr {
-    transition: background-color 0.2s;
-}
-
-.employee-table tbody tr:hover {
-    background-color: #374151;
-}
-
-.employee-table td {
-    color: #e5e7eb;
-}
-
-/* Button styles */
-.button {
-    padding: 6px 12px;
-    background-color: #4f46e5;
-    color: #ffffff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
-}
-
-.button:hover {
-    background-color: #4338ca;
-}
-
-/* Role styles */
-.role {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 9999px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.role-member {
-    background-color: #10b981;
-    color: #064e3b;
-}
-
-.role-admin {
-    background-color: #f59e0b;
-    color: #78350f;
-}
-
-.role-owner {
-    background-color: #ef4444;
-    color: #7f1d1d;
-}
-
-/* Checkbox styles */
-.checkbox-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-.checkbox-input {
-    margin-right: 5px;
-}
-    </style>
-    <div class="container">
-        <h1>Liste des Employés</h1>
-
-        @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        <div class="search-container">
-            <form method="GET" action="{{ route('admin.showEmployeeList') }}">
-                @csrf
-                <input type="text" class="search-input" name="search" placeholder="Rechercher" value="{{ old('search', $search) }}">
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" class="checkbox-input" name="roles[]" value="employé" {{ in_array('employé', $roles) ? 'checked' : '' }}>
-                        Employés
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" class="checkbox-input" name="roles[]" value="superviseur" {{ in_array('superviseur', $roles) ? 'checked' : '' }}>
-                        Superviseurs
-                    </label>
-                </div>
-            </form>
-        </div>
-
-        <table class="employee-table">
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Poste</th>
-                    <th>Email</th>
-                    <th>Rôle</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($employees as $employee)
-                    <tr>
-                        <td>{{ $employee->nom }}</td>
-                        <td>{{ $employee->role }}</td>
-                        <td>{{ $employee->email }}</td>
-                        <td><span class="role role-{{ strtolower($employee->role) }}">{{ $employee->role }}</span></td>
-                        <td><button class="button" onclick="copyToClipboard('{{ $employee->email }}')">Copier</button></td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+<div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Liste des Employés</h1>
+        <p class="mt-2 text-sm text-gray-600">Gérez les employés et superviseurs de votre organisation</p>
     </div>
 
-    <script>
-        function copyToClipboard(email) {
-            navigator.clipboard.writeText(email).then(function() {
-                alert('Email copié dans le presse-papier');
-            }, function() {
-                alert('Erreur lors de la copie de l\'email');
-            });
-        }
-    </script>
-</body>
-</html>
+    @if (session('success'))
+        <div class="mb-6 rounded-md bg-3hcig-green-light/20 p-4 text-3hcig-green-dark">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <div class="mb-6 rounded-lg bg-white p-6 shadow-sm">
+        <form method="GET" action="{{ route('admin.showEmployeeList') }}" class="space-y-4">
+            @csrf
+            <div>
+                <label for="search" class="sr-only">Rechercher un employé</label>
+                <div class="relative">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <input type="text" name="search" id="search" class="block w-full rounded-md border-gray-300 pl-10 py-3 shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20 sm:text-sm" placeholder="Rechercher par nom, email, poste..." value="{{ old('search', $search) }}">
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-4">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" class="rounded border-gray-300 text-3hcig-blue shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20" name="roles[]" value="employé" {{ in_array('employé', $roles) ? 'checked' : '' }}>
+                    <span class="ml-2 text-sm text-gray-700">Employés</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" class="rounded border-gray-300 text-3hcig-blue shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20" name="roles[]" value="superviseur" {{ in_array('superviseur', $roles) ? 'checked' : '' }}>
+                    <span class="ml-2 text-sm text-gray-700">Superviseurs</span>
+                </label>
+                <button type="submit" class="ml-auto rounded-md bg-3hcig-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                    Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="mt-8 overflow-hidden rounded-lg bg-white shadow">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-3hcig-blue-dark">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Poste</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Email</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Rôle</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    @foreach ($employees as $employee)
+                        <tr class="hover:bg-gray-50">
+                            <td class="whitespace-nowrap px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="h-10 w-10 flex-shrink-0">
+                                        <img class="h-10 w-10 rounded-full" src="{{ $employee->avatar ?? asset('storage/avatars/default.png') }}" alt="{{ $employee->nom }}">
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="font-medium text-gray-900">{{ $employee->nom }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ $employee->role }}</td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ $employee->email }}</td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm">
+                                @if(strtolower($employee->role) == 'administrateur')
+                                    <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                        Administrateur
+                                    </span>
+                                @elseif(strtolower($employee->role) == 'superviseur')
+                                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                                        Superviseur
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                        Employé
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                <button type="button" onclick="copyToClipboard('{{ $employee->email }}')" class="text-3hcig-blue hover:text-3hcig-blue-light">
+                                    Copier Email
+                                </button>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination if available -->
+        @if ($employees instanceof \Illuminate\Pagination\LengthAwarePaginator && $employees->hasPages())
+        <div class="border-t border-gray-200 px-4 py-3 sm:px-6">
+            {{ $employees->links() }}
+        </div>
+        @endif
+    </div>
+</div>
+
+<script>
+    function copyToClipboard(email) {
+        navigator.clipboard.writeText(email).then(function() {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'fixed bottom-4 right-4 bg-3hcig-blue text-white px-4 py-2 rounded-md shadow-lg transition-opacity duration-300';
+            tooltip.textContent = 'Email copié !';
+            document.body.appendChild(tooltip);
+            
+            setTimeout(() => {
+                tooltip.classList.add('opacity-0');
+                setTimeout(() => {
+                    document.body.removeChild(tooltip);
+                }, 300);
+            }, 2000);
+        }, function() {
+            alert('Erreur lors de la copie de l\'email');
+        });
+    }
+</script>
 @endsection

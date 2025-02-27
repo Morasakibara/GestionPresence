@@ -5,6 +5,7 @@
 
 
 @import url('login.css');
+@import './components/tailwind/auth.css';
 
 [x-cloak]{
     display: none!important;
