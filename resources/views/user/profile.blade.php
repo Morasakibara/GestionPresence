@@ -1,150 +1,125 @@
 @extends('layouts.app')
 
+@section('title', 'Mon profil')
+
 @section('content')
-<style>
-    /* profile.css */
+<div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-md">
+        <div class="overflow-hidden rounded-lg bg-white shadow-sm">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex flex-col items-center">
+                    <h1 class="mb-6 text-2xl font-bold text-3hcig-blue-dark">Mon profil</h1>
 
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f3f4f6;
-    margin: 0;
-    padding: 0;
-}
+                    <!-- Photo de profil en haut -->
+                    <div class="mb-6 flex flex-col items-center">
+                        @if($user->avatar)
+                            <div class="mb-3 h-32 w-32 overflow-hidden rounded-full border-4 border-3hcig-blue-light">
+                                <img src="{{ asset('storage/' . $user->avatar) }}" alt="Avatar" class="h-full w-full object-cover">
+                            </div>
+                        @else
+                            <div class="mb-3 flex h-32 w-32 items-center justify-center rounded-full bg-3hcig-blue-light/10 text-3hcig-blue">
+                                <svg class="h-20 w-20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                        @endif
+                        <p class="text-sm text-gray-500">{{ $user->email }}</p>
+                    </div>
 
-.container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem;
-}
+                    <!-- Formulaire de profil -->
+                    <form action="{{ route('user.update') }}" method="POST" enctype="multipart/form-data" class="w-full space-y-6">
+                        @csrf
+                        @method('PUT')
 
-h1 {
-    text-align: center;
-    color: #1f2937;
-    font-size: 1.75rem;
-    font-weight: bold;
-    margin-bottom: 2rem;
-}
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Nom</label>
+                            <div class="mt-1">
+                                <input type="text" id="name" name="name" value="{{ $user->nom }}" required
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                            </div>
+                        </div>
 
-form {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 500px;
-}
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                            <div class="mt-1">
+                                <input type="email" id="email" name="email" value="{{ $user->email }}" required
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                            </div>
+                        </div>
 
-.form-group {
-    margin-bottom: 1.5rem;
-}
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700">Nouveau mot de passe</label>
+                            <div class="mt-1">
+                                <input type="password" id="password" name="password" placeholder="Laisser vide pour ne pas changer"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                            </div>
+                        </div>
 
-label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    margin-bottom: 0.5rem;
-}
+                        <div>
+                            <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirmer le nouveau mot de passe</label>
+                            <div class="mt-1">
+                                <input type="password" id="password_confirmation" name="password_confirmation"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                            </div>
+                        </div>
 
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="file"] {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-    color: #1f2937;
-    transition: border-color 0.15s ease-in-out;
-}
+                        <div>
+                            <label for="avatar" class="block text-sm font-medium text-gray-700">Photo de profil</label>
+                            <div class="mt-1">
+                                <input type="file" id="avatar" name="avatar"
+                                       class="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-3hcig-blue focus:outline-none focus:ring-3hcig-blue sm:text-sm">
+                            </div>
+                        </div>
 
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-input[type="file"]:focus {
-    outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
+                        <div class="pt-2">
+                            <button type="submit"
+                                    class="flex w-full justify-center rounded-md bg-3hcig-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                                Mettre à jour le profil
+                            </button>
+                        </div>
+                    </form>
 
-button[type="submit"] {
-    width: 100%;
-    padding: 0.75rem;
-    background-color: #4f46e5;
-    color: white;
-    border: none;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.15s ease-in-out;
-    margin-top: 1rem;
-}
+                    @if(session('success'))
+                    <div class="mt-6 rounded-md bg-3hcig-green-light/20 p-4 text-3hcig-green-dark">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-3hcig-green" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-3hcig-green-dark">
+                                    {{ session('success') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
 
-button[type="submit"]:hover {
-    background-color: #4338ca;
-}
-
-.img-thumbnail {
-    max-width: 200px;
-    height: auto;
-    border-radius: 0.375rem;
-    margin-top: 1rem;
-}
-
-/* Responsive design */
-@media (max-width: 640px) {
-    form {
-        padding: 1.5rem;
-    }
-
-    h1 {
-        font-size: 1.5rem;
-    }
-}
-</style>
-<div class="container">
-    <form action="{{ route('user.update') }}" method="POST" enctype="multipart/form-data">
-        <h1>Mon profil</h1>
-        @csrf
-        @method('PUT')
-        
-        <div class="form-group">
-            <label for="name">Nom</label>
-            <input type="text" id="name" name="name" value="{{ $user->nom }}" required>
-        </div>
-
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" value="{{ $user->email }}" required>
-        </div>
-
-        <div class="form-group">
-            <label for="password">Nouveau mot de passe</label>
-            <input type="password" id="password" name="password" placeholder="Laisser vide pour ne pas changer">
-        </div>
-
-        <div class="form-group">
-            <label for="password_confirmation">Confirmer le nouveau mot de passe</label>
-            <input type="password" id="password_confirmation" name="password_confirmation">
-        </div>
-
-        <div class="form-group">
-            <label for="avatar">Photo de profil</label>
-            <input type="file" id="avatar" name="avatar">
-        </div>
-
-        @if($user->avatar)
-            <div class="avatar-preview">
-                <img src="{{ asset('storage/' . $user->avatar) }}" alt="Avatar" class="img-thumbnail">
+                    @if($errors->any())
+                    <div class="mt-6 rounded-md bg-red-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">Il y a des erreurs dans votre formulaire</h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    <ul class="list-disc space-y-1 pl-5">
+                                        @foreach($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                </div>
             </div>
-        @endif
-
-        <button type="submit">Mettre à jour le profil</button>
-    </form>
+        </div>
+    </div>
 </div>
 @endsection

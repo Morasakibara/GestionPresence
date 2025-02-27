@@ -1,170 +1,128 @@
-<!-- resources/views/user/presence-report.blade.php -->
 @extends('layouts.app')
 
+@section('title', 'Bilan de présence du mois')
+
 @section('content')
-<style>
-    /* styles/presence-report.css */
-
-/* Police et styles de base */
-body {
-    font-family: 'Arial', sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background-color: #f4f4f4;
-}
-
-/* Container principal */
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #fff;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-}
-
-/* Titre */
-h1 {
-    color: #2c3e50;
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-/* Canvas pour le graphique */
-#presenceChart {
-    width: 100%;
-    max-height: 400px;
-    margin-bottom: 30px;
-}
-
-/* Informations de présence */
-.presence-info {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 20px;
-}
-
-.presence-info p {
-    font-size: 18px;
-    margin: 10px 0;
-}
-
-.presence-info strong {
-    color: #3498db;
-}
-
-/* Styles pour les couleurs du graphique */
-.chart-legend {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    margin: 0 10px;
-}
-
-.legend-color {
-    width: 20px;
-    height: 20px;
-    margin-right: 5px;
-    border-radius: 50%;
-}
-
-.legend-color.presence {
-    background-color: #3498db;
-}
-
-.legend-color.absence {
-    background-color: #e74c3c;
-}
-
-/* Media queries pour la responsivité */
-@media (max-width: 768px) {
-    .container {
-        padding: 10px;
-    }
-
-    h1 {
-        font-size: 24px;
-    }
-
-    .presence-info {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    #presenceChart {
-        max-height: 300px;
-    }
-}
-
-@media (max-width: 480px) {
-    h1 {
-        font-size: 20px;
-    }
-
-    .presence-info p {
-        font-size: 16px;
-    }
-
-    #presenceChart {
-        max-height: 250px;
-    }
-}
-</style>
-<div class="container p-4 mx-auto">
-    <h1 class="mb-4 text-xl font-bold">Bilan de présence du mois</h1>
-
-    <canvas id="presenceChart" class="mb-4"></canvas>
-
-    <div class="chart-legend">
-        <div class="legend-item">
-            <div class="legend-color presence"></div>
-            <span>Présences</span>
+<div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-3xl">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-3hcig-blue-dark sm:text-3xl">Bilan de présence du mois</h1>
+            <p class="mt-2 text-sm text-gray-600">Récapitulatif de vos présences et absences</p>
         </div>
-        <div class="legend-item">
-            <div class="legend-color absence"></div>
-            <span>Absences</span>
+
+        <div class="overflow-hidden rounded-lg bg-white p-6 shadow-sm">
+            <!-- Graphique -->
+            <div class="mb-6">
+                <canvas id="presenceChart" height="300"></canvas>
+            </div>
+
+            <!-- Légende du graphique -->
+            <div class="mb-6 flex justify-center space-x-6">
+                <div class="flex items-center">
+                    <span class="mr-2 inline-block h-4 w-4 rounded-full bg-3hcig-blue"></span>
+                    <span class="text-sm text-gray-700">Présences</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="mr-2 inline-block h-4 w-4 rounded-full bg-red-500"></span>
+                    <span class="text-sm text-gray-700">Absences</span>
+                </div>
+            </div>
+
+            <!-- Informations de présence -->
+            <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div class="rounded-lg bg-3hcig-blue-light/10 p-4 text-center">
+                    <p class="text-sm text-gray-600">Total de présences</p>
+                    <p class="mt-1 text-3xl font-bold text-3hcig-blue">{{ $totalPresences }}</p>
+                    <p class="mt-1 text-xs text-gray-500">jours ce mois-ci</p>
+                </div>
+                <div class="rounded-lg bg-red-100 p-4 text-center">
+                    <p class="text-sm text-gray-600">Total d'absences</p>
+                    <p class="mt-1 text-3xl font-bold text-red-600">{{ $totalAbsences }}</p>
+                    <p class="mt-1 text-xs text-gray-500">jours ce mois-ci</p>
+                </div>
+            </div>
+
+            <!-- Taux de présence -->
+            @php
+                $presenceRate = $totalPresences + $totalAbsences > 0
+                    ? round(($totalPresences / ($totalPresences + $totalAbsences)) * 100)
+                    : 0;
+            @endphp
+            <div class="mt-8">
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">Taux de présence</span>
+                    <span class="text-sm font-medium text-3hcig-blue">{{ $presenceRate }}%</span>
+                </div>
+                <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                    <div class="h-2 rounded-full bg-3hcig-blue" style="width: {{ $presenceRate }}%"></div>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
-    <div class="presence-info">
-        <p>Total de présences : <strong>{{ $totalPresences }}</strong></p>
-        <p>Total d'absences : <strong>{{ $totalAbsences }}</strong></p>
-    </div>
+<!-- Script Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('presenceChart').getContext('2d');
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const ctx = document.getElementById('presenceChart').getContext('2d');
-        const data = {
-            labels: @json($presences->pluck('date')->toArray()), // Récupère les jours du mois
-            datasets: [
-                {
-                    label: 'Présences',
-                    data: @json($presences->where('status', 'présent')->pluck('date')->countBy()->toArray()), // Comptes les jours où l'utilisateur est présent
-                    backgroundColor: 'blue',
+    const data = {
+        labels: @json($presences->pluck('date')->toArray()), // Récupère les jours du mois
+        datasets: [
+            {
+                label: 'Présences',
+                data: @json($presences->where('status', 'présent')->pluck('date')->countBy()->toArray()), // Comptes les jours où l'utilisateur est présent
+                backgroundColor: '#1976D2', // Couleur 3hcig-blue
+                borderRadius: 4
+            },
+            {
+                label: 'Absences',
+                data: @json($presences->where('status', 'absent')->pluck('date')->countBy()->toArray()), // Comptes les jours où l'utilisateur est absent
+                backgroundColor: '#EF4444', // Rouge
+                borderRadius: 4
+            }
+        ]
+    };
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false // Masquer la légende par défaut car nous avons une légende personnalisée
                 },
-                {
-                    label: 'Absences',
-                    data: @json($presences->where('status', 'absent')->pluck('date')->countBy()->toArray()), // Comptes les jours où l'utilisateur est absent
-                    backgroundColor: 'red',
+                tooltip: {
+                    backgroundColor: '#1F2937',
+                    titleColor: '#F9FAFB',
+                    bodyColor: '#F9FAFB',
+                    padding: 10,
+                    cornerRadius: 6
                 }
-            ]
-        };
-        const myChart = new Chart(ctx, {
-            type: 'bar',
-            data: data,
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0 // Entiers seulement
+                    },
+                    grid: {
+                        color: '#E5E7EB'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
                     }
                 }
-            }
-        });
-    </script>
-</div>
+            },
+            barPercentage: 0.6,
+            categoryPercentage: 0.8
+        }
+    });
+});
+</script>
 @endsection

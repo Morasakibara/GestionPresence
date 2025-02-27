@@ -1,144 +1,142 @@
 @extends('layouts.app')
 
+@section('title', 'Marquer la présence')
+
 @section('content')
-<style>
-    /* Styles généraux */
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #f3f4f6;
-    color: #1a202c;
-    line-height: 1.5;
-}
+<div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-md">
+        <div class="rounded-lg bg-white p-6 shadow-sm">
+            <div class="mb-6 text-center">
+                <h1 class="text-2xl font-bold text-3hcig-blue-dark">Marquer la présence</h1>
+                <p class="mt-2 text-sm text-gray-600">Enregistrez vos heures d'arrivée et de départ</p>
+            </div>
 
-.container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 2rem;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+            <div class="space-y-6">
+                <!-- Bouton pour marquer l'heure d'arrivée -->
+                <div>
+                    @if(now()->hour >= 7 && now()->hour <= 10)
+                        <form method="POST" action="{{ route('presence.arrival') }}">
+                            @csrf
+                            <button type="submit" class="flex w-full items-center justify-center rounded-md bg-3hcig-blue px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                                <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                </svg>
+                                Marquer l'heure d'arrivée
+                            </button>
+                        </form>
+                    @else
+                        <div class="rounded-md bg-yellow-50 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700">
+                                        Le bouton d'arrivée est actif uniquement entre 7h et 10h.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
 
-h1 {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #1f2937;
-    margin-bottom: 1.5rem;
-    text-align: center;
-}
+                <!-- Bouton pour marquer l'heure de départ -->
+                <div>
+                    @if(now()->hour >= 17 && now()->hour <= 18 && now()->minute <= 30)
+                        <form method="POST" action="{{ route('presence.departure') }}">
+                            @csrf
+                            <button type="submit" class="flex w-full items-center justify-center rounded-md bg-3hcig-green px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2">
+                                <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                Marquer l'heure de départ
+                            </button>
+                        </form>
+                    @else
+                        <div class="rounded-md bg-yellow-50 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700">
+                                        Le bouton de départ est actif uniquement entre 17h et 18h30.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
 
-/* Styles des boutons */
-.btn {
-    display: block;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    font-weight: 500;
-    text-align: center;
-    color: #ffffff;
-    background-color: #3b82f6;
-    border: none;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
+                <!-- Messages de feedback -->
+                @if(session('success'))
+                    <div class="rounded-md bg-3hcig-green-light/20 p-4 text-3hcig-green-dark">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-3hcig-green" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-3hcig-green-dark">
+                                    {{ session('success') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
-.btn:hover {
-    background-color: #2563eb;
-}
+                @if($errors->any())
+                    <div class="rounded-md bg-red-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-red-800">
+                                    {{ $errors->first() }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
 
-.btn:disabled {
-    background-color: #9ca3af;
-    cursor: not-allowed;
-}
-
-.btn-arrival {
-    background-color: #3b82f6;
-}
-
-.btn-departure {
-    background-color: #10b981;
-}
-
-.btn-arrival:hover {
-    background-color: #2563eb;
-}
-
-.btn-departure:hover {
-    background-color: #059669;
-}
-
-/* Styles des messages */
-.message {
-    padding: 0.75rem;
-    margin-top: 1rem;
-    border-radius: 0.375rem;
-    text-align: center;
-}
-
-.message-success {
-    background-color: #d1fae5;
-    color: #065f46;
-}
-
-.message-error {
-    background-color: #fee2e2;
-    color: #991b1b;
-}
-
-/* Styles des formulaires */
-.form-group {
-    margin-bottom: 1rem;
-}
-
-/* Responsive design */
-@media (max-width: 640px) {
-    .container {
-        padding: 1rem;
-    }
-}
-</style>
-<div class="container">
-    <h1>Marquer la présence</h1>
-
-    <!-- Bouton pour marquer l'heure d'arrivée -->
-    <div class="form-group">
-        @if(now()->hour >= 7 && now()->hour <= 10)
-            <form method="POST" action="{{ route('presence.arrival') }}">
-                @csrf
-                <button type="submit" class="btn btn-arrival">
-                    Marquer l'heure d'arrivée
-                </button>
-            </form>
-        @else
-            <p class="message message-error">Le bouton d'arrivée est actif uniquement entre 7h et 10h.</p>
-        @endif
-    </div>
-
-    <!-- Bouton pour marquer l'heure de départ -->
-    <div class="form-group">
-        @if(now()->hour >= 17 && now()->hour <= 18.5)
-            <form method="POST" action="{{ route('presence.departure') }}">
-                @csrf
-                <button type="submit" class="btn btn-departure">
-                    Marquer l'heure de départ
-                </button>
-            </form>
-        @else
-            <p class="message message-error">Le bouton de départ est actif uniquement entre 17h et 18h30.</p>
-        @endif
-    </div>
-
-    @if(session('success'))
-        <div class="message message-success">
-            {{ session('success') }}
+            <!-- Horloge et informations -->
+            <div class="mt-8 rounded-md bg-gray-50 p-4">
+                <div class="flex justify-center">
+                    <div class="text-center">
+                        <div class="text-sm font-medium text-gray-500">Heure actuelle</div>
+                        <div class="mt-1 text-xl font-semibold text-3hcig-blue-dark" id="current-time"></div>
+                        <div class="mt-2 text-xs text-gray-500">
+                            Arrivée: 7h00 - 10h00 | Départ: 17h00 - 18h30
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    @endif
-
-    @if($errors->any())
-        <div class="message message-error">
-            {{ $errors->first() }}
-        </div>
-    @endif
+    </div>
 </div>
+
+<script>
+    // Affichage et mise à jour de l'heure actuelle
+    function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+
+        document.getElementById('current-time').textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    // Mettre à jour l'heure chaque seconde
+    setInterval(updateClock, 1000);
+    updateClock(); // Appel initial
+</script>
 @endsection

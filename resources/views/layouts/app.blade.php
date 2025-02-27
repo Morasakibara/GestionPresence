@@ -133,7 +133,7 @@
                     </a>
                 @endif
             </nav>
-            
+
             <!-- Settings at bottom -->
             <div class="absolute bottom-0 w-full p-4">
                 @if(Auth::check() && Auth::user()->role === 'Superviseur')
@@ -205,12 +205,12 @@
         // User profile dropdown toggle
         const userMenuButton = document.getElementById('user-menu-button');
         const userDropdownMenu = document.getElementById('user-dropdown-menu');
-        
+
         if (userMenuButton && userDropdownMenu) {
             userMenuButton.addEventListener('click', function() {
                 userDropdownMenu.classList.toggle('hidden');
             });
-            
+
             // Close dropdown when clicking outside
             document.addEventListener('click', function(event) {
                 if (!userMenuButton.contains(event.target) && !userDropdownMenu.contains(event.target)) {
@@ -218,11 +218,11 @@
                 }
             });
         }
-        
+
         // Mobile sidebar toggle for smaller screens - if needed
         const mobileSidebarButton = document.getElementById('mobile-sidebar-button');
         const mobileSidebar = document.getElementById('mobile-sidebar');
-        
+
         if (mobileSidebarButton && mobileSidebar) {
             mobileSidebarButton.addEventListener('click', function() {
                 mobileSidebar.classList.toggle('hidden');
@@ -230,7 +230,7 @@
         }
     });
     </script>
-    
+
     @yield('scripts')
 </body>
 </html>

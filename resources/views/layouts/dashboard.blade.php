@@ -33,7 +33,7 @@
                                     <button type="button" class="profile-button relative flex max-w-xs items-center rounded-full bg-3hcig-blue-dark text-sm focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-3hcig-blue focus:outline-none" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
                                         <span class="absolute -inset-1.5"></span>
                                         <span class="sr-only">Open user menu</span>
-                                        <img class="h-8 w-8 rounded-full" src="{{ auth()->user()->avatar }}" alt="{{ auth()->user()->nom }}">
+                                        <img class="h-8 w-8 rounded-full" src="{{ $user->avatar ?? asset('storage/avatars/default.png') }}" alt="{{ auth()->user()->nom }}">
                                     </button>
                                 </div>
 

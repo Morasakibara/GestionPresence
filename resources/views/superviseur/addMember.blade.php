@@ -1,204 +1,100 @@
 @extends('layouts.app')
 
+@section('title', 'Ajouter des membres à votre équipe')
+
 @section('content')
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter des membres à votre équipe</title>
-    <link rel="stylesheet" href="{{ asset('css/employee-list-styles.css') }}">
-</head>
-<body>
-    <style>
-        /* General styles */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f3f4f6;
-    color: #1f2937;
-    line-height: 1.5;
-}
+<div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Ajouter des membres à votre équipe</h1>
+        <p class="mt-2 text-sm text-gray-600">Recherchez et ajoutez de nouveaux membres à votre équipe</p>
+    </div>
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
+    @if(session('success'))
+    <div class="mb-6 rounded-md bg-3hcig-green-light/20 p-4 text-3hcig-green-dark">
+        {{ session('success') }}
+    </div>
+    @endif
 
-h1 {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-}
+    @if(session('error'))
+    <div class="mb-6 rounded-md bg-red-50 p-4 text-red-800">
+        {{ session('error') }}
+    </div>
+    @endif
 
-/* Search styles */
-.search-container {
-    margin-bottom: 20px;
-}
+    <div class="mb-6 rounded-lg bg-white p-6 shadow-sm">
+        <form method="GET" action="{{ route('superviseur.showAddMemberForm') }}" class="space-y-4">
+            @csrf
+            <div>
+                <label for="search" class="sr-only">Rechercher un employé</label>
+                <div class="relative">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <input type="text" name="search" id="search" class="block w-full rounded-md border-gray-300 pl-10 py-3 shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20 sm:text-sm" placeholder="Rechercher par nom" value="{{ $search ?? '' }}">
+                </div>
+            </div>
 
-.search-input {
-    width: 100%;
-    padding: 10px 15px;
-    font-size: 16px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    background-color: #ffffff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex items-center rounded-md bg-3hcig-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                    Rechercher
+                </button>
+            </div>
+        </form>
+    </div>
 
-.search-input:focus {
-    outline: none;
-    border-color: #a78bfa;
-    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
-}
-
-/* Table styles */
-.employee-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background-color: #1f2937;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.employee-table th,
-.employee-table td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid #374151;
-}
-
-.employee-table th {
-    background-color: #111827;
-    color: #ffffff;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 12px;
-    letter-spacing: 0.05em;
-}
-
-.employee-table tbody tr {
-    transition: background-color 0.2s;
-}
-
-.employee-table tbody tr:hover {
-    background-color: #374151;
-}
-
-.employee-table td {
-    color: #e5e7eb;
-}
-
-/* Button styles */
-.button {
-    padding: 6px 12px;
-    background-color: #4f46e5;
-    color: #ffffff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
-}
-
-.button:hover {
-    background-color: #4338ca;
-}
-
-/* Role styles */
-.role {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 9999px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.role-member {
-    background-color: #10b981;
-    color: #064e3b;
-}
-
-.role-admin {
-    background-color: #f59e0b;
-    color: #78350f;
-}
-
-.role-owner {
-    background-color: #ef4444;
-    color: #7f1d1d;
-}
-
-/* Checkbox styles */
-.checkbox-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-.checkbox-input {
-    margin-right: 5px;
-}
-    </style>
-    <div class="container">
-        <h1>Ajouter des membres à votre équipe</h1>
-
-        @if(session('success'))
-        <script>
-            alert("{{ session('success') }}");
-        </script>
-        @endif
-
-        @if(session('error'))
-        <script>
-            alert("{{ session('error') }}");
-        </script>
-        @endif
-
-        <div class="search-container">
-            <form method="GET" action="{{ route('superviseur.showAddMemberForm') }}">
-                @csrf
-                <input type="text" class="search-input" name="search" placeholder="Rechercher par nom" value="{{ $search ?? '' }}">
-            </form>
-        </div>
-
-        <table class="employee-table">
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($employers as $employer)
+    <div class="mt-8 overflow-hidden rounded-lg bg-white shadow">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-3hcig-blue-dark">
                     <tr>
-                        <td>{{ $employer->nom }}</td>
-                        <td>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    @forelse($employers as $employer)
+                    <tr class="hover:bg-gray-50">
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="h-10 w-10 flex-shrink-0">
+                                    <img class="h-10 w-10 rounded-full object-cover" src="{{ $employer->avatar ?? asset('storage/avatars/default.png') }}" alt="{{ $employer->nom }}">
+                                </div>
+                                <div class="ml-4">
+                                    <div class="font-medium text-gray-900">{{ $employer->nom }}</div>
+                                    <div class="text-sm text-gray-500">{{ $employer->email ?? '' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4 text-sm">
                             <form action="{{ route('superviseur.addMemberToTeam', $employer->id) }}" method="POST">
                                 @csrf
-                                <button type="submit" class="button">Ajouter à l'équipe</button>
+                                <button type="submit" class="inline-flex items-center rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                                    <svg class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Ajouter à l'équipe
+                                </button>
                             </form>
                         </td>
                     </tr>
-                @empty
+                    @empty
                     <tr>
-                        <td colspan="2">Aucun employé trouvé.</td>
+                        <td colspan="2" class="px-6 py-4 text-center text-sm text-gray-500">
+                            <div class="py-8">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">Aucun employé trouvé</h3>
+                                <p class="mt-1 text-sm text-gray-500">Aucun résultat pour votre recherche.</p>
+                            </div>
+                        </td>
                     </tr>
-                @endforelse
-            </tbody>
-        </table>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
-
-    <script>
-        // You can add any necessary JavaScript here
-    </script>
-</body>
-</html>
+</div>
 @endsection
