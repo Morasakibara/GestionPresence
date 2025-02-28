@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use App\Exports\ReportExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 
 class AdminController extends Controller
@@ -220,5 +221,75 @@ public function exportReport(Request $request)
     public function showEmployee()
     {
         return view('admin.showEmployee');
+    }
+
+    /**
+ * Mettre à jour le profil de l'administrateur
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return \Illuminate\Http\JsonResponse
+ */
+
+    public function updateProfile(Request $request)
+{
+    // Validation des données
+    $validator = Validator::make($request->all(), [
+        'nom' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users,email,' . auth()->id(),
+        'password' => 'nullable|string|min:8|confirmed',
+        'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    try {
+        // Récupérer l'utilisateur connecté
+        $user = auth()->user();
+
+        // Mettre à jour les informations
+        $user->nom = $request->nom;
+        $user->email = $request->email;
+
+        // Mise à jour du mot de passe si fourni
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        // Traitement de l'avatar
+        if ($request->hasFile('avatar')) {
+            // Supprimer l'ancien avatar s'il existe
+            if ($user->avatar && Storage::disk('public')->exists('avatars/' . $user->avatar)) {
+                Storage::disk('public')->delete('avatars/' . $user->avatar);
+            }
+
+            // Enregistrer le nouvel avatar
+            $avatarName = time() . '.' . $request->avatar->extension();
+            $request->avatar->storeAs('avatars', $avatarName, 'public');
+            $user->avatar = $avatarName;
+        }
+
+        // Enregistrer les modifications
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil mis à jour avec succès',
+            'user' => $user
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de la mise à jour du profil: ' . $e->getMessage()
+        ], 500);
+    }
+    }
+    public function showProfileForm()
+    {
+        return view('admin.profile', ['user' => auth()->user()]);
     }
 }

@@ -60,6 +60,8 @@ Route::middleware(['isAdmin'])->group(function () {
     Route::get('/admin/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('admin.showEmployeeList');
     Route::post('/admin/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee'])->name('admin.deleteEmployee');
     Route::get('/admin/showEmployee',[AdminController::class,'showEmployee'])->name('admin.showEmployee');
+    Route::post('/admin/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('admin.updateProfile');
+    Route::get('/admin/update-profile', [App\Http\Controllers\AdminController::class, 'showProfileForm'])->name('admin.showProfile');
 });
 
 

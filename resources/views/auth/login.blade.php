@@ -24,9 +24,7 @@
       <div>
         <div class="flex items-center justify-between">
           <label for="password" class="block text-sm font-medium leading-6 text-gray-700">Mot de passe</label>
-          <div class="text-sm">
-            <a href="#" class="font-semibold text-3hcig-blue hover:text-3hcig-blue-light">Mot de passe oublié?</a>
-          </div>
+          
         </div>
         <div class="mt-2 relative">
           <input id="password" type="password" name="password" autocomplete="current-password" required
