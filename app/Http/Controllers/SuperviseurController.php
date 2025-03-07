@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class SuperviseurController extends Controller
 {
@@ -152,31 +153,86 @@ class SuperviseurController extends Controller
 
     public function exportPDF()
     {
+        // Récupérer le superviseur connecté
         $superviseur = auth()->user();
-        $equipe = $superviseur->equipe;
-
+        
+        // Vérifier si le superviseur existe
+        if (!$superviseur || $superviseur->role !== 'Superviseur') {
+            return redirect()->back()->with('error', 'Vous devez être un superviseur pour générer un rapport.');
+        }
+        
+        // Récupérer les informations d'équipe du superviseur
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+        
+        if (!$superviseurInfo) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+        
+        $equipe = $superviseurInfo->equipe;
+    
         // Récupérer les employés de la même équipe
-        $employers = Employer::where('equipe', $equipe)->where('poste', 'employer')->get();
-
+        $employers = Employer::where('equipe', $equipe)->pluck('id')->toArray();
+    
         // Calculer le total de présences pour chaque employé pour le mois en cours
         $currentMonth = now()->month;
+        $currentYear = now()->year;
         $reports = [];
-
-        foreach ($employers as $employer) {
-            $totalPresences = Presence::where('employerID', $employer->id)
+    
+        // Récupérer les utilisateurs correspondant à ces IDs d'employé
+        $users = Utilisateur::whereIn('id', $employers)->get();
+        
+        foreach ($users as $user) {
+            $totalPresences = Presence::where('employerID', $user->id)
                 ->whereMonth('date', $currentMonth)
+                ->whereYear('date', $currentYear)
                 ->where('status', 'present')
                 ->count();
-
+    
             $reports[] = [
-                'name' => $employer->name,
+                'name' => $user->nom,
                 'totalPresences' => $totalPresences,
             ];
         }
-
-        $pdf = PDF::loadView('superviseur.generateReportPDF', compact('reports'));
-
-        return $pdf->download('rapport_equipe.pdf');
+    
+        // Générer le PDF
+        $pdf = PDF::loadView('superviseur.generateReportPDF', [
+            'reports' => $reports,
+            'equipe' => $equipe,
+            'date' => now()->format('d/m/Y'),
+            'superviseur' => $superviseur->nom
+        ]);
+        
+        // Définir la période (mois et année en cours)
+        $periode = now()->format('Y-m-d H:i:s');
+        
+        // Enregistrer le PDF dans le stockage
+        $filename = 'rapport_equipe_' . $equipe . '_' . now()->format('Y_m_d_His') . '.pdf';
+        $pdfPath = 'rapports/' . $filename;
+        Storage::disk('public')->put($pdfPath, $pdf->output());
+        
+        // Créer un nouvel enregistrement dans la table rapport
+        $rapport = new \App\Models\Rapport();
+        $rapport->Sup_id = $superviseur->id;
+        $rapport->periode = $periode;
+        $rapport->contenu = $pdfPath; // Chemin vers le PDF stocké
+        $rapport->created_at = now();
+        $rapport->updated_at = now();
+        
+        // Puisque la colonne Adm_id est obligatoire dans la structure de la BDD,
+        // nous devons récupérer un administrateur existant
+        $admin = DB::table('administrateur')->first();
+        if ($admin) {
+            $rapport->Adm_id = $admin->id;
+        } else {
+            // Si aucun administrateur n'existe, créer un message d'erreur
+            return redirect()->back()->with('error', 'Aucun administrateur trouvé dans le système. Impossible d\'enregistrer le rapport.');
+        }
+        
+        // Sauvegarder le rapport
+        $rapport->save();
+        
+        // Télécharger le PDF
+        return $pdf->download($filename);
     }
 
     public function addMember()

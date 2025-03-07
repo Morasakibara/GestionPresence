@@ -174,11 +174,13 @@ class AdminController extends Controller
 
 
   // Générer le rapport et exporter en PDF
-  public function generateReport(Request $request)
+ // Générer le rapport et exporter en PDF
+public function generateReport(Request $request)
 {
     $request->validate([
         'start_date' => 'required|date',
         'end_date' => 'required|date|after_or_equal:start_date',
+        'export_format' => 'required|string',
     ]);
 
     $startDate = $request->start_date;
@@ -194,16 +196,77 @@ class AdminController extends Controller
         ->groupBy('utilisateur.nom')
         ->get();
 
-    // Afficher le rapport dans une autre page
-    return view('admin.report',compact('presences','startDate','endDate'));
+    // Si l'utilisateur a choisi d'exporter en PDF
+    if ($request->export_format === 'pdf') {
+        return $this->exportToPDF($presences, $startDate, $endDate);
+    }
+
+    // Sinon, afficher le rapport dans une autre page
+    return view('admin.report', compact('presences', 'startDate', 'endDate'));
 }
 
 // Exporter le rapport en PDF
-public function exportToPDF($reportData)
+public function exportToPDF($reportData, $startDate = null, $endDate = null)
 {
-    $pdf = Pdf::loadView('admin.report_pdf', compact('reportData'));
-    return $pdf->download('rapport_presence.pdf');
+    // Récupérer l'administrateur connecté
+    $admin = auth()->user();
+    
+    // Vérifier si l'administrateur existe
+    if (!$admin || $admin->role !== 'administrateur') {
+        return redirect()->back()->with('error', 'Vous devez être un administrateur pour générer un rapport.');
+    }
+    
+    // Récupérer les informations d'administrateur
+    $adminInfo = DB::table('administrateur')->where('id', $admin->id)->first();
+    
+    if (!$adminInfo) {
+        return redirect()->back()->with('error', 'Informations de l\'administrateur non trouvées.');
+    }
+    
+    // Créer le PDF
+    $pdf = Pdf::loadView('admin.report_pdf', [
+        'reportData' => $reportData,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+        'admin' => $admin->nom,
+        'generatedDate' => now()->format('d/m/Y')
+    ]);
+    
+    // Définir la période de rapport
+    $periode = $startDate . ' au ' . $endDate;
+    
+    // Enregistrer le PDF dans le stockage
+    $filename = 'rapport_presence_' . str_replace('-', '_', $startDate) . '_' . str_replace('-', '_', $endDate) . '.pdf';
+    $pdfPath = 'rapports/' . $filename;
+    Storage::disk('public')->put($pdfPath, $pdf->output());
+    
+    // Créer un nouvel enregistrement dans la table rapport
+    $rapport = new \App\Models\Rapport();
+    $rapport->Adm_id = $admin->id;
+    $rapport->periode = now()->format('Y-m-d H:i:s');
+    $rapport->contenu = $pdfPath; // Chemin vers le PDF stocké
+    $rapport->created_at = now();
+    $rapport->updated_at = now();
+    
+    // La colonne Sup_id peut être NULL selon votre structure de base de données
+    // Si elle est obligatoire, nous devons récupérer un superviseur existant
+    if (DB::getSchemaBuilder()->getColumnListing('rapport')[2] === 'Sup_id') {
+        $superviseur = DB::table('superviseur')->first();
+        if ($superviseur) {
+            $rapport->Sup_id = $superviseur->id;
+        } else {
+            // Si aucun superviseur n'existe et que le champ est obligatoire
+            return redirect()->back()->with('error', 'Aucun superviseur trouvé dans le système. Impossible d\'enregistrer le rapport.');
+        }
+    }
+    
+    // Sauvegarder le rapport
+    $rapport->save();
+    
+    // Télécharger le PDF
+    return $pdf->download($filename);
 }
+
 public function exportReport(Request $request)
 {
     $request->validate([
@@ -225,7 +288,7 @@ public function exportReport(Request $request)
         ->get();
 
     // Exporter le rapport en PDF
-    return $this->exportToPDF($presences);
+    return $this->exportToPDF($presences, $startDate, $endDate);
 }
 
 
