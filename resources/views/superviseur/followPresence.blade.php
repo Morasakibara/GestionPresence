@@ -9,46 +9,63 @@
         <p class="mt-2 text-sm text-gray-600">Consultez et gérez les présences des employés de votre équipe</p>
     </div>
 
-    <div class="mt-8 overflow-hidden rounded-lg bg-white shadow">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-3hcig-blue-dark">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Photo de profil</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    @foreach($utilisateurs as $utilisateur)
-                    <tr class="hover:bg-gray-50">
-                        <td class="whitespace-nowrap px-6 py-4">
-                            <div class="h-12 w-12 flex-shrink-0">
-                                @if($utilisateur->avatar)
-                                    <img src="{{ asset('storage/avatars/'.$utilisateur->avatar) }}" alt="{{ $utilisateur->nom }}" class="h-12 w-12 rounded-full object-cover">
-                                @else
-                                    <img src="{{ asset('storage/avatars/default.png') }}" alt="Default Avatar" class="h-12 w-12 rounded-full object-cover">
-                                @endif
-                            </div>
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4">
-                            <div class="font-medium text-gray-900">{{ $utilisateur->nom }}</div>
-                        </td>
-                        <td class="whitespace-nowrap px-6 py-4 text-sm">
-                            <button type="button" onclick="openPopup('{{ $utilisateur->id }}')" class="inline-flex items-center rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
-                                <svg class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                Suivre
-                            </button>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+    @if(count($utilisateurs) === 0)
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700">
+                        Aucun employé n'a été trouvé dans votre équipe. Vous pouvez ajouter des membres à votre équipe via la section "Ajouter membre".
+                    </p>
+                </div>
+            </div>
         </div>
-    </div>
+    @else
+        <div class="mt-8 overflow-hidden rounded-lg bg-white shadow">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-3hcig-blue-dark">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Photo de profil</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        @foreach($utilisateurs as $utilisateur)
+                        <tr class="hover:bg-gray-50">
+                            <td class="whitespace-nowrap px-6 py-4">
+                                <div class="h-12 w-12 flex-shrink-0">
+                                    @if($utilisateur->avatar)
+                                        <img src="{{ asset('storage/avatars/'.$utilisateur->avatar) }}" alt="{{ $utilisateur->nom }}" class="h-12 w-12 rounded-full object-cover">
+                                    @else
+                                        <img src="{{ asset('storage/avatars/default.png') }}" alt="Default Avatar" class="h-12 w-12 rounded-full object-cover">
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4">
+                                <div class="font-medium text-gray-900">{{ $utilisateur->nom }}</div>
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm">
+                                <button type="button" onclick="openPopup('{{ $utilisateur->id }}')" class="inline-flex items-center rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                                    <svg class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    Suivre
+                                </button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
 </div>
 
 <!-- Modal - Version corrigée -->

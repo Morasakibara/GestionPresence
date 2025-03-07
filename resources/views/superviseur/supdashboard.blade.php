@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('header')
-Tableau de bord du superviseur
+Tableau de bord du superviseur de l'équipe {{ $equipe ?? 'Non définie' }}
 @endsection
 
 @section('navigation')

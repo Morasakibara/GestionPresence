@@ -15,20 +15,50 @@ use Illuminate\Support\Facades\Log;
 class SuperviseurController extends Controller
 {
     public function Supdashboard(){
-        return view('superviseur.supdashboard');
+        // Récupérer le superviseur connecté
+        $superviseur = Auth::user();
+
+        // Récupérer les informations d'équipe du superviseur
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+
+        // Obtenir le nom de l'équipe
+        $equipe = $superviseurInfo ? $superviseurInfo->equipe : 'Non définie';
+
+        return view('superviseur.supdashboard', ['equipe' => $equipe]);
     }
 
     public function showFollowPresence()
-{
-    $utilisateurs = Utilisateur::whereIn('role', ['Superviseur', 'Employer'])->get();
-    return view('superviseur.followPresence', compact('utilisateurs'));
-}
+    {
+        // Récupérer le superviseur connecté
+        $superviseur = Auth::user();
+
+        // Récupérer les informations d'équipe du superviseur
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+
+        if (!$superviseurInfo) {
+            // Si le superviseur n'a pas d'infos d'équipe, retourner une liste vide
+            return view('superviseur.followPresence', ['utilisateurs' => collect([])]);
+        }
+
+        // Récupérer le nom de l'équipe
+        $equipe = $superviseurInfo->equipe;
+
+        // Récupérer les IDs des employés appartenant à cette équipe
+        $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
+
+        // Récupérer les utilisateurs correspondant à ces IDs
+        $utilisateurs = Utilisateur::whereIn('id', $employerIds)->get();
+
+        return view('superviseur.followPresence', compact('utilisateurs'));
+    }
 
     public function followPresence()
     {
-        $utilisateurs = Utilisateur::whereIn('role',['Superviseur','employer'])->get();
-        return view('superviseur/followPresence',compact('utilisateurs'));
+        // Cette méthode semble être un doublon de showFollowPresence
+        // On va la rediriger vers la méthode showFollowPresence pour maintenir la cohérence
+        return $this->showFollowPresence();
     }
+
     public function getUserDetails($id)
     {
         $utilisateur = Utilisateur::find($id);
@@ -51,51 +81,42 @@ class SuperviseurController extends Controller
         ]);
     }
 
-public function viewUser($id)
-{
-    $utilisateur = Utilisateur::find($id);
+    public function viewUser($id)
+    {
+        $utilisateur = Utilisateur::find($id);
 
-    // Calculer le total des présences où le statut est "present"
-    $totalPresences = Presence::where('employerID', $utilisateur->id)
-                              ->where('status', 'present')
-                              ->count();
+        // Calculer le total des présences où le statut est "present"
+        $totalPresences = Presence::where('employerID', $utilisateur->id)
+                                ->where('status', 'present')
+                                ->count();
 
-    // Récupérer les présences de l'utilisateur pour le mois en cours avec le statut "present"
-    $currentMonth = now()->month;
-    $presenceStats = Presence::where('employerID', $utilisateur->id)
-                             ->where('status', 'present')
-                             ->whereMonth('date', $currentMonth)
-                             ->get();
+        // Récupérer les présences de l'utilisateur pour le mois en cours avec le statut "present"
+        $currentMonth = now()->month;
+        $presenceStats = Presence::where('employerID', $utilisateur->id)
+                                ->where('status', 'present')
+                                ->whereMonth('date', $currentMonth)
+                                ->get();
 
-    // Préparer les données pour le graphique
-    $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $currentMonth, now()->year);
-    $labels = [];
-    $data = [];
+        // Préparer les données pour le graphique
+        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $currentMonth, now()->year);
+        $labels = [];
+        $data = [];
 
-    for ($day = 1; $day <= $daysInMonth; $day++) {
-        $labels[] = $day;
-        $data[] = $presenceStats->where('date', now()->year . '-' . $currentMonth . '-' . str_pad($day, 2, '0', STR_PAD_LEFT))->count();
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $labels[] = $day;
+            $data[] = $presenceStats->where('date', now()->year . '-' . $currentMonth . '-' . str_pad($day, 2, '0', STR_PAD_LEFT))->count();
+        }
+
+        // Passer les données à la vue
+        return view('superviseur.viewUser', [
+            'utilisateur' => $utilisateur,
+            'totalPresences' => $totalPresences,
+            'presenceStats' => [
+                'labels' => $labels,
+                'data' => $data,
+            ],
+        ]);
     }
-
-    // Vérifier les données
-   /* dd([
-        'labels' => $labels,
-        'data' => $data,
-    ]);*/
-
-    // Passer les données à la vue
-    return view('superviseur.viewUser', [
-        'utilisateur' => $utilisateur,
-        'totalPresences' => $totalPresences,
-        'presenceStats' => [
-            'labels' => $labels,
-            'data' => $data,
-        ],
-    ]);
-}
-
-
-
 
     public function showGenerateReport()
     {
@@ -103,134 +124,132 @@ public function viewUser($id)
     }
 
     public function generateReport()
-{
-    $superviseur = auth()->user(); // Assume que le superviseur est l'utilisateur connecté
-    $equipe = $superviseur->equipe;
+    {
+        $superviseur = auth()->user(); // Assume que le superviseur est l'utilisateur connecté
+        $equipe = $superviseur->equipe;
 
-    // Récupérer les employés de la même équipe
-    $employers = Employer::where('equipe', $equipe)->where('poste', 'employer')->get();
+        // Récupérer les employés de la même équipe
+        $employers = Employer::where('equipe', $equipe)->where('poste', 'employer')->get();
 
-    // Calculer le total de présences pour chaque employé pour le mois en cours
-    $currentMonth = now()->month;
-    $reports = [];
+        // Calculer le total de présences pour chaque employé pour le mois en cours
+        $currentMonth = now()->month;
+        $reports = [];
 
-    foreach ($employers as $employer) {
-        $totalPresences = Presence::where('employerID', $employer->id)
-            ->whereMonth('date', $currentMonth)
-            ->where('status', 'present')
-            ->count();
+        foreach ($employers as $employer) {
+            $totalPresences = Presence::where('employerID', $employer->id)
+                ->whereMonth('date', $currentMonth)
+                ->where('status', 'present')
+                ->count();
 
-        $reports[] = [
-            'name' => $employer->name,
-            'totalPresences' => $totalPresences,
-        ];
+            $reports[] = [
+                'name' => $employer->name,
+                'totalPresences' => $totalPresences,
+            ];
+        }
+
+        return view('superviseur.generateReport2', compact('reports'));
     }
 
-    return view('superviseur.generateReport2', compact('reports'));
-}
+    public function exportPDF()
+    {
+        $superviseur = auth()->user();
+        $equipe = $superviseur->equipe;
 
-public function exportPDF()
-{
-    $superviseur = auth()->user();
-    $equipe = $superviseur->equipe;
+        // Récupérer les employés de la même équipe
+        $employers = Employer::where('equipe', $equipe)->where('poste', 'employer')->get();
 
-    // Récupérer les employés de la même équipe
-    $employers = Employer::where('equipe', $equipe)->where('poste', 'employer')->get();
+        // Calculer le total de présences pour chaque employé pour le mois en cours
+        $currentMonth = now()->month;
+        $reports = [];
 
-    // Calculer le total de présences pour chaque employé pour le mois en cours
-    $currentMonth = now()->month;
-    $reports = [];
+        foreach ($employers as $employer) {
+            $totalPresences = Presence::where('employerID', $employer->id)
+                ->whereMonth('date', $currentMonth)
+                ->where('status', 'present')
+                ->count();
 
-    foreach ($employers as $employer) {
-        $totalPresences = Presence::where('employerID', $employer->id)
-            ->whereMonth('date', $currentMonth)
-            ->where('status', 'present')
-            ->count();
+            $reports[] = [
+                'name' => $employer->name,
+                'totalPresences' => $totalPresences,
+            ];
+        }
 
-        $reports[] = [
-            'name' => $employer->name,
-            'totalPresences' => $totalPresences,
-        ];
+        $pdf = PDF::loadView('superviseur.generateReportPDF', compact('reports'));
+
+        return $pdf->download('rapport_equipe.pdf');
     }
 
-    $pdf = PDF::loadView('superviseur.generateReportPDF', compact('reports'));
-
-    return $pdf->download('rapport_equipe.pdf');
-}
-
-public function addMember()
-{
-    return view('superviseur.addMember');
-}
-
-// Afficher les employés avec le rôle 'employer' pour les ajouter à l'équipe
-public function showAddMember()
-{
-    // Récupérer les utilisateurs ayant le rôle 'employer'
-    $employers = Utilisateur::where('role', 'employer')->get();
-
-    return view('superviseur.addMember', compact('employers'));
-}
-
-// Ajouter un employé à l'équipe du superviseur
-public function addMemberToTeam(Request $request, $employerId)
-{
-    // Récupérer le superviseur connecté
-    $superviseur = auth()->user();
-
-    // Vérifier si le superviseur est bien connecté
-    if (!$superviseur || $superviseur->role !== 'Superviseur') {
-        return redirect()->back()->with('error', 'Vous devez être un superviseur pour ajouter des membres à une équipe.');
+    public function addMember()
+    {
+        return view('superviseur.addMember');
     }
 
-    // Récupérer l'équipe du superviseur depuis la table 'superviseur'
-    $superviseurData = Superviseur::where('id', $superviseur->id)->first();
+    // Afficher les employés avec le rôle 'employer' pour les ajouter à l'équipe
+    public function showAddMember()
+    {
+        // Récupérer les utilisateurs ayant le rôle 'employer'
+        $employers = Utilisateur::where('role', 'employer')->get();
 
-    // Vérifier si l'équipe du superviseur est renseignée
-    if (empty($superviseurData->equipe)) {
-        return redirect()->back()->with('error', 'Erreur : votre équipe n\'est pas renseignée.');
+        return view('superviseur.addMember', compact('employers'));
     }
 
-    // D'abord, vérifiez si l'utilisateur existe
-    $utilisateur = Utilisateur::where('id', $employerId)->where('role', 'Employer')->first();
+    // Ajouter un employé à l'équipe du superviseur
+    public function addMemberToTeam(Request $request, $employerId)
+    {
+        // Récupérer le superviseur connecté
+        $superviseur = auth()->user();
 
-    if (!$utilisateur) {
-        return redirect()->back()->with('error', 'Utilisateur non trouvé ou n\'est pas un employé.');
+        // Vérifier si le superviseur est bien connecté
+        if (!$superviseur || $superviseur->role !== 'Superviseur') {
+            return redirect()->back()->with('error', 'Vous devez être un superviseur pour ajouter des membres à une équipe.');
+        }
+
+        // Récupérer l'équipe du superviseur depuis la table 'superviseur'
+        $superviseurData = Superviseur::where('id', $superviseur->id)->first();
+
+        // Vérifier si l'équipe du superviseur est renseignée
+        if (empty($superviseurData->equipe)) {
+            return redirect()->back()->with('error', 'Erreur : votre équipe n\'est pas renseignée.');
+        }
+
+        // D'abord, vérifiez si l'utilisateur existe
+        $utilisateur = Utilisateur::where('id', $employerId)->where('role', 'Employer')->first();
+
+        if (!$utilisateur) {
+            return redirect()->back()->with('error', 'Utilisateur non trouvé ou n\'est pas un employé.');
+        }
+
+        // Ensuite, vérifiez si une entrée correspondante existe dans la table employer
+        $employer = Employer::where('id', $employerId)->first();
+
+        if (!$employer) {
+            // Si l'entrée n'existe pas dans la table employer, créez-la
+            $employer = new Employer();
+            $employer->id = $employerId;
+            $employer->Sup_id = $superviseur->id;  // Définir le superviseur ID
+            $employer->poste = 'Employer';
+        }
+
+        // Mettre à jour le champ "equipe" de l'employé avec l'équipe du superviseur
+        $employer->equipe = $superviseurData->equipe;
+        $employer->save();
+
+        return redirect()->back()->with('success', 'Employé ajouté avec succès à votre équipe.');
     }
 
-    // Ensuite, vérifiez si une entrée correspondante existe dans la table employer
-    $employer = Employer::where('id', $employerId)->first();
+    public function showAddMemberForm(Request $request)
+    {
+        $search = $request->input('search'); // Récupérer le terme de recherche
 
-    if (!$employer) {
-        // Si l'entrée n'existe pas dans la table employer, créez-la
-        $employer = new Employer();
-        $employer->id = $employerId;
-        $employer->Sup_id = $superviseur->id;  // Définir le superviseur ID
-        $employer->poste = 'Employer';
+        // Récupérer les utilisateurs ayant le rôle 'employer' et qui correspondent à la recherche
+        $query = Utilisateur::where('role', 'employer');
+
+        if ($search) {
+            $query->where('nom', 'LIKE', '%' . $search . '%'); // Filtrer par nom si la recherche est présente
+        }
+
+        $employers = $query->get(); // Exécuter la requête
+
+        return view('superviseur.addMember', compact('employers', 'search'));
     }
-
-    // Mettre à jour le champ "equipe" de l'employé avec l'équipe du superviseur
-    $employer->equipe = $superviseurData->equipe;
-    $employer->save();
-
-    return redirect()->back()->with('success', 'Employé ajouté avec succès à votre équipe.');
-}
-
-public function showAddMemberForm(Request $request)
-{
-    $search = $request->input('search'); // Récupérer le terme de recherche
-
-    // Récupérer les utilisateurs ayant le rôle 'employer' et qui correspondent à la recherche
-    $query = Utilisateur::where('role', 'employer');
-
-    if ($search) {
-        $query->where('nom', 'LIKE', '%' . $search . '%'); // Filtrer par nom si la recherche est présente
-    }
-
-    $employers = $query->get(); // Exécuter la requête
-
-    return view('superviseur.addMember', compact('employers', 'search'));
-}
-
-
 }
