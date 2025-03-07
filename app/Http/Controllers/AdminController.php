@@ -66,43 +66,46 @@ class AdminController extends Controller
     }
 
     protected function createEmployee(array $data)
-{
-    $user = Utilisateur::create([
-        'nom' => $data['nom'],
-        'email' => $data['email'],
-        'motDePasse' => Hash::make($data['password']),
-        'role' => in_array('Superviseur', $data['role']) ? 'Superviseur' : 'Employer',
-    ]);
-
-    if (in_array('Employer', $data['role'])) {
-        // Récupérer un superviseur existant (par exemple, le premier superviseur)
-        $superviseur = Superviseur::first();
-
-        // Vérifier si un superviseur existe
-        if ($superviseur) {
-            Employer::create([
-                'id' => $user->id,
-                'Sup_id' => $superviseur->id,
-                'poste' => 'Employer',
-            ]);
-        } else {
-            // Gérer le cas où aucun superviseur n'existe (par exemple, renvoyer une erreur ou créer un superviseur par défaut)
-            throw new \Exception('Aucun superviseur trouvé. Veuillez en créer un d\'abord.');
-        }
-    } elseif (in_array('Superviseur', $data['role'])) {
-        Superviseur::create([
-            'id' => $user->id,
-            'equipe' => $data['equipe'],
+    {
+        $user = Utilisateur::create([
+            'nom' => $data['nom'],
+            'email' => $data['email'],
+            'motDePasse' => Hash::make($data['password']),
+            'role' => in_array('Superviseur', $data['role']) ? 'Superviseur' : 'Employer',
         ]);
+
+        if (in_array('Employer', $data['role'])) {
+            // Récupérer un superviseur existant (par exemple, le premier superviseur)
+            $superviseur = Superviseur::first();
+
+            // Vérifier si un superviseur existe
+            if ($superviseur) {
+                Employer::create([
+                    'id' => $user->id,
+                    'Sup_id' => $superviseur->id,
+                    'poste' => 'Employer',
+                ]);
+            } else {
+                // Gérer le cas où aucun superviseur n'existe (par exemple, renvoyer une erreur ou créer un superviseur par défaut)
+                throw new \Exception('Aucun superviseur trouvé. Veuillez en créer un d\'abord.');
+            }
+        } elseif (in_array('Superviseur', $data['role'])) {
+            Superviseur::create([
+                'id' => $user->id,
+                'equipe' => $data['equipe'],
+            ]);
+        }
+
+        return $user;
     }
 
-    return $user;
-}
-
+    // Cette méthode reste pour la compatibilité mais n'est plus accessible via le menu
     public function showDeleteEmployeeForm()
     {
         return view('admin.deleteEmployee');
     }
+
+    // Cette méthode reste pour la compatibilité mais sera remplacée par deleteEmployeeFromList
     public function deleteEmployee(Request $request)
     {
         $request->validate([
@@ -131,6 +134,37 @@ class AdminController extends Controller
         }
 
         return redirect()->route('admin.deleteEmployee')->with('error', 'Aucun utilisateur trouvé avec cet email');
+    }
+
+    // Nouvelle méthode pour supprimer un employé depuis la liste
+    public function deleteEmployeeFromList(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|string|email|max:255|exists:Utilisateur,email',
+        ]);
+
+        // Trouver l'utilisateur par email
+        $user = Utilisateur::where('email', $request->email)->first();
+
+        if ($user) {
+            if ($user->role == 'Superviseur') {
+                // Supprimer les employés associés à ce superviseur
+                Employer::where('Sup_id', $user->id)->delete();
+
+                // Supprimer le superviseur
+                Superviseur::where('id', $user->id)->delete();
+            } elseif ($user->role == 'Employer') {
+                // Supprimer l'employé
+                Employer::where('id', $user->id)->delete();
+            }
+
+            // Supprimer l'utilisateur
+            $user->delete();
+
+            return redirect()->route('admin.showEmployeeList')->with('success', 'Employé ou superviseur supprimé avec succès');
+        }
+
+        return redirect()->route('admin.showEmployeeList')->with('error', 'Aucun utilisateur trouvé avec cet email');
     }
 
     public function showGenerateReportForm()

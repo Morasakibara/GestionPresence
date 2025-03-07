@@ -15,6 +15,12 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="mb-6 rounded-md bg-red-50 p-4 text-red-800">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <div class="mb-6 rounded-lg bg-white p-6 shadow-sm">
         <form method="GET" action="{{ route('admin.showEmployeeList') }}" class="space-y-4">
             @csrf
@@ -89,9 +95,13 @@
                                 @endif
                             </td>
                             <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                <button type="button" onclick="copyToClipboard('{{ $employee->email }}')" class="text-3hcig-blue hover:text-3hcig-blue-light">
-                                    Copier Email
-                                </button>
+                                <form method="POST" action="{{ route('admin.deleteEmployee.fromList') }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.');">
+                                    @csrf
+                                    <input type="hidden" name="email" value="{{ $employee->email }}">
+                                    <button type="submit" class="text-red-600 hover:text-red-800">
+                                        Supprimer
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @endforeach
@@ -107,24 +117,4 @@
         @endif
     </div>
 </div>
-
-<script>
-    function copyToClipboard(email) {
-        navigator.clipboard.writeText(email).then(function() {
-            const tooltip = document.createElement('div');
-            tooltip.className = 'fixed bottom-4 right-4 bg-3hcig-blue text-white px-4 py-2 rounded-md shadow-lg transition-opacity duration-300';
-            tooltip.textContent = 'Email copié !';
-            document.body.appendChild(tooltip);
-            
-            setTimeout(() => {
-                tooltip.classList.add('opacity-0');
-                setTimeout(() => {
-                    document.body.removeChild(tooltip);
-                }, 300);
-            }, 2000);
-        }, function() {
-            alert('Erreur lors de la copie de l\'email');
-        });
-    }
-</script>
 @endsection

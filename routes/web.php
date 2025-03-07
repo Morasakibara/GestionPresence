@@ -62,6 +62,7 @@ Route::middleware(['isAdmin'])->group(function () {
     Route::get('/admin/showEmployee',[AdminController::class,'showEmployee'])->name('admin.showEmployee');
     Route::post('/admin/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('admin.updateProfile');
     Route::get('/admin/update-profile', [App\Http\Controllers\AdminController::class, 'showProfileForm'])->name('admin.showProfile');
+    Route::post('/admin/delete-employee-from-list', [AdminController::class, 'deleteEmployeeFromList'])->name('admin.deleteEmployee.fromList');
 });
 
 
