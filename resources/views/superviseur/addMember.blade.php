@@ -5,8 +5,8 @@
 @section('content')
 <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Ajouter des membres à votre équipe</h1>
-        <p class="mt-2 text-sm text-gray-600">Recherchez et ajoutez de nouveaux membres à votre équipe</p>
+        <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Gestion des membres de votre équipe</h1>
+        <p class="mt-2 text-sm text-gray-600">Recherchez, ajoutez ou retirez des membres de votre équipe</p>
     </div>
 
     @if(session('success'))
@@ -50,6 +50,7 @@
                 <thead class="bg-3hcig-blue-dark">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Statut</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Action</th>
                     </tr>
                 </thead>
@@ -68,20 +69,43 @@
                             </div>
                         </td>
                         <td class="whitespace-nowrap px-6 py-4 text-sm">
-                            <form action="{{ route('superviseur.addMemberToTeam', $employer->id) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="inline-flex items-center rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
-                                    <svg class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                    </svg>
-                                    Ajouter à l'équipe
-                                </button>
-                            </form>
+                            @if(isset($teamMemberIds) && in_array($employer->id, $teamMemberIds))
+                                <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                    Membre de l'équipe
+                                </span>
+                            @else
+                                <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                                    Non membre
+                                </span>
+                            @endif
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4 text-sm">
+                            @if(isset($teamMemberIds) && in_array($employer->id, $teamMemberIds))
+                                <form action="{{ route('superviseur.removeMemberFromTeam', $employer->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                        <svg class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Retirer de l'équipe
+                                    </button>
+                                </form>
+                            @else
+                                <form action="{{ route('superviseur.addMemberToTeam', $employer->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                                        <svg class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        Ajouter à l'équipe
+                                    </button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="2" class="px-6 py-4 text-center text-sm text-gray-500">
+                        <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
                             <div class="py-8">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>

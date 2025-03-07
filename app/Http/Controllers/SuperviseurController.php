@@ -17,13 +17,13 @@ class SuperviseurController extends Controller
     public function Supdashboard(){
         // Récupérer le superviseur connecté
         $superviseur = Auth::user();
-
+        
         // Récupérer les informations d'équipe du superviseur
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-
+        
         // Obtenir le nom de l'équipe
         $equipe = $superviseurInfo ? $superviseurInfo->equipe : 'Non définie';
-
+        
         return view('superviseur.supdashboard', ['equipe' => $equipe]);
     }
 
@@ -31,24 +31,24 @@ class SuperviseurController extends Controller
     {
         // Récupérer le superviseur connecté
         $superviseur = Auth::user();
-
+        
         // Récupérer les informations d'équipe du superviseur
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-
+        
         if (!$superviseurInfo) {
             // Si le superviseur n'a pas d'infos d'équipe, retourner une liste vide
             return view('superviseur.followPresence', ['utilisateurs' => collect([])]);
         }
-
+        
         // Récupérer le nom de l'équipe
         $equipe = $superviseurInfo->equipe;
-
+        
         // Récupérer les IDs des employés appartenant à cette équipe
         $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
-
+        
         // Récupérer les utilisateurs correspondant à ces IDs
         $utilisateurs = Utilisateur::whereIn('id', $employerIds)->get();
-
+        
         return view('superviseur.followPresence', compact('utilisateurs'));
     }
 
@@ -58,7 +58,7 @@ class SuperviseurController extends Controller
         // On va la rediriger vers la méthode showFollowPresence pour maintenir la cohérence
         return $this->showFollowPresence();
     }
-
+    
     public function getUserDetails($id)
     {
         $utilisateur = Utilisateur::find($id);
@@ -187,10 +187,26 @@ class SuperviseurController extends Controller
     // Afficher les employés avec le rôle 'employer' pour les ajouter à l'équipe
     public function showAddMember()
     {
+        // Récupérer le superviseur connecté
+        $superviseur = auth()->user();
+        
+        // Récupérer les informations d'équipe du superviseur
+        $superviseurData = Superviseur::where('id', $superviseur->id)->first();
+        
+        if (!$superviseurData) {
+            return redirect()->back()->with('error', 'Erreur : informations du superviseur non trouvées.');
+        }
+        
+        // Récupérer l'équipe du superviseur
+        $equipe = $superviseurData->equipe;
+        
         // Récupérer les utilisateurs ayant le rôle 'employer'
-        $employers = Utilisateur::where('role', 'employer')->get();
-
-        return view('superviseur.addMember', compact('employers'));
+        $employers = Utilisateur::where('role', 'Employer')->get();
+        
+        // Récupérer les IDs des employés appartenant déjà à l'équipe du superviseur
+        $teamMemberIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
+        
+        return view('superviseur.addMember', compact('employers', 'teamMemberIds'));
     }
 
     // Ajouter un employé à l'équipe du superviseur
@@ -237,12 +253,65 @@ class SuperviseurController extends Controller
         return redirect()->back()->with('success', 'Employé ajouté avec succès à votre équipe.');
     }
 
+    // Retirer un employé de l'équipe du superviseur
+    public function removeMemberFromTeam(Request $request, $employerId)
+    {
+        // Récupérer le superviseur connecté
+        $superviseur = auth()->user();
+
+        // Vérifier si le superviseur est bien connecté
+        if (!$superviseur || $superviseur->role !== 'Superviseur') {
+            return redirect()->back()->with('error', 'Vous devez être un superviseur pour retirer des membres de votre équipe.');
+        }
+
+        // Récupérer l'équipe du superviseur
+        $superviseurData = Superviseur::where('id', $superviseur->id)->first();
+
+        if (!$superviseurData) {
+            return redirect()->back()->with('error', 'Erreur : informations du superviseur non trouvées.');
+        }
+
+        // Récupérer l'employé
+        $employer = Employer::where('id', $employerId)->first();
+
+        if (!$employer) {
+            return redirect()->back()->with('error', 'Employé non trouvé.');
+        }
+
+        // Vérifier que l'employé fait bien partie de l'équipe du superviseur
+        if ($employer->equipe !== $superviseurData->equipe) {
+            return redirect()->back()->with('error', 'Cet employé ne fait pas partie de votre équipe.');
+        }
+
+        // Vider le champ équipe (plutôt que de supprimer l'enregistrement)
+        $employer->equipe = 'rienuzg9u7h'; // Valeur par défaut comme dans la structure de la base de données
+        $employer->save();
+
+        return redirect()->back()->with('success', 'Employé retiré avec succès de votre équipe.');
+    }
+
     public function showAddMemberForm(Request $request)
     {
         $search = $request->input('search'); // Récupérer le terme de recherche
 
+        // Récupérer le superviseur connecté
+        $superviseur = auth()->user();
+        
+        // Récupérer les informations d'équipe du superviseur
+        $superviseurData = Superviseur::where('id', $superviseur->id)->first();
+        
+        if (!$superviseurData) {
+            return redirect()->back()->with('error', 'Erreur : informations du superviseur non trouvées.');
+        }
+        
+        // Récupérer l'équipe du superviseur
+        $equipe = $superviseurData->equipe;
+        
+        // Récupérer les IDs des employés appartenant déjà à l'équipe du superviseur
+        $teamMemberIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
+
         // Récupérer les utilisateurs ayant le rôle 'employer' et qui correspondent à la recherche
-        $query = Utilisateur::where('role', 'employer');
+        $query = Utilisateur::where('role', 'Employer');
 
         if ($search) {
             $query->where('nom', 'LIKE', '%' . $search . '%'); // Filtrer par nom si la recherche est présente
@@ -250,6 +319,6 @@ class SuperviseurController extends Controller
 
         $employers = $query->get(); // Exécuter la requête
 
-        return view('superviseur.addMember', compact('employers', 'search'));
+        return view('superviseur.addMember', compact('employers', 'search', 'teamMemberIds'));
     }
 }
