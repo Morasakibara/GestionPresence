@@ -11,14 +11,14 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      */
-    protected function schedule(Schedule $schedule): void
-    {
-        // $schedule->command('inspire')->hourly();
-        $schedule->call(function () {
-            $controller = new PreController();
-            $controller->handleAutoAbsences();
-        })->dailyAt('18:35');
-    }
+
+
+
+     protected function schedule(Schedule $schedule)
+     {
+         $schedule->command('presence:auto-absences')->dailyAt('23:59');
+        // $schedule->command('presence:auto-absences')->everyMinute();
+     }
 
     /**
      * Register the commands for the application.
