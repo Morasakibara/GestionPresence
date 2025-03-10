@@ -1,7 +1,21 @@
 @extends('layouts.dashboard')
 
 @section('header')
-Tableau de bord Employé
+<div class="flex items-center justify-between">
+    <span>Tableau de bord Employé</span>
+    <!-- Indicateur de notifications -->
+    <a href="{{ route('notifications.index') }}" class="relative inline-flex items-center px-2 py-1 text-sm font-medium text-3hcig-blue hover:bg-gray-100 rounded-md">
+        <svg class="h-6 w-6 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+        Notifications
+        @if(Auth::user()->unreadNotifications->count() > 0)
+            <span class="absolute -top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                {{ Auth::user()->unreadNotifications->count() > 9 ? '9+' : Auth::user()->unreadNotifications->count() }}
+            </span>
+        @endif
+    </a>
+</div>
 @endsection
 
 @section('navigation')
@@ -9,16 +23,32 @@ Tableau de bord Employé
 <a href="{{ route('user.dashboard') }}" class="rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white" aria-current="page">Tableau de bord</a>
 <a href="{{ route('presence.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Présence</a>
 <a href="{{ route('user.presence.report') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Bilan de présence</a>
+<a href="{{ route('notifications.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white relative">
+    Notifications
+    @if(Auth::user()->unreadNotifications->count() > 0)
+        <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+            {{ Auth::user()->unreadNotifications->count() }}
+        </span>
+    @endif
+</a>
 @endsection
 
 @section('mobile-navigation')
 <a href="{{ route('user.dashboard') }}" class="block rounded-md bg-3hcig-blue px-3 py-2 text-base font-medium text-white" aria-current="page">Tableau de bord</a>
 <a href="{{ route('presence.index') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Présence</a>
 <a href="{{ route('user.presence.report') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Bilan de présence</a>
+<a href="{{ route('notifications.index') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white relative">
+    Notifications
+    @if(Auth::user()->unreadNotifications->count() > 0)
+        <span class="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+            {{ Auth::user()->unreadNotifications->count() }}
+        </span>
+    @endif
+</a>
 @endsection
 
 @section('content')
-<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
     <div class="rounded-lg bg-white p-6 shadow-sm">
         <h2 class="mb-4 text-xl font-semibold text-gray-900">Marquer la présence</h2>
 
@@ -84,6 +114,47 @@ Tableau de bord Employé
                     <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
             </a>
+        </div>
+    </div>
+
+    <div class="rounded-lg bg-white p-6 shadow-sm">
+        <h2 class="mb-4 text-xl font-semibold text-gray-900 flex items-center justify-between">
+            <span>Notifications</span>
+            @if(Auth::user()->unreadNotifications->count() > 0)
+                <span class="inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-600 text-xs font-medium text-white">
+                    {{ Auth::user()->unreadNotifications->count() }}
+                </span>
+            @endif
+        </h2>
+
+        <div class="space-y-3">
+            @if(Auth::user()->notifications->count() > 0)
+                @foreach(Auth::user()->notifications->take(3) as $notification)
+                    <div class="border-l-4 {{ $notification->read_at ? 'border-gray-300 bg-gray-50' : 'border-3hcig-blue bg-blue-50' }} p-3">
+                        <div class="flex justify-between">
+                            <p class="text-sm text-gray-700 {{ $notification->read_at ? '' : 'font-medium' }}">
+                                {{ isset($notification->data['message']) ? $notification->data['message'] : 'Notification' }}
+                            </p>
+                            <span class="text-xs text-gray-500">{{ $notification->created_at->diffForHumans() }}</span>
+                        </div>
+                    </div>
+                @endforeach
+                <div class="mt-4 text-center">
+                    <a href="{{ route('notifications.index') }}" class="inline-flex items-center text-sm font-medium text-3hcig-blue hover:text-3hcig-blue-light">
+                        Voir toutes les notifications
+                        <svg class="ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                </div>
+            @else
+                <div class="py-8 text-center text-gray-500">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <p class="mt-2">Vous n'avez aucune notification</p>
+                </div>
+            @endif
         </div>
     </div>
 </div>

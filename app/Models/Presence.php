@@ -10,6 +10,10 @@ class Presence extends Model
     use HasFactory;
 
     protected $table = 'presence';
+    protected $casts = [
+        'heureArrivee' => 'datetime',
+        'heureDepart' => 'datetime',
+    ];
     protected $fillable = [
         'Sup_id',
         'employerID',

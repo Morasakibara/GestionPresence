@@ -14,6 +14,7 @@ use App\Models\Utilisateur;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\PreController;
+use App\Http\Controllers\NotificationController;
 
 //use Illuminate\Support\Facades\Auth;
 
@@ -103,3 +104,10 @@ Route::get('/role-switch', function() {
     session()->forget('current_role');
     return redirect('/Auth/role_selection');
 })->name('role.switch');
+
+// Routes de notification
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+});
