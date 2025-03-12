@@ -179,13 +179,6 @@
                 </a>
             </div>
             <div class="absolute bottom-0 w-full p-4">
-                @if(Auth::check() && Auth::user()->role === 'administrateur')
-                <a href="{{route('admin.showProfile')}}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="user-profile-button">
-                    Votre Profil
-                </a>
-
-
-                @endif
                 <a href="{{ route('logouts') }}" class="group mt-2 flex w-full items-center rounded-md px-2 py-2 text-base font-medium text-gray-300 hover:bg-red-600 hover:text-white">
                     <svg class="mr-3 h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -225,9 +218,15 @@
                                 </button>
                             </div>
                             <div class="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" id="user-dropdown-menu" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                                @if(Auth::check() && Auth::user()->role === 'administrateur')
+                                <a href="{{route('admin.showProfile')}}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">
+                                    Votre Profil
+                                </a>
+                                @else
                                 <a href="{{ route('user.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">
                                     Mon Profil
                                 </a>
+                                @endif
                                 <a href="{{ route('notifications.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 relative" role="menuitem" tabindex="-1">
                                     Notifications
                                     @if(Auth::user()->unreadNotifications->count() > 0)

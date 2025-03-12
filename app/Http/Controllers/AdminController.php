@@ -13,14 +13,60 @@ use App\Exports\ReportExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 
 class AdminController extends Controller
 {
     public function dashboard()
-    {
-        return view('admin.dashboard');
-    }
+{
+    // Récupérer l'administrateur connecté
+    $admin = Auth::user();
+
+    // Calculer les statistiques globales
+    $totalEmployees = Utilisateur::where('role', 'Employer')->count();
+    $totalSupervisors = Utilisateur::where('role', 'Superviseur')->count();
+
+    // Statistiques pour aujourd'hui
+    $today = now()->toDateString();
+    $presentToday = Presence::whereDate('date', $today)
+                          ->where('status', 'présent')
+                          ->count();
+
+    $absentToday = Presence::whereDate('date', $today)
+                         ->where('status', 'Absent')
+                         ->count();
+
+    // Statistiques pour le mois en cours
+    $currentMonth = now()->month;
+    $currentYear = now()->year;
+
+    $monthlyPresences = Presence::whereMonth('date', $currentMonth)
+                              ->whereYear('date', $currentYear)
+                              ->where('status', 'présent')
+                              ->count();
+
+    $monthlyAbsences = Presence::whereMonth('date', $currentMonth)
+                             ->whereYear('date', $currentYear)
+                             ->where('status', 'Absent')
+                             ->count();
+
+    // Calculer les retards pour le mois en cours
+    $monthlyLates = Presence::whereMonth('date', $currentMonth)
+                         ->whereYear('date', $currentYear)
+                         ->whereRaw('HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0)')
+                         ->count();
+
+    return view('admin.dashboard', compact(
+        'totalEmployees',
+        'totalSupervisors',
+        'presentToday',
+        'absentToday',
+        'monthlyPresences',
+        'monthlyAbsences',
+        'monthlyLates'
+    ));
+}
 
     public function showAddEmployeeForm()
     {
@@ -210,19 +256,19 @@ public function exportToPDF($reportData, $startDate = null, $endDate = null)
 {
     // Récupérer l'administrateur connecté
     $admin = auth()->user();
-    
+
     // Vérifier si l'administrateur existe
     if (!$admin || $admin->role !== 'administrateur') {
         return redirect()->back()->with('error', 'Vous devez être un administrateur pour générer un rapport.');
     }
-    
+
     // Récupérer les informations d'administrateur
     $adminInfo = DB::table('administrateur')->where('id', $admin->id)->first();
-    
+
     if (!$adminInfo) {
         return redirect()->back()->with('error', 'Informations de l\'administrateur non trouvées.');
     }
-    
+
     // Créer le PDF
     $pdf = Pdf::loadView('admin.report_pdf', [
         'reportData' => $reportData,
@@ -231,15 +277,15 @@ public function exportToPDF($reportData, $startDate = null, $endDate = null)
         'admin' => $admin->nom,
         'generatedDate' => now()->format('d/m/Y')
     ]);
-    
+
     // Définir la période de rapport
     $periode = $startDate . ' au ' . $endDate;
-    
+
     // Enregistrer le PDF dans le stockage
     $filename = 'rapport_presence_' . str_replace('-', '_', $startDate) . '_' . str_replace('-', '_', $endDate) . '.pdf';
     $pdfPath = 'rapports/' . $filename;
     Storage::disk('public')->put($pdfPath, $pdf->output());
-    
+
     // Créer un nouvel enregistrement dans la table rapport
     $rapport = new \App\Models\Rapport();
     $rapport->Adm_id = $admin->id;
@@ -247,7 +293,7 @@ public function exportToPDF($reportData, $startDate = null, $endDate = null)
     $rapport->contenu = $pdfPath; // Chemin vers le PDF stocké
     $rapport->created_at = now();
     $rapport->updated_at = now();
-    
+
     // La colonne Sup_id peut être NULL selon votre structure de base de données
     // Si elle est obligatoire, nous devons récupérer un superviseur existant
     if (DB::getSchemaBuilder()->getColumnListing('rapport')[2] === 'Sup_id') {
@@ -259,10 +305,10 @@ public function exportToPDF($reportData, $startDate = null, $endDate = null)
             return redirect()->back()->with('error', 'Aucun superviseur trouvé dans le système. Impossible d\'enregistrer le rapport.');
         }
     }
-    
+
     // Sauvegarder le rapport
     $rapport->save();
-    
+
     // Télécharger le PDF
     return $pdf->download($filename);
 }

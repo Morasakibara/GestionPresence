@@ -38,7 +38,7 @@
                 @else
                     <!-- Bouton pour marquer l'heure d'arrivée -->
                     <div>
-                        @if(now()->hour >= 7 && now()->hour <= 10)
+                        @if(now()->hour >= 7 && (now()->hour < 10 || (now()->hour == 10 && now()->minute == 0)))
                             <form method="POST" action="{{ route('presence.arrival') }}">
                                 @csrf
                                 <button type="submit" class="flex w-full items-center justify-center rounded-md bg-3hcig-blue px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
@@ -68,7 +68,7 @@
 
                     <!-- Bouton pour marquer l'heure de départ -->
                     <div>
-                        @if(now()->hour >= 17 && now()->hour <= 18 && now()->minute <= 30)
+                        @if(now()->hour >= 17 && now()->hour < 18 || (now()->hour == 18 && now()->minute <= 30))
                             <form method="POST" action="{{ route('presence.departure') }}">
                                 @csrf
                                 <button type="submit" class="flex w-full items-center justify-center rounded-md bg-3hcig-green px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2">

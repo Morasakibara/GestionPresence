@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\Utilisateur;
+use App\Notifications\RetardNotification;
+use App\Notifications\AbsenceNotification;
 
 class PreController extends Controller
 {
@@ -23,27 +26,27 @@ class PreController extends Controller
     public function markArrival(Request $request)
     {
         $now = now();
-        
+
         // Vérifier si nous sommes en week-end (samedi=6, dimanche=0)
         if ($now->dayOfWeek === 0 || $now->dayOfWeek === 6) {
             return redirect()->back()->withErrors('Le marquage de présence n\'est pas disponible pendant le week-end.');
         }
-        
+
         if ($now->hour < 7 || $now->hour > 10) {
             return redirect()->back()->withErrors('Vous ne pouvez marquer l\'arrivée qu\'entre 7h et 10h.');
         }
-    
+
         $user = Auth::user();
         $superviseurId = null;
         $equipe = null;
-        
+
         // Récupérer l'ID du superviseur et l'équipe de l'employé
         $employerInfo = DB::table('employer')->where('id', $user->id)->first();
         if ($employerInfo) {
             $superviseurId = $employerInfo->Sup_id;
             $equipe = $employerInfo->equipe;
         }
-    
+
         // Créer l'enregistrement de présence
         $presence = Presence::create([
             'employerID' => $user->id,
@@ -52,14 +55,14 @@ class PreController extends Controller
             'status' => 'en attente',
             'Sup_id' => $superviseurId
         ]);
-    
+
         // Vérifier si l'employé est en retard (après 8h)
         $isRetard = $now->hour > 8 || ($now->hour == 8 && $now->minute > 0);
-        
+
         if ($isRetard) {
             // Récupérer les administrateurs pour les notifications
             $admins = Utilisateur::where('role', 'administrateur')->get();
-            
+
             // Notifier le superviseur direct si disponible
             if ($superviseurId) {
                 $superviseur = Utilisateur::find($superviseurId);
@@ -67,13 +70,17 @@ class PreController extends Controller
                     $superviseur->notify(new RetardNotification($user, $presence));
                 }
             }
-            
+
+            if ($now->hour < 7 || $now->hour > 10 || ($now->hour == 10 && $now->minute > 0)) {
+                return redirect()->back()->withErrors('Vous ne pouvez marquer l\'arrivée qu\'entre 7h00 et 10h00.');
+            }
+
             // Notifier tous les administrateurs
             foreach ($admins as $admin) {
                 $admin->notify(new RetardNotification($user, $presence));
             }
         }
-    
+
         return redirect()->back()->with('success', 'Heure d\'arrivée marquée avec succès.');
     }
 
@@ -86,8 +93,8 @@ class PreController extends Controller
             return redirect()->back()->withErrors('Le marquage de présence n\'est pas disponible pendant le week-end.');
         }
 
-        if ($now->hour < 17 || $now->hour > 18.5) {
-            return redirect()->back()->withErrors('Vous ne pouvez marquer le départ qu\'entre 17h et 18h30.');
+        if ($now->hour < 17 || $now->hour > 18 || ($now->hour == 18 && $now->minute > 30)) {
+            return redirect()->back()->withErrors('Vous ne pouvez marquer le départ qu\'entre 17h00 et 18h30.');
         }
 
         $user = Auth::user();
@@ -111,20 +118,20 @@ class PreController extends Controller
     public function handleAutoAbsences()
     {
         $today = now()->toDateString();
-        
+
         // Mise à jour des présences avec arrivée mais sans départ
         $presencesUpdated = DB::table('presence')
             ->whereDate('date', $today)
             ->whereNotNull('heureArrivee')
             ->whereNull('heureDepart')
             ->update(['status' => 'Absent']);
-    
+
         \Log::info("Présences mises à jour (arrivée sans départ): {$presencesUpdated}");
-    
+
         // Récupérer tous les superviseurs et administrateurs pour les notifications
         $admins = Utilisateur::where('role', 'administrateur')->get();
         $superviseurs = Utilisateur::where('role', 'Superviseur')->get();
-    
+
         // Notifier pour les présences avec arrivée mais sans départ
         $employesArriveesSansDepart = DB::table('presence')
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
@@ -135,11 +142,11 @@ class PreController extends Controller
             ->where('presence.status', 'Absent')
             ->select('utilisateur.*', 'presence.id as presence_id', 'employer.Sup_id', 'employer.equipe')
             ->get();
-    
+
         foreach ($employesArriveesSansDepart as $employe) {
             // Récupérer l'utilisateur pour pouvoir utiliser le trait Notifiable
             $employeUser = Utilisateur::find($employe->id);
-            
+
             // Notifier le superviseur de cet employé
             if ($employe->Sup_id) {
                 $superviseur = Utilisateur::find($employe->Sup_id);
@@ -147,13 +154,13 @@ class PreController extends Controller
                     $superviseur->notify(new AbsenceNotification($employeUser, $today));
                 }
             }
-            
+
             // Notifier tous les administrateurs
             foreach ($admins as $admin) {
                 $admin->notify(new AbsenceNotification($employeUser, $today));
             }
         }
-    
+
         // Création d'enregistrements pour les employés sans aucune présence aujourd'hui
         $employesSansPresence = DB::table('utilisateur')
             ->join('employer', 'utilisateur.id', '=', 'employer.id')
@@ -164,7 +171,7 @@ class PreController extends Controller
             ->whereNull('presence.id')
             ->select('utilisateur.id', 'utilisateur.nom', 'utilisateur.email', 'employer.Sup_id', 'employer.equipe')
             ->get();
-    
+
         $absencesCreated = 0;
         foreach ($employesSansPresence as $employe) {
             DB::table('presence')->insert([
@@ -176,10 +183,10 @@ class PreController extends Controller
                 'updated_at' => now()
             ]);
             $absencesCreated++;
-            
+
             // Récupérer l'utilisateur pour pouvoir utiliser le trait Notifiable
             $employeUser = Utilisateur::find($employe->id);
-            
+
             // Notifier le superviseur direct de cet employé uniquement
             if ($employe->Sup_id) {
                 $superviseur = Utilisateur::find($employe->Sup_id);
@@ -187,15 +194,15 @@ class PreController extends Controller
                     $superviseur->notify(new AbsenceNotification($employeUser, $today));
                 }
             }
-            
+
             // Notifier tous les administrateurs
             foreach ($admins as $admin) {
                 $admin->notify(new AbsenceNotification($employeUser, $today));
             }
         }
-    
+
         \Log::info("Absences créées pour employés sans présence: {$absencesCreated}");
-    
+
         return "Absences traitées avec succès. Mises à jour: {$presencesUpdated}, Créées: {$absencesCreated}";
     }
 }

@@ -50,50 +50,144 @@
 @endsection
 
 @section('content')
-<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    <a href="{{ route('superviseur.showAddMember') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-        <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
+<!-- Statut de l'équipe aujourd'hui -->
+<div class="mb-6">
+    <h2 class="text-lg font-semibold text-gray-800 mb-3">Statut de l'équipe aujourd'hui</h2>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Nombre de membres -->
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                    <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Membres d'équipe</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $teamMemberCount ?? 0 }}</p>
+                </div>
+            </div>
         </div>
-        <h2 class="mt-4 text-lg font-medium text-gray-900">Ajout de membre à l'équipe</h2>
-        <p class="mt-1 text-sm text-gray-500">Ajouter un nouveau membre à votre équipe</p>
-    </a>
 
-    <a href="{{ route('superviseur.showFollowPresence') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-        <div class="rounded-full bg-3hcig-green/10 p-3 text-3hcig-green">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+        <!-- Présents aujourd'hui -->
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
+                    <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Présents aujourd'hui</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $presentToday ?? 0 }}</p>
+                </div>
+            </div>
         </div>
-        <h2 class="mt-4 text-lg font-medium text-gray-900">Suivre les présences</h2>
-        <p class="mt-1 text-sm text-gray-500">Superviser les présences de votre équipe</p>
-    </a>
 
-    <a href="{{ route('superviseur.generateReport2') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-        <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+        <!-- Absents aujourd'hui -->
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-red-100 rounded-md p-3">
+                    <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Absents aujourd'hui</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $absentToday ?? 0 }}</p>
+                </div>
+            </div>
         </div>
-        <h2 class="mt-4 text-lg font-medium text-gray-900">Générer Rapports</h2>
-        <p class="mt-1 text-sm text-gray-500">Créer des rapports détaillés sur votre équipe</p>
-    </a>
 
-    <a href="{{ route('notifications.index') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow relative">
-        <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            @if(Auth::user()->unreadNotifications->count() > 0)
-                <span class="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
-                    {{ Auth::user()->unreadNotifications->count() }}
-                </span>
-            @endif
+        <!-- Retards aujourd'hui -->
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
+                    <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Retards aujourd'hui</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $lateToday ?? 0 }}</p>
+                </div>
+            </div>
         </div>
-        <h2 class="mt-4 text-lg font-medium text-gray-900">Notifications</h2>
-        <p class="mt-1 text-sm text-gray-500">Voir les alertes d'absence et retards</p>
-    </a>
+    </div>
 </div>
+
+<!-- Accès rapides -->
+<div class="mb-6">
+    <h2 class="text-lg font-semibold text-gray-800 mb-3">Accès rapides</h2>
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <a href="{{ route('superviseur.showAddMember') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+            </div>
+            <h2 class="mt-4 text-lg font-medium text-gray-900">Ajout de membre à l'équipe</h2>
+            <p class="mt-1 text-sm text-gray-500">Ajouter un nouveau membre à votre équipe</p>
+        </a>
+
+        <a href="{{ route('superviseur.showFollowPresence') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="rounded-full bg-3hcig-green/10 p-3 text-3hcig-green">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h2 class="mt-4 text-lg font-medium text-gray-900">Suivre les présences</h2>
+            <p class="mt-1 text-sm text-gray-500">Superviser les présences de votre équipe</p>
+        </a>
+
+        <a href="{{ route('superviseur.generateReport2') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <h2 class="mt-4 text-lg font-medium text-gray-900">Générer Rapports</h2>
+            <p class="mt-1 text-sm text-gray-500">Créer des rapports détaillés sur votre équipe</p>
+        </a>
+
+        <a href="{{ route('notifications.index') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow relative">
+            <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                @if(Auth::user()->unreadNotifications->count() > 0)
+                    <span class="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                        {{ Auth::user()->unreadNotifications->count() }}
+                    </span>
+                @endif
+            </div>
+            <h2 class="mt-4 text-lg font-medium text-gray-900">Notifications</h2>
+            <p class="mt-1 text-sm text-gray-500">Voir les alertes d'absence et retards</p>
+        </a>
+    </div>
+</div>
+
+<!-- Dernières notifications -->
+@if(Auth::user()->notifications->count() > 0)
+<div class="mb-6">
+    <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold text-gray-800">Dernières notifications</h2>
+        <a href="{{ route('notifications.index') }}" class="text-sm font-medium text-3hcig-blue hover:text-3hcig-blue-dark">
+            Voir toutes
+        </a>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        @foreach(Auth::user()->notifications->take(3) as $notification)
+            <div class="border-l-4 {{ $notification->read_at ? 'border-gray-300' : 'border-3hcig-blue' }} p-4 {{ !$loop->last ? 'border-b border-gray-200' : '' }}">
+                <div class="flex justify-between">
+                    <p class="text-sm text-gray-700 {{ $notification->read_at ? '' : 'font-medium' }}">
+                        {{ isset($notification->data['message']) ? $notification->data['message'] : 'Notification' }}
+                    </p>
+                    <span class="text-xs text-gray-500">{{ $notification->created_at->diffForHumans() }}</span>
+                </div>
+            </div>
+        @endforeach
+    </div>
+</div>
+@endif
 @endsection

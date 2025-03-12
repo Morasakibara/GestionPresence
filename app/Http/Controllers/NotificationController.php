@@ -14,7 +14,7 @@ class NotificationController extends Controller
         $user = Auth::user();
         $notifications = null;
         
-        if ($user->role === 'administrateur') {
+        if ($user->role === 'Administrateur') {
             // Les administrateurs voient toutes leurs notifications
             $notifications = $user->notifications()
                 ->orderBy('created_at', 'desc')

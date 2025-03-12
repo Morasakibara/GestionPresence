@@ -18,38 +18,77 @@ class SuperviseurController extends Controller
     public function Supdashboard(){
         // Récupérer le superviseur connecté
         $superviseur = Auth::user();
-        
+
         // Récupérer les informations d'équipe du superviseur
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-        
+
         // Obtenir le nom de l'équipe
         $equipe = $superviseurInfo ? $superviseurInfo->equipe : 'Non définie';
-        
-        return view('superviseur.supdashboard', ['equipe' => $equipe]);
+
+        // Récupérer les IDs des employés de cette équipe
+        $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
+
+        // Statistiques de l'équipe
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+        $today = now()->toDateString();
+
+        // Nombre total des membres de l'équipe
+        $teamMemberCount = count($employerIds);
+
+        // Compter les présences du jour pour l'équipe
+        $presentToday = Presence::whereIn('employerID', $employerIds)
+                               ->whereDate('date', $today)
+                               ->where('status', 'présent')
+                               ->count();
+
+        // Compter les absences du jour
+        $absentToday = Presence::whereIn('employerID', $employerIds)
+                              ->whereDate('date', $today)
+                              ->where('status', 'Absent')
+                              ->count();
+
+        // Récupérer les retards du jour
+        $lateToday = Presence::whereIn('employerID', $employerIds)
+                            ->whereDate('date', $today)
+                            ->whereRaw('HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0)')
+                            ->count();
+
+        // Récupérer le nombre de notifications non lues
+        $unreadNotifications = $superviseur->unreadNotifications->count();
+
+        return view('superviseur.supdashboard', compact(
+            'equipe',
+            'teamMemberCount',
+            'presentToday',
+            'absentToday',
+            'lateToday',
+            'unreadNotifications'
+        ));
     }
 
     public function showFollowPresence()
     {
         // Récupérer le superviseur connecté
         $superviseur = Auth::user();
-        
+
         // Récupérer les informations d'équipe du superviseur
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-        
+
         if (!$superviseurInfo) {
             // Si le superviseur n'a pas d'infos d'équipe, retourner une liste vide
             return view('superviseur.followPresence', ['utilisateurs' => collect([])]);
         }
-        
+
         // Récupérer le nom de l'équipe
         $equipe = $superviseurInfo->equipe;
-        
+
         // Récupérer les IDs des employés appartenant à cette équipe
         $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
-        
+
         // Récupérer les utilisateurs correspondant à ces IDs
         $utilisateurs = Utilisateur::whereIn('id', $employerIds)->get();
-        
+
         return view('superviseur.followPresence', compact('utilisateurs'));
     }
 
@@ -59,7 +98,7 @@ class SuperviseurController extends Controller
         // On va la rediriger vers la méthode showFollowPresence pour maintenir la cohérence
         return $this->showFollowPresence();
     }
-    
+
     public function getUserDetails($id)
     {
         $utilisateur = Utilisateur::find($id);
@@ -155,45 +194,45 @@ class SuperviseurController extends Controller
     {
         // Récupérer le superviseur connecté
         $superviseur = auth()->user();
-        
+
         // Vérifier si le superviseur existe
         if (!$superviseur || $superviseur->role !== 'Superviseur') {
             return redirect()->back()->with('error', 'Vous devez être un superviseur pour générer un rapport.');
         }
-        
+
         // Récupérer les informations d'équipe du superviseur
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-        
+
         if (!$superviseurInfo) {
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
-        
+
         $equipe = $superviseurInfo->equipe;
-    
+
         // Récupérer les employés de la même équipe
         $employers = Employer::where('equipe', $equipe)->pluck('id')->toArray();
-    
+
         // Calculer le total de présences pour chaque employé pour le mois en cours
         $currentMonth = now()->month;
         $currentYear = now()->year;
         $reports = [];
-    
+
         // Récupérer les utilisateurs correspondant à ces IDs d'employé
         $users = Utilisateur::whereIn('id', $employers)->get();
-        
+
         foreach ($users as $user) {
             $totalPresences = Presence::where('employerID', $user->id)
                 ->whereMonth('date', $currentMonth)
                 ->whereYear('date', $currentYear)
                 ->where('status', 'present')
                 ->count();
-    
+
             $reports[] = [
                 'name' => $user->nom,
                 'totalPresences' => $totalPresences,
             ];
         }
-    
+
         // Générer le PDF
         $pdf = PDF::loadView('superviseur.generateReportPDF', [
             'reports' => $reports,
@@ -201,15 +240,15 @@ class SuperviseurController extends Controller
             'date' => now()->format('d/m/Y'),
             'superviseur' => $superviseur->nom
         ]);
-        
+
         // Définir la période (mois et année en cours)
         $periode = now()->format('Y-m-d H:i:s');
-        
+
         // Enregistrer le PDF dans le stockage
         $filename = 'rapport_equipe_' . $equipe . '_' . now()->format('Y_m_d_His') . '.pdf';
         $pdfPath = 'rapports/' . $filename;
         Storage::disk('public')->put($pdfPath, $pdf->output());
-        
+
         // Créer un nouvel enregistrement dans la table rapport
         $rapport = new \App\Models\Rapport();
         $rapport->Sup_id = $superviseur->id;
@@ -217,7 +256,7 @@ class SuperviseurController extends Controller
         $rapport->contenu = $pdfPath; // Chemin vers le PDF stocké
         $rapport->created_at = now();
         $rapport->updated_at = now();
-        
+
         // Puisque la colonne Adm_id est obligatoire dans la structure de la BDD,
         // nous devons récupérer un administrateur existant
         $admin = DB::table('administrateur')->first();
@@ -227,10 +266,10 @@ class SuperviseurController extends Controller
             // Si aucun administrateur n'existe, créer un message d'erreur
             return redirect()->back()->with('error', 'Aucun administrateur trouvé dans le système. Impossible d\'enregistrer le rapport.');
         }
-        
+
         // Sauvegarder le rapport
         $rapport->save();
-        
+
         // Télécharger le PDF
         return $pdf->download($filename);
     }
@@ -245,23 +284,23 @@ class SuperviseurController extends Controller
     {
         // Récupérer le superviseur connecté
         $superviseur = auth()->user();
-        
+
         // Récupérer les informations d'équipe du superviseur
         $superviseurData = Superviseur::where('id', $superviseur->id)->first();
-        
+
         if (!$superviseurData) {
             return redirect()->back()->with('error', 'Erreur : informations du superviseur non trouvées.');
         }
-        
+
         // Récupérer l'équipe du superviseur
         $equipe = $superviseurData->equipe;
-        
+
         // Récupérer les utilisateurs ayant le rôle 'employer'
         $employers = Utilisateur::where('role', 'Employer')->get();
-        
+
         // Récupérer les IDs des employés appartenant déjà à l'équipe du superviseur
         $teamMemberIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
-        
+
         return view('superviseur.addMember', compact('employers', 'teamMemberIds'));
     }
 
@@ -352,17 +391,17 @@ class SuperviseurController extends Controller
 
         // Récupérer le superviseur connecté
         $superviseur = auth()->user();
-        
+
         // Récupérer les informations d'équipe du superviseur
         $superviseurData = Superviseur::where('id', $superviseur->id)->first();
-        
+
         if (!$superviseurData) {
             return redirect()->back()->with('error', 'Erreur : informations du superviseur non trouvées.');
         }
-        
+
         // Récupérer l'équipe du superviseur
         $equipe = $superviseurData->equipe;
-        
+
         // Récupérer les IDs des employés appartenant déjà à l'équipe du superviseur
         $teamMemberIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
 

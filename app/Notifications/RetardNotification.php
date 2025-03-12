@@ -41,7 +41,7 @@ class RetardNotification extends Notification implements ShouldQueue
         $subject = '';
         $greeting = '';
         
-        if ($notifiable->role === 'administrateur') {
+        if ($notifiable->role === 'Administrateur') {
             $subject = 'Notification de retard à un administrateur';
             $greeting = 'Bonjour Administrateur,';
         } elseif ($notifiable->role === 'Superviseur') {
@@ -81,7 +81,7 @@ class RetardNotification extends Notification implements ShouldQueue
         }
         
         $messagePrefix = '';
-        if ($notifiable->role === 'administrateur') {
+        if ($notifiable->role === 'Administrateur') {
             $messagePrefix = '[Admin] ';
         } elseif ($notifiable->role === 'Superviseur' && $isSupervisorTeamMember) {
             $messagePrefix = '[Équipe] ';

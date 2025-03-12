@@ -17,7 +17,32 @@ use Illuminate\Support\Facades\Hash;
 class UtilisateurController extends Controller
 {
     public function dashboard(){
-        return view('user.dashboard');
+        $user = Auth::user();
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
+
+        // Compter les présences du mois courant
+        $presenceCount = Presence::where('employerID', $user->id)
+                                ->whereMonth('date', $currentMonth)
+                                ->whereYear('date', $currentYear)
+                                ->where('status', 'présent')
+                                ->count();
+
+        // Récupérer la dernière arrivée
+        $lastPresence = Presence::where('employerID', $user->id)
+                               ->whereNotNull('heureArrivee')
+                               ->orderBy('heureArrivee', 'desc')
+                               ->first();
+
+        $lastArrival = $lastPresence ? $lastPresence->heureArrivee : null;
+
+        // Récupérer le dernier départ
+        $lastDeparture = Presence::where('employerID', $user->id)
+                               ->whereNotNull('heureDepart')
+                               ->orderBy('heureDepart', 'desc')
+                               ->value('heureDepart');
+
+        return view('user.dashboard', compact('presenceCount', 'lastArrival', 'lastDeparture'));
     }
 
     public function presenceReport()
@@ -74,7 +99,7 @@ public function profile(){
     public function update(Request $request)
 {
     $user = Auth::user();
-    
+
     if (!$user) {
         return redirect()->back()->with('error', 'Utilisateur non trouvé.');
     }
@@ -110,5 +135,5 @@ public function profile(){
         return redirect()->route('user.profile')->with('info', 'Aucune modification n\'a été apportée au profil.');
     }
 }
-    
+
 }
