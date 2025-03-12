@@ -21,7 +21,6 @@ class RegisterController extends Controller
         $this->validator($request->all())->validate();
 
         $user = $this->create($request->all());
-
         
         auth()->login($user);
 
@@ -34,7 +33,17 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:Utilisateur'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'poste' => ['required', 'string', 'max:255'],
+            'poste' => ['required', 'string', 'max:255', 'not_in:rien'],
+        ], [
+            'name.required' => 'Le nom est obligatoire.',
+            'email.required' => 'L\'email est obligatoire.',
+            'email.email' => 'Veuillez saisir une adresse email valide.',
+            'email.unique' => 'Cette adresse email est déjà utilisée.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
+            'poste.required' => 'Le poste est obligatoire.',
+            'poste.not_in' => 'Veuillez sélectionner un poste valide.',
         ]);
     }
 

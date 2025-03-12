@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
@@ -12,11 +13,16 @@ class LoginController extends Controller
     {
         return view('auth.login');
     }
+    
     public function login(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+        ], [
+            'email.required' => 'Veuillez saisir votre adresse email.',
+            'email.email' => 'Veuillez saisir une adresse email valide.',
+            'password.required' => 'Veuillez saisir votre mot de passe.',
         ]);
 
         $credentials = $request->only('email', 'password');
@@ -37,25 +43,28 @@ class LoginController extends Controller
             return redirect()->intended('dashboard');
         }
 
-        return redirect('login')->withErrors(['email' => 'Email ou mot de passe incorrect.']);
+        // Authentification échouée
+        throw ValidationException::withMessages([
+            'email' => ['Email ou mot de passe incorrect.'],
+        ]);
     }
 
     public function showRoleSelectionModal()
-{
-    $user = Auth::user();
-    if (!$user) {
-        return redirect('/login');
-    }
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect('/login');
+        }
 
-    // Assurez-vous que l'utilisateur est bien un superviseur
-    if ($user->role !== 'Superviseur') {
-        // Si ce n'est pas un superviseur, rediriger vers le tableau de bord approprié
-        session(['current_role' => $user->role]);
-        return redirect()->intended($user->role === 'Employer' ? '/user/dashboard' : '/admin/dashboard');
-    }
+        // Assurez-vous que l'utilisateur est bien un superviseur
+        if ($user->role !== 'Superviseur') {
+            // Si ce n'est pas un superviseur, rediriger vers le tableau de bord approprié
+            session(['current_role' => $user->role]);
+            return redirect()->intended($user->role === 'Employer' ? '/user/dashboard' : '/admin/dashboard');
+        }
 
-    return view('auth.role_selection', compact('user'));
-}
+        return view('auth.role_selection', compact('user'));
+    }
 
     public function selectRole(Request $request)
     {
