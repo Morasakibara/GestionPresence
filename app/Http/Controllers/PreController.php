@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use App\Models\Utilisateur;
 use App\Notifications\RetardNotification;
 use App\Notifications\AbsenceNotification;
+use App\Models\WorkplaceLocation;
 
 class PreController extends Controller
 {
@@ -123,7 +124,7 @@ public function markDeparture(Request $request)
         return redirect()->back()->withErrors('Le marquage de présence n\'est pas disponible pendant le week-end.');
     }
 
-    if ($now->hour < 17 || $now->hour > 18 || ($now->hour == 18 && $now->minute > 30)) {
+    if ($now->hour < 17 || $now->hour > 18 || ($now->hour == 18 && $now->minute > 50)) {
         return redirect()->back()->withErrors('Vous ne pouvez marquer le départ qu\'entre 17h00 et 18h30.');
     }
 
