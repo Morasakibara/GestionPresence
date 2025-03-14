@@ -15,6 +15,8 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\PreController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\GeoLocationController;
+use App\Http\Controllers\WorkplaceLocationController;
 
 //use Illuminate\Support\Facades\Auth;
 
@@ -64,6 +66,7 @@ Route::middleware(['isAdmin'])->group(function () {
     Route::post('/admin/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('admin.updateProfile');
     Route::get('/admin/update-profile', [App\Http\Controllers\AdminController::class, 'showProfileForm'])->name('admin.showProfile');
     Route::post('/admin/delete-employee-from-list', [AdminController::class, 'deleteEmployeeFromList'])->name('admin.deleteEmployee.fromList');
+    Route::resource('workplace-locations', WorkplaceLocationController::class);
 });
 
 
@@ -75,6 +78,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/profile', [UtilisateurController::class, 'profile'])->name('user.profile');
         Route::put('/update', [UtilisateurController::class, 'update'])->name('user.update');
         Route::get('/presence-report', [UtilisateurController::class, 'presenceReport'])->name('user.presence.report');
+        Route::post('/check-location', [GeoLocationController::class, 'checkLocation'])->name('check.location');
     });
 
     // Superviseur routes
@@ -110,4 +114,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::post('/check-location', [GeoLocationController::class, 'checkLocation'])->name('check.location');
 });

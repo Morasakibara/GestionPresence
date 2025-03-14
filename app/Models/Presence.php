@@ -13,6 +13,8 @@ class Presence extends Model
     protected $casts = [
         'heureArrivee' => 'datetime',
         'heureDepart' => 'datetime',
+        'localisation_validee_arrivee' => 'boolean',
+        'localisation_validee_depart' => 'boolean',
     ];
     protected $fillable = [
         'Sup_id',
@@ -20,11 +22,23 @@ class Presence extends Model
         'heureArrivee',
         'heureDepart',
         'date',
-        'status'
+        'status',
+        'latitude_arrivee',
+        'longitude_arrivee',
+        'latitude_depart',
+        'longitude_depart',
+        'localisation_validee_arrivee',
+        'localisation_validee_depart',
+        'workplace_location_id'
     ];
 
     public function superviseur()
     {
         return $this->belongsTo(Superviseur::class, 'Sup_id');
+    }
+
+    public function workplaceLocation()
+    {
+        return $this->belongsTo(WorkplaceLocation::class, 'workplace_location_id');
     }
 }

@@ -24,96 +24,153 @@ class PreController extends Controller
     }
 
     public function markArrival(Request $request)
-    {
-        $now = now();
+{
+    $now = now();
 
-        // Vérifier si nous sommes en week-end (samedi=6, dimanche=0)
-        if ($now->dayOfWeek === 0 || $now->dayOfWeek === 6) {
-            return redirect()->back()->withErrors('Le marquage de présence n\'est pas disponible pendant le week-end.');
-        }
-
-        if ($now->hour < 7 || $now->hour > 10) {
-            return redirect()->back()->withErrors('Vous ne pouvez marquer l\'arrivée qu\'entre 7h et 10h.');
-        }
-
-        $user = Auth::user();
-        $superviseurId = null;
-        $equipe = null;
-
-        // Récupérer l'ID du superviseur et l'équipe de l'employé
-        $employerInfo = DB::table('employer')->where('id', $user->id)->first();
-        if ($employerInfo) {
-            $superviseurId = $employerInfo->Sup_id;
-            $equipe = $employerInfo->equipe;
-        }
-
-        // Créer l'enregistrement de présence
-        $presence = Presence::create([
-            'employerID' => $user->id,
-            'heureArrivee' => $now,
-            'date' => $now->toDateString(),
-            'status' => 'en attente',
-            'Sup_id' => $superviseurId
-        ]);
-
-        // Vérifier si l'employé est en retard (après 8h)
-        $isRetard = $now->hour > 8 || ($now->hour == 8 && $now->minute > 0);
-
-        if ($isRetard) {
-            // Récupérer les administrateurs pour les notifications
-            $admins = Utilisateur::where('role', 'administrateur')->get();
-
-            // Notifier le superviseur direct si disponible
-            if ($superviseurId) {
-                $superviseur = Utilisateur::find($superviseurId);
-                if ($superviseur) {
-                    $superviseur->notify(new RetardNotification($user, $presence));
-                }
-            }
-
-            if ($now->hour < 7 || $now->hour > 10 || ($now->hour == 10 && $now->minute > 0)) {
-                return redirect()->back()->withErrors('Vous ne pouvez marquer l\'arrivée qu\'entre 7h00 et 10h00.');
-            }
-
-            // Notifier tous les administrateurs
-            foreach ($admins as $admin) {
-                $admin->notify(new RetardNotification($user, $presence));
-            }
-        }
-
-        return redirect()->back()->with('success', 'Heure d\'arrivée marquée avec succès.');
+    // Vérifier si nous sommes en week-end (samedi=6, dimanche=0)
+    if ($now->dayOfWeek === 0 || $now->dayOfWeek === 6) {
+        return redirect()->back()->withErrors('Le marquage de présence n\'est pas disponible pendant le week-end.');
     }
 
-    public function markDeparture(Request $request)
-    {
-        $now = now();
-
-        // Vérifier si nous sommes en week-end (samedi=6, dimanche=0)
-        if ($now->dayOfWeek === 0 || $now->dayOfWeek === 6) {
-            return redirect()->back()->withErrors('Le marquage de présence n\'est pas disponible pendant le week-end.');
-        }
-
-        if ($now->hour < 17 || $now->hour > 18 || ($now->hour == 18 && $now->minute > 30)) {
-            return redirect()->back()->withErrors('Vous ne pouvez marquer le départ qu\'entre 17h00 et 18h30.');
-        }
-
-        $user = Auth::user();
-        $presence = Presence::where('employerID', $user->id)
-                          ->whereDate('heureArrivee', $now->toDateString())
-                          ->whereNull('heureDepart')
-                          ->first();
-
-        if (!$presence) {
-            return redirect()->back()->withErrors('Aucune arrivée correspondante n\'a été trouvée pour aujourd\'hui ou le départ a déjà été marqué.');
-        }
-
-        $presence->update([
-            'heureDepart' => $now,
-            'status' => 'présent'
-        ]);
-
-        return redirect()->back()->with('success', 'Heure de départ marquée avec succès.');
+    if ($now->hour < 7 || $now->hour > 10 || ($now->hour == 10 && $now->minute > 0)) {
+        return redirect()->back()->withErrors('Vous ne pouvez marquer l\'arrivée qu\'entre 7h00 et 10h00.');
     }
+
+    // Vérifier la géolocalisation
+    $latitude = $request->input('latitude');
+    $longitude = $request->input('longitude');
+
+    if (!$latitude || !$longitude) {
+        return redirect()->back()->withErrors('La géolocalisation est requise pour marquer votre présence.');
+    }
+
+    // Trouver un lieu de travail valide
+    $validLocation = false;
+    $workplaceLocationId = null;
+
+    $workplaceLocations = WorkplaceLocation::where('actif', true)->get();
+
+    foreach ($workplaceLocations as $location) {
+        if ($location->isWithinRadius($latitude, $longitude)) {
+            $validLocation = true;
+            $workplaceLocationId = $location->id;
+            break;
+        }
+    }
+
+    if (!$validLocation) {
+        return redirect()->back()->withErrors('Vous devez être physiquement présent sur votre lieu de travail pour marquer votre présence.');
+    }
+
+    $user = Auth::user();
+    $superviseurId = null;
+    $equipe = null;
+
+    // Récupérer l'ID du superviseur et l'équipe de l'employé
+    $employerInfo = DB::table('employer')->where('id', $user->id)->first();
+    if ($employerInfo) {
+        $superviseurId = $employerInfo->Sup_id;
+        $equipe = $employerInfo->equipe;
+    }
+
+    // Créer l'enregistrement de présence
+    $presence = Presence::create([
+        'employerID' => $user->id,
+        'heureArrivee' => $now,
+        'date' => $now->toDateString(),
+        'status' => 'en attente',
+        'Sup_id' => $superviseurId,
+        'latitude_arrivee' => $latitude,
+        'longitude_arrivee' => $longitude,
+        'localisation_validee_arrivee' => true,
+        'workplace_location_id' => $workplaceLocationId
+    ]);
+
+    // Vérifier si l'employé est en retard (après 8h)
+    $isRetard = $now->hour > 8 || ($now->hour == 8 && $now->minute > 0);
+
+    if ($isRetard) {
+        // Récupérer les administrateurs pour les notifications
+        $admins = Utilisateur::where('role', 'administrateur')
+                ->orWhere('role', 'Administrateur')
+                ->orWhere('role', 'ADMINISTRATEUR')
+                ->orWhere('role', 'Admin')
+                ->get();
+
+        // Notifier le superviseur direct si disponible
+        if ($superviseurId) {
+            $superviseur = Utilisateur::find($superviseurId);
+            if ($superviseur) {
+                $superviseur->notify(new RetardNotification($user, $presence));
+            }
+        }
+
+        // Notifier tous les administrateurs
+        foreach ($admins as $admin) {
+            $admin->notify(new RetardNotification($user, $presence));
+        }
+    }
+
+    return redirect()->back()->with('success', 'Heure d\'arrivée marquée avec succès.');
+}
+
+public function markDeparture(Request $request)
+{
+    $now = now();
+
+    // Vérifier si nous sommes en week-end (samedi=6, dimanche=0)
+    if ($now->dayOfWeek === 0 || $now->dayOfWeek === 6) {
+        return redirect()->back()->withErrors('Le marquage de présence n\'est pas disponible pendant le week-end.');
+    }
+
+    if ($now->hour < 17 || $now->hour > 18 || ($now->hour == 18 && $now->minute > 30)) {
+        return redirect()->back()->withErrors('Vous ne pouvez marquer le départ qu\'entre 17h00 et 18h30.');
+    }
+
+    // Vérifier la géolocalisation
+    $latitude = $request->input('latitude');
+    $longitude = $request->input('longitude');
+
+    if (!$latitude || !$longitude) {
+        return redirect()->back()->withErrors('La géolocalisation est requise pour marquer votre départ.');
+    }
+
+    // Trouver un lieu de travail valide
+    $validLocation = false;
+
+    $workplaceLocations = WorkplaceLocation::where('actif', true)->get();
+
+    foreach ($workplaceLocations as $location) {
+        if ($location->isWithinRadius($latitude, $longitude)) {
+            $validLocation = true;
+            break;
+        }
+    }
+
+    if (!$validLocation) {
+        return redirect()->back()->withErrors('Vous devez être physiquement présent sur votre lieu de travail pour marquer votre départ.');
+    }
+
+    $user = Auth::user();
+    $presence = Presence::where('employerID', $user->id)
+                      ->whereDate('heureArrivee', $now->toDateString())
+                      ->whereNull('heureDepart')
+                      ->first();
+
+    if (!$presence) {
+        return redirect()->back()->withErrors('Aucune arrivée correspondante n\'a été trouvée pour aujourd\'hui ou le départ a déjà été marqué.');
+    }
+
+    $presence->update([
+        'heureDepart' => $now,
+        'status' => 'présent',
+        'latitude_depart' => $latitude,
+        'longitude_depart' => $longitude,
+        'localisation_validee_depart' => true
+    ]);
+
+    return redirect()->back()->with('success', 'Heure de départ marquée avec succès.');
+}
 
     public function handleAutoAbsences()
     {

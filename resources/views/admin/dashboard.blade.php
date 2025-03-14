@@ -32,6 +32,9 @@
         </span>
     @endif
 </a>
+<a href="{{ route('admin.workplace-locations.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">
+    Lieux de travail
+</a>
 @endsection
 
 @section('mobile-navigation')
@@ -46,6 +49,9 @@
             {{ Auth::user()->unreadNotifications->count() }}
         </span>
     @endif
+</a>
+<a href="{{ route('admin.workplace-locations.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">
+    Lieux de travail
 </a>
 @endsection
 
@@ -68,7 +74,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Total des superviseurs -->
         <div class="bg-white rounded-lg shadow-sm p-4">
             <div class="flex items-center">
@@ -83,7 +89,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Présents aujourd'hui -->
         <div class="bg-white rounded-lg shadow-sm p-4">
             <div class="flex items-center">
@@ -98,7 +104,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Absents aujourd'hui -->
         <div class="bg-white rounded-lg shadow-sm p-4">
             <div class="flex items-center">
@@ -134,7 +140,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Total des absences ce mois -->
         <div class="bg-white rounded-lg shadow-sm p-4">
             <div class="flex items-center">
@@ -149,7 +155,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Total des retards ce mois -->
         <div class="bg-white rounded-lg shadow-sm p-4">
             <div class="flex items-center">

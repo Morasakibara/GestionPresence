@@ -57,6 +57,7 @@
                     <div class="h-2 rounded-full bg-3hcig-blue" style="width: {{ $presenceRate }}%"></div>
                 </div>
             </div>
+            
         </div>
     </div>
 </div>

@@ -17,7 +17,7 @@
             width: 100%;
             padding: 20px;
         }
-        
+
         /* Logo et en-tête */
         .brand-header {
             display: flex;
@@ -34,7 +34,7 @@
             font-weight: bold;
             color: #115293; /* 3hcig-blue-dark */
         }
-        
+
         /* En-tête du rapport */
         .header {
             background-color: #115293; /* 3hcig-blue-dark */
@@ -69,7 +69,7 @@
             font-size: 14px;
             color: rgba(255, 255, 255, 0.9);
         }
-        
+
         /* Tableau */
         .table-container {
             margin-bottom: 24px;
@@ -102,7 +102,7 @@
         tr:nth-child(even) {
             background-color: #f9fafb; /* gray-50 */
         }
-        
+
         /* Badge pour les présences */
         .badge {
             display: inline-block;
@@ -114,7 +114,7 @@
             background-color: rgba(25, 118, 210, 0.1); /* 3hcig-blue avec opacité */
             color: #115293; /* 3hcig-blue-dark */
         }
-        
+
         /* Résumé */
         .summary {
             background-color: #f3f4f6; /* gray-100 */
@@ -139,7 +139,7 @@
         .summary strong {
             color: #1f2937; /* gray-800 */
         }
-        
+
         /* Signature */
         .signature-section {
             margin-top: 40px;
@@ -160,7 +160,7 @@
             font-size: 14px;
             margin-top: 8px;
         }
-        
+
         /* Message absence de données */
         .no-data {
             text-align: center;
@@ -176,7 +176,7 @@
             margin-bottom: 8px;
             color: #374151; /* gray-700 */
         }
-        
+
         /* Pied de page */
         .footer {
             margin-top: 40px;
@@ -194,7 +194,7 @@
         <div class="brand-header">
             <div class="company-name">3HCIG COOP-CA</div>
         </div>
-        
+
         <!-- En-tête du rapport -->
         <div class="header">
             <div class="header-bg"></div>
@@ -230,10 +230,10 @@
                 <h2>Résumé du rapport</h2>
                 <p><strong>Nombre d'employés:</strong> {{ count($reportData) }}</p>
                 <p><strong>Total des présences:</strong> {{ $reportData->sum('total_presence') }}</p>
-                <p><strong>Moyenne de présences par employé:</strong> 
+                <p><strong>Moyenne de présences par employé:</strong>
                     {{ count($reportData) > 0 ? round($reportData->sum('total_presence') / count($reportData), 1) : 0 }}
                 </p>
-                <p><strong>Période analysée:</strong> {{ isset($startDate) && isset($endDate) ? 
+                <p><strong>Période analysée:</strong> {{ isset($startDate) && isset($endDate) ?
                     ceil((strtotime($endDate) - strtotime($startDate)) / (60 * 60 * 24)) + 1 . ' jours' : 'Période complète' }}</p>
             </div>
         @else
@@ -253,5 +253,6 @@
             <p>© {{ date('Y') }} 3HCIG COOP-CA. Ce document est généré automatiquement et est confidentiel.</p>
         </div>
     </div>
+    
 </body>
 </html>
