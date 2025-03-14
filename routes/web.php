@@ -52,20 +52,20 @@ Route::get('logout', [LoginController::class, 'logout'])->name('logouts');
 
 
 //ici on a les route permettant de gerer les fonctioanalite de l'Admin
-Route::middleware(['auth','isAdmin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    Route::get('/admin/add-employee', [AdminController::class, 'showAddEmployeeForm'])->name('admin.addEmployee');
-    Route::post('/admin/store-employee', [AdminController::class, 'storeEmployee'])->name('admin.storeEmployee');
-    Route::get('/admin/delete-employee', [AdminController::class, 'showDeleteEmployeeForm'])->name('admin.deleteEmployee');
-    Route::get('/admin/generate-report', [AdminController::class, 'showGenerateReportForm'])->name('admin.generateReport');
-    Route::post('/admin/generate-report', [AdminController::class, 'generateReport'])->name('admin.generateReport');
-    Route::post('/admin/report',[AdminController::class, 'exportReport'])->name('admin.exportReport');
-    Route::get('/admin/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('admin.showEmployeeList');
-    Route::post('/admin/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee'])->name('admin.deleteEmployee');
-    Route::get('/admin/showEmployee',[AdminController::class,'showEmployee'])->name('admin.showEmployee');
-    Route::post('/admin/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('admin.updateProfile');
-    Route::get('/admin/update-profile', [App\Http\Controllers\AdminController::class, 'showProfileForm'])->name('admin.showProfile');
-    Route::post('/admin/delete-employee-from-list', [AdminController::class, 'deleteEmployeeFromList'])->name('admin.deleteEmployee.fromList');
+Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('add-employee', [AdminController::class, 'showAddEmployeeForm'])->name('addEmployee');
+    Route::post('/store-employee', [AdminController::class, 'storeEmployee'])->name('storeEmployee');
+    Route::get('/delete-employee', [AdminController::class, 'showDeleteEmployeeForm'])->name('deleteEmployee');
+    Route::get('/generate-report', [AdminController::class, 'showGenerateReportForm'])->name('generateReport');
+    Route::post('/generate-report', [AdminController::class, 'generateReport'])->name('generateReport');
+    Route::post('/report',[AdminController::class, 'exportReport'])->name('exportReport');
+    Route::get('/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('showEmployeeList');
+    Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee'])->name('deleteEmployee');
+    Route::get('/showEmployee',[AdminController::class,'showEmployee'])->name('admin.showEmployee');
+    Route::post('/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('updateProfile');
+    Route::get('/update-profile', [App\Http\Controllers\AdminController::class, 'showProfileForm'])->name('showProfile');
+    Route::post('delete-employee-from-list', [AdminController::class, 'deleteEmployeeFromList'])->name('deleteEmployee.fromList');
     Route::resource('workplace-locations', WorkplaceLocationController::class);
 
       // Routes pour les lieux de travail

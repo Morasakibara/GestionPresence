@@ -249,28 +249,39 @@ class SuperviseurController extends Controller
         $pdfPath = 'rapports/' . $filename;
         Storage::disk('public')->put($pdfPath, $pdf->output());
 
-        // Créer un nouvel enregistrement dans la table rapport
-        $rapport = new \App\Models\Rapport();
-        $rapport->Sup_id = $superviseur->id;
-        $rapport->periode = $periode;
-        $rapport->contenu = $pdfPath; // Chemin vers le PDF stocké
-        $rapport->created_at = now();
-        $rapport->updated_at = now();
+        try {
+            $existingReport = \App\Models\Rapport::where([
+                'Sup_id' => $superviseur->id,
+                'contenu' => $pdfPath
+            ])->first();
 
-        // Puisque la colonne Adm_id est obligatoire dans la structure de la BDD,
-        // nous devons récupérer un administrateur existant
-        $admin = DB::table('administrateur')->first();
-        if ($admin) {
-            $rapport->Adm_id = $admin->id;
-        } else {
-            // Si aucun administrateur n'existe, créer un message d'erreur
-            return redirect()->back()->with('error', 'Aucun administrateur trouvé dans le système. Impossible d\'enregistrer le rapport.');
+            if (!$existingReport) {
+                // Créer un nouvel enregistrement dans la table rapport
+                $rapport = new \App\Models\Rapport();
+                $rapport->Sup_id = $superviseur->id;
+                $rapport->periode = $periode;
+                $rapport->contenu = $pdfPath;
+                $rapport->created_at = now();
+                $rapport->updated_at = now();
+
+                // Récupérer un administrateur existant
+                $admin = DB::table('administrateur')->first();
+                if ($admin) {
+                    $rapport->Adm_id = $admin->id;
+
+                    // Sauvegarder le rapport
+                    $rapport->save();
+                } else {
+                    \Log::error('Aucun administrateur trouvé. Impossible d\'enregistrer le rapport.');
+                }
+            } else {
+                \Log::info('Rapport similaire déjà existant. Aucun nouveau rapport créé.');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la sauvegarde du rapport: ' . $e->getMessage());
         }
 
-        // Sauvegarder le rapport
-        $rapport->save();
-
-        // Télécharger le PDF
+        // Télécharger le PDF même si l'enregistrement échoue
         return $pdf->download($filename);
     }
 
