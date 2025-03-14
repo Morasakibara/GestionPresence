@@ -1,198 +1,81 @@
 @extends('layouts.app')
 
-@section('title', 'Marquer la présence')
+@section('title', 'Notifications')
 
 @section('content')
 <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    <div class="mx-auto max-w-md">
-        <div class="rounded-lg bg-white p-6 shadow-sm">
-            <div class="mb-6 text-center">
-                <h1 class="text-2xl font-bold text-3hcig-blue-dark">Marquer la présence</h1>
-                <p class="mt-2 text-sm text-gray-600">Enregistrez vos heures d'arrivée et de départ</p>
-            </div>
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Notifications</h1>
+        <form action="{{ route('notifications.readAll') }}" method="POST">
+            @csrf
+            <button type="submit" class="inline-flex items-center rounded-md bg-3hcig-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                Marquer tout comme lu
+            </button>
+        </form>
+    </div>
 
-            <div class="space-y-6">
-                @php
-                    $currentDay = now()->dayOfWeek;
-                    $isWeekend = $currentDay === 0 || $currentDay === 6; // 0 = dimanche, 6 = samedi
-                @endphp
-
-                @if($isWeekend)
-                    <!-- Code pour weekend inchangé -->
-                @else
-                    <!-- Bouton pour marquer l'heure d'arrivée -->
-                    <div>
-                        @if(now()->hour >= 7 && (now()->hour < 10 || (now()->hour == 10 && now()->minute == 0)))
-                            <form method="POST" action="{{ route('presence.arrival') }}" id="arrival-form">
+    <div class="overflow-hidden rounded-lg bg-white shadow">
+        <ul role="list" class="divide-y divide-gray-200">
+            @forelse($notifications as $notification)
+                <li class="px-4 py-5 sm:px-6 {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center">
+                                @if(isset($notification->data['type']) && $notification->data['type'] === 'absence')
+                                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
+                                        <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                @elseif(isset($notification->data['type']) && $notification->data['type'] === 'retard')
+                                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-yellow-100">
+                                        <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                @else
+                                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-3hcig-blue-light/20">
+                                        <svg class="h-6 w-6 text-3hcig-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                    </div>
+                                @endif
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-900">{{ isset($notification->data['message']) ? $notification->data['message'] : 'Notification' }}</p>
+                                    <p class="text-sm text-gray-500">
+                                        {{ \Carbon\Carbon::parse($notification->created_at)->format('d/m/Y H:i') }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        @if(!$notification->read_at)
+                            <form action="{{ route('notifications.read', $notification->id) }}" method="POST">
                                 @csrf
-                                <input type="hidden" name="latitude" id="latitude-arrival">
-                                <input type="hidden" name="longitude" id="longitude-arrival">
-                                <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="flex w-full items-center justify-center rounded-md bg-3hcig-blue px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
-                                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                    </svg>
-                                    Marquer l'heure d'arrivée
+                                <button type="submit" class="inline-flex items-center rounded-md bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                                    Marquer comme lu
                                 </button>
                             </form>
                         @else
-                            <!-- Messages d'indisponibilité inchangés -->
+                            <span class="inline-flex items-center rounded-md bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-500">
+                                Lu
+                            </span>
                         @endif
                     </div>
+                </li>
+            @empty
+                <li class="px-4 py-10 sm:px-6 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune notification</h3>
+                    <p class="mt-1 text-sm text-gray-500">Vous n'avez aucune notification pour le moment.</p>
+                </li>
+            @endforelse
+        </ul>
 
-                    <!-- Bouton pour marquer l'heure de départ -->
-                    <div>
-                        @if(now()->hour >= 17 && (now()->hour < 18 || (now()->hour == 18 && now()->minute <= 30)))
-                            <form method="POST" action="{{ route('presence.departure') }}" id="departure-form">
-                                @csrf
-                                <input type="hidden" name="latitude" id="latitude-departure">
-                                <input type="hidden" name="longitude" id="longitude-departure">
-                                <button type="button" onclick="getLocationAndSubmit('departure-form')" class="flex w-full items-center justify-center rounded-md bg-3hcig-green px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2">
-                                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
-                                    Marquer l'heure de départ
-                                </button>
-                            </form>
-                        @else
-                            <!-- Messages d'indisponibilité inchangés -->
-                        @endif
-                    </div>
-                @endif
-
-                <!-- Messages de feedback inchangés -->
-
-                <!-- Horloge et informations inchangées -->
-            </div>
+        <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+            {{ $notifications->links() }}
         </div>
     </div>
 </div>
-
-<script>
-    // Affichage et mise à jour de l'heure actuelle (inchangé)
-    function updateClock() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-
-        document.getElementById('current-time').textContent = `${hours}:${minutes}:${seconds}`;
-    }
-
-    // Mettre à jour l'heure chaque seconde
-    setInterval(updateClock, 1000);
-    updateClock(); // Appel initial
-
-    // Nouvelle fonction pour obtenir la géolocalisation et soumettre le formulaire
-    function getLocationAndSubmit(formId) {
-        if (navigator.geolocation) {
-            // Afficher un message de chargement
-            showLoadingMessage('Obtention de votre position...');
-
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    // Position obtenue avec succès
-                    hideLoadingMessage();
-
-                    // Remplir les champs cachés
-                    if (formId === 'arrival-form') {
-                        document.getElementById('latitude-arrival').value = position.coords.latitude;
-                        document.getElementById('longitude-arrival').value = position.coords.longitude;
-                    } else {
-                        document.getElementById('latitude-departure').value = position.coords.latitude;
-                        document.getElementById('longitude-departure').value = position.coords.longitude;
-                    }
-
-                    // Soumettre le formulaire
-                    document.getElementById(formId).submit();
-                },
-                function(error) {
-                    // Erreur lors de l'obtention de la position
-                    hideLoadingMessage();
-
-                    let errorMessage;
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            errorMessage = "Vous devez autoriser l'accès à votre position pour marquer votre présence.";
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            errorMessage = "Impossible de déterminer votre position. Veuillez réessayer.";
-                            break;
-                        case error.TIMEOUT:
-                            errorMessage = "La demande de géolocalisation a expiré. Veuillez réessayer.";
-                            break;
-                        default:
-                            errorMessage = "Une erreur inconnue s'est produite lors de la géolocalisation.";
-                            break;
-                    }
-
-                    displayError(errorMessage);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
-            );
-        } else {
-            displayError("La géolocalisation n'est pas prise en charge par votre navigateur.");
-        }
-    }
-
-    // Fonction pour afficher un message de chargement
-    function showLoadingMessage(message) {
-        // Créer un div pour le message de chargement s'il n'existe pas déjà
-        if (!document.getElementById('loading-message')) {
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = 'loading-message';
-            loadingDiv.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
-            loadingDiv.innerHTML = `
-                <div class="bg-white rounded-lg p-6 shadow-xl">
-                    <div class="flex items-center">
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-3hcig-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span id="loading-text" class="text-gray-700"></span>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(loadingDiv);
-        }
-
-        document.getElementById('loading-text').textContent = message;
-        document.getElementById('loading-message').style.display = 'flex';
-    }
-
-    // Fonction pour masquer le message de chargement
-    function hideLoadingMessage() {
-        const loadingMessage = document.getElementById('loading-message');
-        if (loadingMessage) {
-            loadingMessage.style.display = 'none';
-        }
-    }
-
-    // Fonction pour afficher un message d'erreur
-    function displayError(message) {
-        // Créer un div pour le message d'erreur
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'fixed inset-x-0 top-0 flex items-center justify-center mt-4 z-50';
-        errorDiv.innerHTML = `
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative max-w-md">
-                <span class="block sm:inline">${message}</span>
-                <span class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.parentElement.remove();">
-                    <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <title>Fermer</title>
-                        <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
-                    </svg>
-                </span>
-            </div>
-        `;
-        document.body.appendChild(errorDiv);
-
-        // Supprimer le message après 5 secondes
-        setTimeout(() => {
-            errorDiv.remove();
-        }, 5000);
-    }
-</script>
 @endsection

@@ -14,8 +14,8 @@
         <div class="bg-3hcig-blue-dark px-6 py-4 text-white">
             <div class="flex flex-col items-center space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0">
                 <div class="flex-shrink-0">
-                    <img src="{{ asset('storage/avatars/'.($utilisateur->avatar ?: 'default.png')) }}" 
-                         alt="{{ $utilisateur->nom }}" 
+                    <img src="{{ asset('storage/avatars/'.($utilisateur->avatar ?: 'default.png')) }}"
+                         alt="{{ $utilisateur->nom }}"
                          class="h-24 w-24 rounded-full border-2 border-white object-cover shadow-sm sm:h-32 sm:w-32">
                 </div>
                 <div class="text-center sm:text-left">
@@ -61,6 +61,90 @@
                     <canvas id="presenceChart"></canvas>
                 </div>
                 <p class="mt-2 text-sm text-gray-500">Graphique des présences quotidiennes pour le mois en cours.</p>
+            </div>
+
+            <!-- Géolocalisation -->
+            <div class="mt-8">
+                <h3 class="mb-4 text-lg font-medium text-gray-900">Dernières localisations enregistrées</h3>
+                <div class="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
+                    @php
+                        $lastPresence = App\Models\Presence::where('employerID', $utilisateur->id)
+                            ->whereNotNull('latitude_arrivee')
+                            ->orderBy('date', 'desc')
+                            ->first();
+                    @endphp
+
+                    @if($lastPresence)
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-gray-50 p-4 rounded-md">
+                                    <h4 class="font-medium text-gray-700 mb-2">Dernière arrivée</h4>
+                                    <p class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Date:</span> {{ $lastPresence->date }}
+                                    </p>
+                                    <p class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Heure:</span> {{ $lastPresence->heureArrivee ? $lastPresence->heureArrivee->format('H:i:s') : 'N/A' }}
+                                    </p>
+                                    <p class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Statut:</span>
+                                        <span class="{{ $lastPresence->localisation_validee_arrivee ? 'text-green-600' : 'text-red-600' }}">
+                                            {{ $lastPresence->localisation_validee_arrivee ? 'Position validée' : 'Position non validée' }}
+                                        </span>
+                                    </p>
+                                    @if($lastPresence->latitude_arrivee && $lastPresence->longitude_arrivee)
+                                        <a href="https://www.google.com/maps?q={{ $lastPresence->latitude_arrivee }},{{ $lastPresence->longitude_arrivee }}"
+                                        target="_blank"
+                                        class="inline-flex items-center text-sm text-3hcig-blue hover:underline mt-2">
+                                            <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            Voir sur la carte
+                                        </a>
+                                    @endif
+                                </div>
+
+                                <div class="bg-gray-50 p-4 rounded-md">
+                                    <h4 class="font-medium text-gray-700 mb-2">Dernier départ</h4>
+                                    <p class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Date:</span> {{ $lastPresence->date }}
+                                    </p>
+                                    <p class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Heure:</span> {{ $lastPresence->heureDepart ? $lastPresence->heureDepart->format('H:i:s') : 'N/A' }}
+                                    </p>
+                                    <p class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Statut:</span>
+                                        <span class="{{ $lastPresence->localisation_validee_depart ? 'text-green-600' : 'text-red-600' }}">
+                                            {{ $lastPresence->localisation_validee_depart ? 'Position validée' : 'Position non validée' }}
+                                        </span>
+                                    </p>
+                                    @if($lastPresence->latitude_depart && $lastPresence->longitude_depart)
+                                        <a href="https://www.google.com/maps?q={{ $lastPresence->latitude_depart }},{{ $lastPresence->longitude_depart }}"
+                                        target="_blank"
+                                        class="inline-flex items-center text-sm text-3hcig-blue hover:underline mt-2">
+                                            <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            Voir sur la carte
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+
+                            @if($lastPresence->workplaceLocation)
+                                <div class="mt-4 pt-4 border-t border-gray-200">
+                                    <h4 class="font-medium text-gray-700 mb-2">Lieu de travail</h4>
+                                    <p class="text-sm text-gray-600">{{ $lastPresence->workplaceLocation->nom }}</p>
+                                </div>
+                            @endif
+                        </div>
+                    @else
+                        <div class="px-4 py-5 sm:p-6">
+                            <p class="text-sm text-gray-500">Aucune donnée de géolocalisation disponible pour cet employé.</p>
+                        </div>
+                    @endif
+                </div>
             </div>
 
             <!-- Actions -->

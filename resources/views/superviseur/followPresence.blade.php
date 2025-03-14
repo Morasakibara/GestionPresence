@@ -32,6 +32,11 @@
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Photo de profil</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom</th>
+                            <!-- Geolocalisation -->
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Dernière localisation</th>
+
+                            <!-- Et dans le corps de la table, après la colonne nom et avant la colonne action pour chaque employé -->
+
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Action</th>
                         </tr>
                     </thead>
@@ -49,6 +54,37 @@
                             </td>
                             <td class="whitespace-nowrap px-6 py-4">
                                 <div class="font-medium text-gray-900">{{ $utilisateur->nom }}</div>
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4">
+                                @php
+                                    $lastPresence = App\Models\Presence::where('employerID', $utilisateur->id)
+                                        ->whereNotNull('latitude_arrivee')
+                                        ->orderBy('date', 'desc')
+                                        ->first();
+                                @endphp
+
+                                @if($lastPresence && ($lastPresence->localisation_validee_arrivee || $lastPresence->localisation_validee_depart))
+                                    <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Validée
+                                    </span>
+                                @elseif($lastPresence)
+                                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Non validée
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-gray-400" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Non disponible
+                                    </span>
+                                @endif
                             </td>
                             <td class="whitespace-nowrap px-6 py-4 text-sm">
                                 <button type="button" onclick="openPopup('{{ $utilisateur->id }}')" class="inline-flex items-center rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
@@ -72,7 +108,7 @@
 <div id="userModal" class="modal hidden fixed inset-0 z-50 overflow-y-auto flex items-center justify-center" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <!-- Background overlay -->
     <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity modal-overlay"></div>
-    
+
     <!-- Modal panel -->
     <div class="relative bg-white rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 rounded-t-lg">
@@ -121,10 +157,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.close-modal').forEach(button => {
         button.addEventListener('click', closeModal);
     });
-    
+
     // Fermer la modal si on clique sur l'overlay
     document.querySelector('.modal-overlay').addEventListener('click', closeModal);
-    
+
     // Fermer la modal avec la touche Escape
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape' && !document.getElementById('userModal').classList.contains('hidden')) {
@@ -136,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function openPopup(userId) {
     // Afficher la modal avec l'état de chargement
     document.getElementById('userModal').classList.remove('hidden');
-    
+
     // Configuration de l'en-tête CSRF pour les requêtes AJAX
     $.ajaxSetup({
         headers: {
@@ -151,7 +187,7 @@ function openPopup(userId) {
         success: function(data) {
             // Vérifier si les données sont bien reçues
             console.log('Données reçues:', data);
-            
+
             // Afficher les données dans la modal
             if (data.detailsHtml) {
                 $('#userDetails').html(data.detailsHtml);
@@ -159,7 +195,7 @@ function openPopup(userId) {
                 $('#userDetails').html('<p class="text-red-500">Le format de données reçu n\'est pas correct.</p>');
                 console.error('Format de données incorrect:', data);
             }
-            
+
             // Mettre à jour le lien "Voir plus"
             $('#viewMoreLink').attr('href', $('#viewMoreLink').attr('href').replace(':id', userId));
         },

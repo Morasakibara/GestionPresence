@@ -52,7 +52,7 @@ Route::get('logout', [LoginController::class, 'logout'])->name('logouts');
 
 
 //ici on a les route permettant de gerer les fonctioanalite de l'Admin
-Route::middleware(['isAdmin'])->group(function () {
+Route::middleware(['auth','isAdmin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/admin/add-employee', [AdminController::class, 'showAddEmployeeForm'])->name('admin.addEmployee');
     Route::post('/admin/store-employee', [AdminController::class, 'storeEmployee'])->name('admin.storeEmployee');
@@ -67,7 +67,15 @@ Route::middleware(['isAdmin'])->group(function () {
     Route::get('/admin/update-profile', [App\Http\Controllers\AdminController::class, 'showProfileForm'])->name('admin.showProfile');
     Route::post('/admin/delete-employee-from-list', [AdminController::class, 'deleteEmployeeFromList'])->name('admin.deleteEmployee.fromList');
     Route::resource('workplace-locations', WorkplaceLocationController::class);
-});
+
+      // Routes pour les lieux de travail
+      Route::get('/workplace-locations', [WorkplaceLocationController::class, 'index'])->name('workplace-locations.index');
+      Route::get('/workplace-locations/create', [WorkplaceLocationController::class, 'create'])->name('workplace-locations.create');
+      Route::post('/workplace-locations', [WorkplaceLocationController::class, 'store'])->name('workplace-locations.store');
+      Route::get('/workplace-locations/{workplaceLocation}/edit', [WorkplaceLocationController::class, 'edit'])->name('workplace-locations.edit');
+      Route::put('/workplace-locations/{workplaceLocation}', [WorkplaceLocationController::class, 'update'])->name('workplace-locations.update');
+      Route::delete('/workplace-locations/{workplaceLocation}', [WorkplaceLocationController::class, 'destroy'])->name('workplace-locations.destroy');
+  });
 
 
 

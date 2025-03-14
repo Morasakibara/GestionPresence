@@ -57,7 +57,37 @@
                     <div class="h-2 rounded-full bg-3hcig-blue" style="width: {{ $presenceRate }}%"></div>
                 </div>
             </div>
-            
+            <td class="whitespace-nowrap px-6 py-4">
+                @php
+                     $lastPresence = App\Models\Presence::where('employerID', Auth::user()->id)
+                        ->whereNotNull('latitude_arrivee')
+                        ->orderBy('date', 'desc')
+                        ->first();
+                @endphp
+
+                @if($lastPresence && ($lastPresence->localisation_validee_arrivee || $lastPresence->localisation_validee_depart))
+                    <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                            <circle cx="4" cy="4" r="3" />
+                        </svg>
+                        Validée
+                    </span>
+                @elseif($lastPresence)
+                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8">
+                            <circle cx="4" cy="4" r="3" />
+                        </svg>
+                        Non validée
+                    </span>
+                @else
+                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-gray-400" fill="currentColor" viewBox="0 0 8 8">
+                            <circle cx="4" cy="4" r="3" />
+                        </svg>
+                        Non disponible
+                    </span>
+                @endif
+            </td>
         </div>
     </div>
 </div>
