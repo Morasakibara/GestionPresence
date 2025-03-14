@@ -57,7 +57,7 @@
                 @csrf
                 <button type="submit" id="arrivalButton"
                         class="w-full rounded-md bg-3hcig-blue px-4 py-2 font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        {{ Carbon\Carbon::now()->hour >= 7 && Carbon\Carbon::now()->hour < 10 ? '' : 'disabled' }}>
+                        {{ Carbon\Carbon::now()->hour >= 7 && (Carbon\Carbon::now()->hour < 10 || (Carbon\Carbon::now()->hour == 10 && Carbon\Carbon::now()->minute == 0)) ? '' : 'disabled' }}>
                     Marquer l'arrivée
                 </button>
             </form>
@@ -66,7 +66,7 @@
                 @csrf
                 <button type="submit" id="departureButton"
                         class="w-full rounded-md bg-gray-600 px-4 py-2 font-medium text-white shadow-sm hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        {{ Carbon\Carbon::now()->hour >= 17 && Carbon\Carbon::now()->hour < 18 && Carbon\Carbon::now()->minute <= 30 ? '' : 'disabled' }}>
+                        {{ Carbon\Carbon::now()->hour >= 17 && (Carbon\Carbon::now()->hour < 18 || (Carbon\Carbon::now()->hour == 18 && Carbon\Carbon::now()->minute <= 30)) ? '' : 'disabled' }}>
                     Marquer le départ
                 </button>
             </form>
@@ -171,8 +171,11 @@ document.addEventListener('DOMContentLoaded', function() {
         var arrivalButton = document.getElementById('arrivalButton');
         var departureButton = document.getElementById('departureButton');
 
-        arrivalButton.disabled = !(hour >= 7 && hour < 10);
-        departureButton.disabled = !(hour >= 17 && hour < 18 && minute <= 30);
+         // Active entre 7:00 et 10:00 (inclus)
+         arrivalButton.disabled = !(hour >= 7 && (hour < 10 || (hour === 10 && minute === 0)));
+
+         // Active entre 17:00 et 18:30 (inclus)
+        departureButton.disabled = !(hour >= 17 && (hour < 18 || (hour === 18 && minute <= 30)));
     }
 
     // Mettre à jour toutes les minutes
