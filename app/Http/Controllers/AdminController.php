@@ -252,7 +252,7 @@ public function generateReport(Request $request)
 }
 
 // Exporter le rapport en PDF
-public function exportToPDF($reportData, $startDate = null, $endDate = null)
+ public function exportToPDF($reportData, $startDate = null, $endDate = null)
 {
     // Récupérer l'administrateur connecté
     $admin = auth()->user();
@@ -273,7 +273,7 @@ public function exportToPDF($reportData, $startDate = null, $endDate = null)
     $pdf = Pdf::loadView('admin.report_pdf', [
         'reportData' => $reportData,
         'startDate' => $startDate,
-        'endDate' => $endDate,
+        'endDate'=> $endDate,
         'admin' => $admin->nom,
         'generatedDate' => now()->format('d/m/Y')
     ]);
@@ -293,6 +293,8 @@ public function exportToPDF($reportData, $startDate = null, $endDate = null)
     $rapport->contenu = $pdfPath; // Chemin vers le PDF stocké
     $rapport->created_at = now();
     $rapport->updated_at = now();
+
+
 
     // La colonne Sup_id peut être NULL selon votre structure de base de données
     // Si elle est obligatoire, nous devons récupérer un superviseur existant

@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
        // 'isSuperviseur' => \App\Http\Middleware\IsSuperviseur::class,
         //'employee' => \App\Http\Middleware\EmployeeMiddleware::class,
         'check.role.network' => \App\Http\Middleware\CheckUserRoleAndNetwork::class,
+        'registration.access' => \App\Http\Middleware\RegistrationAccessMiddleware::class,
     ];
 }

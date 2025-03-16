@@ -32,9 +32,12 @@ use App\Http\Controllers\WorkplaceLocationController;
 */
 
 Route::get('/', [TestController::class,'index'])->name('index');
-/*Route::get('/test-db', function () {
-    return User::all();
-});*/
+Route::post('/verify-registration-access', [App\Http\Controllers\TestController::class, 'verifyRegistrationAccess'])->name('verify.registration.access');
+
+
+Route::middleware('registration.access')->group(function () {
+    Route::get('/register', [TestController::class, 'showRegistrationForm'])->name('register');
+});
 
 //Enregistrement de l'Admin
 Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');

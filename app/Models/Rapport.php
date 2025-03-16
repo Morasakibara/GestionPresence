@@ -10,12 +10,15 @@ class Rapport extends Model
     use HasFactory;
 
     protected $table = 'rapport';
+    public $incrementing = false;
 
     protected $fillable = [
         'Adm_id',
         'Sup_id',
         'periode',
         'contenu',
+        'created_at',
+        'updated_at',
     ];
 
     public function administrateur()

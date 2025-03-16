@@ -58,7 +58,6 @@
                 <thead class="bg-3hcig-blue-dark">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Poste</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Email</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Rôle</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Action</th>
@@ -77,7 +76,6 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ $employee->role }}</td>
                             <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ $employee->email }}</td>
                             <td class="whitespace-nowrap px-6 py-4 text-sm">
                                 @if(strtolower($employee->role) == 'administrateur')
