@@ -14,7 +14,7 @@
         <div class="relative flex-grow">
             <!-- Image de fond avec overlay -->
             <div class="absolute inset-0 z-0">
-                <img src="{{ asset('storage/avatars/loginBackground.jpg') }}" alt="Background" class="w-full h-full object-cover">
+                <img src="{{ asset('storage/avatars/indexBackground.jpg') }}" alt="Background" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-white bg-opacity-80"></div>
             </div>
 
@@ -57,7 +57,7 @@
             <img src="{{ asset('storage/avatars/regiterBackground.jpg') }}" alt="Inscription" class="absolute inset-0 w-full h-full object-cover">
             <div class="absolute inset-0 bg-black bg-opacity-50"></div>
             <div class="absolute inset-0 flex items-center justify-center">
-                <h2 class="text-4xl font-bold text-white z-10">Nouvel utilisateur</h2>
+                <h2 class="text-4xl font-bold text-white z-10">Nouvel administrateur</h2>
             </div>
         </div>
         <div class="p-8">
