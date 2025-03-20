@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
 
      protected function schedule(Schedule $schedule)
      {
-         $schedule->command('presence:auto-absences')->dailyAt('23:59');
+         $schedule->command('presence:auto-absences')->dailyAt('18:45');
         // $schedule->command('presence:auto-absences')->everyMinute();
      }
 
