@@ -70,7 +70,7 @@
 
                     <!-- Bouton pour marquer l'heure de départ -->
                     <div>
-                        @if(now()->hour >= 17 && (now()->hour < 18 || (now()->hour == 18 && now()->minute <= 50)))
+                        @if(now()->hour >= 17 && (now()->hour < 18 || (now()->hour == 18 && now()->minute <= 30)))
                             <form method="POST" action="{{ route('presence.departure') }}" id="departure-form">
                                 @csrf
                                 <input type="hidden" name="latitude" id="latitude-departure">
