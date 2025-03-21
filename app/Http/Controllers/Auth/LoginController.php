@@ -6,6 +6,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Hash;
+use App\Models\Utilisateur;
+use Illuminate\Support\Facades\Log;
 
 class LoginController extends Controller
 {
@@ -13,7 +16,7 @@ class LoginController extends Controller
     {
         return view('auth.login');
     }
-    
+
     public function login(Request $request)
     {
         $request->validate([
@@ -25,11 +28,42 @@ class LoginController extends Controller
             'password.required' => 'Veuillez saisir votre mot de passe.',
         ]);
 
-        $credentials = $request->only('email', 'password');
+        // Journaliser les identifiants pour déboguer
+        Log::info('Tentative de connexion', ['email' => $request->email]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
+        // Récupérer l'utilisateur par email
+        $user = Utilisateur::where('email', $request->email)->first();
 
+        // Vérifier si l'utilisateur existe
+        if (!$user) {
+            Log::warning('Utilisateur non trouvé', ['email' => $request->email]);
+            throw ValidationException::withMessages([
+                'email' => ['Email ou mot de passe incorrect.'],
+            ]);
+        }
+
+        // Journaliser les informations de l'utilisateur pour déboguer
+        Log::info('Utilisateur trouvé', [
+            'id' => $user->id,
+            'nom' => $user->nom,
+            'role' => $user->role,
+            'motDePasseLength' => $user->motDePasse ? strlen($user->motDePasse) : 0,
+            'motDePasseStartsWith' => $user->motDePasse ? substr($user->motDePasse, 0, 10) . '...' : 'null'
+        ]);
+
+        // Vérifier si le mot de passe correspond
+        $passwordMatches = Hash::check($request->password, $user->motDePasse);
+        Log::info('Vérification du mot de passe', [
+            'passwordMatches' => $passwordMatches,
+            'passwordLength' => strlen($request->password)
+        ]);
+
+        if ($passwordMatches) {
+            // Connecter manuellement l'utilisateur
+            Auth::login($user);
+            Log::info('Utilisateur connecté avec succès', ['id' => $user->id]);
+
+            // Redirection en fonction du rôle
             if ($user->role === 'Superviseur') {
                 return $this->showRoleSelectionModal($user);
             } elseif ($user->role === 'Employer') {
@@ -39,11 +73,12 @@ class LoginController extends Controller
                 return redirect()->intended('/admin/dashboard');
             }
 
-            // Optionally handle other roles or redirect to a default page
+            // Redirection par défaut
             return redirect()->intended('dashboard');
         }
 
         // Authentification échouée
+        Log::warning('Échec d\'authentification - mot de passe incorrect', ['email' => $request->email]);
         throw ValidationException::withMessages([
             'email' => ['Email ou mot de passe incorrect.'],
         ]);

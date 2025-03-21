@@ -219,7 +219,6 @@ class AdminController extends Controller
     }
 
 
-  // Générer le rapport et exporter en PDF
  // Générer le rapport et exporter en PDF
 public function generateReport(Request $request)
 {

@@ -4,13 +4,13 @@
 <div class="flex items-center justify-between">
     <span>Tableau de bord Employé</span>
     <!-- Indicateur de notifications -->
-    <a href="{{ route('notifications.index') }}" class="relative inline-flex items-center px-2 py-1 text-sm font-medium text-3hcig-blue hover:bg-gray-100 rounded-md">
-        <svg class="h-6 w-6 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <a href="{{ route('notifications.index') }}" class="relative inline-flex items-center px-2 py-1 text-sm font-medium rounded-md text-3hcig-blue hover:bg-gray-100">
+        <svg class="w-6 h-6 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
         </svg>
         Notifications
         @if(Auth::user()->unreadNotifications->count() > 0)
-            <span class="absolute -top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+            <span class="absolute right-0 flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-600 rounded-full -top-1">
                 {{ Auth::user()->unreadNotifications->count() > 9 ? '9+' : Auth::user()->unreadNotifications->count() }}
             </span>
         @endif
@@ -20,13 +20,13 @@
 
 @section('navigation')
 <!-- Current: "bg-3hcig-blue text-white", Default: "text-gray-300 hover:bg-3hcig-blue hover:text-white" -->
-<a href="{{ route('user.dashboard') }}" class="rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white" aria-current="page">Tableau de bord</a>
-<a href="{{ route('presence.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Présence</a>
-<a href="{{ route('user.presence.report') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Bilan de présence</a>
-<a href="{{ route('notifications.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white relative">
+<a href="{{ route('user.dashboard') }}" class="px-3 py-2 text-sm font-medium text-white rounded-md bg-3hcig-blue" aria-current="page">Tableau de bord</a>
+<a href="{{ route('presence.index') }}" class="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">Présence</a>
+<a href="{{ route('user.presence.report') }}" class="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">Bilan de présence</a>
+<a href="{{ route('notifications.index') }}" class="relative px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">
     Notifications
     @if(Auth::user()->unreadNotifications->count() > 0)
-        <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+        <span class="absolute flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-600 rounded-full -top-1 -right-1">
             {{ Auth::user()->unreadNotifications->count() }}
         </span>
     @endif
@@ -34,13 +34,13 @@
 @endsection
 
 @section('mobile-navigation')
-<a href="{{ route('user.dashboard') }}" class="block rounded-md bg-3hcig-blue px-3 py-2 text-base font-medium text-white" aria-current="page">Tableau de bord</a>
-<a href="{{ route('presence.index') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Présence</a>
-<a href="{{ route('user.presence.report') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Bilan de présence</a>
-<a href="{{ route('notifications.index') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white relative">
+<a href="{{ route('user.dashboard') }}" class="block px-3 py-2 text-base font-medium text-white rounded-md bg-3hcig-blue" aria-current="page">Tableau de bord</a>
+<a href="{{ route('presence.index') }}" class="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">Présence</a>
+<a href="{{ route('user.presence.report') }}" class="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">Bilan de présence</a>
+<a href="{{ route('notifications.index') }}" class="relative block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">
     Notifications
     @if(Auth::user()->unreadNotifications->count() > 0)
-        <span class="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+        <span class="absolute flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-600 rounded-full top-2 right-2">
             {{ Auth::user()->unreadNotifications->count() }}
         </span>
     @endif
@@ -49,54 +49,153 @@
 
 @section('content')
 <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-    <div class="rounded-lg bg-white p-6 shadow-sm">
+    <div class="p-6 bg-white rounded-lg shadow-sm">
         <h2 class="mb-4 text-xl font-semibold text-gray-900">Marquer la présence</h2>
 
         <div class="space-y-4">
-            <form action="{{ route('presence.arrival') }}" method="POST">
-                @csrf
-                <button type="submit" id="arrivalButton"
-                        class="w-full rounded-md bg-3hcig-blue px-4 py-2 font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        {{ Carbon\Carbon::now()->hour >= 7 && (Carbon\Carbon::now()->hour < 10 || (Carbon\Carbon::now()->hour == 10 && Carbon\Carbon::now()->minute == 0)) ? '' : 'disabled' }}>
-                    Marquer l'arrivée
-                </button>
-            </form>
+            @php
+                $currentDay = now()->dayOfWeek;
+                $isWeekend = $currentDay === 0 || $currentDay === 6; // 0 = dimanche, 6 = samedi
+            @endphp
 
-            <form action="{{ route('presence.departure') }}" method="POST">
-                @csrf
-                <button type="submit" id="departureButton"
-                        class="w-full rounded-md bg-gray-600 px-4 py-2 font-medium text-white shadow-sm hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        {{ Carbon\Carbon::now()->hour >= 17 && (Carbon\Carbon::now()->hour < 18 || (Carbon\Carbon::now()->hour == 18 && Carbon\Carbon::now()->minute <= 30)) ? '' : 'disabled' }}>
-                    Marquer le départ
-                </button>
-            </form>
-        </div>
-
-        <div class="mt-4 rounded-md bg-gray-50 p-4">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-3hcig-blue" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                    </svg>
+            @if($isWeekend)
+                <div class="p-4 rounded-md bg-red-50">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="w-5 h-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-red-800">
+                                Le marquage de présence n'est pas disponible pendant le week-end.
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div class="ml-3 text-sm text-gray-600">
-                    <p>L'arrivée peut être marquée entre 7h et 10h.</p>
-                    <p>Le départ peut être marqué entre 17h et 18h30.</p>
+            @else
+                <!-- Bouton pour marquer l'heure d'arrivée -->
+                <div>
+                    @if(now()->hour >= 7 && (now()->hour < 10 || (now()->hour == 10 && now()->minute == 0)))
+                        <form method="POST" action="{{ route('presence.arrival') }}" id="arrival-form">
+                            @csrf
+                            <input type="hidden" name="latitude" id="latitude-arrival">
+                            <input type="hidden" name="longitude" id="longitude-arrival">
+                            <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="flex items-center justify-center w-full px-4 py-2 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-blue hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                                <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                </svg>
+                                Marquer l'arrivée
+                            </button>
+                        </form>
+                    @else
+                        <div class="p-4 rounded-md bg-yellow-50">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="w-5 h-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700">
+                                        Le bouton d'arrivée est actif entre 7h et 10h
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Bouton pour marquer l'heure de départ -->
+                <div>
+                    @if(now()->hour >= 17 && (now()->hour < 18 || (now()->hour == 18 && now()->minute <= 30)))
+                        <form method="POST" action="{{ route('presence.departure') }}" id="departure-form">
+                            @csrf
+                            <input type="hidden" name="latitude" id="latitude-departure">
+                            <input type="hidden" name="longitude" id="longitude-departure">
+                            <button type="button" onclick="getLocationAndSubmit('departure-form')" class="flex items-center justify-center w-full px-4 py-2 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-green hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2">
+                                <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                Marquer le départ
+                            </button>
+                        </form>
+                    @else
+                        <div class="p-4 rounded-md bg-yellow-50">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="w-5 h-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700">
+                                        Le bouton de départ est actif entre 17h et 18h30
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            <!-- Horloge et informations -->
+            <div class="p-4 mt-2 rounded-md bg-gray-50">
+                <div class="flex justify-center">
+                    <div class="text-center">
+                        <div class="text-sm font-medium text-gray-500">Heure actuelle</div>
+                        <div class="mt-1 text-xl font-semibold text-3hcig-blue-dark" id="current-time"></div>
+                    </div>
                 </div>
             </div>
+
+            <!-- Messages de feedback -->
+            @if(session('success'))
+                <div class="p-4 rounded-md bg-3hcig-green-light/20 text-3hcig-green-dark">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="w-5 h-5 text-3hcig-green" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-3hcig-green-dark">
+                                {{ session('success') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="p-4 rounded-md bg-red-50">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="w-5 h-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-red-800">
+                                {{ $errors->first() }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 
-    <div class="rounded-lg bg-white p-6 shadow-sm">
+    <div class="p-6 bg-white rounded-lg shadow-sm">
         <h2 class="mb-4 text-xl font-semibold text-gray-900">Résumé de présence</h2>
 
         <div class="space-y-4">
-            <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-200">
                 <span class="text-sm font-medium text-gray-500">Présences ce mois-ci</span>
                 <span class="text-lg font-semibold text-3hcig-blue">{{ isset($presenceCount) ? $presenceCount : '0' }}</span>
             </div>
 
-            <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-200">
                 <span class="text-sm font-medium text-gray-500">Dernière arrivée</span>
                 <span class="text-gray-700">{{ isset($lastArrival) ? $lastArrival->format('d/m/Y H:i') : 'Aucune donnée' }}</span>
             </div>
@@ -110,18 +209,18 @@
         <div class="mt-6">
             <a href="{{ route('user.presence.report') }}" class="inline-flex items-center text-sm font-medium text-3hcig-blue hover:text-3hcig-blue-light">
                 Voir le bilan complet
-                <svg class="ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="w-5 h-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
             </a>
         </div>
     </div>
 
-    <div class="rounded-lg bg-white p-6 shadow-sm">
-        <h2 class="mb-4 text-xl font-semibold text-gray-900 flex items-center justify-between">
+    <div class="p-6 bg-white rounded-lg shadow-sm">
+        <h2 class="flex items-center justify-between mb-4 text-xl font-semibold text-gray-900">
             <span>Notifications</span>
             @if(Auth::user()->unreadNotifications->count() > 0)
-                <span class="inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-600 text-xs font-medium text-white">
+                <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-red-600 rounded-full">
                     {{ Auth::user()->unreadNotifications->count() }}
                 </span>
             @endif
@@ -142,14 +241,14 @@
                 <div class="mt-4 text-center">
                     <a href="{{ route('notifications.index') }}" class="inline-flex items-center text-sm font-medium text-3hcig-blue hover:text-3hcig-blue-light">
                         Voir toutes les notifications
-                        <svg class="ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <svg class="w-5 h-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
                     </a>
                 </div>
             @else
                 <div class="py-8 text-center text-gray-500">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="w-12 h-12 mx-auto text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                     <p class="mt-2">Vous n'avez aucune notification</p>
@@ -158,30 +257,133 @@
         </div>
     </div>
 </div>
-@endsection
 
-@push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    function updateButtons() {
-        var now = new Date();
-        var hour = now.getHours();
-        var minute = now.getMinutes();
+    // Affichage et mise à jour de l'heure actuelle
+    function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
 
-        var arrivalButton = document.getElementById('arrivalButton');
-        var departureButton = document.getElementById('departureButton');
-
-         // Active entre 7:00 et 10:00 (inclus)
-         arrivalButton.disabled = !(hour >= 7 && (hour < 10 || (hour === 10 && minute === 0)));
-
-         // Active entre 17:00 et 18:30 (inclus)
-        departureButton.disabled = !(hour >= 17 && (hour < 18 || (hour === 18 && minute <= 30)));
+        document.getElementById('current-time').textContent = `${hours}:${minutes}:${seconds}`;
     }
 
-    // Mettre à jour toutes les minutes
-    setInterval(updateButtons, 60000);
-    // Mettre à jour immédiatement au chargement de la page
-    updateButtons();
-});
+    // Mettre à jour l'heure chaque seconde
+    setInterval(updateClock, 1000);
+    updateClock(); // Appel initial
+
+    // Fonction pour obtenir la géolocalisation et soumettre le formulaire
+    function getLocationAndSubmit(formId) {
+        if (navigator.geolocation) {
+            // Afficher un message de chargement
+            showLoadingMessage('Obtention de votre position...');
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    // Position obtenue avec succès
+                    hideLoadingMessage();
+
+                    // Remplir les champs cachés
+                    if (formId === 'arrival-form') {
+                        document.getElementById('latitude-arrival').value = position.coords.latitude;
+                        document.getElementById('longitude-arrival').value = position.coords.longitude;
+                    } else {
+                        document.getElementById('latitude-departure').value = position.coords.latitude;
+                        document.getElementById('longitude-departure').value = position.coords.longitude;
+                    }
+
+                    // Soumettre le formulaire
+                    document.getElementById(formId).submit();
+                },
+                function(error) {
+                    // Erreur lors de l'obtention de la position
+                    hideLoadingMessage();
+
+                    let errorMessage;
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = "Vous devez autoriser l'accès à votre position pour marquer votre présence.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = "Impossible de déterminer votre position. Veuillez réessayer.";
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = "La demande de géolocalisation a expiré. Veuillez réessayer.";
+                            break;
+                        default:
+                            errorMessage = "Une erreur inconnue s'est produite lors de la géolocalisation.";
+                            break;
+                    }
+
+                    displayError(errorMessage);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            displayError("La géolocalisation n'est pas prise en charge par votre navigateur.");
+        }
+    }
+
+    // Fonction pour afficher un message de chargement
+    function showLoadingMessage(message) {
+        // Créer un div pour le message de chargement s'il n'existe pas déjà
+        if (!document.getElementById('loading-message')) {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loading-message';
+            loadingDiv.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
+            loadingDiv.innerHTML = `
+                <div class="p-6 bg-white rounded-lg shadow-xl">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3 -ml-1 animate-spin text-3hcig-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span id="loading-text" class="text-gray-700"></span>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(loadingDiv);
+        }
+
+        document.getElementById('loading-text').textContent = message;
+        document.getElementById('loading-message').style.display = 'flex';
+    }
+
+    // Fonction pour masquer le message de chargement
+    function hideLoadingMessage() {
+        const loadingMessage = document.getElementById('loading-message');
+        if (loadingMessage) {
+            loadingMessage.style.display = 'none';
+        }
+    }
+
+    // Fonction pour afficher un message d'erreur
+    function displayError(message) {
+        // Créer un div pour le message d'erreur
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'fixed inset-x-0 top-0 flex items-center justify-center mt-4 z-50';
+        errorDiv.innerHTML = `
+            <div class="relative max-w-md px-4 py-3 text-red-700 bg-red-100 border border-red-400 rounded">
+                <span class="block sm:inline">${message}</span>
+                <span class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.parentElement.remove();">
+                    <svg class="w-6 h-6 text-red-500 fill-current" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <title>Fermer</title>
+                        <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+                    </svg>
+                </span>
+            </div>
+        `;
+        document.body.appendChild(errorDiv);
+
+        // Supprimer le message après 5 secondes
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 5000);
+    }
 </script>
-@endpush
+@endsection
