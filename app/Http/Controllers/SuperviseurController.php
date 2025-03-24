@@ -122,41 +122,69 @@ class SuperviseurController extends Controller
     }
 
     public function viewUser($id)
-    {
-        $utilisateur = Utilisateur::find($id);
+{
+    $utilisateur = Utilisateur::find($id);
 
-        // Calculer le total des présences où le statut est "present"
-        $totalPresences = Presence::where('employerID', $utilisateur->id)
-                                ->where('status', 'present')
-                                ->count();
+    // Calculer le total des présences où le statut est "présent"
+    $totalPresences = Presence::where('employerID', $utilisateur->id)
+                            ->where('status', 'présent')
+                            ->count();
 
-        // Récupérer les présences de l'utilisateur pour le mois en cours avec le statut "present"
-        $currentMonth = now()->month;
-        $presenceStats = Presence::where('employerID', $utilisateur->id)
-                                ->where('status', 'present')
-                                ->whereMonth('date', $currentMonth)
-                                ->get();
+    // Récupérer les présences de l'utilisateur pour le mois en cours
+    $currentMonth = now()->month;
+    $currentYear = now()->year;
 
-        // Préparer les données pour le graphique
-        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $currentMonth, now()->year);
-        $labels = [];
-        $data = [];
+    // Préparer les données pour le graphique
+    $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $currentMonth, $currentYear);
+    $labels = [];
+    $data = [];
 
-        for ($day = 1; $day <= $daysInMonth; $day++) {
-            $labels[] = $day;
-            $data[] = $presenceStats->where('date', now()->year . '-' . $currentMonth . '-' . str_pad($day, 2, '0', STR_PAD_LEFT))->count();
+    // Préparer un tableau pour compter les présences par jour
+    $presenceByDay = [];
+
+    // Récupérer les présences pour ce mois
+    $presences = Presence::where('employerID', $utilisateur->id)
+                        ->where('status', 'présent')
+                        ->whereMonth('date', $currentMonth)
+                        ->whereYear('date', $currentYear)
+                        ->get();
+
+    // Comptage des présences par jour
+    foreach ($presences as $presence) {
+        // Solution 1: Convertir la date en objet Carbon si ce n'est pas déjà fait
+        $date = $presence->date;
+        if (!($date instanceof \Carbon\Carbon)) {
+            $date = \Carbon\Carbon::parse($date);
         }
 
-        // Passer les données à la vue
-        return view('superviseur.viewUser', [
-            'utilisateur' => $utilisateur,
-            'totalPresences' => $totalPresences,
-            'presenceStats' => [
-                'labels' => $labels,
-                'data' => $data,
-            ],
-        ]);
+        // Extraire le jour
+        $day = (int)$date->format('d');
+
+        // Alternative: Utiliser une méthode plus simple si la date est une chaîne
+        // $day = (int)date('d', strtotime($presence->date));
+
+        if (!isset($presenceByDay[$day])) {
+            $presenceByDay[$day] = 0;
+        }
+        $presenceByDay[$day]++;
     }
+
+    // Générer les données pour tous les jours du mois
+    for ($day = 1; $day <= $daysInMonth; $day++) {
+        $labels[] = $day;
+        $data[] = $presenceByDay[$day] ?? 0; // 0 si pas de présence ce jour-là
+    }
+
+    // Passer les données à la vue
+    return view('superviseur.viewUser', [
+        'utilisateur' => $utilisateur,
+        'totalPresences' => $totalPresences,
+        'presenceStats' => [
+            'labels' => $labels,
+            'data' => $data,
+        ],
+    ]);
+}
 
     public function showGenerateReport()
     {
@@ -164,31 +192,44 @@ class SuperviseurController extends Controller
     }
 
     public function generateReport()
-    {
-        $superviseur = auth()->user(); // Assume que le superviseur est l'utilisateur connecté
-        $equipe = $superviseur->equipe;
+{
+    $superviseur = auth()->user(); // Le superviseur connecté
 
-        // Récupérer les employés de la même équipe
-        $employers = Employer::where('equipe', $equipe)->where('poste', 'employer')->get();
+    // Récupérer les informations du superviseur
+    $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
 
-        // Calculer le total de présences pour chaque employé pour le mois en cours
-        $currentMonth = now()->month;
-        $reports = [];
-
-        foreach ($employers as $employer) {
-            $totalPresences = Presence::where('employerID', $employer->id)
-                ->whereMonth('date', $currentMonth)
-                ->where('status', 'present')
-                ->count();
-
-            $reports[] = [
-                'name' => $employer->name,
-                'totalPresences' => $totalPresences,
-            ];
-        }
-
-        return view('superviseur.generateReport2', compact('reports'));
+    if (!$superviseurInfo) {
+        return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
     }
+
+    $equipe = $superviseurInfo->equipe;
+
+    // Récupérer les IDs des employés de cette équipe
+    $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
+
+    // Récupérer les utilisateurs correspondant à ces IDs
+    $users = Utilisateur::whereIn('id', $employerIds)->get();
+
+    // Calculer le total de présences pour chaque employé pour le mois en cours
+    $currentMonth = now()->month;
+    $currentYear = now()->year;
+    $reports = [];
+
+    foreach ($users as $user) {
+        $totalPresences = Presence::where('employerID', $user->id)
+            ->whereMonth('date', $currentMonth)
+            ->whereYear('date', $currentYear)
+            ->where('status', 'présent')
+            ->count();
+
+        $reports[] = [
+            'name' => $user->nom, // Utiliser le champ 'nom' de Utilisateur
+            'totalPresences' => $totalPresences,
+        ];
+    }
+
+    return view('superviseur.generateReport2', compact('reports'));
+}
 
     public function exportPDF()
     {
