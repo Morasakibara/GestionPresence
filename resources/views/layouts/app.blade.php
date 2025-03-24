@@ -31,7 +31,7 @@
             <div class="flex items-center justify-center h-16 border-b border-3hcig-blue">
                 <img class="w-auto h-20" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="3HCIG COOP-CA">
             </div>
-            
+
             <!-- Nav Links pour Desktop -->
             <nav class="flex flex-col flex-1 px-2 mt-5 overflow-y-auto h-[calc(100%-144px)]">
                 @if ($user->role === 'Superviseur' && $currentRole === 'Employer')
@@ -206,7 +206,7 @@
             <div class="flex items-center justify-center h-16 border-b border-3hcig-blue">
                 <img class="w-auto h-20" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="3HCIG COOP-CA">
             </div>
-            
+
             <!-- Nav Links pour Mobile -->
             <nav class="flex flex-col flex-1 px-2 mt-5 overflow-y-auto h-[calc(100%-144px)]">
                 @if ($user->role === 'Superviseur' && $currentRole === 'Employer')

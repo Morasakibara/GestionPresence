@@ -31,13 +31,19 @@ use App\Http\Controllers\WorkplaceLocationController;
 |
 */
 
-Route::get('/', [TestController::class,'index'])->name('index');
-Route::post('/verify-registration-access', [App\Http\Controllers\TestController::class, 'verifyRegistrationAccess'])->name('verify.registration.access');
+// Dans routes/web.php
 
+// Routes d'authentification
+Route::get('/', [\App\Http\Controllers\TestController::class, 'index'])->name('index');
+Route::post('/verify-access', [\App\Http\Controllers\TestController::class, 'verifyRegistrationAccess'])->name('verify.registration.access');
 
-Route::middleware('registration.access')->group(function () {
-    Route::get('/register', [TestController::class, 'showRegistrationForm'])->name('register');
-});
+// Protection explicite des routes d'enregistrement
+Route::get('/register', [\App\Http\Controllers\Auth\RegisterController::class, 'showRegistrationForm'])
+    ->middleware('registration.access')
+    ->name('register');
+
+Route::post('/register', [\App\Http\Controllers\Auth\RegisterController::class, 'register'])
+    ->middleware('registration.access');
 
 //Enregistrement de l'Admin
 Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');

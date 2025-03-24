@@ -11,6 +11,12 @@ use Illuminate\Http\Request;
 
 class RegisterController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('registration.access');
+    }
+
     public function showRegistrationForm()
     {
         return view('auth.register');
@@ -21,7 +27,7 @@ class RegisterController extends Controller
         $this->validator($request->all())->validate();
 
         $user = $this->create($request->all());
-        
+
         auth()->login($user);
 
         return redirect('/admin/dashboard');

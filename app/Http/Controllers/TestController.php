@@ -15,22 +15,22 @@ class TestController extends Controller
     }
 
     public function verifyRegistrationAccess(Request $request)
-    {
-        $request->validate([
-            'access_code' => 'required|string'
-        ]);
+{
+    $request->validate([
+        'access_code' => 'required|string'
+    ]);
 
-        if ($request->access_code === $this->registrationAccessCode) {
-            // Stocker dans la session que l'accès est autorisé avec timestamp
-            session([
-                'registration_access_granted' => true,
-                'registration_access_time' => now()->timestamp
-            ]);
-            return redirect()->route('register')->with('success', 'Accès autorisé');
-        }
+    if ($request->access_code === $this->registrationAccessCode) {
+        // Créer un cookie qui expire dans 30 minutes
+        $cookie = cookie('registration_access', 'granted', 30);
 
-        return redirect()->route('index')->with('error', 'Code d\'accès incorrect');
+        return redirect()->route('register')
+            ->with('success', 'Accès autorisé')
+            ->withCookie($cookie);
     }
+
+    return redirect()->route('index')->with('error', 'Code d\'accès incorrect');
+}
 
     public function showRegistrationForm()
     {
