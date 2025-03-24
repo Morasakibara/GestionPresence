@@ -56,7 +56,7 @@ class UtilisateurController extends Controller
 
         // Calculer le total des présences et les absences
         $totalPresences = $presences->where('status', 'présent')->count();
-        $totalAbsences = $presences->where('status', 'absent')->count();
+        $totalAbsences = $presences->where('status', 'Absent')->count();
 
         return view('user.presence-report', compact('presences', 'totalPresences', 'totalAbsences'));
     }

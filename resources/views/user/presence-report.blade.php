@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             {
                 label: 'Absences',
-                data: @json($presences->where('status', 'absent')->pluck('date')->countBy()->toArray()), // Comptes les jours où l'utilisateur est absent
+                data: @json($presences->where('status', 'Absent')->pluck('date')->countBy()->toArray()), // Comptes les jours où l'utilisateur est absent
                 backgroundColor: '#EF4444', // Rouge
                 borderRadius: 4
             }
