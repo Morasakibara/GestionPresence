@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('rapport', function (Blueprint $table) {
-            // La table rapport est déjà créée avec timestamps(), on n'ajoute que remember_token
-            $table->rememberToken()->after('contenu');
+        Schema::create('administrateur', function (Blueprint $table) {
+            $table->unsignedBigInteger('id')->primary();
+            $table->string('poste');
+
+            $table->foreign('id')->references('id')->on('utilisateur')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 
@@ -22,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('rapport', function (Blueprint $table) {
-            $table->dropColumn([ 'remember_token']);
-        });
+        Schema::dropIfExists('administrateur');
     }
 };

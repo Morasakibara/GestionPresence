@@ -26,12 +26,15 @@ class DatabaseSeeder extends Seeder
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',
         // ]);
-        UtilisateurSeeder::class;
-        AdministrateurSeeder::class;
-        SuperviseurSeeder::class;
-        EmployerSeeder::class;
-        PresenceSeeder::class;
-        MarquerSeeder::class;
-        RapportSeeder::class;
+        $this->call([
+            UtilisateurSeeder::class,
+            AdministrateurSeeder::class,
+            SuperviseurSeeder::class,
+            EmployerSeeder::class,
+            PresenceSeeder::class,
+            MarquerSeeder::class,
+            RapportSeeder::class,
+            WorkplaceLocationSeeder::class,
+        ]);
     }
 }

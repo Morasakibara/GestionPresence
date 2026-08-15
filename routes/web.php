@@ -61,23 +61,15 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::post('/store-employee', [AdminController::class, 'storeEmployee'])->name('storeEmployee');
     Route::get('/delete-employee', [AdminController::class, 'showDeleteEmployeeForm'])->name('deleteEmployee');
     Route::get('/generate-report', [AdminController::class, 'showGenerateReportForm'])->name('generateReport');
-    Route::post('/generate-report', [AdminController::class, 'generateReport'])->name('generateReport');
+    Route::post('/generate-report', [AdminController::class, 'generateReport']);
     Route::post('/report',[AdminController::class, 'exportReport'])->name('exportReport');
     Route::get('/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('showEmployeeList');
-    Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee'])->name('deleteEmployee');
+    Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee']);
     Route::get('/showEmployee',[AdminController::class,'showEmployee'])->name('admin.showEmployee');
     Route::post('/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('updateProfile');
     Route::get('/update-profile', [App\Http\Controllers\AdminController::class, 'showProfileForm'])->name('showProfile');
     Route::post('delete-employee-from-list', [AdminController::class, 'deleteEmployeeFromList'])->name('deleteEmployee.fromList');
     Route::resource('workplace-locations', WorkplaceLocationController::class);
-
-      // Routes pour les lieux de travail
-      Route::get('/workplace-locations', [WorkplaceLocationController::class, 'index'])->name('workplace-locations.index');
-      Route::get('/workplace-locations/create', [WorkplaceLocationController::class, 'create'])->name('workplace-locations.create');
-      Route::post('/workplace-locations', [WorkplaceLocationController::class, 'store'])->name('workplace-locations.store');
-      Route::get('/workplace-locations/{workplaceLocation}/edit', [WorkplaceLocationController::class, 'edit'])->name('workplace-locations.edit');
-      Route::put('/workplace-locations/{workplaceLocation}', [WorkplaceLocationController::class, 'update'])->name('workplace-locations.update');
-      Route::delete('/workplace-locations/{workplaceLocation}', [WorkplaceLocationController::class, 'destroy'])->name('workplace-locations.destroy');
   });
 
 
@@ -125,5 +117,4 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
-    Route::post('/check-location', [GeoLocationController::class, 'checkLocation'])->name('check.location');
 });

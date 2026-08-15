@@ -257,7 +257,7 @@ public function generateReport(Request $request)
     $admin = auth()->user();
 
     // Vérifier si l'administrateur existe
-    if (!$admin || $admin->role !== 'administrateur') {
+    if (!$admin || $admin->role !== 'Administrateur') {
         return redirect()->back()->with('error', 'Vous devez être un administrateur pour générer un rapport.');
     }
 

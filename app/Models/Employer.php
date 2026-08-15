@@ -17,6 +17,9 @@ class Employer extends Model
         'id', 'Sup_id', 'poste','equipe',
     ];
 
+    // L'id est hérité de la table utilisateur (assigné manuellement)
+    public $incrementing = false;
+
     public $timestamps = false;
 
     public function utilisateur()

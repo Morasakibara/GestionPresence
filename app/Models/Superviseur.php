@@ -16,6 +16,9 @@ class Superviseur extends Model
         'id', 'equipe',
     ];
 
+    // L'id est hérité de la table utilisateur (assigné manuellement)
+    public $incrementing = false;
+
     public $timestamps = false;
 
     public function employers()

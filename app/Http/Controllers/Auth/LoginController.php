@@ -69,7 +69,7 @@ class LoginController extends Controller
             } elseif ($user->role === 'Employer') {
                 session(['current_role' => 'Employer']);
                 return redirect()->intended('/user/dashboard');
-            } elseif ($user->role === 'administrateur') {
+            } elseif ($user->role === 'Administrateur') {
                 return redirect()->intended('/admin/dashboard');
             }
 

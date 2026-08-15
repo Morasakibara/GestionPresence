@@ -11,6 +11,9 @@ class Administrateur extends Model
 
     protected $table = 'administrateur'; // Nom de la table existante
 
+    // L'id est hérité de la table utilisateur (assigné manuellement)
+    public $incrementing = false;
+
     protected $fillable = [
         'id', // Assume que `user_id` est une clé étrangère
         'poste',

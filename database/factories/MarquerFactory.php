@@ -16,7 +16,7 @@ class MarquerFactory extends Factory
         $faker = Faker::create();
 
         return [
-            'Emp_id' => Employer::factory()->create()->id,
+            'Empl_id' => Employer::factory()->create()->id,
             'id' => Presence::factory()->create()->id,
         ];
     }

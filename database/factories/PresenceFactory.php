@@ -22,7 +22,7 @@ class PresenceFactory extends Factory
             'heureArrivee' => $faker->dateTimeBetween('08:00:00', '10:00:00'),
             'heureDepart' => $faker->dateTimeBetween('16:00:00', '18:00:00'),
             'date' => $faker->date(),
-            'status' => $faker->randomElement('present','absent'),
+            'status' => $faker->randomElement(['present', 'absent']),
         ];
     }
 }

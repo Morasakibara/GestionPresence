@@ -1,6 +1,9 @@
 #!/usr/bin/env php
 <?php
 
+// PHP 8.4 : masque les dépréciations du framework (Laravel 10) en CLI.
+error_reporting(E_ALL & ~E_DEPRECATED);
+
 define('LARAVEL_START', microtime(true));
 
 /*

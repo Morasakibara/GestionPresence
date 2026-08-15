@@ -15,9 +15,12 @@ class UtilisateurFactory extends Factory
     {
         $faker = Faker::create();
 
+        // unique() n'est garanti que par instance Faker : on ajoute un suffixe
+        // aléatoire pour garantir l'unicité entre les centaines d'utilisateurs
+        // créés par les factories imbriquées des seeders.
         return [
             'nom' => $faker->name,
-            'email' => $faker->unique()->safeEmail,
+            'email' => preg_replace('/@/', uniqid() . '@', $faker->safeEmail),
             'motDePasse' => Hash::make('password'),
             'role' => $faker->randomElement(['Administrateur', 'Superviseur', 'Employer']),
         ];

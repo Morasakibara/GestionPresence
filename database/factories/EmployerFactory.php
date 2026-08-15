@@ -20,6 +20,7 @@ class EmployerFactory extends Factory
             'id' => Utilisateur::factory()->create()->id,
             'Sup_id' => Superviseur::factory()->create()->id,
             'poste' => 'Employer',
+            'equipe' => $faker->word,
         ];
     }
 }

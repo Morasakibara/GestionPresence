@@ -18,7 +18,7 @@ class RapportFactory extends Factory
         return [
             'Adm_id' => Administrateur::factory()->create()->id,
             'Sup_id' => Superviseur::factory()->create()->id,
-            'periode' => $faker->dateTimeBetween('-1 year', 'now'),
+            'periode' => $faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
             'contenu' => $faker->paragraph,
 
         ];

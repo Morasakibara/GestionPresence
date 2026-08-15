@@ -1,5 +1,9 @@
 <?php
 
+// PHP 8.4 : masque les dépréciations du framework (Laravel 10) pour éviter
+// qu'elles ne déclenchent headers_sent() avant l'envoi des cookies de session.
+error_reporting(E_ALL & ~E_DEPRECATED);
+
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 
