@@ -17,3 +17,6 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# Mailpit local (binaire téléchargé)
+tools/mailpit/

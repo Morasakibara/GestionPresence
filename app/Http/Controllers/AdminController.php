@@ -362,11 +362,6 @@ public function exportReport(Request $request)
         return view('admin.showEmployeeList',compact('employees','search','roles'));
     }
 
-    public function showEmployee()
-    {
-        return view('admin.showEmployee');
-    }
-
     /**
  * Mettre à jour le profil de l'administrateur
  *
