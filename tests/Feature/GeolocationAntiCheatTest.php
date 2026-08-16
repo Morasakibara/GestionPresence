@@ -223,6 +223,84 @@ class GeolocationAntiCheatTest extends TestCase
         $response->assertSee($employe->nom);
     }
 
+    public function test_workflow_traitement_presence_suspecte(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        // Créer une présence suspecte
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Vitesse de déplacement irréaliste (43.5 km/h).',
+        ]);
+
+        // Se connecter en admin et traiter la présence
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $response = $this->post("/admin/suspect-presences/{$presence->id}/update", [
+            'statut_traitement' => 'justifié',
+            'commentaire' => 'Déplacement professionnel confirmé.',
+        ]);
+        $response->assertRedirect(route('admin.suspectPresences'));
+        $response->assertSessionHas('success');
+
+        // Vérifier la mise à jour + l'historique
+        $presence->refresh();
+        $this->assertEquals('justifié', $presence->statut_traitement);
+        $this->assertEquals('Déplacement professionnel confirmé.', $presence->commentaire_traitement);
+        $this->assertEquals($admin->id, $presence->traite_par);
+        $this->assertNotNull($presence->traite_le);
+
+        $this->assertDatabaseHas('presence_traitements', [
+            'presence_id' => $presence->id,
+            'statut_avant' => 'nouveau',
+            'statut_apres' => 'justifié',
+        ]);
+
+        // Statut invalide -> erreur de validation
+        $response = $this->post("/admin/suspect-presences/{$presence->id}/update", [
+            'statut_traitement' => 'inexistant',
+        ]);
+        $response->assertSessionHasErrors('statut_traitement');
+    }
+
+    public function test_superviseur_voit_ses_presences_suspectes(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Précision GPS insuffisante (320 m).',
+        ]);
+
+        // Se connecter en superviseur (celui de l'équipe de l'employé)
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        // Choisir le rôle Superviseur après login
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        $response = $this->get('/superviseur/suspect-presences');
+        $response->assertOk();
+        $response->assertSee('Précision GPS insuffisante');
+        $response->assertSee($employe->nom);
+    }
+
     public function test_vitesse_irrealiste_marque_suspect(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));

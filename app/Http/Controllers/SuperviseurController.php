@@ -162,6 +162,55 @@ class SuperviseurController extends Controller
         ]);
     }
 
+    /**
+     * Liste les présences suspectes des membres de l'équipe du superviseur.
+     */
+    public function showSuspectPresences(Request $request)
+    {
+        $superviseur = auth()->user();
+
+        if (!$superviseur || $superviseur->role !== 'Superviseur') {
+            return redirect()->back()->with('error', 'Accès non autorisé.');
+        }
+
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+
+        if (!$superviseurInfo) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+
+        // IDs des employés de l'équipe
+        $employerIds = Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
+
+        $search = $request->input('search');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $query = DB::table('presence')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->where('presence.suspect', true)
+            ->whereIn('presence.employerID', $employerIds)
+            ->select(
+                'presence.*',
+                'utilisateur.nom as employer_nom',
+                'utilisateur.email as employer_email'
+            );
+
+        if ($search) {
+            $query->where('utilisateur.nom', 'like', '%' . $search . '%');
+        }
+        if ($startDate) {
+            $query->whereDate('presence.date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->whereDate('presence.date', '<=', $endDate);
+        }
+
+        $suspectPresences = $query->orderByDesc('presence.date')->orderByDesc('presence.heureArrivee')->paginate(20);
+
+        return view('superviseur.suspectPresences', compact('suspectPresences', 'search', 'startDate', 'endDate'));
+    }
+
     public function showGenerateReport()
     {
         return view('superviseur.generateReport2');

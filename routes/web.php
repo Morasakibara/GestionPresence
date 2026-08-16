@@ -65,6 +65,7 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::post('/report',[AdminController::class, 'exportReport'])->name('exportReport');
     Route::get('/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('showEmployeeList');
     Route::get('/suspect-presences', [AdminController::class, 'showSuspectPresences'])->name('suspectPresences');
+    Route::post('/suspect-presences/{id}/update', [AdminController::class, 'updateSuspectPresence'])->name('updateSuspectPresence');
     Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee']);
     Route::post('/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('updateProfile');
     Route::get('/update-profile', [App\Http\Controllers\AdminController::class, 'showProfileForm'])->name('showProfile');
@@ -93,6 +94,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/showUser/{id}', [SuperviseurController::class, 'showUser'])->name('user.show');
         Route::get('/exportPDF', [SuperviseurController::class, 'exportPDF'])->name('export.pdf');
         Route::get('/showAddMember', [SuperviseurController::class, 'showAddMember'])->name('superviseur.showAddMember');
+        Route::get('/suspect-presences', [SuperviseurController::class, 'showSuspectPresences'])->name('superviseur.suspectPresences');
         Route::post('/addMemberToTeam/{id}', [SuperviseurController::class, 'addMemberToTeam'])->name('superviseur.addMemberToTeam');
         Route::get('/add-member', [SuperviseurController::class, 'showAddMemberForm'])->name('superviseur.showAddMemberForm');
         Route::post('remove-member/{id}', [SuperviseurController::class, 'removeMemberFromTeam'])->name('superviseur.removeMemberFromTeam');

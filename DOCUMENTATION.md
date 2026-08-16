@@ -118,7 +118,7 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | **Générer un rapport** | Rapport de présence sur une période → **PDF** téléchargeable + enregistré. |
 | **Lieux de travail** | CRUD complet des zones de géofencing (nom, GPS, rayon, actif/inactif). |
 | **Profil** | Modification du profil et de l'avatar (modal). |
-| **Présences suspectes** | Page dédiée listant les pointages marqués suspects (motif, distance, vitesse) avec filtres recherche + période. |
+| **Présences suspectes** | Page dédiée listant les pointages marqués suspects (motif, distance, vitesse) avec filtres recherche + période. **Workflow de traitement** : statut (`nouveau`/`examiné`/`justifié`/`rejeté`) + commentaire + historique de traitement (`presence_traitements`). |
 
 ### 🧑‍💼 Superviseur (`/superviseur/*`)
 | Fonctionnalité | Détail |
@@ -128,6 +128,7 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | **Ajouter / retirer un membre** | Gestion de l'équipe (rattache `Sup_id` + `equipe` de façon cohérente). |
 | **Rapport d'équipe** | Rapport mensuel de son équipe + **export PDF**. |
 | **Changer de rôle** | Bascule Employé ↔ Superviseur. |
+| **Présences suspectes** | Vue en lecture seule des pointages suspects des membres de son équipe (motif, distance, vitesse) + filtres. Le traitement reste réservé à l'admin. |
 | **Notifications** | Reçoit les retards/absences des membres de son équipe. |
 
 ### 🧑‍🔧 Employé (`/user/*`)
@@ -166,9 +167,17 @@ Un service dédié (`App\Services\GeolocationVerificationService`) protège le p
 | **Vérification croisée de vitesse** | Distance Haversine arrivée↔départ ÷ temps écoulé. Une vitesse > 40 km/h (ex. pointage à Paris le matin et Lyon le soir) marque la présence **suspecte**. |
 | **Précision GPS** | L'`accuracy` du navigateur est contrôlée (> 300 m → suspect). |
 | **Traçabilité** | IP, user-agent, horodatages, précision et coordonnées sont enregistrés sur chaque présence. |
-| **Visibilité** | Les présences suspectes sont marquées dans la liste des employés et les rapports (HTML + PDF) ; une page admin `/admin/suspect-presences` les liste avec filtres. |
+| **Alerte automatique** | Dès qu'une présence est marquée suspecte (arrivée ou départ), l'administrateur principal reçoit une **notification email + interne** (`SuspectPresenceNotification`) avec un lien direct vers la page d'examen. |
+| **Visibilité** | Les présences suspectes sont marquées dans la liste des employés et les rapports (HTML + PDF) ; une page admin `/admin/suspect-presences` les liste avec filtres. Le superviseur voit celles de son équipe (`/superviseur/suspect-presences`). |
 
 Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `motif_suspicion`). Les seuils sont configurables dans `config/geolocation.php` et via variables d'environnement (`GEOLOC_*`).
+
+### 6.1ter Workflow de traitement des présences suspectes
+1. **Détection** : l'anti-triche marque une présence `suspect = true` + `motif_suspicion` ; l'admin est notifié automatiquement.
+2. **Examen** : l'admin consulte `/admin/suspect-presences` (motif, distance, vitesse, employé, période) avec filtres nom + période.
+3. **Traitement** : l'admin choisit un statut — `nouveau`, `examiné`, `justifié` ou `rejeté` — et ajoute un commentaire. La présence enregistre `statut_traitement`, `commentaire_traitement`, `traite_par` et `traite_le`.
+4. **Historique** : chaque changement de statut est journalisé dans la table `presence_traitements` (`statut_avant` → `statut_apres`, commentaire, auteur, date) — traçabilité complète.
+5. **Visibilité superviseur** : le superviseur voit les pointages suspects de son équipe en lecture seule (pas de droit de traitement).
 
 ### 6.2 Notifications (retard & absence)
 - **Retard** : notifié au superviseur direct + à l'administrateur principal, en **email** et **notification interne**.

@@ -394,6 +394,44 @@ public function exportReport(Request $request)
     }
 
     /**
+     * Met à jour le statut de traitement d'une présence suspecte
+     * et journalise la modification dans l'historique.
+     */
+    public function updateSuspectPresence(Request $request, $id)
+    {
+        $request->validate([
+            'statut_traitement' => 'required|in:nouveau,examiné,rejeté,justifié',
+            'commentaire' => 'nullable|string|max:2000',
+        ]);
+
+        $presence = Presence::find($id);
+
+        if (!$presence || !$presence->suspect) {
+            return redirect()->route('admin.suspectPresences')->with('error', 'Présence suspecte introuvable.');
+        }
+
+        // Historique : enregistrer le changement de statut
+        if ($presence->statut_traitement !== $request->statut_traitement) {
+            \App\Models\PresenceTraitement::create([
+                'presence_id' => $presence->id,
+                'statut_avant' => $presence->statut_traitement ?? 'nouveau',
+                'statut_apres' => $request->statut_traitement,
+                'commentaire' => $request->commentaire,
+                'traite_par' => Auth::id(),
+            ]);
+        }
+
+        $presence->update([
+            'statut_traitement' => $request->statut_traitement,
+            'commentaire_traitement' => $request->commentaire,
+            'traite_par' => Auth::id(),
+            'traite_le' => now(),
+        ]);
+
+        return redirect()->route('admin.suspectPresences')->with('success', 'Statut de la présence suspecte mis à jour.');
+    }
+
+    /**
  * Mettre à jour le profil de l'administrateur
  *
  * @param  \Illuminate\Http\Request  $request

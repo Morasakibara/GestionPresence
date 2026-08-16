@@ -157,6 +157,9 @@ class PreController extends Controller
         }
     }
 
+    // Alerter l'admin si la présence est marquée suspecte (anti-triche)
+    $this->notifyAdminSuspect($user, $presence);
+
     return redirect()->back()->with('success', 'Heure d\'arrivée marquée avec succès.');
 }
 
@@ -272,6 +275,9 @@ public function markDeparture(Request $request)
         'motif_suspicion' => $suspect ? implode(' ', $motifs) : null,
     ]);
 
+    // Alerter l'admin si la présence est devenue suspecte (ex. vitesse irréaliste)
+    $this->notifyAdminSuspect($user, $presence);
+
     return redirect()->back()->with('success', 'Heure de départ marquée avec succès.');
 }
 
@@ -370,5 +376,20 @@ public function markDeparture(Request $request)
     private function primaryAdmin(): ?Utilisateur
     {
         return Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+    }
+
+    /**
+     * Notifie l'administrateur principal quand une présence est marquée suspecte.
+     */
+    private function notifyAdminSuspect(Utilisateur $employeUser, Presence $presence): void
+    {
+        if (!$presence->suspect) {
+            return;
+        }
+
+        $adminPrincipal = $this->primaryAdmin();
+        if ($adminPrincipal) {
+            $adminPrincipal->notify(new \App\Notifications\SuspectPresenceNotification($employeUser, $presence));
+        }
     }
 }

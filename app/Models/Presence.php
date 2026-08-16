@@ -37,7 +37,11 @@ class Presence extends Model
         'distance_km',
         'vitesse_kmh',
         'suspect',
-        'motif_suspicion'
+        'motif_suspicion',
+        'statut_traitement',
+        'commentaire_traitement',
+        'traite_par',
+        'traite_le'
     ];
 
     public function superviseur()
