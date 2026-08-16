@@ -150,7 +150,7 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 ### 🧑‍🔧 Employé (`/user/*`)
 | Fonctionnalité | Détail |
 |---|---|
-| **Dashboard** | Présences du mois, dernière arrivée / dernier départ, **évaluation colorée du mois** (note /20 + 🟢/🟠/🔴) et **historique d'évolution sur 6 mois** (tendance ▲ hausse / ▼ baisse / — stable). |
+| **Dashboard** | Présences du mois, dernière arrivée / dernier départ, **évaluation colorée du mois** (note /20 + 🟢/🟠/🔴), **historique d'évolution sur 6 mois** (tendance ▲ hausse / ▼ baisse / — stable) et **graphique Chart.js** de l'évolution de la note sur 20. |
 | **Pointer** | Marquage d'**arrivée** et de **départ** à **toute heure** (y compris le week-end), validé par géolocalisation. Au départ, **fiche de rendement obligatoire** (tâches effectuées). |
 | **Bilan de présence** | Historique du mois + total présences/absences. |
 | **Mes rendements** | Page `/user/rendement` : historique de ses **fiches de rendement** (date, arrivée, départ, **durée travaillée**, tâches effectuées) + **temps de travail total**. |

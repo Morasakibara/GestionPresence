@@ -287,6 +287,9 @@
             @endforeach
         </div>
         <p class="mt-3 text-xs text-gray-500">Évolution de votre note sur 20 mois par mois. <span class="text-green-600">▲ hausse</span> · <span class="text-red-600">▼ baisse</span> · <span class="text-gray-400">— stable</span></p>
+        <div class="mt-4">
+            <canvas id="evaluationChart" height="120"></canvas>
+        </div>
     </div>
 
     <div class="p-6 bg-white rounded-lg shadow-sm">
@@ -458,5 +461,70 @@
             errorDiv.remove();
         }, 5000);
     }
+</script>
+
+@php
+    $chartLabels = array_map(fn ($h) => ucfirst($h['label']), $historique);
+    $chartNotes = array_map(fn ($h) => (float) $h['note'], $historique);
+    $chartCouleurs = array_map(function ($h) {
+        return $h['couleur'] === 'vert' ? '#22c55e' : ($h['couleur'] === 'rouge' ? '#ef4444' : '#f97316');
+    }, $historique);
+@endphp
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('evaluationChart');
+        if (!ctx) {
+            return;
+        }
+        const labels = @json($chartLabels);
+        const data = @json($chartNotes);
+        const couleurs = @json($chartCouleurs);
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Note /20',
+                    data: data,
+                    borderColor: '#115293',
+                    backgroundColor: 'rgba(17, 82, 147, 0.08)',
+                    borderWidth: 2,
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: couleurs,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return 'Note : ' + context.parsed.y + '/20';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 20,
+                        ticks: { stepSize: 4 },
+                        title: { display: true, text: 'Note sur 20' }
+                    },
+                    x: {
+                        ticks: { maxRotation: 45, minRotation: 0 }
+                    }
+                }
+            }
+        });
+    });
 </script>
 @endsection

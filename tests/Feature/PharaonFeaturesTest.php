@@ -591,5 +591,7 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee('historique');
         $response->assertSee('6 mois');
         $response->assertSee('/20');
+        $response->assertSee('evaluationChart'); // graphique Chart.js
+        $response->assertSee('chart.js');
     }
 }
