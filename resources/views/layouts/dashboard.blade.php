@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', '3HCIG COOP-CA') }}</title>
+    <title>{{ config('app.name', 'Le Pharaon') }}</title>
 
     <!-- Styles -->
     @vite('resources/css/app.css')
@@ -29,7 +29,7 @@
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center">
                         <div class="shrink-0">
-                            <img class="w-auto h-20" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="3HCIG COOP-CA">
+                            <img class="w-auto h-20" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
                         </div>
                         <div class="hidden md:block">
                             <div class="flex items-baseline ml-10 space-x-4">

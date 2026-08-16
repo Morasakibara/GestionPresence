@@ -16,26 +16,15 @@ class PreController extends Controller
 {
     public function index()
     {
-        // Vérifier si nous sommes en week-end (samedi=6, dimanche=0)
-        $today = Carbon::now();
-        $isWeekend = $today->dayOfWeek === 0 || $today->dayOfWeek === 6;
-
-        // Afficher les options de marquage (arrivée et départ)
-        return view('presence.index', ['isWeekend' => $isWeekend]);
+        // Le pointage est désormais possible à toute heure, y compris le week-end
+        return view('presence.index');
     }
 
     public function markArrival(Request $request)
 {
     $now = now();
 
-    // Vérifier si nous sommes en week-end (samedi=6, dimanche=0)
-    if ($now->dayOfWeek === 0 || $now->dayOfWeek === 6) {
-        return redirect()->back()->withErrors('Le marquage de présence n\'est pas disponible pendant le week-end.');
-    }
-
-    if ($now->hour < 7 || $now->hour > 10 || ($now->hour == 10 && $now->minute > 0)) {
-        return redirect()->back()->withErrors('Vous ne pouvez marquer l\'arrivée qu\'entre 7h00 et 10h00.');
-    }
+    // Aucune restriction horaire : le pointage est possible à toute heure, y compris le week-end.
 
     // Vérifier la géolocalisation
     $latitude = $request->input('latitude');
@@ -107,20 +96,16 @@ class PreController extends Controller
     }
 
     return redirect()->back()->with('success', 'Heure d\'arrivée marquée avec succès.');
-}
-
-public function markDeparture(Request $request)
+}    public function markDeparture(Request $request)
 {
     $now = now();
 
-    // Vérifier si nous sommes en week-end (samedi=6, dimanche=0)
-    if ($now->dayOfWeek === 0 || $now->dayOfWeek === 6) {
-        return redirect()->back()->withErrors('Le marquage de présence n\'est pas disponible pendant le week-end.');
-    }
+    // Aucune restriction horaire : le pointage est possible à toute heure, y compris le week-end.
 
-    if ($now->hour < 17 || $now->hour > 18 || ($now->hour == 18 && $now->minute > 50)) {
-        return redirect()->back()->withErrors('Vous ne pouvez marquer le départ qu\'entre 17h00 et 18h30.');
-    }
+    // La fiche de rendement est obligatoire au départ
+    $request->validate([
+        'rendement' => 'required|string|max:5000',
+    ]);
 
     // Vérifier la géolocalisation
     $latitude = $request->input('latitude');
@@ -161,7 +146,8 @@ public function markDeparture(Request $request)
         'status' => 'présent',
         'latitude_depart' => $latitude,
         'longitude_depart' => $longitude,
-        'localisation_validee_depart' => true
+        'localisation_validee_depart' => true,
+        'rendement' => $request->input('rendement')
     ]);
 
     return redirect()->back()->with('success', 'Heure de départ marquée avec succès.');

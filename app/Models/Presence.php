@@ -29,7 +29,8 @@ class Presence extends Model
         'longitude_depart',
         'localisation_validee_arrivee',
         'localisation_validee_depart',
-        'workplace_location_id'
+        'workplace_location_id',
+        'rendement'
     ];
 
     public function superviseur()

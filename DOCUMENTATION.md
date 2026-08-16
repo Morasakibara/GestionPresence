@@ -1,14 +1,18 @@
-# 📋 3HCIG COOP-CA — Application de Gestion des Présences
+# 📋 Le Pharaon — Application de Gestion des Présences
 
 ## 1. Présentation du projet
 
-**3HCIG COOP-CA** est une application web de **gestion des présences en entreprise** permettant de :
+**Le Pharaon** est une application web de **gestion des présences en entreprise** permettant de :
 
-- Pointer son **arrivée** et son **départ** depuis le navigateur, avec **validation géolocalisée** (l'employé doit être physiquement sur son lieu de travail).
-- Détecter automatiquement les **retards** (après 8h00) et les **absences**.
+- Pointer son **arrivée** et son **départ** depuis le navigateur à **toute heure** (y compris le week-end), avec **validation géolocalisée** (l'employé doit être physiquement sur son lieu de travail).
+- Remplir une **fiche de rendement obligatoire** au départ (tâches effectuées dans la journée).
+- Détecter automatiquement les **retards** (après 8h00) et les **absences** (système d'alertes maintenu).
 - Notifier par **email + notification interne** le superviseur direct et l'administrateur principal.
-- Suivre la présence des équipes (superviseurs), générer des **rapports PDF** (admin et superviseur).
+- **Évaluer la discipline et le rendement** de chaque employé avec une notation /20 et des couleurs 🟢 vert / 🟠 orange / 🔴 rouge, intégrée aux rapports.
+- Suivre la présence des équipes (superviseurs), générer des **rapports PDF détaillés** (admin/fondateurs et superviseurs/directeurs) incluant les **réalisations** de chaque employé.
 - Gérer les **lieux de travail** (géofencing : centre GPS + rayon en mètres).
+
+L'application repose sur une architecture **multi-rôles** : Administrateur (Fondateur), Superviseur (Directeur / Directeur adjoint), Employé.
 
 L'application repose sur une architecture **multi-rôles** : Administrateur, Superviseur, Employé.
 
@@ -103,7 +107,16 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | `notifications` | Notifications internes (Laravel Notifications). |
 
 ### Statuts de présence
-`en attente` (arrivée pointée) → `présent` (départ pointé) | `Absent` (auto-absence ou arrivée sans départ).
+`en attente` (arrivée pointée) → `présent` (départ pointé avec fiche de rendement) | `Absent` (auto-absence ou arrivée sans départ).
+
+### Fiche de rendement (colonne `presence.rendement`)
+Remplie obligatoirement au départ : description des tâches effectuées dans la journée. Affichée dans les **rapports** (admin + superviseur, HTML et PDF) pour le suivi du rendement hebdomadaire / mensuel.
+
+### Évaluation de discipline et de notation (table `evaluations`)
+- Note **/20** calculée automatiquement (`App\Services\EvaluationService`) à partir des retards, absences, présences suspectes, présences complètes et fiches de rendement remplies.
+- **Couleur** : 🟢 Vert ≥ 14/20 · 🟠 Orange 10-13/20 · 🔴 Rouge < 10/20.
+- **Évaluation manuelle** : l'admin (fondateur) et le superviseur (directeur / directeur adjoint) peuvent enregistrer une note + couleur + commentaire par employé et par mois (elle prime sur l'auto-calcul).
+- **Intégrée aux rapports** : badge coloré par employé dans les rapports HTML et PDF (admin et superviseur).
 
 ---
 
@@ -115,7 +128,7 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | **Dashboard** | Statistiques globales : employés, superviseurs, présences/absences/retards du jour et du mois. |
 | **Ajouter employé** | Formulaire (nom, email, mot de passe, rôle Employer/Superviseur + équipe pour un superviseur). |
 | **Liste des employés** | Recherche + filtres par rôle, suppression depuis la liste. |
-| **Générer un rapport** | Rapport de présence sur une période → **PDF** téléchargeable + enregistré. |
+| **Générer un rapport** | Rapport de présence et de **rendement** sur une période : total présences, **évaluation colorée /20** (🟢/🟠/🔴), **réalisations** (fiches de rendement de la période) + enregistrement d'une **évaluation manuelle** → **PDF** téléchargeable + enregistré. |
 | **Lieux de travail** | CRUD complet des zones de géofencing (nom, GPS, rayon, actif/inactif). |
 | **Profil** | Modification du profil et de l'avatar (modal). |
 
@@ -125,7 +138,7 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | **Dashboard d'équipe** | Statistiques de son équipe (membres, présents, absents, retards du jour). |
 | **Suivre les présences** | Liste des membres de son équipe + détail par utilisateur (frise graphique Chart.js). |
 | **Ajouter / retirer un membre** | Gestion de l'équipe (rattache `Sup_id` + `equipe` de façon cohérente). |
-| **Rapport d'équipe** | Rapport mensuel de son équipe + **export PDF**. |
+| **Rapport d'équipe** | Rapport mensuel de son équipe avec **évaluations colorées /20** et **réalisations** (fiches de rendement) + **export PDF** + évaluation manuelle des membres. |
 | **Changer de rôle** | Bascule Employé ↔ Superviseur. |
 | **Notifications** | Reçoit les retards/absences des membres de son équipe. |
 
@@ -133,7 +146,7 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | Fonctionnalité | Détail |
 |---|---|
 | **Dashboard** | Présences du mois, dernière arrivée / dernier départ. |
-| **Pointer** | Marquage d'**arrivée** (7h–10h) et de **départ** (17h–18h30), validé par géolocalisation. |
+| **Pointer** | Marquage d'**arrivée** et de **départ** à **toute heure** (y compris le week-end), validé par géolocalisation. Au départ, **fiche de rendement obligatoire** (tâches effectuées). |
 | **Bilan de présence** | Historique du mois + total présences/absences. |
 | **Profil** | Modification du profil et de l'avatar. |
 
@@ -149,10 +162,10 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 1. L'employé ouvre la page « Présence », le navigateur récupère sa position GPS.
 2. `POST /check-location` vérifie (formule de **Haversine**) que la position est dans le rayon d'un lieu actif → réponse JSON `valid: true/false`.
 3. Arrivée (`POST /mark-arrival`) : créé une `presence` avec statut `en attente`, heure d'arrivée et coordonnées.
-   - **Fenêtre** : 7h00 → 10h00, jours ouvrés uniquement (week-end bloqué).
-   - **Retard** : arrivée après 8h00 → notifications automatiques.
-4. Départ (`POST /mark-departure`) : met à jour la présence avec statut `présent`.
-   - **Fenêtre** : 17h00 → 18h30.
+   - **Aucune restriction horaire** : pointage possible à toute heure, y compris le week-end (arriver à 8h, 9h, 10h, 14h…).
+   - **Retard** : arrivée après 8h00 → notifications automatiques (système d'alertes maintenu).
+4. Départ (`POST /mark-departure`) : exige la **fiche de rendement** (`rendement` requis), puis met à jour la présence avec statut `présent`.
+   - **Aucune restriction horaire** pour le départ.
 
 ### 6.2 Notifications (retard & absence)
 - **Retard** : notifié au superviseur direct + à l'administrateur principal, en **email** et **notification interne**.

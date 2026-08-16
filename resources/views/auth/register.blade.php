@@ -14,10 +14,10 @@
     
     <!-- Contenu du bloc gauche -->
     <div class="relative z-20 flex flex-col justify-center items-start px-12 w-full h-full">
-      <img class="h-24 mb-8" src="{{ asset('storage/avatars/logo-3HCIG.png') }}" alt="3HCIG COOP-CA">
+      <img class="h-24 mb-8" src="{{ asset('storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
       
       <!-- Texte d'accueil animé -->
-      <h1 class="text-4xl font-bold mb-4 text-white text-shadow animate-fade-in">Rejoignez 3HCIG</h1>
+      <h1 class="text-4xl font-bold mb-4 text-white text-shadow animate-fade-in">Rejoignez Le Pharaon</h1>
       <p class="text-xl text-white text-shadow mb-6 max-w-md animate-slide-up">
         Créez votre compte pour faire partie de notre coopérative et contribuer à nos projets communs.
       </p>
@@ -33,7 +33,7 @@
   <div class="w-full md:w-1/2 flex flex-col justify-center bg-gray-100 px-6 py-12 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-sm">
       <div class="md:hidden">
-        <img class="mx-auto h-20 w-auto" src="{{ asset('storage/avatars/logo-3HCIG.png') }}" alt="3HCIG COOP-CA">
+        <img class="mx-auto h-20 w-auto" src="{{ asset('storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
       </div>
       <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-3hcig-blue-dark">Création de compte</h2>
     </div>

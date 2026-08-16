@@ -192,7 +192,7 @@
     <div class="container">
         <!-- En-tête avec logo -->
         <div class="brand-header">
-            <div class="company-name">3HCIG COOP-CA</div>
+            <div class="company-name">Le Pharaon</div>
         </div>
 
         <!-- En-tête du rapport -->
@@ -212,7 +212,9 @@
                     <thead>
                         <tr>
                             <th>Nom de l'employé</th>
-                            <th>Total de présences</th>
+                            <th>Total présences</th>
+                            <th>Évaluation</th>
+                            <th>Réalisations (rendement)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -220,6 +222,20 @@
                         <tr>
                             <td>{{ $data->employer_nom }}</td>
                             <td><span class="badge">{{ $data->total_presence }}</span></td>
+                            <td>
+                                <span class="badge" style="{{ $data->evaluation_couleur === 'vert' ? 'background-color: rgba(22,163,74,0.12); color:#15803d;' : ($data->evaluation_couleur === 'rouge' ? 'background-color: rgba(220,38,38,0.12); color:#b91c1c;' : 'background-color: rgba(249,115,22,0.12); color:#c2410c;') }}">
+                                    {{ $data->evaluation_note }}/20
+                                </span>
+                            </td>
+                            <td style="font-size:11px; max-width:280px;">
+                                @if(count($data->rendements) > 0)
+                                    @foreach($data->rendements as $rendement)
+                                        • {{ \Illuminate\Support\Str::limit($rendement, 140) }}<br>
+                                    @endforeach
+                                @else
+                                    <span style="color:#9ca3af;">Aucune fiche remplie</span>
+                                @endif
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -235,6 +251,8 @@
                 </p>
                 <p><strong>Période analysée:</strong> {{ isset($startDate) && isset($endDate) ?
                     ceil((strtotime($endDate) - strtotime($startDate)) / (60 * 60 * 24)) + 1 . ' jours' : 'Période complète' }}</p>
+                <p><strong>Légende évaluation:</strong> <span style="color:#15803d;">🟢 Vert ≥ 14/20</span> ·
+                    <span style="color:#c2410c;">🟠 Orange 10-13/20</span> · <span style="color:#b91c1c;">🔴 Rouge &lt; 10/20</span></p>
             </div>
         @else
             <div class="no-data">
@@ -250,7 +268,7 @@
         </div>
 
         <div class="footer">
-            <p>© {{ date('Y') }} 3HCIG COOP-CA. Ce document est généré automatiquement et est confidentiel.</p>
+            <p>© {{ date('Y') }} Le Pharaon. Ce document est généré automatiquement et est confidentiel.</p>
         </div>
     </div>
     

@@ -5,7 +5,7 @@
     <!-- Header avec le logo -->
     <header class="py-6 bg-white shadow-md z-10">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-center">
-            <img class="h-20" src="{{ asset('storage/avatars/logo-3HCIG.png') }}" alt="3HCIG COOP-CA">
+            <img class="h-20" src="{{ asset('storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
         </div>
     </header>
 
@@ -22,7 +22,7 @@
             <div class="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <!-- Titre et sous-titre -->
                 <div class="text-center mb-16">
-                    <h1 class="text-4xl font-bold text-3hcig-blue-dark mb-4">Bienvenue sur l'application de gestion de présence 3HCIG</h1>
+                    <h1 class="text-4xl font-bold text-3hcig-blue-dark mb-4">Bienvenue sur l'application de gestion de présence Le Pharaon</h1>
                     <p class="text-xl text-gray-700 max-w-3xl mx-auto">
                         Suivez et gérez facilement les présences, générez des rapports détaillés et optimisez le suivi de vos collaborateurs au sein de notre coopérative.
                     </p>
@@ -80,7 +80,7 @@
     <!-- Footer -->
     <footer class="py-4 bg-white border-t border-gray-200 shadow-inner mt-auto">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p class="text-gray-600">&copy; {{ date('Y') }} 3HCIG COOP-CA. Tous droits réservés.</p>
+            <p class="text-gray-600">&copy; {{ date('Y') }} Le Pharaon. Tous droits réservés.</p>
         </div>
     </footer>
 

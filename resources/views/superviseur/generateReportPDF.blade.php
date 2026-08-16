@@ -177,7 +177,9 @@
                     <thead>
                         <tr>
                             <th>Nom de l'employé</th>
-                            <th>Total de présences (Mois en cours)</th>
+                            <th>Total présences (Mois en cours)</th>
+                            <th>Évaluation</th>
+                            <th>Réalisations (rendement)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -185,6 +187,20 @@
                         <tr>
                             <td>{{ $report['name'] }}</td>
                             <td><span class="badge">{{ $report['totalPresences'] }}</span></td>
+                            <td>
+                                <span class="badge" style="{{ $report['evaluation_couleur'] === 'vert' ? 'background-color: rgba(22,163,74,0.12); color:#15803d;' : ($report['evaluation_couleur'] === 'rouge' ? 'background-color: rgba(220,38,38,0.12); color:#b91c1c;' : 'background-color: rgba(249,115,22,0.12); color:#c2410c;') }}">
+                                    {{ $report['evaluation_note'] }}/20
+                                </span>
+                            </td>
+                            <td style="font-size:11px; max-width:280px;">
+                                @if(count($report['rendements']) > 0)
+                                    @foreach($report['rendements'] as $rendement)
+                                        • {{ \Illuminate\Support\Str::limit($rendement, 140) }}<br>
+                                    @endforeach
+                                @else
+                                    <span style="color:#9ca3af;">Aucune fiche remplie</span>
+                                @endif
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -198,6 +214,8 @@
                 <p><strong>Moyenne de présences par employé:</strong> 
                     {{ count($reports) > 0 ? round(array_sum(array_column($reports, 'totalPresences')) / count($reports), 1) : 0 }}
                 </p>
+                <p><strong>Légende évaluation:</strong> <span style="color:#15803d;">🟢 Vert ≥ 14/20</span> ·
+                    <span style="color:#c2410c;">🟠 Orange 10-13/20</span> · <span style="color:#b91c1c;">🔴 Rouge &lt; 10/20</span></p>
             </div>
         @else
             <div class="no-data">
@@ -213,7 +231,7 @@
         </div>
 
         <div class="footer">
-            <p>© {{ date('Y') }} 3HCIG COOP-CA. Ce document est généré automatiquement et est confidentiel.</p>
+            <p>© {{ date('Y') }} Le Pharaon. Ce document est généré automatiquement et est confidentiel.</p>
         </div>
     </div>
 </body>

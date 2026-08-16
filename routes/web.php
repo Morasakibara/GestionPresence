@@ -63,6 +63,7 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::get('/generate-report', [AdminController::class, 'showGenerateReportForm'])->name('generateReport');
     Route::post('/generate-report', [AdminController::class, 'generateReport']);
     Route::post('/report',[AdminController::class, 'exportReport'])->name('exportReport');
+    Route::post('/evaluations', [AdminController::class, 'storeEvaluation'])->name('storeEvaluation');
     Route::get('/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('showEmployeeList');
     Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee']);
     Route::post('/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('updateProfile');
@@ -88,6 +89,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/supdashboard', [SuperviseurController::class, 'Supdashboard'])->name('superviseur.supdashboard');
         Route::get('/followPresence', [SuperviseurController::class, 'showFollowPresence'])->name('superviseur.showFollowPresence');
         Route::get('/generateReport2', [SuperviseurController::class, 'generateReport'])->name('superviseur.generateReport2');
+        Route::post('/evaluations', [SuperviseurController::class, 'storeEvaluation'])->name('superviseur.storeEvaluation');
         Route::get('/getUserDetails/{id}', [SuperviseurController::class, 'getUserDetails'])->name('superviseur.getUserDetails');
         Route::get('/viewUser/{id}', [SuperviseurController::class, 'viewUser'])->name('viewUser');
         Route::get('/showUser/{id}', [SuperviseurController::class, 'showUser'])->name('user.show');

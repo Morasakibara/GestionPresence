@@ -12,94 +12,41 @@
             </div>
 
             <div class="space-y-6">
-                @php
-                    $currentDay = now()->dayOfWeek;
-                    $isWeekend = $currentDay === 0 || $currentDay === 6; // 0 = dimanche, 6 = samedi
-                @endphp
+                <!-- Bouton pour marquer l'heure d'arrivée -->
+                <div>
+                    <form method="POST" action="{{ route('presence.arrival') }}" id="arrival-form">
+                        @csrf
+                        <input type="hidden" name="latitude" id="latitude-arrival">
+                        <input type="hidden" name="longitude" id="longitude-arrival">
+                        <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-blue hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                            <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                            </svg>
+                            Marquer l'heure d'arrivée
+                        </button>
+                    </form>
+                </div>
 
-                @if($isWeekend)
-                    <div class="p-4 rounded-md bg-red-50">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="w-5 h-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm font-medium text-red-800">
-                                    Le marquage de présence n'est pas disponible pendant le week-end.
-                                </p>
-                                <p class="mt-1 text-sm text-red-700">
-                                    Veuillez revenir durant les jours ouvrables (lundi à vendredi).
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <!-- Bouton pour marquer l'heure d'arrivée -->
-                    <div>
-                        @if(now()->hour >= 7 && (now()->hour < 10 || (now()->hour == 10 && now()->minute == 0)))
-                            <form method="POST" action="{{ route('presence.arrival') }}" id="arrival-form">
-                                @csrf
-                                <input type="hidden" name="latitude" id="latitude-arrival">
-                                <input type="hidden" name="longitude" id="longitude-arrival">
-                                <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-blue hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
-                                    <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                    </svg>
-                                    Marquer l'heure d'arrivée
-                                </button>
-                            </form>
-                        @else
-                            <div class="p-4 rounded-md bg-yellow-50">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="w-5 h-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-yellow-700">
-                                            Le bouton d'arrivée est actif uniquement entre 7h et 10h.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Bouton pour marquer l'heure de départ -->
-                    <div>
-                        @if(now()->hour >= 17 && (now()->hour < 18 || (now()->hour == 18 && now()->minute <= 30)))
-                            <form method="POST" action="{{ route('presence.departure') }}" id="departure-form">
-                                @csrf
-                                <input type="hidden" name="latitude" id="latitude-departure">
-                                <input type="hidden" name="longitude" id="longitude-departure">
-                                <button type="button" onclick="getLocationAndSubmit('departure-form')" class="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-green hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2">
-                                    <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
-                                    Marquer l'heure de départ
-                                </button>
-                            </form>
-                        @else
-                            <div class="p-4 rounded-md bg-yellow-50">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="w-5 h-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-yellow-700">
-                                            Le bouton de départ est actif uniquement entre 17h et 18h30.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                @endif
+                <!-- Bouton pour marquer l'heure de départ avec fiche de rendement -->
+                <div>
+                    <form method="POST" action="{{ route('presence.departure') }}" id="departure-form">
+                        @csrf
+                        <input type="hidden" name="latitude" id="latitude-departure">
+                        <input type="hidden" name="longitude" id="longitude-departure">
+                        <label for="rendement" class="block text-sm font-medium text-gray-700 mb-1">
+                            Fiche de rendement du jour <span class="text-red-600">*</span>
+                        </label>
+                        <textarea name="rendement" id="rendement" rows="4" required
+                            placeholder="Décrivez ce que vous avez fait aujourd'hui : tâches effectuées, projets avancés, résultats obtenus..."
+                            class="block w-full px-3 py-2 mb-3 text-sm border border-gray-300 rounded-md shadow-sm focus:border-3hcig-blue focus:outline-none focus:ring-3hcig-blue"></textarea>
+                        <button type="button" onclick="getLocationAndSubmit('departure-form')" class="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-green hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2">
+                            <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Marquer l'heure de départ
+                        </button>
+                    </form>
+                </div>
 
                 <!-- Messages de feedback -->
                 @if(session('success'))
@@ -144,11 +91,7 @@
                         <div class="text-sm font-medium text-gray-500">Heure actuelle</div>
                         <div class="mt-1 text-xl font-semibold text-3hcig-blue-dark" id="current-time"></div>
                         <div class="mt-2 text-xs text-gray-500">
-                            @if($isWeekend)
-                                Week-end: Système non disponible
-                            @else
-                                Arrivée: 7h00 - 10h00 | Départ: 17h00 - 18h30
-                            @endif
+                            Pointage ouvert à toute heure — renseignez votre fiche de rendement avant de pointer votre départ.
                         </div>
                     </div>
                 </div>

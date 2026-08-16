@@ -186,23 +186,40 @@ class SuperviseurController extends Controller
         // Récupérer les utilisateurs correspondant à ces IDs
         $users = Utilisateur::whereIn('id', $employerIds)->get();
 
-        // Calculer le total de présences pour chaque employé pour le mois en cours
-        $currentMonth = now()->month;
-        $currentYear = now()->year;
+        // Période : mois en cours
+        $debut = now()->startOfMonth()->toDateString();
+        $fin = now()->endOfMonth()->toDateString();
         $reports = [];
 
         foreach ($users as $user) {
             $totalPresences = Presence::where('employerID', $user->id)
-                ->whereMonth('date', $currentMonth)
-                ->whereYear('date', $currentYear)
+                ->whereBetween('date', [$debut, $fin])
                 ->where('status', 'présent')
                 ->count();
 
+            $rendements = Presence::where('employerID', $user->id)
+                ->whereBetween('date', [$debut, $fin])
+                ->whereNotNull('rendement')
+                ->where('rendement', '!=', '')
+                ->orderBy('date')
+                ->pluck('rendement')
+                ->toArray();
+
+            $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
+
             $reports[] = [
                 'name' => $user->nom,
+                'employerID' => $user->id,
                 'totalPresences' => $totalPresences,
+                'rendements' => $rendements,
+                'evaluation_note' => $evaluation['note'],
+                'evaluation_couleur' => $evaluation['couleur'],
+                'evaluation_commentaire' => $evaluation['commentaire'],
+                'evaluation_manuelle' => $evaluation['manuelle'],
             ];
         }
+
+        usort($reports, fn ($a, $b) => $b['totalPresences'] <=> $a['totalPresences']);
 
         return view('superviseur.generateReport2', compact('reports'));
     }
@@ -229,9 +246,9 @@ class SuperviseurController extends Controller
         // Récupérer les employés de la même équipe
         $employers = Employer::where('equipe', $equipe)->pluck('id')->toArray();
 
-        // Calculer le total de présences pour chaque employé pour le mois en cours
-        $currentMonth = now()->month;
-        $currentYear = now()->year;
+        // Période : mois en cours
+        $debut = now()->startOfMonth()->toDateString();
+        $fin = now()->endOfMonth()->toDateString();
         $reports = [];
 
         // Récupérer les utilisateurs correspondant à ces IDs d'employé
@@ -239,16 +256,33 @@ class SuperviseurController extends Controller
 
         foreach ($users as $user) {
             $totalPresences = Presence::where('employerID', $user->id)
-                ->whereMonth('date', $currentMonth)
-                ->whereYear('date', $currentYear)
+                ->whereBetween('date', [$debut, $fin])
                 ->where('status', 'présent')
                 ->count();
 
+            $rendements = Presence::where('employerID', $user->id)
+                ->whereBetween('date', [$debut, $fin])
+                ->whereNotNull('rendement')
+                ->where('rendement', '!=', '')
+                ->orderBy('date')
+                ->pluck('rendement')
+                ->toArray();
+
+            $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
+
             $reports[] = [
                 'name' => $user->nom,
+                'employerID' => $user->id,
                 'totalPresences' => $totalPresences,
+                'rendements' => $rendements,
+                'evaluation_note' => $evaluation['note'],
+                'evaluation_couleur' => $evaluation['couleur'],
+                'evaluation_commentaire' => $evaluation['commentaire'],
+                'evaluation_manuelle' => $evaluation['manuelle'],
             ];
         }
+
+        usort($reports, fn ($a, $b) => $b['totalPresences'] <=> $a['totalPresences']);
 
         // Générer le PDF
         $pdf = PDF::loadView('superviseur.generateReportPDF', [
@@ -413,6 +447,32 @@ class SuperviseurController extends Controller
         $employer->save();
 
         return redirect()->back()->with('success', 'Employé retiré avec succès de votre équipe.');
+    }
+
+    /**
+     * Enregistre (ou met à jour) une évaluation manuelle pour un membre de l'équipe et un mois.
+     */
+    public function storeEvaluation(Request $request)
+    {
+        $request->validate([
+            'employerID' => 'required|integer|exists:employer,id',
+            'mois' => 'required|date_format:Y-m',
+            'note' => 'required|numeric|min:0|max:20',
+            'couleur' => 'required|in:vert,orange,rouge',
+            'commentaire' => 'nullable|string|max:2000',
+        ]);
+
+        \App\Models\Evaluation::updateOrCreate(
+            ['employerID' => $request->employerID, 'mois' => $request->mois],
+            [
+                'note' => (float) $request->note,
+                'couleur' => $request->couleur,
+                'commentaire' => $request->commentaire,
+                'evaluateur_id' => Auth::id(),
+            ]
+        );
+
+        return redirect()->back()->with('success', 'Évaluation enregistrée.');
     }
 
     public function showAddMemberForm(Request $request)

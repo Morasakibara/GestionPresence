@@ -237,22 +237,52 @@ public function generateReport(Request $request)
         ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
         ->whereBetween('presence.date', [$startDate, $endDate])
         ->where('presence.status', 'présent')
-        ->select('utilisateur.nom as employer_nom', DB::raw('count(presence.status) as total_presence'))
-        ->groupBy('utilisateur.nom')
+        ->select('utilisateur.nom as employer_nom', 'presence.employerID')
         ->get();
+
+    // Regrouper par employé avec réalisations (fiches de rendement) et évaluation
+    $reportData = [];
+    foreach ($presences->groupBy('employer_nom') as $nom => $group) {
+        $employerID = (int) $group->first()->employerID;
+        $rendements = \App\Models\Presence::where('employerID', $employerID)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->whereNotNull('rendement')
+            ->where('rendement', '!=', '')
+            ->orderBy('date')
+            ->pluck('rendement')
+            ->toArray();
+
+        $evaluation = \App\Services\EvaluationService::evaluer($employerID, $startDate, $endDate);
+
+        $reportData[] = (object) [
+            'employer_nom' => $nom,
+            'employerID' => $employerID,
+            'total_presence' => $group->count(),
+            'rendements' => $rendements,
+            'evaluation_note' => $evaluation['note'],
+            'evaluation_couleur' => $evaluation['couleur'],
+            'evaluation_commentaire' => $evaluation['commentaire'],
+            'evaluation_manuelle' => $evaluation['manuelle'],
+        ];
+    }
+
+    usort($reportData, fn ($a, $b) => $b->total_presence <=> $a->total_presence);
+    $reportData = collect($reportData);
 
     // Si l'utilisateur a choisi d'exporter en PDF
     if ($request->export_format === 'pdf') {
-        return $this->exportToPDF($presences, $startDate, $endDate);
+        return $this->exportToPDF($reportData, $startDate, $endDate);
     }
 
     // Sinon, afficher le rapport dans une autre page
-    return view('admin.report', compact('presences', 'startDate', 'endDate'));
+    return view('admin.report', compact('reportData', 'startDate', 'endDate'));
 }
 
 // Exporter le rapport en PDF
- public function exportToPDF($reportData, $startDate = null, $endDate = null)
+public function exportToPDF($reportData, $startDate = null, $endDate = null)
 {
+    // Les données arrivent déjà enrichies (reportData), on les passe telles quelles au PDF.
+
     // Récupérer l'administrateur connecté
     $admin = auth()->user();
 
@@ -330,14 +360,68 @@ public function exportReport(Request $request)
         ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
         ->whereBetween('presence.date', [$startDate, $endDate])
         ->where('presence.status', 'présent')
-        ->select('utilisateur.nom as employer_nom', DB::raw('count(presence.status) as total_presence'))
-        ->groupBy('utilisateur.nom')
+        ->select('utilisateur.nom as employer_nom', 'presence.employerID')
         ->get();
 
+    // Regrouper par employé avec réalisations (fiches de rendement) et évaluation
+    $reportData = [];
+    foreach ($presences->groupBy('employer_nom') as $nom => $group) {
+        $employerID = (int) $group->first()->employerID;
+        $rendements = \App\Models\Presence::where('employerID', $employerID)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->whereNotNull('rendement')
+            ->where('rendement', '!=', '')
+            ->orderBy('date')
+            ->pluck('rendement')
+            ->toArray();
+
+        $evaluation = \App\Services\EvaluationService::evaluer($employerID, $startDate, $endDate);
+
+        $reportData[] = (object) [
+            'employer_nom' => $nom,
+            'employerID' => $employerID,
+            'total_presence' => $group->count(),
+            'rendements' => $rendements,
+            'evaluation_note' => $evaluation['note'],
+            'evaluation_couleur' => $evaluation['couleur'],
+            'evaluation_commentaire' => $evaluation['commentaire'],
+            'evaluation_manuelle' => $evaluation['manuelle'],
+        ];
+    }
+
+    usort($reportData, fn ($a, $b) => $b->total_presence <=> $a->total_presence);
+    $reportData = collect($reportData);
+
     // Exporter le rapport en PDF
-    return $this->exportToPDF($presences, $startDate, $endDate);
+    return $this->exportToPDF($reportData, $startDate, $endDate);
 }
 
+
+    /**
+     * Enregistre (ou met à jour) une évaluation manuelle pour un employé et un mois.
+     */
+    public function storeEvaluation(Request $request)
+    {
+        $request->validate([
+            'employerID' => 'required|integer|exists:employer,id',
+            'mois' => 'required|date_format:Y-m',
+            'note' => 'required|numeric|min:0|max:20',
+            'couleur' => 'required|in:vert,orange,rouge',
+            'commentaire' => 'nullable|string|max:2000',
+        ]);
+
+        \App\Models\Evaluation::updateOrCreate(
+            ['employerID' => $request->employerID, 'mois' => $request->mois],
+            [
+                'note' => (float) $request->note,
+                'couleur' => $request->couleur,
+                'commentaire' => $request->commentaire,
+                'evaluateur_id' => Auth::id(),
+            ]
+        );
+
+        return redirect()->back()->with('success', 'Évaluation enregistrée.');
+    }
 
     public function showEmployeeList(Request $request)
     {

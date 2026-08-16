@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', '3HCIG COOP-CA') }}</title>
+    <title>{{ config('app.name', 'Le Pharaon') }}</title>
     @vite('resources/css/app.css')
     @yield('additional_css')
 </head>
@@ -29,7 +29,7 @@
         <div id="desktop-sidebar" class="hidden md:block fixed inset-y-0 left-0 z-50 w-64 text-white bg-3hcig-blue-dark">
             <!-- Logo in Sidebar Header -->
             <div class="flex items-center justify-center h-16 border-b border-3hcig-blue">
-                <img class="w-auto h-20" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="3HCIG COOP-CA">
+                <img class="w-auto h-20" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
             </div>
             
             <!-- Nav Links pour Desktop -->
@@ -204,7 +204,7 @@
         <div id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 text-white transition-transform duration-300 ease-in-out transform -translate-x-full bg-3hcig-blue-dark md:hidden">
             <!-- Logo in Sidebar Header -->
             <div class="flex items-center justify-center h-16 border-b border-3hcig-blue">
-                <img class="w-auto h-20" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="3HCIG COOP-CA">
+                <img class="w-auto h-20" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
             </div>
             
             <!-- Nav Links pour Mobile -->
@@ -381,7 +381,7 @@
             <header class="bg-white shadow">
                 <div class="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
                     <h1 class="text-xl font-semibold text-3hcig-blue-dark">
-                        @yield('title', config('app.name', '3HCIG COOP-CA'))
+                        @yield('title', config('app.name', 'Le Pharaon'))
                     </h1>
                     <div class="flex items-center">
                         <!-- Notification Icon -->
@@ -444,7 +444,7 @@
 
             <!-- Footer -->
             <footer class="px-4 py-4 text-sm text-center text-gray-500 bg-white shadow-inner sm:px-6 lg:px-8">
-                <p>&copy; {{ date('Y') }} 3HCIG COOP-CA. Tous droits réservés.</p>
+                <p>&copy; {{ date('Y') }} Le Pharaon. Tous droits réservés.</p>
             </footer>
         </div>
     </div>
