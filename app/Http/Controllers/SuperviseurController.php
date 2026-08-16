@@ -125,15 +125,19 @@ class SuperviseurController extends Controller
     {
         $utilisateur = Utilisateur::find($id);
 
-        // Calculer le total des présences où le statut est "present"
+        if (!$utilisateur) {
+            abort(404);
+        }
+
+        // Calculer le total des présences où le statut est "présent"
         $totalPresences = Presence::where('employerID', $utilisateur->id)
-                                ->where('status', 'present')
+                                ->where('status', 'présent')
                                 ->count();
 
-        // Récupérer les présences de l'utilisateur pour le mois en cours avec le statut "present"
+        // Récupérer les présences de l'utilisateur pour le mois en cours avec le statut "présent"
         $currentMonth = now()->month;
         $presenceStats = Presence::where('employerID', $utilisateur->id)
-                                ->where('status', 'present')
+                                ->where('status', 'présent')
                                 ->whereMonth('date', $currentMonth)
                                 ->get();
 
@@ -165,24 +169,37 @@ class SuperviseurController extends Controller
 
     public function generateReport()
     {
-        $superviseur = auth()->user(); // Assume que le superviseur est l'utilisateur connecté
-        $equipe = $superviseur->equipe;
+        $superviseur = auth()->user();
 
-        // Récupérer les employés de la même équipe
-        $employers = Employer::where('equipe', $equipe)->where('poste', 'employer')->get();
+        // Récupérer les informations d'équipe du superviseur
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+
+        if (!$superviseurInfo) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+
+        $equipe = $superviseurInfo->equipe;
+
+        // Récupérer les IDs des employés de la même équipe
+        $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
+
+        // Récupérer les utilisateurs correspondant à ces IDs
+        $users = Utilisateur::whereIn('id', $employerIds)->get();
 
         // Calculer le total de présences pour chaque employé pour le mois en cours
         $currentMonth = now()->month;
+        $currentYear = now()->year;
         $reports = [];
 
-        foreach ($employers as $employer) {
-            $totalPresences = Presence::where('employerID', $employer->id)
+        foreach ($users as $user) {
+            $totalPresences = Presence::where('employerID', $user->id)
                 ->whereMonth('date', $currentMonth)
-                ->where('status', 'present')
+                ->whereYear('date', $currentYear)
+                ->where('status', 'présent')
                 ->count();
 
             $reports[] = [
-                'name' => $employer->name,
+                'name' => $user->nom,
                 'totalPresences' => $totalPresences,
             ];
         }
@@ -224,7 +241,7 @@ class SuperviseurController extends Controller
             $totalPresences = Presence::where('employerID', $user->id)
                 ->whereMonth('date', $currentMonth)
                 ->whereYear('date', $currentYear)
-                ->where('status', 'present')
+                ->where('status', 'présent')
                 ->count();
 
             $reports[] = [

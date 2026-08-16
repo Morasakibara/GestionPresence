@@ -38,11 +38,11 @@
 
             <div class="flex flex-wrap gap-4">
                 <label class="inline-flex items-center">
-                    <input type="checkbox" class="rounded border-gray-300 text-3hcig-blue shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20" name="roles[]" value="employé" {{ in_array('employé', $roles) ? 'checked' : '' }}>
+                    <input type="checkbox" class="rounded border-gray-300 text-3hcig-blue shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20" name="roles[]" value="Employer" {{ in_array('Employer', $roles) ? 'checked' : '' }}>
                     <span class="ml-2 text-sm text-gray-700">Employés</span>
                 </label>
                 <label class="inline-flex items-center">
-                    <input type="checkbox" class="rounded border-gray-300 text-3hcig-blue shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20" name="roles[]" value="superviseur" {{ in_array('superviseur', $roles) ? 'checked' : '' }}>
+                    <input type="checkbox" class="rounded border-gray-300 text-3hcig-blue shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20" name="roles[]" value="Superviseur" {{ in_array('Superviseur', $roles) ? 'checked' : '' }}>
                     <span class="ml-2 text-sm text-gray-700">Superviseurs</span>
                 </label>
                 <button type="submit" class="ml-auto rounded-md bg-3hcig-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">

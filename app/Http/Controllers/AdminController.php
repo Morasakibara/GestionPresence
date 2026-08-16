@@ -346,7 +346,7 @@ public function exportReport(Request $request)
 
         //Recuperer tous les employes avec leur nom,poste et email
         $query = DB::table('utilisateur')
-        ->whereIn('role',['superviseur','employer'])
+        ->whereIn('role',['Superviseur','Employer'])
         ->select('nom','role','email');
 
        if ($roles) {
