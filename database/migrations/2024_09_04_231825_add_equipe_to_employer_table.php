@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('employer', function (Blueprint $table) {
-            $table->string('equipe')->after('poste');
+            // Nullable : un employé peut être créé sans équipe (il hérite de celle
+            // de son superviseur via Sup_id), seule la création superviseur la renseigne.
+            $table->string('equipe')->nullable()->after('poste');
         });
     }
 
