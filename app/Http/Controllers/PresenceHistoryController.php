@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Presence;
 use App\Models\PresenceTraitement;
 use App\Models\Utilisateur;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -73,7 +74,74 @@ class PresenceHistoryController extends Controller
         $employeInfo = Utilisateur::find($presence->employerID);
         $presence->employer_nom = $employeInfo ? $employeInfo->nom : null;
 
-        return view('user.presence-history', compact('presence', 'traitements'));
+        // Pour l'admin : l'employé est-il bloqué (suspectes non justifiées sur la période) ?
+        $estBloque = false;
+        $nbSuspectesNonJustifiees = 0;
+        if (Auth::user()->role === 'Administrateur') {
+            $blocageJours = (int) config('geolocation.blocage_periode_jours', 30);
+            $nbSuspectesNonJustifiees = Presence::where('employerID', $presence->employerID)
+                ->where('suspect', true)
+                ->where('statut_traitement', '!=', 'justifié')
+                ->whereDate('date', '>=', now()->subDays($blocageJours))
+                ->count();
+            $estBloque = $nbSuspectesNonJustifiees >= (int) config('geolocation.blocage_suspects_max', 3);
+        }
+
+        return view('user.presence-history', compact('presence', 'traitements', 'estBloque', 'nbSuspectesNonJustifiees'));
+    }
+
+    /**
+     * L'administrateur débloque manuellement un employé : toutes ses présences
+     * suspectes non justifiées passent en statut 'justifié' (déblocage),
+     * ce qui lève le blocage de pointage. Journalisé dans l'historique.
+     */
+    public function unblockEmploye(Request $request, $employeId)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'Administrateur') {
+            return redirect()->back()->with('error', 'Seul un administrateur peut débloquer un employé.');
+        }
+
+        $employe = Utilisateur::find($employeId);
+        if (!$employe) {
+            return redirect()->back()->with('error', 'Employé introuvable.');
+        }
+
+        $blocageJours = (int) config('geolocation.blocage_periode_jours', 30);
+
+        // Présences suspectes non justifiées sur la période de blocage
+        $suspectes = Presence::where('employerID', $employeId)
+            ->where('suspect', true)
+            ->where('statut_traitement', '!=', 'justifié')
+            ->whereDate('date', '>=', now()->subDays($blocageJours))
+            ->get();
+
+        if ($suspectes->isEmpty()) {
+            return redirect()->back()->with('info', 'Aucune présence suspecte non justifiée à débloquer pour cet employé.');
+        }
+
+        $commentaire = $request->input('commentaire') ?: 'Déblocage manuel par l\'administrateur.';
+        $traitePar = $user->id;
+
+        foreach ($suspectes as $presence) {
+            // Journaliser le changement de statut
+            PresenceTraitement::create([
+                'presence_id' => $presence->id,
+                'statut_avant' => $presence->statut_traitement ?? 'nouveau',
+                'statut_apres' => 'justifié',
+                'commentaire' => $commentaire,
+                'traite_par' => $traitePar,
+            ]);
+
+            $presence->update([
+                'statut_traitement' => 'justifié',
+                'commentaire_traitement' => $commentaire,
+                'traite_par' => $traitePar,
+                'traite_le' => now(),
+            ]);
+        }
+
+        return redirect()->back()->with('success', $suspectes->count() . ' présence(s) suspecte(s) marquée(s) justifiée(s) — l\'employé est débloqué.');
     }
 
     /**

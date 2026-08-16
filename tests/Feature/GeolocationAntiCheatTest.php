@@ -1167,4 +1167,103 @@ class GeolocationAntiCheatTest extends TestCase
         $this->assertGreaterThan(0, $presence->vitesse_kmh);
         $this->assertStringContainsString('Vitesse', $presence->motif_suspicion);
     }
+
+    public function test_stats_admin_affiche_suspectes_et_bloques(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+
+        // 3 présences suspectes non justifiées -> employé bloqué
+        foreach (['2026-08-01', '2026-08-03', '2026-08-05'] as $date) {
+            Presence::create([
+                'employerID' => $employe->id,
+                'Sup_id' => $employerInfo->Sup_id,
+                'date' => $date,
+                'heureArrivee' => $date . ' 08:05:00',
+                'heureDepart' => $date . ' 17:30:00',
+                'status' => 'présent',
+                'suspect' => true,
+                'motif_suspicion' => 'Précision GPS insuffisante.',
+                'statut_traitement' => 'nouveau',
+            ]);
+        }
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $response = $this->get('/admin/stats-suspects');
+        $response->assertOk();
+        $response->assertSee('Statistiques des présences suspectes', false);
+        $response->assertSee($employe->nom); // employé bloqué listé
+    }
+
+    public function test_stats_admin_refuse_pour_employe(): void
+    {
+        $employe = $this->loginEmploye();
+
+        $response = $this->get('/admin/stats-suspects');
+        $response->assertRedirect(); // l'employé n'accède pas à l'espace admin
+    }
+
+    public function test_deblocage_manuel_employe_par_admin(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+
+        // 3 suspectes non justifiées -> bloqué
+        $ids = [];
+        foreach (['2026-08-01', '2026-08-03', '2026-08-05'] as $date) {
+            $ids[] = Presence::create([
+                'employerID' => $employe->id,
+                'Sup_id' => $employerInfo->Sup_id,
+                'date' => $date,
+                'heureArrivee' => $date . ' 08:05:00',
+                'heureDepart' => $date . ' 17:30:00',
+                'status' => 'présent',
+                'suspect' => true,
+                'motif_suspicion' => 'Précision GPS insuffisante.',
+                'statut_traitement' => 'nouveau',
+            ])->id;
+        }
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $response = $this->post("/admin/unblock-employe/{$employe->id}", [
+            'commentaire' => 'Vérification manuelle effectuée.',
+        ]);
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // Toutes les suspectes passent en justifié
+        foreach ($ids as $id) {
+            $this->assertDatabaseHas('presence', [
+                'id' => $id,
+                'statut_traitement' => 'justifié',
+                'commentaire_traitement' => 'Vérification manuelle effectuée.',
+            ]);
+        }
+
+        // Journalisé dans l'historique
+        $this->assertDatabaseHas('presence_traitements', [
+            'presence_id' => $ids[0],
+            'statut_avant' => 'nouveau',
+            'statut_apres' => 'justifié',
+            'traite_par' => $admin->id,
+        ]);
+    }
+
+    public function test_deblocage_refuse_pour_employe_non_admin(): void
+    {
+        $employe = $this->loginEmploye();
+
+        // L'employé n'a pas le droit de débloquer : le middleware isAdmin le redirige vers /
+        $response = $this->post("/admin/unblock-employe/{$employe->id}", [
+            'commentaire' => 'tentative',
+        ]);
+
+        $response->assertRedirect('/');
+    }
 }

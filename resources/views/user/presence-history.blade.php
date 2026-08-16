@@ -34,6 +34,28 @@
             </div>
         </div>
 
+        @if($isAdmin && isset($estBloque) && $estBloque)
+        <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="text-sm font-bold text-red-700">🚫 Cet employé est bloqué au pointage</p>
+                    <p class="mt-1 text-xs text-gray-600">
+                        {{ $nbSuspectesNonJustifiees }} présence(s) suspecte(s) non justifiée(s) sur la période de blocage.
+                    </p>
+                </div>
+                <form method="POST" action="{{ route('admin.unblockEmploye', $presence->employerID) }}" class="flex items-center gap-2">
+                    @csrf
+                    <input type="text" name="commentaire" placeholder="Motif du déblocage (optionnel)"
+                        class="w-48 rounded-md border-gray-300 text-sm shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20">
+                    <button type="submit"
+                        class="inline-flex items-center rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-green-700">
+                        🔓 Débloquer l'employé
+                    </button>
+                </form>
+            </div>
+        </div>
+        @endif
+
         <!-- Récapitulatif de la présence -->
         <div class="overflow-hidden rounded-lg bg-white p-6 shadow-sm">
             <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">

@@ -66,11 +66,13 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::post('/report',[AdminController::class, 'exportReport'])->name('exportReport');
     Route::get('/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('showEmployeeList');
     Route::get('/suspect-presences', [AdminController::class, 'showSuspectPresences'])->name('suspectPresences');
+    Route::get('/stats-suspects', [AdminController::class, 'suspectStats'])->name('suspectStats');
     Route::get('/suspect-presences/export', [AdminController::class, 'exportSuspectPresences'])->name('suspectPresences.export');
     Route::post('/suspect-presences/{id}/update', [AdminController::class, 'updateSuspectPresence'])->name('updateSuspectPresence');
     Route::post('/suspect-presences/{id}/repondre-contestation', [AdminController::class, 'repondreContestation'])->name('repondreContestation');
     Route::get('/presence-history/{id}', [PresenceHistoryController::class, 'show'])->name('presenceHistory');
     Route::get('/presence-history/{id}/pdf', [PresenceHistoryController::class, 'exportPdf'])->name('presenceHistory.pdf');
+    Route::post('/unblock-employe/{employeId}', [PresenceHistoryController::class, 'unblockEmploye'])->name('unblockEmploye');
     Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee']);
     Route::post('/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('updateProfile');
     Route::get('/update-profile', [App\Http\Controllers\AdminController::class, 'showProfileForm'])->name('showProfile');

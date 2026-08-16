@@ -398,6 +398,81 @@ public function exportReport(Request $request)
     }
 
     /**
+     * Tableau de bord des statistiques globales : suspicions et blocages.
+     */
+    public function suspectStats()
+    {
+        $blocageMax = (int) config('geolocation.blocage_suspects_max', 3);
+        $blocageJours = (int) config('geolocation.blocage_periode_jours', 30);
+
+        // 1. Total suspectes + répartition par statut de traitement
+        $totalSuspectes = Presence::where('suspect', true)->count();
+        $parStatut = Presence::where('suspect', true)
+            ->select('statut_traitement', DB::raw('count(*) as total'))
+            ->groupBy('statut_traitement')
+            ->pluck('total', 'statut_traitement');
+
+        // 2. Répartition par motif (les motifs sont des phrases ; on compte les catégories clés)
+        $motifCounts = [
+            'Vitesse irréaliste' => Presence::where('suspect', true)->where('motif_suspicion', 'like', '%Vitesse%')->count(),
+            'Précision GPS faible' => Presence::where('suspect', true)->where('motif_suspicion', 'like', '%Précision GPS%')->count(),
+            'Autres motifs' => 0,
+        ];
+        $motifCounts['Autres motifs'] = max(0, $totalSuspectes - $motifCounts['Vitesse irréaliste'] - $motifCounts['Précision GPS faible']);
+
+        // 3. Contestations : total, en attente, accordées, refusées
+        $totalContestations = Presence::whereNotNull('commentaire_contestation')->count();
+        $contestationsEnAttente = Presence::whereNotNull('commentaire_contestation')->whereNull('reponse_contestation')->count();
+        $contestationsAccordees = Presence::where('reponse_contestation', 'accordé')->count();
+        $contestationsRefusees = Presence::where('reponse_contestation', 'refusé')->count();
+
+        // 4. Employés actuellement bloqués
+        $employesBloques = collect();
+        $employes = DB::table('employer')
+            ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
+            ->select('employer.id', 'utilisateur.nom')
+            ->get();
+
+        foreach ($employes as $employe) {
+            $count = Presence::where('employerID', $employe->id)
+                ->where('suspect', true)
+                ->where('statut_traitement', '!=', 'justifié')
+                ->whereDate('date', '>=', now()->subDays($blocageJours))
+                ->count();
+            if ($count >= $blocageMax) {
+                $employesBloques->push((object) ['nom' => $employe->nom, 'suspectes' => $count]);
+            }
+        }
+
+        // 5. Évolution mensuelle (6 derniers mois)
+        $evolutionMensuelle = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $mois = now()->subMonths($i);
+            $evolutionMensuelle[] = [
+                'mois' => $mois->translatedFormat('M Y'),
+                'total' => Presence::where('suspect', true)
+                    ->whereYear('date', $mois->year)
+                    ->whereMonth('date', $mois->month)
+                    ->count(),
+            ];
+        }
+
+        return view('admin.suspectStats', compact(
+            'totalSuspectes',
+            'parStatut',
+            'motifCounts',
+            'totalContestations',
+            'contestationsEnAttente',
+            'contestationsAccordees',
+            'contestationsRefusees',
+            'employesBloques',
+            'evolutionMensuelle',
+            'blocageMax',
+            'blocageJours'
+        ));
+    }
+
+    /**
      * Exporte la liste des présences suspectes (CSV ou PDF) avec les filtres.
      */
     public function exportSuspectPresences(Request $request)

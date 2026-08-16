@@ -119,6 +119,8 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | **Lieux de travail** | CRUD complet des zones de géofencing (nom, GPS, rayon, actif/inactif). |
 | **Profil** | Modification du profil et de l'avatar (modal). |
 | **Présences suspectes** | Page dédiée listant les pointages marqués suspects (motif, distance, vitesse) avec filtres recherche + période. **Workflow de traitement** : statut (`nouveau`/`examiné`/`justifié`/`rejeté`) + commentaire + historique de traitement (`presence_traitements`). **Export CSV/PDF** des résultats filtrés. **Badge sidebar** : compteur de présences suspectes non traitées. |
+| **Statistiques des suspicions** | Page `/admin/stats-suspects` : tableau de bord des **suspicions et blocages** — total suspectes + répartition par statut, par motif (vitesse / GPS / autres), contestations (total, en attente, accordées, refusées), **employés actuellement bloqués** et évolution mensuelle sur 6 mois. Lien dans la sidebar. |
+| **Déblocage manuel** | Depuis la timeline d'un employé (admin), bouton **« Débloquer l'employé »** si celui-ci est bloqué : toutes ses présences suspectes non justifiées passent en `justifié` (commentaire de déblocage), levée immédiate du blocage de pointage. Chaque présence est journalisée dans l'historique (`presence_traitements`). |
 
 ### 🧑‍💼 Superviseur (`/superviseur/*`)
 | Fonctionnalité | Détail |
@@ -187,6 +189,8 @@ Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `m
 12. **Timeline de présence** : l'**historique complet** d'une présence (arrivée, départ, suspicion, contestation, réponse de l'admin, changements de statut) est consultable en chronologie : par l'**employé** depuis son bilan (`/user/presence-history/{id}`), par l'**admin** et le **superviseur** depuis la page suspectes (lien « Voir l'historique »). L'accès est contrôlé par rôle (admin : tout ; superviseur : son équipe ; employé : ses propres présences).
 13. **Export CSV enrichi** : l'export CSV des suspectes inclut désormais les colonnes **Contestation** (date + commentaire) et **Réponse admin** (accordé/refusé + commentaire), avec échappement CSV correct des `;` et `"`.
 14. **Export PDF de la timeline** : chaque timeline (employé, admin ou superviseur) peut être **exportée en PDF** (bouton « Export PDF ») pour l'archivage — récapitulatif complet, suspicion, contestation, réponse et historique des statuts.
+15. **Statistiques globales (admin)** : le tableau de bord `/admin/stats-suspects` agrège les suspicions (total, statuts, motifs, contestations, employés bloqués, évolution mensuelle sur 6 mois) pour piloter l'activité de contrôle.
+16. **Déblocage manuel (admin)** : quand un employé est bloqué au pointage, l'admin peut le **débloquer** depuis sa timeline — les suspectes non justifiées passent en `justifié` avec traçabilité (`presence_traitements`) et la levée du blocage est immédiate.
 
 ### 6.2 Notifications (retard & absence)
 - **Retard** : notifié au superviseur direct + à l'administrateur principal, en **email** et **notification interne**.
@@ -208,6 +212,8 @@ Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `m
 | `presence:rappel-suspectes` | **Tous les lundis à 9h00** | Notifie l'admin principal des présences suspectes restées **non traitées** (statut `nouveau`) depuis plus de `GEOLOC_RAPPEL_SUSPECTES_JOURS` jours (défaut 7). Option `--days=N` pour forcer le seuil. |
 | `presence:rappel-blocages` | **Tous les jours à 8h30** | Tant que des membres d'une équipe restent **bloqués au pointage** (seuil de suspectes non justifiées atteint), le superviseur de l'équipe reçoit un rappel quotidien (`MembresBloquesNotification`) avec la liste des membres bloqués. |
 | `presence:bilan-hebdo` | **Tous les lundis à 9h30** | Envoie à l'admin un **bilan email + interne** (`BilanHebdoNotification`) des présences suspectes de la semaine précédente : total, en attente, examinées, justifiées, rejetées, **avec un PDF joint** (détail par employé/date/statut/motif). |
+
+La **levée du blocage** se fait par traitement des présences (statut `justifié`) ou par **déblocage manuel** de l'admin (voir §6.1ter).
 
 Configuré dans `bootstrap/app.php` (`withSchedule`). En production, un cron `* * * * * php artisan schedule:run` est requis.
 
