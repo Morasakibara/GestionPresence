@@ -14,7 +14,30 @@
                 'orange' => 'bg-orange-100 text-orange-800',
                 'rouge' => 'bg-red-100 text-red-800',
             ];
+
+            // Données pour le graphique de comparaison des évaluations (toute l'entreprise)
+            $palette = ['#115293', '#16a34a', '#ea580c', '#9333ea', '#dc2626', '#0891b2', '#ca8a04', '#db2777', '#4f46e5', '#65a30d'];
+            $chartLabels = isset($reportData[0]) && !empty($reportData[0]->historique)
+                ? array_map(fn ($h) => $h['label'], $reportData[0]->historique)
+                : [];
+            $chartDatasets = [];
+            foreach ($reportData as $idx => $data) {
+                $chartDatasets[] = [
+                    'label' => $data->employer_nom,
+                    'data' => array_map(fn ($h) => (float) $h['note'], $data->historique),
+                    'color' => $palette[$idx % count($palette)],
+                ];
+            }
         @endphp
+
+        @if(count($reportData) > 0)
+        <div class="mb-8 rounded-lg border border-gray-200 bg-gray-50 p-6">
+            <h2 class="mb-1 text-lg font-semibold text-gray-900">Évolution des évaluations de l'entreprise (6 mois)</h2>
+            <p class="mb-4 text-sm text-gray-600">Comparaison de la note /20 de chaque employé, mois par mois.</p>
+            <canvas id="companyEvaluationChart" height="110"></canvas>
+            <p class="mt-3 text-xs text-gray-500">Échelle de 0 à 20. 🟢 Vert ≥ 14 · 🟠 Orange 10-13 · 🔴 Rouge &lt; 10</p>
+        </div>
+        @endif
 
         <div class="overflow-x-auto">
             <table class="w-full border-collapse mb-6">
@@ -114,4 +137,57 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('companyEvaluationChart');
+        if (!ctx) {
+            return;
+        }
+        const labels = @json($chartLabels);
+        const datasets = @json($chartDatasets).map(d => ({
+            label: d.label,
+            data: d.data,
+            borderColor: d.color,
+            backgroundColor: d.color,
+            borderWidth: 2,
+            tension: 0.35,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: d.color,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1.5
+        }));
+
+        new Chart(ctx, {
+            type: 'line',
+            data: { labels: labels, datasets: datasets },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ' : ' + context.parsed.y + '/20';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 20,
+                        ticks: { stepSize: 4 },
+                        title: { display: true, text: 'Note sur 20' }
+                    },
+                    x: {
+                        ticks: { maxRotation: 45, minRotation: 0 }
+                    }
+                }
+            }
+        });
+    });
+</script>
 @endsection

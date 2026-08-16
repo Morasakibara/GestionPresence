@@ -132,7 +132,7 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 | **Dashboard** | Statistiques globales : employés, superviseurs, présences/absences/retards du jour et du mois. |
 | **Ajouter employé** | Formulaire (nom, email, mot de passe, rôle Employer/Superviseur + équipe pour un superviseur). |
 | **Liste des employés** | Recherche + filtres par rôle, suppression depuis la liste. |
-| **Générer un rapport** | Rapport de présence et de **rendement** sur une période : total présences, **total heures travaillées**, **évaluation colorée /20** (🟢/🟠/🔴), **réalisations** (fiches de rendement de la période) + enregistrement d'une **évaluation manuelle** + **bulletin PDF individuel** par employé → **PDF** téléchargeable + enregistré. |
+| **Générer un rapport** | Rapport de présence et de **rendement** sur une période : total présences, **total heures travaillées**, **évaluation colorée /20** (🟢/🟠/🔴), **réalisations** (fiches de rendement de la période) + **graphique Chart.js de comparaison** des évaluations de toute l'entreprise (une courbe par employé sur 6 mois) + enregistrement d'une **évaluation manuelle** + **bulletin PDF individuel** par employé → **PDF** téléchargeable + enregistré. |
 | **Lieux de travail** | CRUD complet des zones de géofencing (nom, GPS, rayon, actif/inactif). |
 | **Profil** | Modification du profil et de l'avatar (modal). |
 

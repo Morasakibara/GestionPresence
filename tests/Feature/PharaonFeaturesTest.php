@@ -246,6 +246,10 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee($employe->nom);
         $response->assertSee('Développement de la page de rendement.');
         $response->assertSee('/20');
+        // Graphique de comparaison des évaluations (toute l'entreprise)
+        $response->assertSee('Évolution des évaluations');
+        $response->assertSee('companyEvaluationChart');
+        $response->assertSee('chart.js');
     }
 
     /** Le rapport superviseur inclut réalisations et évaluations. */

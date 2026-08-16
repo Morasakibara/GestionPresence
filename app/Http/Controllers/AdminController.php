@@ -261,6 +261,23 @@ public function generateReport(Request $request)
 
         $evaluation = \App\Services\EvaluationService::evaluer($employerID, $startDate, $endDate);
 
+        // Historique d'évaluation des 6 derniers mois (pour le graphique de comparaison)
+        $historique = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $mois = now()->subMonths($i);
+            $eval = \App\Services\EvaluationService::evaluer(
+                $employerID,
+                $mois->copy()->startOfMonth()->toDateString(),
+                $mois->copy()->endOfMonth()->toDateString()
+            );
+            $historique[] = [
+                'mois' => $mois->format('Y-m'),
+                'label' => ucfirst($mois->locale('fr')->isoFormat('MMMM')),
+                'note' => $eval['note'],
+                'couleur' => $eval['couleur'],
+            ];
+        }
+
         $reportData[] = (object) [
             'employer_nom' => $nom,
             'employerID' => $employerID,
@@ -271,6 +288,7 @@ public function generateReport(Request $request)
             'evaluation_couleur' => $evaluation['couleur'],
             'evaluation_commentaire' => $evaluation['commentaire'],
             'evaluation_manuelle' => $evaluation['manuelle'],
+            'historique' => $historique,
         ];
     }
 
