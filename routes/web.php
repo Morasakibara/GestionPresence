@@ -65,6 +65,7 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::post('/report',[AdminController::class, 'exportReport'])->name('exportReport');
     Route::post('/evaluations', [AdminController::class, 'storeEvaluation'])->name('storeEvaluation');
     Route::get('/evaluations/export', [AdminController::class, 'exportEvaluationsCsv'])->name('evaluations.export');
+    Route::get('/employe/{id}/bulletin', [AdminController::class, 'evaluationBulletin'])->name('evaluation.bulletin');
     Route::get('/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('showEmployeeList');
     Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee']);
     Route::post('/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('updateProfile');
@@ -94,6 +95,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::post('/evaluations', [SuperviseurController::class, 'storeEvaluation'])->name('superviseur.storeEvaluation');
         Route::get('/rendements', [SuperviseurController::class, 'teamRendements'])->name('superviseur.rendements');
         Route::get('/rendements/export', [SuperviseurController::class, 'exportTeamRendementsCsv'])->name('superviseur.rendements.export');
+        Route::get('/employe/{id}/bulletin', [SuperviseurController::class, 'evaluationBulletin'])->name('superviseur.evaluation.bulletin');
         Route::get('/getUserDetails/{id}', [SuperviseurController::class, 'getUserDetails'])->name('superviseur.getUserDetails');
         Route::get('/viewUser/{id}', [SuperviseurController::class, 'viewUser'])->name('viewUser');
         Route::get('/showUser/{id}', [SuperviseurController::class, 'showUser'])->name('user.show');

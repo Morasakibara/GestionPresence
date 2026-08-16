@@ -205,12 +205,20 @@ class SuperviseurController extends Controller
                 ->pluck('rendement')
                 ->toArray();
 
+            // Temps de travail total du mois (minutes)
+            $presencesPeriode = Presence::where('employerID', $user->id)
+                ->whereBetween('date', [$debut, $fin])
+                ->get(['heureArrivee', 'heureDepart']);
+            $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
+            $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+
             $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
 
             $reports[] = [
                 'name' => $user->nom,
                 'employerID' => $user->id,
                 'totalPresences' => $totalPresences,
+                'totalHeures' => $totalHeures,
                 'rendements' => $rendements,
                 'evaluation_note' => $evaluation['note'],
                 'evaluation_couleur' => $evaluation['couleur'],
@@ -268,12 +276,20 @@ class SuperviseurController extends Controller
                 ->pluck('rendement')
                 ->toArray();
 
+            // Temps de travail total du mois (minutes)
+            $presencesPeriode = Presence::where('employerID', $user->id)
+                ->whereBetween('date', [$debut, $fin])
+                ->get(['heureArrivee', 'heureDepart']);
+            $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
+            $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+
             $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
 
             $reports[] = [
                 'name' => $user->nom,
                 'employerID' => $user->id,
                 'totalPresences' => $totalPresences,
+                'totalHeures' => $totalHeures,
                 'rendements' => $rendements,
                 'evaluation_note' => $evaluation['note'],
                 'evaluation_couleur' => $evaluation['couleur'],
@@ -515,6 +531,14 @@ class SuperviseurController extends Controller
             ->orderBy('presence.heureArrivee')
             ->get();
 
+        // Durée travaillée par fiche + total du jour
+        $totalMinutes = 0;
+        foreach ($rendements as $r) {
+            $r->duree = \App\Services\EvaluationService::dureeTravail($r->heureArrivee, $r->heureDepart);
+            $totalMinutes += \App\Services\EvaluationService::minutesTravail($r->heureArrivee, $r->heureDepart);
+        }
+        $totalDuree = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+
         // Membres n'ayant pas encore rempli leur fiche ce jour-là
         $membresSansFiche = Utilisateur::whereIn('id', $employerIds)
             ->whereNotIn('id', DB::table('presence')
@@ -523,7 +547,7 @@ class SuperviseurController extends Controller
                 ->pluck('employerID'))
             ->get(['id', 'nom']);
 
-        return view('superviseur.rendements', compact('rendements', 'membresSansFiche', 'date', 'employerIds'));
+        return view('superviseur.rendements', compact('rendements', 'membresSansFiche', 'date', 'employerIds', 'totalDuree'));
     }
 
     /**
@@ -544,7 +568,7 @@ class SuperviseurController extends Controller
         $fin = $request->input('fin', $debut);
 
         $lignes = [];
-        $lignes[] = ['Équipe', 'Employé', 'Date', 'Arrivée', 'Départ', 'Rendement'];
+        $lignes[] = ['Équipe', 'Employé', 'Date', 'Arrivée', 'Départ', 'Durée', 'Rendement'];
 
         $rows = DB::table('presence')
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
@@ -565,6 +589,7 @@ class SuperviseurController extends Controller
                 date('d/m/Y', strtotime($r->date)),
                 $r->heureArrivee ? date('H:i', strtotime($r->heureArrivee)) : '',
                 $r->heureDepart ? date('H:i', strtotime($r->heureDepart)) : '',
+                \App\Services\EvaluationService::dureeTravail($r->heureArrivee, $r->heureDepart) ?? '',
                 $r->rendement,
             ];
         }
@@ -578,6 +603,54 @@ class SuperviseurController extends Controller
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename=rendements_equipe_' . $debut . '_' . $fin . '.csv',
         ]);
+    }
+
+    /**
+     * Bulletin individuel d'évaluation PDF pour un membre de l'équipe et un mois.
+     */
+    public function evaluationBulletin(Request $request, $id)
+    {
+        $superviseur = auth()->user();
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+
+        if (!$superviseurInfo) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+
+        $employerIds = Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
+
+        // Le membre doit appartenir à l'équipe du superviseur
+        if (!in_array((int) $id, array_map('intval', $employerIds))) {
+            return redirect()->back()->with('error', 'Ce membre ne fait pas partie de votre équipe.');
+        }
+
+        $mois = $request->input('mois', now()->format('Y-m'));
+        $debut = $mois . '-01';
+        $fin = now()->parse($debut)->endOfMonth()->toDateString();
+
+        $employe = DB::table('employer')
+            ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
+            ->where('employer.id', $id)
+            ->select('employer.id', 'utilisateur.nom')
+            ->first();
+
+        if (!$employe) {
+            return redirect()->back()->with('error', 'Membre non trouvé.');
+        }
+
+        $evaluation = \App\Services\EvaluationService::evaluer($id, $debut, $fin);
+        $stats = \App\Services\EvaluationService::statsPeriode($id, $debut, $fin);
+        $rendements = Presence::where('employerID', $id)
+            ->whereBetween('date', [$debut, $fin])
+            ->whereNotNull('rendement')
+            ->where('rendement', '!=', '')
+            ->orderBy('date')
+            ->get(['date', 'heureArrivee', 'heureDepart', 'rendement']);
+
+        $pdf = Pdf::loadView('superviseur.evaluation_bulletin_pdf', compact('employe', 'evaluation', 'stats', 'rendements', 'mois', 'debut', 'fin'));
+        $filename = 'bulletin_evaluation_' . $mois . '_' . $id . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     public function showAddMemberForm(Request $request)

@@ -213,6 +213,7 @@
                         <tr>
                             <th>Nom de l'employé</th>
                             <th>Total présences</th>
+                            <th>Total heures</th>
                             <th>Évaluation</th>
                             <th>Réalisations (rendement)</th>
                         </tr>
@@ -222,6 +223,7 @@
                         <tr>
                             <td>{{ $data->employer_nom }}</td>
                             <td><span class="badge">{{ $data->total_presence }}</span></td>
+                            <td><span class="badge" style="background-color: rgba(37,99,235,0.1); color:#1d4ed8;">{{ $data->total_heures ?? '-' }}</span></td>
                             <td>
                                 <span class="badge" style="{{ $data->evaluation_couleur === 'vert' ? 'background-color: rgba(22,163,74,0.12); color:#15803d;' : ($data->evaluation_couleur === 'rouge' ? 'background-color: rgba(220,38,38,0.12); color:#b91c1c;' : 'background-color: rgba(249,115,22,0.12); color:#c2410c;') }}">
                                     {{ $data->evaluation_note }}/20

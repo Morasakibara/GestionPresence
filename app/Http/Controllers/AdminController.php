@@ -252,12 +252,20 @@ public function generateReport(Request $request)
             ->pluck('rendement')
             ->toArray();
 
+        // Temps de travail total de la période (minutes)
+        $presencesPeriode = \App\Models\Presence::where('employerID', $employerID)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->get(['heureArrivee', 'heureDepart']);
+        $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
+        $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+
         $evaluation = \App\Services\EvaluationService::evaluer($employerID, $startDate, $endDate);
 
         $reportData[] = (object) [
             'employer_nom' => $nom,
             'employerID' => $employerID,
             'total_presence' => $group->count(),
+            'total_heures' => $totalHeures,
             'rendements' => $rendements,
             'evaluation_note' => $evaluation['note'],
             'evaluation_couleur' => $evaluation['couleur'],
@@ -375,12 +383,20 @@ public function exportReport(Request $request)
             ->pluck('rendement')
             ->toArray();
 
+        // Temps de travail total de la période (minutes)
+        $presencesPeriode = \App\Models\Presence::where('employerID', $employerID)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->get(['heureArrivee', 'heureDepart']);
+        $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
+        $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+
         $evaluation = \App\Services\EvaluationService::evaluer($employerID, $startDate, $endDate);
 
         $reportData[] = (object) [
             'employer_nom' => $nom,
             'employerID' => $employerID,
             'total_presence' => $group->count(),
+            'total_heures' => $totalHeures,
             'rendements' => $rendements,
             'evaluation_note' => $evaluation['note'],
             'evaluation_couleur' => $evaluation['couleur'],
@@ -413,10 +429,17 @@ public function exportReport(Request $request)
             ->get();
 
         $lignes = [];
-        $lignes[] = ['Employé', 'Mois', 'Note /20', 'Couleur', 'Commentaire', 'Rendements du mois'];
+        $lignes[] = ['Employé', 'Mois', 'Note /20', 'Couleur', 'Commentaire', 'Heures travaillées', 'Rendements du mois'];
 
         foreach ($employes as $employe) {
             $evaluation = \App\Services\EvaluationService::evaluer($employe->id, $debut, $fin);
+
+            // Temps de travail total du mois
+            $presencesPeriode = \App\Models\Presence::where('employerID', $employe->id)
+                ->whereBetween('date', [$debut, $fin])
+                ->get(['heureArrivee', 'heureDepart']);
+            $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
+            $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
 
             $rendements = \App\Models\Presence::where('employerID', $employe->id)
                 ->whereBetween('date', [$debut, $fin])
@@ -433,6 +456,7 @@ public function exportReport(Request $request)
                 number_format($evaluation['note'], 1, ',', ''),
                 $evaluation['couleur'],
                 $evaluation['commentaire'],
+                $totalHeures,
                 $rendements,
             ];
         }
@@ -446,6 +470,45 @@ public function exportReport(Request $request)
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename=evaluations_rendements_' . $mois . '.csv',
         ]);
+    }
+
+    /**
+     * Bulletin individuel d'évaluation PDF pour un employé et un mois.
+     */
+    public function evaluationBulletin(Request $request, $id)
+    {
+        $admin = auth()->user();
+        if (!$admin || $admin->role !== 'Administrateur') {
+            return redirect()->back()->with('error', 'Accès réservé à l\'administrateur.');
+        }
+
+        $mois = $request->input('mois', now()->format('Y-m'));
+        $debut = $mois . '-01';
+        $fin = now()->parse($debut)->endOfMonth()->toDateString();
+
+        $employe = DB::table('employer')
+            ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
+            ->where('employer.id', $id)
+            ->select('employer.id', 'utilisateur.nom')
+            ->first();
+
+        if (!$employe) {
+            return redirect()->back()->with('error', 'Employé non trouvé.');
+        }
+
+        $evaluation = \App\Services\EvaluationService::evaluer($id, $debut, $fin);
+        $stats = \App\Services\EvaluationService::statsPeriode($id, $debut, $fin);
+        $rendements = Presence::where('employerID', $id)
+            ->whereBetween('date', [$debut, $fin])
+            ->whereNotNull('rendement')
+            ->where('rendement', '!=', '')
+            ->orderBy('date')
+            ->get(['date', 'heureArrivee', 'heureDepart', 'rendement']);
+
+        $pdf = Pdf::loadView('admin.evaluation_bulletin_pdf', compact('employe', 'evaluation', 'stats', 'rendements', 'mois', 'debut', 'fin'));
+        $filename = 'bulletin_evaluation_' . $mois . '_' . $id . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     /**

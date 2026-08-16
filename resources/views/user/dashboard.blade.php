@@ -248,6 +248,48 @@
     </div>
 
     <div class="p-6 bg-white rounded-lg shadow-sm">
+        <h2 class="mb-4 text-xl font-semibold text-gray-900">Mon historique d'évaluation (6 mois)</h2>
+        <div class="space-y-2">
+            @php
+                $histoClasses = [
+                    'vert' => ['bg-green-50 border-green-200 text-green-800', 'bg-green-500'],
+                    'orange' => ['bg-orange-50 border-orange-200 text-orange-800', 'bg-orange-500'],
+                    'rouge' => ['bg-red-50 border-red-200 text-red-800', 'bg-red-500'],
+                ];
+            @endphp
+            @foreach($historique as $i => $h)
+                @php
+                    $hc = $histoClasses[$h['couleur']] ?? $histoClasses['orange'];
+                    $prev = $historique[$i - 1] ?? null;
+                    $tendance = $prev
+                        ? ($h['note'] > $prev['note'] ? 'up' : ($h['note'] < $prev['note'] ? 'down' : 'flat'))
+                        : 'flat';
+                @endphp
+                <div class="flex items-center justify-between rounded-lg border px-4 py-2.5 {{ $hc[0] }}">
+                    <div class="flex items-center gap-3">
+                        <span class="inline-block h-3 w-3 rounded-full {{ $hc[1] }}"></span>
+                        <span class="text-sm font-medium capitalize">{{ $h['label'] }}</span>
+                        @if($h['manuelle'])
+                            <span class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500">manuelle</span>
+                        @endif
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold">{{ $h['note'] }}/20</span>
+                        @if($tendance === 'up')
+                            <span class="text-xs font-semibold text-green-600" title="En hausse vs mois précédent">▲</span>
+                        @elseif($tendance === 'down')
+                            <span class="text-xs font-semibold text-red-600" title="En baisse vs mois précédent">▼</span>
+                        @else
+                            <span class="text-xs text-gray-400" title="Stable vs mois précédent">—</span>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        <p class="mt-3 text-xs text-gray-500">Évolution de votre note sur 20 mois par mois. <span class="text-green-600">▲ hausse</span> · <span class="text-red-600">▼ baisse</span> · <span class="text-gray-400">— stable</span></p>
+    </div>
+
+    <div class="p-6 bg-white rounded-lg shadow-sm">
         <h2 class="flex items-center justify-between mb-4 text-xl font-semibold text-gray-900">
             <span>Notifications</span>
             @if(Auth::user()->unreadNotifications->count() > 0)

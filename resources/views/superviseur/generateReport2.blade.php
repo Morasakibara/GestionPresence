@@ -24,6 +24,7 @@
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom de l'employé</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Total de Présences (Mois en cours)</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Total Heures</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Évaluation</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Réalisations (rendement)</th>
                     </tr>
@@ -33,6 +34,14 @@
                     <tr class="hover:bg-gray-50 align-top">
                         <td class="whitespace-nowrap px-6 py-4">
                             <div class="font-medium text-gray-900">{{ $report['name'] }}</div>
+                            @if(isset($report['employerID']) && $report['employerID'])
+                            <div class="mt-1">
+                                <a href="{{ route('superviseur.evaluation.bulletin', ['id' => $report['employerID'], 'mois' => now()->format('Y-m')]) }}" class="inline-flex items-center gap-1 text-xs font-medium text-3hcig-blue hover:text-3hcig-blue-light" title="Télécharger le bulletin individuel du mois">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    Bulletin PDF
+                                </a>
+                            </div>
+                            @endif
                         </td>
                         <td class="whitespace-nowrap px-6 py-4">
                             <div class="text-sm text-gray-900">
@@ -40,6 +49,9 @@
                                     {{ $report['totalPresences'] }}
                                 </span>
                             </div>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <div class="text-sm font-medium text-3hcig-blue-dark">{{ $report['totalHeures'] ?? '-' }}</div>
                         </td>
                         <td class="px-6 py-4">
                             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold {{ $couleurBadge[$report['evaluation_couleur']] ?? $couleurBadge['orange'] }}">
@@ -81,7 +93,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="px-6 py-6 text-center text-sm text-gray-500">
+                        <td colspan="5" class="px-6 py-6 text-center text-sm text-gray-500">
                             Aucun rapport disponible — il n'y a aucune donnée de présence pour le mois en cours.
                         </td>
                     </tr>

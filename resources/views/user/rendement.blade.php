@@ -17,6 +17,7 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Date</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Arrivée</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Départ</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Durée</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Tâches effectuées</th>
                     </tr>
                 </thead>
@@ -26,16 +27,26 @@
                         <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{{ date('d/m/Y', strtotime($r->date)) }}</td>
                         <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">{{ $r->heureArrivee ? date('H:i', strtotime($r->heureArrivee)) : '-' }}</td>
                         <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">{{ $r->heureDepart ? date('H:i', strtotime($r->heureDepart)) : '-' }}</td>
+                        <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-800">{{ $r->duree ?? '-' }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ $r->rendement }}</td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500">
+                        <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500">
                             Aucune fiche de rendement pour le moment — remplissez-la lors de votre prochain départ.
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
+                @if($rendements->isNotEmpty())
+                <tfoot class="bg-gray-50">
+                    <tr>
+                        <td colspan="3" class="px-6 py-3 text-right text-sm font-semibold text-gray-700">Temps de travail total :</td>
+                        <td class="whitespace-nowrap px-6 py-3 text-sm font-bold text-3hcig-blue">{{ $totalDuree }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+                @endif
             </table>
         </div>
     </div>

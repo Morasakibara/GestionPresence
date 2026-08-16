@@ -21,6 +21,52 @@ class EvaluationService
     public const ROUGE = 'rouge';
 
     /**
+     * Minutes travaillées entre l'arrivée et le départ (0 si invalide).
+     */
+    public static function minutesTravail($heureArrivee, $heureDepart): int
+    {
+        if (!$heureArrivee || !$heureDepart) {
+            return 0;
+        }
+        try {
+            $arrivee = \Illuminate\Support\Carbon::parse($heureArrivee);
+            $depart = \Illuminate\Support\Carbon::parse($heureDepart);
+            $minutes = (int) $arrivee->diffInMinutes($depart);
+
+            return $minutes > 0 ? $minutes : 0;
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Durée de travail formatée (ex: "7h30") ou null si indisponible.
+     */
+    public static function dureeTravail($heureArrivee, $heureDepart): ?string
+    {
+        $minutes = self::minutesTravail($heureArrivee, $heureDepart);
+        if ($minutes <= 0) {
+            return null;
+        }
+
+        $heures = intdiv($minutes, 60);
+        $mins = $minutes % 60;
+
+        return $heures . 'h' . str_pad((string) $mins, 2, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Formate un total de minutes en durée (ex: 450 -> "7h30").
+     */
+    public static function formaterDureeTotale(int $minutes): string
+    {
+        $heures = intdiv($minutes, 60);
+        $mins = $minutes % 60;
+
+        return $heures . 'h' . str_pad((string) $mins, 2, '0', STR_PAD_LEFT);
+    }
+
+    /**
      * Calcule la couleur à partir d'une note sur 20.
      */
     public static function couleurPourNote(float $note): string

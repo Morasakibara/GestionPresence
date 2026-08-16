@@ -47,7 +47,25 @@ class UtilisateurController extends Controller
         $fin = Carbon::now()->endOfMonth()->toDateString();
         $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
 
-        return view('user.dashboard', compact('presenceCount', 'lastArrival', 'lastDeparture', 'evaluation'));
+        // Historique des 6 derniers mois (pour suivre l'évolution)
+        $historique = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $mois = Carbon::now()->subMonths($i);
+            $eval = \App\Services\EvaluationService::evaluer(
+                $user->id,
+                $mois->copy()->startOfMonth()->toDateString(),
+                $mois->copy()->endOfMonth()->toDateString()
+            );
+            $historique[] = [
+                'mois' => $mois->format('Y-m'),
+                'label' => $mois->locale('fr')->isoFormat('MMMM YYYY'),
+                'note' => $eval['note'],
+                'couleur' => $eval['couleur'],
+                'manuelle' => $eval['manuelle'],
+            ];
+        }
+
+        return view('user.dashboard', compact('presenceCount', 'lastArrival', 'lastDeparture', 'evaluation', 'historique'));
     }
 
     public function presenceReport()
@@ -109,7 +127,14 @@ public function profile(){
             ->orderByDesc('date')
             ->get(['id', 'date', 'heureArrivee', 'heureDepart', 'rendement', 'status']);
 
-        return view('user.rendement', compact('rendements'));
+        // Durée travaillée par fiche + total
+        foreach ($rendements as $r) {
+            $r->duree = \App\Services\EvaluationService::dureeTravail($r->heureArrivee, $r->heureDepart);
+        }
+        $totalMinutes = $rendements->sum(fn ($r) => \App\Services\EvaluationService::minutesTravail($r->heureArrivee, $r->heureDepart));
+        $totalDuree = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+
+        return view('user.rendement', compact('rendements', 'totalDuree'));
     }
 
     public function profile()

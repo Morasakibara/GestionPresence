@@ -488,4 +488,108 @@ class PharaonFeaturesTest extends TestCase
         $this->artisan('presence:rappel-fiches-rendement')
             ->expectsOutputToContain('Aucun superviseur concerné');
     }
+
+    /** S8 — La durée de travail est calculée et affichée dans le rendement employé. */
+    public function test_duree_travail_dans_rendement_employe(): void
+    {
+        $employe = $this->loginEmploye();
+        $employerInfo = DB::table('employer')->where('id', $employe->id)->first();
+
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:00:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'rendement' => 'Revue hebdomadaire avec la direction.',
+        ]);
+
+        $response = $this->get('/user/rendement');
+        $response->assertOk();
+        $response->assertSee('Durée');
+        $response->assertSee('9h30'); // 08:00 -> 17:30
+        $response->assertSee('Temps de travail total');
+    }
+
+    /** S9 — Le CSV superviseur contient la durée travaillée. */
+    public function test_csv_superviseur_contient_duree(): void
+    {
+        $employe = $this->loginEmploye();
+        $employerInfo = DB::table('employer')->where('id', $employe->id)->first();
+
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 09:00:00',
+            'heureDepart' => '2026-08-17 16:45:00',
+            'status' => 'présent',
+            'rendement' => 'Préparation des livraisons.',
+        ]);
+
+        $response = $this->get('/superviseur/rendements/export?debut=2026-08-10&fin=2026-08-17');
+        $response->assertOk();
+        $this->assertStringContainsString('Durée', $response->getContent());
+        $this->assertStringContainsString('7h45', $response->getContent()); // 09:00 -> 16:45
+    }
+
+    /** S10 — L'admin télécharge le bulletin individuel d'évaluation PDF. */
+    public function test_admin_bulletin_evaluation_pdf(): void
+    {
+        $employe = $this->loginEmploye();
+
+        $admin = $this->loginAdmin();
+        $this->post('/select-role', ['role' => 'Administrateur']);
+
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => DB::table('employer')->where('id', $employe->id)->value('Sup_id'),
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:00:00',
+            'heureDepart' => '2026-08-17 17:00:00',
+            'status' => 'présent',
+            'rendement' => 'Préparation du rapport mensuel.',
+        ]);
+
+        $response = $this->get('/admin/employe/' . $employe->id . '/bulletin?mois=2026-08');
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+    }
+
+    /** S11 — Le superviseur ne peut pas télécharger le bulletin d'un employé hors équipe. */
+    public function test_superviseur_bulletin_hors_equipe_refuse(): void
+    {
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        // Un employé qui n'est pas dans son équipe
+        $superviseurInfo = DB::table('superviseur')->where('id', $superviseur->id)->first();
+        $horsEquipe = Utilisateur::where('role', 'Employer')
+            ->whereNotIn('id', DB::table('employer')->where('equipe', $superviseurInfo->equipe)->pluck('id'))
+            ->first();
+        $this->assertNotNull($horsEquipe);
+
+        $response = $this->get('/superviseur/employe/' . $horsEquipe->id . '/bulletin?mois=2026-08');
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+    }
+
+    /** S12 — Le dashboard employé affiche l'historique des 6 derniers mois. */
+    public function test_dashboard_employe_historique_evaluations(): void
+    {
+        $employe = $this->loginEmploye();
+
+        $response = $this->get('/user/dashboard');
+        $response->assertOk();
+        $response->assertSee('historique');
+        $response->assertSee('6 mois');
+        $response->assertSee('/20');
+    }
 }

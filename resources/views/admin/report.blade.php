@@ -22,6 +22,7 @@
                     <tr class="bg-3hcig-blue text-white">
                         <th class="border border-gray-300 px-4 py-3 text-left">Nom de l'employé</th>
                         <th class="border border-gray-300 px-4 py-3 text-left">Total Présence</th>
+                        <th class="border border-gray-300 px-4 py-3 text-left">Total Heures</th>
                         <th class="border border-gray-300 px-4 py-3 text-left">Évaluation</th>
                         <th class="border border-gray-300 px-4 py-3 text-left">Réalisations (fiches de rendement)</th>
                     </tr>
@@ -29,8 +30,17 @@
                 <tbody>
                     @forelse($reportData as $data)
                     <tr class="hover:bg-gray-100 align-top">
-                        <td class="border border-gray-300 px-4 py-3 font-medium">{{ $data->employer_nom }}</td>
+                        <td class="border border-gray-300 px-4 py-3 font-medium">
+                            {{ $data->employer_nom }}
+                            <div class="mt-1">
+                                <a href="{{ route('admin.evaluation.bulletin', ['id' => $data->employerID, 'mois' => substr($startDate, 0, 7)]) }}" class="inline-flex items-center gap-1 text-xs font-medium text-3hcig-blue hover:text-3hcig-blue-light" title="Télécharger le bulletin individuel du mois">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    Bulletin PDF
+                                </a>
+                            </div>
+                        </td>
                         <td class="border border-gray-300 px-4 py-3">{{ $data->total_presence }}</td>
+                        <td class="border border-gray-300 px-4 py-3 font-medium">{{ $data->total_heures ?? '-' }}</td>
                         <td class="border border-gray-300 px-4 py-3">
                             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold {{ $couleurBadge[$data->evaluation_couleur] ?? $couleurBadge['orange'] }}">
                                 {{ $data->evaluation_note }}/20
@@ -71,7 +81,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="border border-gray-300 px-4 py-6 text-center text-gray-500">
+                        <td colspan="5" class="border border-gray-300 px-4 py-6 text-center text-gray-500">
                             Aucune donnée de présence pour la période sélectionnée.
                         </td>
                     </tr>

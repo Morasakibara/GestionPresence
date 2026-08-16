@@ -178,6 +178,7 @@
                         <tr>
                             <th>Nom de l'employé</th>
                             <th>Total présences (Mois en cours)</th>
+                            <th>Total heures</th>
                             <th>Évaluation</th>
                             <th>Réalisations (rendement)</th>
                         </tr>
@@ -187,6 +188,7 @@
                         <tr>
                             <td>{{ $report['name'] }}</td>
                             <td><span class="badge">{{ $report['totalPresences'] }}</span></td>
+                            <td><span class="badge" style="background-color: rgba(37,99,235,0.1); color:#1d4ed8;">{{ $report['totalHeures'] ?? '-' }}</span></td>
                             <td>
                                 <span class="badge" style="{{ $report['evaluation_couleur'] === 'vert' ? 'background-color: rgba(22,163,74,0.12); color:#15803d;' : ($report['evaluation_couleur'] === 'rouge' ? 'background-color: rgba(220,38,38,0.12); color:#b91c1c;' : 'background-color: rgba(249,115,22,0.12); color:#c2410c;') }}">
                                     {{ $report['evaluation_note'] }}/20
