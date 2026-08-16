@@ -989,6 +989,143 @@ class GeolocationAntiCheatTest extends TestCase
         ]);
     }
 
+    public function test_admin_voit_timeline_depuis_page_suspectes(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Précision GPS insuffisante.',
+        ]);
+
+        // L'admin accède à la timeline depuis la page suspectes
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $response = $this->get('/admin/suspect-presences');
+        $response->assertOk();
+        $response->assertSee("Voir l'historique", false);
+
+        $response = $this->get("/admin/presence-history/{$presence->id}");
+        $response->assertOk();
+        $response->assertSee('Historique de la présence');
+        $response->assertSee($employe->nom); // nom de l'employé affiché pour l'admin
+    }
+
+    public function test_superviseur_voit_timeline_membre_equipe_mais_pas_autre_equipe(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Vitesse irréaliste.',
+        ]);
+
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        // Timeline d'un membre de SON équipe -> OK
+        $response = $this->get("/superviseur/presence-history/{$presence->id}");
+        $response->assertOk();
+        $response->assertSee('Historique de la présence');
+
+        // Présence d'un employé d'une AUTRE équipe -> refus
+        $autreSuperviseur = Utilisateur::where('role', 'Superviseur')->where('id', '!=', $superviseur->id)->first();
+        $membreAutreEquipe = \App\Models\Employer::where('Sup_id', $autreSuperviseur->id)->first();
+        $presenceAutre = Presence::create([
+            'employerID' => $membreAutreEquipe->id,
+            'Sup_id' => $autreSuperviseur->id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Test.',
+        ]);
+
+        $response = $this->get("/superviseur/presence-history/{$presenceAutre->id}");
+        $response->assertSessionHas('error');
+    }
+
+    public function test_export_pdf_timeline_presence(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Vitesse irréaliste (43.5 km/h).',
+            'commentaire_contestation' => 'GPS en panne',
+            'conteste_le' => now(),
+        ]);
+
+        $response = $this->get("/user/presence-history/{$presence->id}/pdf");
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('%PDF', substr($response->getContent(), 0, 20));
+    }
+
+    public function test_rappel_quotidien_membres_bloques(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+
+        // Créer 3 présences suspectes non justifiées (blocage)
+        foreach (['2026-07-20', '2026-07-21', '2026-07-22'] as $date) {
+            Presence::create([
+                'employerID' => $employe->id,
+                'Sup_id' => $employerInfo->Sup_id,
+                'date' => $date,
+                'heureArrivee' => $date . ' 08:05:00',
+                'heureDepart' => $date . ' 17:30:00',
+                'status' => 'présent',
+                'suspect' => true,
+                'motif_suspicion' => 'Précision GPS insuffisante.',
+                'statut_traitement' => 'nouveau',
+            ]);
+        }
+
+        // La commande de rappel quotidien notifie le superviseur
+        $this->artisan('presence:rappel-blocages')
+            ->expectsOutputToContain('notifié');
+
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $employerInfo->Sup_id,
+            'type' => \App\Notifications\MembresBloquesNotification::class,
+        ]);
+
+        // Une fois les présences traitées, plus de notification
+        Presence::where('employerID', $employe->id)->update(['statut_traitement' => 'justifié']);
+        $this->artisan('presence:rappel-blocages')
+            ->expectsOutputToContain('Aucun membre bloqué');
+    }
+
     public function test_vitesse_irrealiste_marque_suspect(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));

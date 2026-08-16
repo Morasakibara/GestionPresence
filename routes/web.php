@@ -17,6 +17,7 @@ use App\Http\Controllers\PreController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\GeoLocationController;
 use App\Http\Controllers\WorkplaceLocationController;
+use App\Http\Controllers\PresenceHistoryController;
 
 //use Illuminate\Support\Facades\Auth;
 
@@ -68,6 +69,8 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::get('/suspect-presences/export', [AdminController::class, 'exportSuspectPresences'])->name('suspectPresences.export');
     Route::post('/suspect-presences/{id}/update', [AdminController::class, 'updateSuspectPresence'])->name('updateSuspectPresence');
     Route::post('/suspect-presences/{id}/repondre-contestation', [AdminController::class, 'repondreContestation'])->name('repondreContestation');
+    Route::get('/presence-history/{id}', [PresenceHistoryController::class, 'show'])->name('presenceHistory');
+    Route::get('/presence-history/{id}/pdf', [PresenceHistoryController::class, 'exportPdf'])->name('presenceHistory.pdf');
     Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee']);
     Route::post('/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('updateProfile');
     Route::get('/update-profile', [App\Http\Controllers\AdminController::class, 'showProfileForm'])->name('showProfile');
@@ -85,7 +88,8 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::put('/update', [UtilisateurController::class, 'update'])->name('user.update');
         Route::get('/presence-report', [UtilisateurController::class, 'presenceReport'])->name('user.presence.report');
         Route::post('/contester-presence/{id}', [UtilisateurController::class, 'contesterPresence'])->name('user.contesterPresence');
-        Route::get('/presence-history/{id}', [UtilisateurController::class, 'presenceHistory'])->name('user.presenceHistory');
+        Route::get('/presence-history/{id}', [PresenceHistoryController::class, 'show'])->name('user.presenceHistory');
+        Route::get('/presence-history/{id}/pdf', [PresenceHistoryController::class, 'exportPdf'])->name('user.presenceHistory.pdf');
     });
 
     // Superviseur routes
@@ -99,6 +103,8 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/exportPDF', [SuperviseurController::class, 'exportPDF'])->name('export.pdf');
         Route::get('/showAddMember', [SuperviseurController::class, 'showAddMember'])->name('superviseur.showAddMember');
         Route::get('/suspect-presences', [SuperviseurController::class, 'showSuspectPresences'])->name('superviseur.suspectPresences');
+        Route::get('/presence-history/{id}', [PresenceHistoryController::class, 'show'])->name('superviseur.presenceHistory');
+        Route::get('/presence-history/{id}/pdf', [PresenceHistoryController::class, 'exportPdf'])->name('superviseur.presenceHistory.pdf');
         Route::post('/addMemberToTeam/{id}', [SuperviseurController::class, 'addMemberToTeam'])->name('superviseur.addMemberToTeam');
         Route::get('/add-member', [SuperviseurController::class, 'showAddMemberForm'])->name('superviseur.showAddMemberForm');
         Route::post('remove-member/{id}', [SuperviseurController::class, 'removeMemberFromTeam'])->name('superviseur.removeMemberFromTeam');

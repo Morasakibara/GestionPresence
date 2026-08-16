@@ -25,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('presence:rappel-suspectes')->weeklyOn(1, '09:00');
         // Bilan hebdomadaire des présences suspectes (le lundi à 9h30)
         $schedule->command('presence:bilan-hebdo')->weeklyOn(1, '09:30');
+        // Rappel quotidien aux superviseurs tant que des membres restent bloqués (8h30)
+        $schedule->command('presence:rappel-blocages')->dailyAt('08:30');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

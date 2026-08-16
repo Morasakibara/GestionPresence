@@ -80,6 +80,9 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">{{ $presence->employer_nom }}</div>
                                 <div class="text-sm text-gray-500">{{ $presence->employer_email }}</div>
+                                <a href="{{ route('superviseur.presenceHistory', $presence->id) }}" class="mt-1 inline-flex items-center text-xs font-medium text-3hcig-blue hover:text-3hcig-blue-light">
+                                    Voir l'historique →
+                                </a>
                             </td>
                             <td class="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                                 {{ \Carbon\Carbon::parse($presence->date)->format('d/m/Y') }}

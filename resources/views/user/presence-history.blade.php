@@ -5,16 +5,33 @@
 @section('content')
 <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
     <div class="mx-auto max-w-3xl">
-        <div class="mb-6 flex items-center justify-between">
+        @php
+            $isAdmin = Auth::user()->role === 'Administrateur';
+            $isSuperviseur = Auth::user()->role === 'Superviseur';
+        @endphp
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h1 class="text-2xl font-bold text-3hcig-blue-dark sm:text-3xl">Historique de la présence</h1>
                 <p class="mt-2 text-sm text-gray-600">
                     Pointage du {{ \Carbon\Carbon::parse($presence->date)->format('d/m/Y') }}
+                    @if($isAdmin || $isSuperviseur)
+                        — {{ $presence->employer_nom ?? 'Employé #' . $presence->employerID }}
+                    @endif
                 </p>
             </div>
-            <a href="{{ route('user.presence.report') }}" class="text-sm font-medium text-3hcig-blue hover:text-3hcig-blue-light">
-                ← Retour au bilan
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="{{ route($isAdmin ? 'admin.suspectPresences' : ($isSuperviseur ? 'superviseur.suspectPresences' : 'user.presence.report')) }}"
+                    class="text-sm font-medium text-3hcig-blue hover:text-3hcig-blue-light">
+                    ← Retour
+                </a>
+                <a href="{{ route($isAdmin ? 'admin.presenceHistory.pdf' : ($isSuperviseur ? 'superviseur.presenceHistory.pdf' : 'user.presenceHistory.pdf'), $presence->id) }}"
+                    class="inline-flex items-center rounded-md bg-3hcig-blue px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-3hcig-blue-light">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19h6m-6-4h6" />
+                    </svg>
+                    Export PDF
+                </a>
+            </div>
         </div>
 
         <!-- Récapitulatif de la présence -->
