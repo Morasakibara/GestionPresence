@@ -10,7 +10,7 @@ class EmployeeMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::check() && (Auth::user()->role === 'employer' || Auth::user()->role === 'superviseur')) {
+        if (Auth::check() && (Auth::user()->role === 'Employer' || Auth::user()->role === 'Superviseur')) {
             return $next($request);
         }
 

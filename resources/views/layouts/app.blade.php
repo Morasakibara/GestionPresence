@@ -134,7 +134,7 @@
                         </span>
                     @endif
                 </a>
-                @elseif ($user->role === 'administrateur')
+                @elseif ($user->role === 'Administrateur')
                 <!-- Liens pour Administrateur -->
                 <a href="{{ route('admin.dashboard') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('admin.dashboard') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
                     <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('admin.dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -309,7 +309,7 @@
                         </span>
                     @endif
                 </a>
-                @elseif ($user->role === 'administrateur')
+                @elseif ($user->role === 'Administrateur')
                 <!-- Liens pour Administrateur (mobile) -->
                 <a href="{{ route('admin.dashboard') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('admin.dashboard') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
                     <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('admin.dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -409,7 +409,7 @@
                                 </button>
                             </div>
                             <div class="absolute right-0 z-10 hidden w-48 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" id="user-dropdown-menu" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
-                                @if(Auth::check() && Auth::user()->role === 'administrateur')
+                                @if(Auth::check() && Auth::user()->role === 'Administrateur')
                                 <a href="{{route('admin.showProfile')}}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">
                                     Votre Profil
                                 </a>

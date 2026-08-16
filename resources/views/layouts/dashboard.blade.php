@@ -13,7 +13,7 @@
 <body class="relative h-full antialiased">
     <!-- Arrière-plan avec overlay spécifique au rôle -->
     <div class="fixed inset-0 z-[-10]">
-        @if(Auth::user()->role === 'administrateur')
+        @if(Auth::user()->role === 'Administrateur')
             <img src="{{ asset('storage/avatars/adminBackground.jpg') }}" alt="Admin Background" class="absolute inset-0 object-cover w-full h-full">
         @elseif(Auth::user()->role === 'Superviseur')
             <img src="{{ asset('storage/avatars/supBackground.jpg') }}" alt="Superviseur Background" class="absolute inset-0 object-cover w-full h-full">
@@ -52,7 +52,7 @@
                                 <!-- Dropdown menu -->
                                 <div id="profile-dropdown" class="absolute right-0 z-10 hidden w-48 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg profile-dropdown ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
 
-                                    @if(Auth::check() && Auth::user()->role === 'administrateur')
+                                    @if(Auth::check() && Auth::user()->role === 'Administrateur')
                                     <a href="#" onclick="openProfileModal()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="user-profile-button">
                                         Votre Profil
                                     </a>
