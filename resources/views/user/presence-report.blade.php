@@ -89,6 +89,56 @@
                 @endif
             </td>
         </div>
+
+        <!-- Présences suspectes : contestation -->
+        @if(isset($suspectPresences) && $suspectPresences->count() > 0)
+        <div class="mt-8 overflow-hidden rounded-lg bg-white p-6 shadow-sm">
+            <h2 class="text-lg font-bold text-3hcig-blue-dark">Présences suspectes</h2>
+            <p class="mt-1 text-sm text-gray-600">
+                Des pointages ont été marqués suspects par le système anti-triche. Vous pouvez contester si vous estimez une erreur.
+            </p>
+
+            <div class="mt-4 space-y-4">
+                @foreach($suspectPresences as $suspect)
+                <div class="rounded-lg border border-red-200 bg-red-50/50 p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">
+                                {{ \Carbon\Carbon::parse($suspect->date)->format('d/m/Y') }}
+                                <span class="ml-2 inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">Suspecte</span>
+                            </p>
+                            <p class="mt-1 text-sm text-gray-600">Motif : {{ $suspect->motif_suspicion ?? 'Non renseigné' }}</p>
+                            @if($suspect->commentaire_contestation)
+                                <p class="mt-2 text-sm text-green-700">
+                                    ✓ Contesté le {{ \Carbon\Carbon::parse($suspect->conteste_le)->format('d/m/Y à H:i') }} :
+                                    « {{ $suspect->commentaire_contestation }} »
+                                </p>
+                            @endif
+                        </div>
+                        @if(!$suspect->commentaire_contestation)
+                        <form method="POST" action="{{ route('user.contesterPresence', $suspect->id) }}" class="w-full sm:w-auto">
+                            @csrf
+                            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                <input type="text" name="commentaire" required maxlength="1000"
+                                    placeholder="Votre explication..."
+                                    class="flex-1 rounded-md border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20">
+                                <button type="submit"
+                                    class="inline-flex items-center justify-center rounded-md bg-3hcig-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                                    Contester
+                                </button>
+                            </div>
+                        </form>
+                        @else
+                        <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                            Contestation envoyée
+                        </span>
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 

@@ -147,6 +147,7 @@
                             <th>Distance (km)</th>
                             <th>Vitesse (km/h)</th>
                             <th>Motif</th>
+                            <th>Contestation</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -164,6 +165,7 @@
                             <td>{{ $p->distance_km ? number_format($p->distance_km, 2, ',', '') : '-' }}</td>
                             <td>{{ $p->vitesse_kmh ? number_format($p->vitesse_kmh, 2, ',', '') : '-' }}</td>
                             <td>{{ $p->motif_suspicion ?? '-' }}</td>
+                            <td>{{ $p->commentaire_contestation ? 'Contesté le ' . date('d/m/Y', strtotime($p->conteste_le)) . ' : ' . $p->commentaire_contestation : '-' }}</td>
                         </tr>
                         @endforeach
                     </tbody>

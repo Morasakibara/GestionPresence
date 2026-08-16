@@ -7,6 +7,7 @@ use App\Models\Utilisateur;
 use App\Models\WorkplaceLocation;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class GeolocationAntiCheatTest extends TestCase
@@ -555,6 +556,136 @@ class GeolocationAntiCheatTest extends TestCase
         $presence->update(['statut_traitement' => 'examiné']);
         $this->artisan('presence:rappel-suspectes', ['--days' => 7])
             ->expectsOutputToContain('Aucune présence suspecte');
+    }
+
+    public function test_employe_conteste_sa_presence_suspecte(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Vitesse de déplacement irréaliste (43.5 km/h).',
+            'statut_traitement' => 'nouveau',
+        ]);
+
+        // L'employé voit sa présence suspecte sur son rapport
+        $response = $this->get('/user/presence-report');
+        $response->assertOk();
+        $response->assertSee('Présences suspectes');
+        $response->assertSee('Vitesse de déplacement irréaliste');
+
+        // Il la conteste
+        $response = $this->post("/user/contester-presence/{$presence->id}", [
+            'commentaire' => 'La géolocalisation a échoué ce jour-là, j\'étais présent.',
+        ]);
+        $response->assertSessionHas('success');
+
+        $presence->refresh();
+        $this->assertNotNull($presence->commentaire_contestation);
+        $this->assertNotNull($presence->conteste_le);
+
+        // L'admin est notifié
+        $admin = Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $admin->id,
+            'type' => \App\Notifications\PresenceContesteeNotification::class,
+        ]);
+
+        // La page admin affiche la contestation
+        $this->post('/logout');
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+        $response = $this->get('/admin/suspect-presences');
+        $response->assertOk();
+        $response->assertSee('Contesté');
+        $response->assertSee('La géolocalisation a échoué');
+    }
+
+    public function test_employe_ne_peut_contester_que_sa_propre_presence(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        // Présence suspecte d'un AUTRE employé
+        $autre = Utilisateur::where('role', 'Employer')->where('id', '!=', $employe->id)->first();
+        $autreInfo = \App\Models\Employer::where('id', $autre->id)->first();
+        $presenceAutre = Presence::create([
+            'employerID' => $autre->id,
+            'Sup_id' => $autreInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Précision GPS insuffisante.',
+        ]);
+
+        $response = $this->post("/user/contester-presence/{$presenceAutre->id}", [
+            'commentaire' => 'Tentative de contester la présence d\'un collègue.',
+        ]);
+        $response->assertSessionHas('error');
+
+        $presenceAutre->refresh();
+        $this->assertNull($presenceAutre->commentaire_contestation);
+    }
+
+    public function test_bilan_hebdo_commande_notifie_admin(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        // Deux suspectes la semaine précédente (10-16 août 2026, fenêtre calculée par la commande)
+        // created_at n'est pas fillable -> on le fixe après création via DB
+        $p1 = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-12',
+            'heureArrivee' => '2026-08-12 08:05:00',
+            'heureDepart' => '2026-08-12 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Bilan nouveau.',
+            'statut_traitement' => 'nouveau',
+        ]);
+        $p2 = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-13',
+            'heureArrivee' => '2026-08-13 08:05:00',
+            'heureDepart' => '2026-08-13 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Bilan justifié.',
+            'statut_traitement' => 'justifié',
+        ]);
+        DB::table('presence')->whereIn('id', [$p1->id, $p2->id])
+            ->update(['created_at' => '2026-08-13 10:00:00', 'updated_at' => '2026-08-13 10:00:00']);
+
+        $this->artisan('presence:bilan-hebdo')
+            ->expectsOutputToContain('Bilan hebdomadaire envoyé');
+
+        $admin = Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $admin->id,
+            'type' => \App\Notifications\BilanHebdoNotification::class,
+        ]);
+
+        $notification = DB::table('notifications')
+            ->where('notifiable_id', $admin->id)
+            ->where('type', \App\Notifications\BilanHebdoNotification::class)
+            ->first();
+        $data = json_decode($notification->data, true);
+        $this->assertEquals(2, $data['total']);
+        $this->assertEquals(1, $data['nouveau']);
+        $this->assertEquals(1, $data['justifie']);
     }
 
     public function test_vitesse_irrealiste_marque_suspect(): void

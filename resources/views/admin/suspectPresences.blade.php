@@ -98,6 +98,7 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Distance</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Vitesse</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Motif de suspicion</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Contestation</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Statut</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Traitement</th>
                     </tr>
@@ -128,6 +129,15 @@
                                 <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
                                     {{ $presence->motif_suspicion ?? 'Aucun motif renseigné' }}
                                 </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                @if($presence->commentaire_contestation)
+                                    <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">Contesté</span>
+                                    <div class="mt-1 max-w-xs text-xs text-gray-600">« {{ $presence->commentaire_contestation }} »</div>
+                                    <div class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($presence->conteste_le)->format('d/m/Y H:i') }}</div>
+                                @else
+                                    <span class="text-xs text-gray-400">—</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @php

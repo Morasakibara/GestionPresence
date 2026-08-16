@@ -41,7 +41,9 @@ class Presence extends Model
         'statut_traitement',
         'commentaire_traitement',
         'traite_par',
-        'traite_le'
+        'traite_le',
+        'commentaire_contestation',
+        'conteste_le'
     ];
 
     public function superviseur()

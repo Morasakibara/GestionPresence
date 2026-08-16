@@ -58,7 +58,48 @@ class UtilisateurController extends Controller
         $totalPresences = $presences->where('status', 'présent')->count();
         $totalAbsences = $presences->where('status', 'absent')->count();
 
-        return view('user.presence-report', compact('presences', 'totalPresences', 'totalAbsences'));
+        // Présences suspectes de l'employé (pour contestation)
+        $suspectPresences = Presence::where('employerID', $user->id)
+                             ->where('suspect', true)
+                             ->orderByDesc('date')
+                             ->get();
+
+        return view('user.presence-report', compact('presences', 'totalPresences', 'totalAbsences', 'suspectPresences'));
+    }
+
+    /**
+     * L'employé conteste une de ses présences marquées suspecte.
+     */
+    public function contesterPresence(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'commentaire' => 'required|string|max:1000',
+        ]);
+
+        $presence = Presence::where('employerID', $user->id)->find($id);
+
+        if (!$presence) {
+            return redirect()->back()->with('error', 'Présence introuvable.');
+        }
+
+        if (!$presence->suspect) {
+            return redirect()->back()->with('error', 'Cette présence n\'est pas marquée suspecte.');
+        }
+
+        $presence->update([
+            'commentaire_contestation' => $request->commentaire,
+            'conteste_le' => now(),
+        ]);
+
+        // Informer l'administrateur principal
+        $admin = Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+        if ($admin) {
+            $admin->notify(new \App\Notifications\PresenceContesteeNotification($user, $presence));
+        }
+
+        return redirect()->back()->with('success', 'Votre contestation a été enregistrée. L\'administrateur en sera informé.');
     }
 
    /* public function update(Request $request)

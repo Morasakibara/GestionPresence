@@ -136,7 +136,7 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 |---|---|
 | **Dashboard** | Présences du mois, dernière arrivée / dernier départ. |
 | **Pointer** | Marquage d'**arrivée** (7h–10h) et de **départ** (17h–18h30), validé par géolocalisation. |
-| **Bilan de présence** | Historique du mois + total présences/absences. |
+| **Bilan de présence** | Historique du mois + total présences/absences. **Contestation** : l'employé peut contester une de ses présences marquées suspecte (commentaire + date), ce qui notifie l'admin. |
 | **Profil** | Modification du profil et de l'avatar. |
 
 ### ⚙️ Toutes les personnes connectées
@@ -181,6 +181,7 @@ Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `m
 6. **Notifications au traitement** : quand l'admin traite une présence, le **superviseur de l'équipe** ET **l'employé concerné** reçoivent un **email + notification interne** (`PresenceTraiteeNotification`, adaptée au rôle du destinataire) avec le nouveau statut, le commentaire de l'admin et un lien pertinent.
 7. **Badge sidebar** : la sidebar admin affiche un badge rouge avec le nombre de présences suspectes **non traitées** (statut `nouveau`) — il disparaît dès qu'elles sont traitées.
 8. **Export d'audit** : la page admin permet d'exporter la liste filtrée en **CSV** (BOM UTF-8, séparateur `;`, compatible Excel FR) ou en **PDF** stylé (même gabarit que les rapports).
+9. **Contestation employé** : l'employé voit ses présences suspectes dans son bilan (`/user/presence-report`) et peut les **contester** (commentaire requis). La présence enregistre `commentaire_contestation` + `conteste_le`, l'admin est notifié (`PresenceContesteeNotification`) et la contestation s'affiche avec badge « Contesté » sur les pages admin, superviseur et l'export PDF.
 
 ### 6.2 Notifications (retard & absence)
 - **Retard** : notifié au superviseur direct + à l'administrateur principal, en **email** et **notification interne**.
@@ -200,6 +201,7 @@ Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `m
 |---|---|---|
 | `presence:auto-absences` | **Tous les jours à 18h45** | ① Passe en `Absent` les présences « arrivée sans départ » ; ② crée des absences pour les employés sans aucune présence du jour ; notifie le superviseur + l'admin principal pour chaque cas. |
 | `presence:rappel-suspectes` | **Tous les lundis à 9h00** | Notifie l'admin principal des présences suspectes restées **non traitées** (statut `nouveau`) depuis plus de `GEOLOC_RAPPEL_SUSPECTES_JOURS` jours (défaut 7). Option `--days=N` pour forcer le seuil. |
+| `presence:bilan-hebdo` | **Tous les lundis à 9h30** | Envoie à l'admin un **bilan email + interne** (`BilanHebdoNotification`) des présences suspectes de la semaine précédente : total, en attente, examinées, justifiées, rejetées. |
 
 Configuré dans `bootstrap/app.php` (`withSchedule`). En production, un cron `* * * * * php artisan schedule:run` est requis.
 
