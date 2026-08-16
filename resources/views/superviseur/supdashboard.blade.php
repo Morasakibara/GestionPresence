@@ -176,7 +176,7 @@
             Voir toutes
         </a>
     </div>
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div class="bg-white rounded-2xl border border-gray-200/70 shadow-card overflow-hidden">
         @foreach(Auth::user()->notifications->take(3) as $notification)
             <div class="border-l-4 {{ $notification->read_at ? 'border-gray-300' : 'border-3hcig-blue' }} p-4 {{ !$loop->last ? 'border-b border-gray-200' : '' }}">
                 <div class="flex justify-between">

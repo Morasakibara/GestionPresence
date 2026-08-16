@@ -8,16 +8,16 @@
 
 @section('content')
 <div class="px-4 py-8 mx-auto sm:px-6 lg:px-8">
-    <div class="p-6 bg-white rounded-lg shadow-sm">
+    <div class="p-6 bg-white rounded-2xl border border-gray-200/70 shadow-card">
         <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-gray-900">Ajouter un lieu de travail</h1>
-            <a href="{{ route('admin.workplace-locations.index') }}" class="text-3hcig-blue hover:text-3hcig-blue-dark">
+            <h1 class="text-2xl font-bold text-[#080808]">Ajouter un lieu de travail</h1>
+            <a href="{{ route('admin.workplace-locations.index') }}" class="btn-press inline-flex items-center rounded-lg bg-pharaoh-gold/10 px-3 py-1.5 text-sm font-semibold text-pharaoh-bronze-dark hover:bg-pharaoh-gold/20">
                 Retour à la liste
             </a>
         </div>
 
         @if ($errors->any())
-            <div class="px-4 py-3 mb-4 text-red-700 bg-red-100 border border-red-400 rounded">
+            <div class="px-4 py-3 mb-4 text-red-700 bg-red-50 border border-red-200 rounded-lg">
                 <ul>
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -59,7 +59,7 @@
 
             <div class="mb-4">
                 <p class="mb-2 text-sm text-gray-700">Obtenir les coordonnées actuelles:</p>
-                <button type="button" id="getLocation" class="px-4 py-2 text-gray-800 bg-gray-200 rounded hover:bg-gray-300">
+                <button type="button" id="getLocation" class="btn-press px-4 py-2 text-pharaoh-bronze-dark bg-pharaoh-gold/10 rounded-lg hover:bg-pharaoh-gold/20 transition-colors duration-150">
                     Utiliser ma position actuelle
                 </button>
             </div>
@@ -69,7 +69,7 @@
             </div>
 
             <div class="flex justify-end mt-6">
-                <button type="submit" class="px-4 py-2 text-white rounded-md bg-3hcig-blue hover:bg-3hcig-blue-dark">
+                <button type="submit" class="btn-gold btn-press">
                     Ajouter le lieu de travail
                 </button>
             </div>

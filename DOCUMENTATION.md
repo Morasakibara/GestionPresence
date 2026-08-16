@@ -59,6 +59,9 @@ Le frontend a été entièrement refondu avec une identité **noir & or** (nivea
 - **Logo** : `logo-pharaon.png` (606×610) remplace `logo-3HCIG.png` sur toutes les pages (sidebar desktop/mobile, login, register, index) avec une taille harmonisée.
 - **Skills de design** installés dans `.agents/skills/` : `emil-design-eng`, `apple-design`, `improve-animations`, `review-animations`, `animation-vocabulary` (Skills For Design Engineers d'Emil Kowalski) — utilisés pour les choix de design et d'animation.
 - **Correctifs frontend** : conflits `hidden` + `flex` sur les modales corrigés (wrapper `flex` interne, `hidden` sur le conteneur) — plus d'avertissement navigateur « hidden applies the same CSS properties as flex ».
+- **Couleurs système harmonisées** : les échelles Tailwind standards (`red`, `green`, `yellow`, `blue`, `indigo`) sont **remappées** sur les couleurs sémantiques de la charte (danger `#D64545`, succès `#2E8B57`, alerte `#D97706`, info `#3B82C4`) dans `tailwind.config.js` — toutes les pages (badges, alertes, graphiques, notifications, statuts) utilisent désormais automatiquement des teintes cohérentes avec la charte noir & or.
+- **Pages restantes harmonisées** : lieux de travail (index/create/edit), notifications, marquage de présence, détails utilisateur, sélection de rôle et bilan de présence — cartes `shadow-card`, en-têtes de tableaux noirs, boutons `btn-gold`, couleurs de graphiques Chart.js aux couleurs de la charte (or `#D39B23` / danger `#D64545`).
+- **Nettoyage** : code mort supprimé (`EmployeeController`, `PresenceController` non routés, vues `employee/*`, `user/stock`, `layouts/user`, `welcome`, `layouts/logout`, `deconexion`) et route cassée `user.show` (méthode `showUser` inexistante) retirée — **toute fonctionnalité backend a désormais un rendu frontend fonctionnel**.
 
 ---
 

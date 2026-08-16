@@ -26,7 +26,7 @@
         width: 100%;
         height: 100%;
         overflow: auto;
-        background-color: rgba(0,0,0,0.4);
+        background-color: rgba(8,8,8,0.55);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -34,14 +34,14 @@
     .modal-content {
         background-color: #ffffff;
         padding: 2rem;
-        border-radius: 0.5rem;
+        border-radius: 1rem;
         width: 90%;
         max-width: 28rem;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1), 0 8px 24px -8px rgba(211,155,35,0.2);
         text-align: center;
     }
     .modal-icon {
-        background-color: #d1fae5;
+        background-color: #f6e2c0;
         width: 3rem;
         height: 3rem;
         border-radius: 50%;
@@ -51,12 +51,12 @@
         margin: 0 auto 1rem;
     }
     .modal-icon svg {
-        color: #059669;
+        color: #b77f1d;
     }
     .modal-title {
-        color: #111827;
+        color: #080808;
         font-size: 1.25rem;
-        font-weight: 600;
+        font-weight: 700;
         margin-bottom: 0.5rem;
     }
     .modal-text {
@@ -70,12 +70,15 @@
         gap: 0.5rem;
     }
     .btn-cancel, .btn-confirm {
-        padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.5rem;
         font-size: 0.875rem;
-        font-weight: 500;
+        font-weight: 600;
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1), background-color 0.2s;
+    }
+    .btn-cancel:active, .btn-confirm:active {
+        transform: scale(0.97);
     }
     .btn-cancel {
         background-color: #ffffff;
@@ -86,12 +89,13 @@
         background-color: #f3f4f6;
     }
     .btn-confirm {
-        background-color: #4f46e5;
+        background-color: #D39B23;
         color: #ffffff;
         border: none;
+        box-shadow: 0 8px 24px -8px rgba(211,155,35,0.45);
     }
     .btn-confirm:hover {
-        background-color: #4338ca;
+        background-color: #E9B533;
     }
 </style>
 

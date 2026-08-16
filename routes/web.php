@@ -11,8 +11,6 @@ use App\Http\Controllers\UtilisateurController;
 use App\Models\Administrateur;
 use App\Models\Superviseur;
 use App\Models\Utilisateur;
-use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\PreController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\GeoLocationController;
@@ -98,7 +96,6 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/employe/{id}/bulletin', [SuperviseurController::class, 'evaluationBulletin'])->name('superviseur.evaluation.bulletin');
         Route::get('/getUserDetails/{id}', [SuperviseurController::class, 'getUserDetails'])->name('superviseur.getUserDetails');
         Route::get('/viewUser/{id}', [SuperviseurController::class, 'viewUser'])->name('viewUser');
-        Route::get('/showUser/{id}', [SuperviseurController::class, 'showUser'])->name('user.show');
         Route::get('/exportPDF', [SuperviseurController::class, 'exportPDF'])->name('export.pdf');
         Route::get('/showAddMember', [SuperviseurController::class, 'showAddMember'])->name('superviseur.showAddMember');
         Route::post('/addMemberToTeam/{id}', [SuperviseurController::class, 'addMemberToTeam'])->name('superviseur.addMemberToTeam');

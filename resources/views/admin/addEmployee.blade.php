@@ -15,7 +15,7 @@
     </div>
     @endif
 
-    <div class="p-6 overflow-hidden bg-white rounded-lg shadow-sm">
+    <div class="p-6 overflow-hidden bg-white rounded-2xl border border-gray-200/70 shadow-card">
         <form action="{{ route('admin.storeEmployee') }}" method="POST" class="space-y-6">
             @csrf
             <div>

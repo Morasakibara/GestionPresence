@@ -59,14 +59,14 @@ input[type="password"] {
 input[type="email"]:focus,
 input[type="password"]:focus {
     outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    border-color: #D39B23;
+    box-shadow: 0 0 0 3px rgba(211, 155, 35, 0.15);
 }
 
 button[type="submit"] {
     width: 100%;
     padding: 0.75rem;
-    background-color: #4f46e5;
+    background-color: #D39B23;
     color: white;
     border: none;
     border-radius: 0.375rem;
@@ -77,14 +77,14 @@ button[type="submit"] {
 }
 
 button[type="submit"]:hover {
-    background-color: #4338ca;
+    background-color: #E9B533;
 }
 
 .forgot-password {
     display: block;
     text-align: right;
     font-size: 0.75rem;
-    color: #4f46e5;
+    color: #B77F1D;
     text-decoration: none;
     margin-top: 0.5rem;
 }

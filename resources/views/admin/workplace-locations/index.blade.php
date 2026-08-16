@@ -8,40 +8,40 @@
 
 @section('content')
 <div class="mx-auto sm:px-6 lg:px-8 px-4 py-8">
-    <div class="bg-white rounded-lg shadow-sm p-6 ">
+    <div class="bg-white rounded-2xl border border-gray-200/70 shadow-card p-6">
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-900">Lieux de travail</h1>
-            <a href="{{ route('admin.workplace-locations.create') }}" class="px-4 py-2 bg-3hcig-blue text-white rounded-md hover:bg-3hcig-blue-dark">
+            <h1 class="text-2xl font-bold text-[#080808]">Lieux de travail</h1>
+            <a href="{{ route('admin.workplace-locations.create') }}" class="btn-gold btn-press">
                 Ajouter un lieu
             </a>
         </div>
     
         @if(session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+            <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-4">
                 {{ session('success') }}
             </div>
         @endif
     
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+                <thead class="bg-[#080808]">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
                             Nom
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
                             Latitude
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
                             Longitude
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
                             Rayon (m)
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
                             Statut
                         </th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">
                             Actions
                         </th>
                     </tr>
@@ -62,18 +62,18 @@
                                 <div class="text-sm text-gray-900">{{ $location->rayon }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $location->actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                <span class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full {{ $location->actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $location->actif ? 'Actif' : 'Inactif' }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a href="{{ route('admin.workplace-locations.edit', $location) }}" class="text-3hcig-blue hover:text-3hcig-blue-dark mr-3">
+                                <a href="{{ route('admin.workplace-locations.edit', $location) }}" class="btn-press inline-flex items-center rounded-lg bg-pharaoh-gold/10 px-3 py-1.5 text-xs font-semibold text-pharaoh-bronze-dark hover:bg-pharaoh-gold/20 mr-3">
                                     Modifier
                                 </a>
                                 <form action="{{ route('admin.workplace-locations.destroy', $location) }}" method="POST" class="inline-block">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce lieu de travail?')">
+                                    <button type="submit" class="text-red-600 hover:text-red-900 transition-colors duration-150" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce lieu de travail?')">
                                         Supprimer
                                     </button>
                                 </form>
@@ -93,8 +93,8 @@
         </div>
     </div>
     
-    <div class="mt-6 bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Aide</h2>
+    <div class="mt-6 bg-white rounded-2xl border border-gray-200/70 shadow-card p-6">
+        <h2 class="text-xl font-bold text-[#080808] mb-4">Aide</h2>
         <div class="prose text-gray-600">
             <p>Les lieux de travail définissent les zones géographiques où vos employés peuvent marquer leur présence.</p>
     

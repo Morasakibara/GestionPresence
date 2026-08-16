@@ -104,13 +104,13 @@ document.addEventListener('DOMContentLoaded', function() {
             {
                 label: 'Présences',
                 data: @json($presences->where('status', 'présent')->pluck('date')->countBy()->toArray()), // Comptes les jours où l'utilisateur est présent
-                backgroundColor: '#1976D2', // Couleur 3hcig-blue
+                backgroundColor: '#D39B23', // Or de la charte Le Pharaon
                 borderRadius: 4
             },
             {
                 label: 'Absences',
                 data: @json($presences->where('status', 'absent')->pluck('date')->countBy()->toArray()), // Comptes les jours où l'utilisateur est absent
-                backgroundColor: '#EF4444', // Rouge
+                backgroundColor: '#D64545', // Danger de la charte
                 borderRadius: 4
             }
         ]

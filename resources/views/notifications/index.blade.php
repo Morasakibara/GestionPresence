@@ -5,19 +5,19 @@
 @section('content')
 <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Notifications</h1>
+        <h1 class="text-2xl font-bold text-[#080808] sm:text-3xl">Notifications</h1>
         <form action="{{ route('notifications.readAll') }}" method="POST">
             @csrf
-            <button type="submit" class="inline-flex items-center rounded-md bg-3hcig-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+            <button type="submit" class="btn-gold btn-press">
                 Marquer tout comme lu
             </button>
         </form>
     </div>
 
-    <div class="overflow-hidden rounded-lg bg-white shadow">
+    <div class="overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-card">
         <ul role="list" class="divide-y divide-gray-200">
             @forelse($notifications as $notification)
-                <li class="px-4 py-5 sm:px-6 {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }}">
+                <li class="px-4 py-5 sm:px-6 transition-colors duration-150 {{ $notification->read_at ? 'bg-gray-50' : 'bg-white hover:bg-gray-50/60' }}">
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
                             <div class="flex items-center">
@@ -51,12 +51,12 @@
                         @if(!$notification->read_at)
                             <form action="{{ route('notifications.read', $notification->id) }}" method="POST">
                                 @csrf
-                                <button type="submit" class="inline-flex items-center rounded-md bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                                <button type="submit" class="btn-press inline-flex items-center rounded-lg bg-pharaoh-gold/10 px-3 py-1.5 text-xs font-semibold text-pharaoh-bronze-dark transition-colors duration-150 hover:bg-pharaoh-gold/20 focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2">
                                     Marquer comme lu
                                 </button>
                             </form>
                         @else
-                            <span class="inline-flex items-center rounded-md bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-500">
+                            <span class="inline-flex items-center rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-500">
                                 Lu
                             </span>
                         @endif

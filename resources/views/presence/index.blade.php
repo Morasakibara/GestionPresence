@@ -5,7 +5,7 @@
 @section('content')
 <div class="container px-4 py-6 mx-auto sm:px-6 lg:px-8">
     <div class="max-w-md mx-auto">
-        <div class="p-6 bg-white rounded-lg shadow-sm">
+        <div class="p-6 bg-white rounded-2xl border border-gray-200/70 shadow-card">
             <div class="mb-6 text-center">
                 <h1 class="text-2xl font-bold text-[#080808]">Marquer la présence</h1>
                 <p class="mt-2 text-sm text-gray-600">Enregistrez vos heures d'arrivée et de départ</p>
@@ -85,11 +85,11 @@
             </div>
 
             <!-- Horloge et informations -->
-            <div class="p-4 mt-8 rounded-md bg-gray-50">
+            <div class="p-4 mt-8 rounded-xl border border-gray-200/60 bg-gray-50">
                 <div class="flex justify-center">
                     <div class="text-center">
                         <div class="text-sm font-medium text-gray-500">Heure actuelle</div>
-                        <div class="mt-1 text-xl font-semibold text-3hcig-blue-dark" id="current-time"></div>
+                        <div class="mt-1 text-xl font-semibold text-pharaoh-bronze-dark" id="current-time"></div>
                         <div class="mt-2 text-xs text-gray-500">
                             Pointage ouvert à toute heure — renseignez votre fiche de rendement avant de pointer votre départ.
                         </div>

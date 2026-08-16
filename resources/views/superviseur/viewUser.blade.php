@@ -149,7 +149,7 @@
 
             <!-- Actions -->
             <div class="mt-8 flex justify-end">
-                <a href="{{ route('superviseur.showFollowPresence') }}" class="inline-flex items-center rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                <a href="{{ route('superviseur.showFollowPresence') }}" class="btn-press inline-flex items-center rounded-lg bg-pharaoh-gold/10 px-4 py-2 text-sm font-semibold text-pharaoh-bronze-dark transition-colors duration-150 hover:bg-pharaoh-gold/20 focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2">
                     <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                     </svg>
