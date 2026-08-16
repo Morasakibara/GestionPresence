@@ -91,6 +91,22 @@ public function profile(){
 }
     */
 
+    /**
+     * Historique des fiches de rendement de l'employé connecté.
+     */
+    public function rendementReport()
+    {
+        $user = Auth::user();
+
+        $rendements = Presence::where('employerID', $user->id)
+            ->whereNotNull('rendement')
+            ->where('rendement', '!=', '')
+            ->orderByDesc('date')
+            ->get(['id', 'date', 'heureArrivee', 'heureDepart', 'rendement', 'status']);
+
+        return view('user.rendement', compact('rendements'));
+    }
+
     public function profile()
     {
         return view('user.profile', ['user' => Auth::user()]);

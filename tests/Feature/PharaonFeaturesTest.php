@@ -275,4 +275,143 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee('Réunion client et suivi des livrables.');
         $response->assertSee('/20');
     }
+
+    /** S1 — L'employé consulte l'historique de ses fiches de rendement. */
+    public function test_employe_consulte_ses_fiches_de_rendement(): void
+    {
+        $employe = $this->loginEmploye();
+
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => 3,
+            'date' => '2026-08-10',
+            'heureArrivee' => '2026-08-10 08:00:00',
+            'heureDepart' => '2026-08-10 17:00:00',
+            'status' => 'présent',
+            'rendement' => 'Analyse des besoins client.',
+        ]);
+
+        $response = $this->get('/user/rendement');
+        $response->assertOk();
+        $response->assertSee('Mes fiches de rendement');
+        $response->assertSee('Analyse des besoins client.');
+    }
+
+    /** S2 — L'admin exporte le CSV des évaluations et rendements. */
+    public function test_admin_export_csv_evaluations_rendements(): void
+    {
+        $admin = $this->loginAdmin();
+        $employe = Utilisateur::where('role', 'Employer')->first();
+
+        // Un rendement sur le mois pour cet employé
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => 3,
+            'date' => '2026-08-10',
+            'heureArrivee' => '2026-08-10 08:00:00',
+            'heureDepart' => '2026-08-10 17:00:00',
+            'status' => 'présent',
+            'rendement' => 'Livraison du module de facturation.',
+        ]);
+
+        $response = $this->get('/admin/evaluations/export?mois=2026-08');
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+        $this->assertStringContainsString('Employé', $response->getContent());
+        $this->assertStringContainsString('Note /20', $response->getContent());
+        $this->assertStringContainsString($employe->nom, $response->getContent());
+        $this->assertStringContainsString('Livraison du module de facturation.', $response->getContent());
+    }
+
+    /** S3 — Une évaluation rouge notifie l'administrateur principal. */
+    public function test_evaluation_rouge_notifie_admin(): void
+    {
+        $admin = $this->loginAdmin();
+        $employe = Utilisateur::where('role', 'Employer')->first();
+
+        $this->post('/admin/evaluations', [
+            'employerID' => $employe->id,
+            'mois' => '2026-08',
+            'note' => 4,
+            'couleur' => 'rouge',
+            'commentaire' => 'Absences répétées.',
+        ])->assertSessionHas('success');
+
+        // L'admin qui évalue est l'admin principal -> pas de notification (évite l'auto-notification)
+        $this->assertDatabaseMissing('notifications', [
+            'type' => \App\Notifications\EvaluationRougeNotification::class,
+        ]);
+
+        // Le superviseur enregistre une évaluation rouge -> l'admin principal est notifié
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        $this->post('/superviseur/evaluations', [
+            'employerID' => $employe->id,
+            'mois' => '2026-08',
+            'note' => 3,
+            'couleur' => 'rouge',
+            'commentaire' => 'Discipline critique.',
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('notifications', [
+            'type' => \App\Notifications\EvaluationRougeNotification::class,
+        ]);
+    }
+
+    /** S3bis — La commande planifiée notifie l'admin pour les évaluations rouges. */
+    public function test_commande_alertes_evaluations_rouges(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 0));
+        $employe = Utilisateur::where('role', 'Employer')->first();
+
+        // Beaucoup d'absences + retards sur juillet -> évaluation rouge
+        foreach (['2026-07-06', '2026-07-07'] as $date) {
+            Presence::create([
+                'employerID' => $employe->id,
+                'Sup_id' => 3,
+                'date' => $date,
+                'heureArrivee' => $date . ' 09:30:00',
+                'heureDepart' => $date . ' 17:00:00',
+                'status' => 'présent',
+            ]);
+        }
+        Presence::create(['employerID' => $employe->id, 'Sup_id' => 3, 'date' => '2026-07-08', 'status' => 'Absent']);
+        Presence::create(['employerID' => $employe->id, 'Sup_id' => 3, 'date' => '2026-07-09', 'status' => 'Absent']);
+        Presence::create(['employerID' => $employe->id, 'Sup_id' => 3, 'date' => '2026-07-10', 'status' => 'Absent']);
+
+        $this->artisan('presence:alertes-evaluations-rouges', ['--mois' => '2026-07'])
+            ->expectsOutputToContain('notifié');
+
+        $this->assertDatabaseHas('notifications', [
+            'type' => \App\Notifications\EvaluationRougeNotification::class,
+        ]);
+    }
+
+    /** S4 — Le superviseur consulte les fiches de rendement de son équipe. */
+    public function test_superviseur_consulte_rendements_equipe(): void
+    {
+        $employe = $this->loginEmploye();
+        $employerInfo = DB::table('employer')->where('id', $employe->id)->first();
+
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:00:00',
+            'heureDepart' => '2026-08-17 17:00:00',
+            'status' => 'présent',
+            'rendement' => 'Préparation de la revue hebdomadaire.',
+        ]);
+
+        $response = $this->get('/superviseur/rendements?date=2026-08-17');
+        $response->assertOk();
+        $response->assertSee('Rendement de l\'équipe');
+        $response->assertSee('Préparation de la revue hebdomadaire.');
+    }
 }

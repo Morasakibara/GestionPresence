@@ -117,6 +117,8 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 - **Couleur** : 🟢 Vert ≥ 14/20 · 🟠 Orange 10-13/20 · 🔴 Rouge < 10/20.
 - **Évaluation manuelle** : l'admin (fondateur) et le superviseur (directeur / directeur adjoint) peuvent enregistrer une note + couleur + commentaire par employé et par mois (elle prime sur l'auto-calcul).
 - **Intégrée aux rapports** : badge coloré par employé dans les rapports HTML et PDF (admin et superviseur).
+- **Alerte automatique 🔴** : quand une évaluation passe en **rouge** (manuelle ou auto-détectée), l'**administrateur principal est notifié** (`EvaluationRougeNotification` — email + interne) — déclenchée à l'enregistrement d'une évaluation rouge et via la commande planifiée `presence:alertes-evaluations-rouges` (le 1er de chaque mois, 8h00).
+- **Export CSV** : `GET /admin/evaluations/export?mois=YYYY-MM` génère un CSV (BOM UTF-8, séparateur `;`) avec par employé : note, couleur, commentaire et **rendements du mois**. Bouton sur la page rapport admin.
 
 ---
 
@@ -139,6 +141,7 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 | **Suivre les présences** | Liste des membres de son équipe + détail par utilisateur (frise graphique Chart.js). |
 | **Ajouter / retirer un membre** | Gestion de l'équipe (rattache `Sup_id` + `equipe` de façon cohérente). |
 | **Rapport d'équipe** | Rapport mensuel de son équipe avec **évaluations colorées /20** et **réalisations** (fiches de rendement) + **export PDF** + évaluation manuelle des membres. |
+| **Rendement équipe** | Page `/superviseur/rendements` : **suivi quotidien** des fiches de rendement des membres (filtre par date) + alerte des membres n'ayant pas encore rempli leur fiche. |
 | **Changer de rôle** | Bascule Employé ↔ Superviseur. |
 | **Notifications** | Reçoit les retards/absences des membres de son équipe. |
 
@@ -148,6 +151,7 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 | **Dashboard** | Présences du mois, dernière arrivée / dernier départ. |
 | **Pointer** | Marquage d'**arrivée** et de **départ** à **toute heure** (y compris le week-end), validé par géolocalisation. Au départ, **fiche de rendement obligatoire** (tâches effectuées). |
 | **Bilan de présence** | Historique du mois + total présences/absences. |
+| **Mes rendements** | Page `/user/rendement` : historique de ses **fiches de rendement** (date, arrivée, départ, tâches effectuées). |
 | **Profil** | Modification du profil et de l'avatar. |
 
 ### ⚙️ Toutes les personnes connectées
@@ -184,6 +188,7 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 | Commande | Cadence | Effet |
 |---|---|---|
 | `presence:auto-absences` | **Tous les jours à 18h45** | ① Passe en `Absent` les présences « arrivée sans départ » ; ② crée des absences pour les employés sans aucune présence du jour ; notifie le superviseur + l'admin principal pour chaque cas. |
+| `presence:alertes-evaluations-rouges` | **Le 1er de chaque mois à 8h00** | Notifie l'admin principal des employés dont l'évaluation (auto-calculée) est passée en **rouge** sur le mois précédent. Option `--mois=Y-m`. |
 
 Configuré dans `bootstrap/app.php` (`withSchedule`). En production, un cron `* * * * * php artisan schedule:run` est requis.
 

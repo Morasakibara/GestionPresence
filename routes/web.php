@@ -64,6 +64,7 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::post('/generate-report', [AdminController::class, 'generateReport']);
     Route::post('/report',[AdminController::class, 'exportReport'])->name('exportReport');
     Route::post('/evaluations', [AdminController::class, 'storeEvaluation'])->name('storeEvaluation');
+    Route::get('/evaluations/export', [AdminController::class, 'exportEvaluationsCsv'])->name('evaluations.export');
     Route::get('/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('showEmployeeList');
     Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee']);
     Route::post('/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('updateProfile');
@@ -81,6 +82,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/profile', [UtilisateurController::class, 'profile'])->name('user.profile');
         Route::put('/update', [UtilisateurController::class, 'update'])->name('user.update');
         Route::get('/presence-report', [UtilisateurController::class, 'presenceReport'])->name('user.presence.report');
+        Route::get('/rendement', [UtilisateurController::class, 'rendementReport'])->name('user.rendement');
         Route::post('/check-location', [GeoLocationController::class, 'checkLocation'])->name('check.location');
     });
 
@@ -90,6 +92,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/followPresence', [SuperviseurController::class, 'showFollowPresence'])->name('superviseur.showFollowPresence');
         Route::get('/generateReport2', [SuperviseurController::class, 'generateReport'])->name('superviseur.generateReport2');
         Route::post('/evaluations', [SuperviseurController::class, 'storeEvaluation'])->name('superviseur.storeEvaluation');
+        Route::get('/rendements', [SuperviseurController::class, 'teamRendements'])->name('superviseur.rendements');
         Route::get('/getUserDetails/{id}', [SuperviseurController::class, 'getUserDetails'])->name('superviseur.getUserDetails');
         Route::get('/viewUser/{id}', [SuperviseurController::class, 'viewUser'])->name('viewUser');
         Route::get('/showUser/{id}', [SuperviseurController::class, 'showUser'])->name('user.show');

@@ -23,6 +23,7 @@
 <a href="{{ route('user.dashboard') }}" class="px-3 py-2 text-sm font-medium text-white rounded-md bg-3hcig-blue" aria-current="page">Tableau de bord</a>
 <a href="{{ route('presence.index') }}" class="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">Présence</a>
 <a href="{{ route('user.presence.report') }}" class="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">Bilan de présence</a>
+<a href="{{ route('user.rendement') }}" class="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">Mes rendements</a>
 <a href="{{ route('notifications.index') }}" class="relative px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">
     Notifications
     @if(Auth::user()->unreadNotifications->count() > 0)
@@ -37,6 +38,7 @@
 <a href="{{ route('user.dashboard') }}" class="block px-3 py-2 text-base font-medium text-white rounded-md bg-3hcig-blue" aria-current="page">Tableau de bord</a>
 <a href="{{ route('presence.index') }}" class="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">Présence</a>
 <a href="{{ route('user.presence.report') }}" class="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">Bilan de présence</a>
+<a href="{{ route('user.rendement') }}" class="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">Mes rendements</a>
 <a href="{{ route('notifications.index') }}" class="relative block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-3hcig-blue hover:text-white">
     Notifications
     @if(Auth::user()->unreadNotifications->count() > 0)
@@ -54,8 +56,8 @@
 
         <div class="space-y-4">
             @php
-                $currentDay = now()->dayOfWeek;
-                $isWeekend = $currentDay === 0 || $currentDay === 6; // 0 = dimanche, 6 = samedi
+                // Pointage libre : plus de restriction horaire ni de week-end
+                $isWeekend = false;
             @endphp
 
             @if($isWeekend)
@@ -76,7 +78,7 @@
             @else
                 <!-- Bouton pour marquer l'heure d'arrivée -->
                 <div>
-                    @if(now()->hour >= 7 && (now()->hour < 10 || (now()->hour == 10 && now()->minute == 0)))
+                    @if(true)
                         <form method="POST" action="{{ route('presence.arrival') }}" id="arrival-form">
                             @csrf
                             <input type="hidden" name="latitude" id="latitude-arrival">
@@ -108,11 +110,15 @@
 
                 <!-- Bouton pour marquer l'heure de départ -->
                 <div>
-                    @if(now()->hour >= 17 && (now()->hour < 18 || (now()->hour == 18 && now()->minute <= 30)))
+                    @if(true)
                         <form method="POST" action="{{ route('presence.departure') }}" id="departure-form">
                             @csrf
                             <input type="hidden" name="latitude" id="latitude-departure">
                             <input type="hidden" name="longitude" id="longitude-departure">
+                            <label for="rendement" class="block text-sm font-medium text-gray-700 mb-1">Fiche de rendement du jour <span class="text-red-600">*</span></label>
+                            <textarea name="rendement" id="rendement" rows="3" required
+                                placeholder="Décrivez ce que vous avez fait aujourd'hui..."
+                                class="block w-full px-3 py-2 mb-3 text-sm border border-gray-300 rounded-md shadow-sm focus:border-3hcig-blue focus:outline-none focus:ring-3hcig-blue"></textarea>
                             <button type="button" onclick="getLocationAndSubmit('departure-form')" class="flex items-center justify-center w-full px-4 py-2 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-green hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2">
                                 <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

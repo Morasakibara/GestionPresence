@@ -472,7 +472,58 @@ class SuperviseurController extends Controller
             ]
         );
 
+        // Alerte automatique à l'admin principal si l'évaluation passe en rouge
+        if ($request->couleur === 'rouge') {
+            $employe = \App\Models\Utilisateur::find($request->employerID);
+            $adminPrincipal = \App\Models\Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+            if ($employe && $adminPrincipal && (int) $adminPrincipal->id !== (int) Auth::id()) {
+                $adminPrincipal->notify(new \App\Notifications\EvaluationRougeNotification(
+                    $employe->nom,
+                    $request->mois,
+                    (float) $request->note
+                ));
+            }
+        }
+
         return redirect()->back()->with('success', 'Évaluation enregistrée.');
+    }
+
+    /**
+     * Suivi quotidien des fiches de rendement des membres de l'équipe.
+     */
+    public function teamRendements(Request $request)
+    {
+        $superviseur = Auth::user();
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+
+        if (!$superviseurInfo) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+
+        $employerIds = Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
+
+        $date = $request->input('date', now()->toDateString());
+
+        // Fiches de rendement du jour sélectionné, avec le nom de l'employé
+        $rendements = DB::table('presence')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->whereIn('presence.employerID', $employerIds)
+            ->whereDate('presence.date', $date)
+            ->whereNotNull('presence.rendement')
+            ->where('presence.rendement', '!=', '')
+            ->select('presence.id', 'presence.date', 'presence.heureArrivee', 'presence.heureDepart', 'presence.rendement', 'utilisateur.nom')
+            ->orderBy('presence.heureArrivee')
+            ->get();
+
+        // Membres n'ayant pas encore rempli leur fiche ce jour-là
+        $membresSansFiche = Utilisateur::whereIn('id', $employerIds)
+            ->whereNotIn('id', DB::table('presence')
+                ->whereDate('date', $date)
+                ->whereNotNull('rendement')
+                ->pluck('employerID'))
+            ->get(['id', 'nom']);
+
+        return view('superviseur.rendements', compact('rendements', 'membresSansFiche', 'date', 'employerIds'));
     }
 
     public function showAddMemberForm(Request $request)

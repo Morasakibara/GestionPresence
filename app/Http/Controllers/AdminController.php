@@ -398,6 +398,57 @@ public function exportReport(Request $request)
 
 
     /**
+     * Export CSV des évaluations et des rendements par employé.
+     */
+    public function exportEvaluationsCsv(Request $request)
+    {
+        $mois = $request->input('mois', now()->format('Y-m'));
+        $debut = $mois . '-01';
+        $fin = now()->parse($debut)->endOfMonth()->toDateString();
+
+        $employes = DB::table('employer')
+            ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
+            ->select('employer.id', 'utilisateur.nom')
+            ->orderBy('utilisateur.nom')
+            ->get();
+
+        $lignes = [];
+        $lignes[] = ['Employé', 'Mois', 'Note /20', 'Couleur', 'Commentaire', 'Rendements du mois'];
+
+        foreach ($employes as $employe) {
+            $evaluation = \App\Services\EvaluationService::evaluer($employe->id, $debut, $fin);
+
+            $rendements = \App\Models\Presence::where('employerID', $employe->id)
+                ->whereBetween('date', [$debut, $fin])
+                ->whereNotNull('rendement')
+                ->where('rendement', '!=', '')
+                ->orderBy('date')
+                ->get(['date', 'rendement'])
+                ->map(fn ($r) => $r->date . ' : ' . $r->rendement)
+                ->implode("\n");
+
+            $lignes[] = [
+                $employe->nom,
+                $mois,
+                number_format($evaluation['note'], 1, ',', ''),
+                $evaluation['couleur'],
+                $evaluation['commentaire'],
+                $rendements,
+            ];
+        }
+
+        $contenu = "\xEF\xBB\xBF"; // BOM UTF-8 pour Excel
+        foreach ($lignes as $ligne) {
+            $contenu .= implode(';', array_map(fn ($cell) => '"' . str_replace('"', '""', (string) $cell) . '"', $ligne)) . "\r\n";
+        }
+
+        return response($contenu, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename=evaluations_rendements_' . $mois . '.csv',
+        ]);
+    }
+
+    /**
      * Enregistre (ou met à jour) une évaluation manuelle pour un employé et un mois.
      */
     public function storeEvaluation(Request $request)
@@ -419,6 +470,19 @@ public function exportReport(Request $request)
                 'evaluateur_id' => Auth::id(),
             ]
         );
+
+        // Alerte automatique si l'évaluation passe en rouge
+        if ($request->couleur === 'rouge') {
+            $employe = \App\Models\Utilisateur::find($request->employerID);
+            $adminPrincipal = $this->primaryAdmin();
+            if ($employe && $adminPrincipal && (int) $adminPrincipal->id !== (int) Auth::id()) {
+                $adminPrincipal->notify(new \App\Notifications\EvaluationRougeNotification(
+                    $employe->nom,
+                    $request->mois,
+                    (float) $request->note
+                ));
+            }
+        }
 
         return redirect()->back()->with('success', 'Évaluation enregistrée.');
     }
@@ -452,6 +516,14 @@ public function exportReport(Request $request)
  * @param  \Illuminate\Http\Request  $request
  * @return \Illuminate\Http\JsonResponse
  */
+
+    /**
+     * Retourne l'administrateur principal (le plus ancien) pour les notifications.
+     */
+    private function primaryAdmin(): ?\App\Models\Utilisateur
+    {
+        return \App\Models\Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+    }
 
     public function updateProfile(Request $request)
 {

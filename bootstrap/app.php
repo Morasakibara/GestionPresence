@@ -21,6 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function ($schedule) {
         $schedule->command('presence:auto-absences')->dailyAt('18:45');
+        // Alerte automatique des évaluations rouges : le 1er de chaque mois à 8h00
+        $schedule->command('presence:alertes-evaluations-rouges')->monthlyOn(1, '08:00');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
