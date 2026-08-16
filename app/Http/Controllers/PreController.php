@@ -11,9 +11,17 @@ use App\Models\Utilisateur;
 use App\Notifications\RetardNotification;
 use App\Notifications\AbsenceNotification;
 use App\Models\WorkplaceLocation;
+use App\Services\GeolocationVerificationService;
 
 class PreController extends Controller
 {
+    protected $geoService;
+
+    public function __construct(GeolocationVerificationService $geoService)
+    {
+        $this->geoService = $geoService;
+    }
+
     public function index()
     {
         // Vérifier si nous sommes en week-end (samedi=6, dimanche=0)
@@ -38,16 +46,34 @@ class PreController extends Controller
     }
 
     // Vérifier la géolocalisation
-    $latitude = $request->input('latitude');
-    $longitude = $request->input('longitude');
+    $latitude = (float) $request->input('latitude');
+    $longitude = (float) $request->input('longitude');
 
     if (!$latitude || !$longitude) {
         return redirect()->back()->withErrors('La géolocalisation est requise pour marquer votre présence.');
     }
 
+    // Anti-triche : vérifier la signature délivrée par /user/check-location
+    $signature = $request->input('signature');
+    if (!$signature) {
+        return redirect()->back()->withErrors('Veuillez valider votre position avant de marquer votre présence.');
+    }
+
+    $verification = $this->geoService->verifySignature(
+        $signature,
+        $latitude,
+        $longitude,
+        $request->input('client_timestamp') ? (int) $request->input('client_timestamp') : null
+    );
+
+    if (!$verification['valid']) {
+        return redirect()->back()->withErrors($verification['reason']);
+    }
+
     // Trouver un lieu de travail valide
     $validLocation = false;
     $workplaceLocationId = null;
+    $matchedLocation = null;
 
     $workplaceLocations = WorkplaceLocation::where('actif', true)->get();
 
@@ -55,12 +81,33 @@ class PreController extends Controller
         if ($location->isWithinRadius($latitude, $longitude)) {
             $validLocation = true;
             $workplaceLocationId = $location->id;
+            $matchedLocation = $location;
             break;
         }
     }
 
     if (!$validLocation) {
         return redirect()->back()->withErrors('Vous devez être physiquement présent sur votre lieu de travail pour marquer votre présence.');
+    }
+
+    // Vérification croisée : précision GPS déclarée par le navigateur
+    $accuracy = $request->input('accuracy');
+    $suspect = false;
+    $motifs = [];
+
+    if ($accuracy !== null && (float) $accuracy > (int) config('geolocation.max_accuracy_m', 300)) {
+        $suspect = true;
+        $motifs[] = 'Précision GPS trop faible (' . round((float) $accuracy) . ' m).';
+    }
+
+    // Empêcher un double pointage d'arrivée le même jour
+    $existing = Presence::where('employerID', Auth::id())
+                       ->whereDate('date', $now->toDateString())
+                       ->whereNotNull('heureArrivee')
+                       ->first();
+
+    if ($existing) {
+        return redirect()->back()->withErrors('Vous avez déjà pointé votre arrivée aujourd\'hui.');
     }
 
     $user = Auth::user();
@@ -84,7 +131,11 @@ class PreController extends Controller
         'latitude_arrivee' => $latitude,
         'longitude_arrivee' => $longitude,
         'localisation_validee_arrivee' => true,
-        'workplace_location_id' => $workplaceLocationId
+        'workplace_location_id' => $workplaceLocationId,
+        'accuracy_arrivee' => $accuracy !== null ? (float) $accuracy : null,
+        'client_timestamp_arrivee' => $request->input('client_timestamp') ? (int) $request->input('client_timestamp') : null,
+        'suspect' => $suspect,
+        'motif_suspicion' => $suspect ? implode(' ', $motifs) : null,
     ]);
 
     // Vérifier si l'employé est en retard (après 8h)
@@ -123,21 +174,40 @@ public function markDeparture(Request $request)
     }
 
     // Vérifier la géolocalisation
-    $latitude = $request->input('latitude');
-    $longitude = $request->input('longitude');
+    $latitude = (float) $request->input('latitude');
+    $longitude = (float) $request->input('longitude');
 
     if (!$latitude || !$longitude) {
         return redirect()->back()->withErrors('La géolocalisation est requise pour marquer votre départ.');
     }
 
+    // Anti-triche : vérifier la signature délivrée par /user/check-location
+    $signature = $request->input('signature');
+    if (!$signature) {
+        return redirect()->back()->withErrors('Veuillez valider votre position avant de marquer votre départ.');
+    }
+
+    $verification = $this->geoService->verifySignature(
+        $signature,
+        $latitude,
+        $longitude,
+        $request->input('client_timestamp') ? (int) $request->input('client_timestamp') : null
+    );
+
+    if (!$verification['valid']) {
+        return redirect()->back()->withErrors($verification['reason']);
+    }
+
     // Trouver un lieu de travail valide
     $validLocation = false;
+    $workplaceLocationId = null;
 
     $workplaceLocations = WorkplaceLocation::where('actif', true)->get();
 
     foreach ($workplaceLocations as $location) {
         if ($location->isWithinRadius($latitude, $longitude)) {
             $validLocation = true;
+            $workplaceLocationId = $location->id;
             break;
         }
     }
@@ -156,12 +226,50 @@ public function markDeparture(Request $request)
         return redirect()->back()->withErrors('Aucune arrivée correspondante n\'a été trouvée pour aujourd\'hui ou le départ a déjà été marqué.');
     }
 
+    // Vérification croisée : distance et vitesse entre le point d'arrivée et de départ
+    $suspect = (bool) $presence->suspect;
+    $motifs = $presence->motif_suspicion ? explode(' ', $presence->motif_suspicion) : [];
+
+    $accuracy = $request->input('accuracy');
+    if ($accuracy !== null && (float) $accuracy > (int) config('geolocation.max_accuracy_m', 300)) {
+        $suspect = true;
+        $motifs[] = 'Précision GPS trop faible (' . round((float) $accuracy) . ' m).';
+    }
+
+    $distanceKm = null;
+    $speedKmh = null;
+    if ($presence->latitude_arrivee && $presence->longitude_arrivee) {
+        $distanceKm = $this->geoService->haversineKm(
+            (float) $presence->latitude_arrivee,
+            (float) $presence->longitude_arrivee,
+            $latitude,
+            $longitude
+        );
+
+        $secondsElapsed = abs($now->diffInSeconds($presence->heureArrivee));
+        $speedKmh = $this->geoService->speedKmh($distanceKm, $secondsElapsed);
+
+        // Une vitesse de déplacement irréaliste (ex. Paris -> Lyon le même jour)
+        // indique une position falsifiée sur l'un des deux pointages.
+        if ($speedKmh > (int) config('geolocation.max_speed_kmh', 40)) {
+            $suspect = true;
+            $motifs[] = 'Vitesse de déplacement irréaliste (' . round($speedKmh, 1) . ' km/h).';
+        }
+    }
+
     $presence->update([
         'heureDepart' => $now,
         'status' => 'présent',
         'latitude_depart' => $latitude,
         'longitude_depart' => $longitude,
-        'localisation_validee_depart' => true
+        'localisation_validee_depart' => true,
+        'workplace_location_id' => $workplaceLocationId,
+        'accuracy_depart' => $accuracy !== null ? (float) $accuracy : null,
+        'client_timestamp_depart' => $request->input('client_timestamp') ? (int) $request->input('client_timestamp') : null,
+        'distance_km' => $distanceKm !== null ? round($distanceKm, 3) : null,
+        'vitesse_kmh' => $speedKmh !== null ? round($speedKmh, 2) : null,
+        'suspect' => $suspect,
+        'motif_suspicion' => $suspect ? implode(' ', $motifs) : null,
     ]);
 
     return redirect()->back()->with('success', 'Heure de départ marquée avec succès.');

@@ -80,7 +80,6 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/profile', [UtilisateurController::class, 'profile'])->name('user.profile');
         Route::put('/update', [UtilisateurController::class, 'update'])->name('user.update');
         Route::get('/presence-report', [UtilisateurController::class, 'presenceReport'])->name('user.presence.report');
-        Route::post('/check-location', [GeoLocationController::class, 'checkLocation'])->name('check.location');
     });
 
     // Superviseur routes
@@ -102,6 +101,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
     Route::get('/presence', [PreController::class, 'index'])->name('presence.index');
     Route::post('/mark-arrival', [PreController::class, 'markArrival'])->name('presence.arrival');
     Route::post('/mark-departure', [PreController::class, 'markDeparture'])->name('presence.departure');
+    Route::post('/check-location', [GeoLocationController::class, 'checkLocation'])->name('check.location');
 });
 
 //route pour permettre au superviseur de pouvoir changer de rôle

@@ -43,6 +43,9 @@
                                 @csrf
                                 <input type="hidden" name="latitude" id="latitude-arrival">
                                 <input type="hidden" name="longitude" id="longitude-arrival">
+                                <input type="hidden" name="accuracy" id="accuracy-arrival">
+                                <input type="hidden" name="client_timestamp" id="client-timestamp-arrival">
+                                <input type="hidden" name="signature" id="signature-arrival">
                                 <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-blue hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
                                     <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
@@ -75,6 +78,9 @@
                                 @csrf
                                 <input type="hidden" name="latitude" id="latitude-departure">
                                 <input type="hidden" name="longitude" id="longitude-departure">
+                                <input type="hidden" name="accuracy" id="accuracy-departure">
+                                <input type="hidden" name="client_timestamp" id="client-timestamp-departure">
+                                <input type="hidden" name="signature" id="signature-departure">
                                 <button type="button" onclick="getLocationAndSubmit('departure-form')" class="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-green hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2">
                                     <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -180,20 +186,56 @@
 
             navigator.geolocation.getCurrentPosition(
                 function(position) {
-                    // Position obtenue avec succès
-                    hideLoadingMessage();
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    const clientTimestamp = Math.floor(Date.now() / 1000);
 
-                    // Remplir les champs cachés
+                    // Remplir les champs cachés de position
                     if (formId === 'arrival-form') {
-                        document.getElementById('latitude-arrival').value = position.coords.latitude;
-                        document.getElementById('longitude-arrival').value = position.coords.longitude;
+                        document.getElementById('latitude-arrival').value = latitude;
+                        document.getElementById('longitude-arrival').value = longitude;
+                        document.getElementById('accuracy-arrival').value = accuracy;
+                        document.getElementById('client-timestamp-arrival').value = clientTimestamp;
                     } else {
-                        document.getElementById('latitude-departure').value = position.coords.latitude;
-                        document.getElementById('longitude-departure').value = position.coords.longitude;
+                        document.getElementById('latitude-departure').value = latitude;
+                        document.getElementById('longitude-departure').value = longitude;
+                        document.getElementById('accuracy-departure').value = accuracy;
+                        document.getElementById('client-timestamp-departure').value = clientTimestamp;
                     }
 
-                    // Soumettre le formulaire
-                    document.getElementById(formId).submit();
+                    // Étape 1 : valider la position auprès du serveur (anti-triche)
+                    showLoadingMessage('Validation de votre position...');
+
+                    fetch('{{ route('check.location') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ latitude: latitude, longitude: longitude })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.valid && data.signature) {
+                            // Remplir la signature et soumettre
+                            if (formId === 'arrival-form') {
+                                document.getElementById('signature-arrival').value = data.signature;
+                            } else {
+                                document.getElementById('signature-departure').value = data.signature;
+                            }
+                            hideLoadingMessage();
+                            document.getElementById(formId).submit();
+                        } else {
+                            hideLoadingMessage();
+                            displayError(data.message || "Votre position n'a pas été validée. Veuillez réessayer.");
+                        }
+                    })
+                    .catch(error => {
+                        hideLoadingMessage();
+                        displayError("Erreur lors de la validation de la position. Veuillez réessayer.");
+                    });
                 },
                 function(error) {
                     // Erreur lors de l'obtention de la position

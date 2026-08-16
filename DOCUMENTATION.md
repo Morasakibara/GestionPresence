@@ -145,14 +145,28 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 
 ## 6. Flux métier détaillés
 
-### 6.1 Pointage avec géofencing
-1. L'employé ouvre la page « Présence », le navigateur récupère sa position GPS.
-2. `POST /check-location` vérifie (formule de **Haversine**) que la position est dans le rayon d'un lieu actif → réponse JSON `valid: true/false`.
-3. Arrivée (`POST /mark-arrival`) : créé une `presence` avec statut `en attente`, heure d'arrivée et coordonnées.
+### 6.1 Pointage avec géofencing **anti-triche**
+1. L'employé ouvre la page « Présence », le navigateur récupère sa position GPS (précision `accuracy` incluse).
+2. `POST /check-location` vérifie (formule de **Haversine**) que la position est dans le rayon d'un lieu actif → réponse JSON `valid: true/false` + **signature HMAC** si valide.
+3. Arrivée (`POST /mark-arrival`) : le serveur vérifie la signature, l'écart d'horloge client/serveur, puis créé une `presence` avec statut `en attente`, heure d'arrivée, coordonnées et métadonnées de vérification.
    - **Fenêtre** : 7h00 → 10h00, jours ouvrés uniquement (week-end bloqué).
    - **Retard** : arrivée après 8h00 → notifications automatiques.
-4. Départ (`POST /mark-departure`) : met à jour la présence avec statut `présent`.
+   - **Anti double-pointage** : une seule arrivée par jour.
+4. Départ (`POST /mark-departure`) : vérifie la signature puis met à jour la présence avec statut `présent`, coordonnées, distance/vitesse de déplacement.
    - **Fenêtre** : 17h00 → 18h30.
+
+### 6.1bis Protection anti-triche de la géolocalisation
+Un service dédié (`App\Services\GeolocationVerificationService`) protège le pointage :
+
+| Protection | Mécanisme |
+|---|---|
+| **Signature à usage unique** | `check-location` signe la position validée (HMAC-SHA256 + nonce aléatoire + horodatage). `mark-arrival`/`mark-departure` refusent toute requête sans signature valide, expirée, rejouée ou altérée. |
+| **Vérification d'horloge** | Le navigateur envoie son horodatage ; un écart > 5 min avec le serveur rejette la requête (anti-falsification d'horloge). |
+| **Vérification croisée de vitesse** | Distance Haversine arrivée↔départ ÷ temps écoulé. Une vitesse > 40 km/h (ex. pointage à Paris le matin et Lyon le soir) marque la présence **suspecte**. |
+| **Précision GPS** | L'`accuracy` du navigateur est contrôlée (> 300 m → suspect). |
+| **Traçabilité** | IP, user-agent, horodatages, précision et coordonnées sont enregistrés sur chaque présence. |
+
+Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `motif_suspicion`). Les seuils sont configurables dans `config/geolocation.php` et via variables d'environnement (`GEOLOC_*`).
 
 ### 6.2 Notifications (retard & absence)
 - **Retard** : notifié au superviseur direct + à l'administrateur principal, en **email** et **notification interne**.
@@ -270,5 +284,5 @@ Pour étendre la couverture : tests Feature pour les flux de pointage, géolocal
 | **Notifications** | Limitée au superviseur direct + admin principal (optimisation faite) | Vérifier le volume si beaucoup d'équipes. |
 | **Backups** | Non configurés | Planifier des sauvegardes MySQL + `storage/app/public/rapports`. |
 | **HTTPS** | Non forcé | Activer `APP_URL` en HTTPS + HSTS en production. |
-| **Géolocalisation** | Basée sur la position du navigateur | Le client peut tricher (ex. devtools) — éventuellement app native ou signature de confiance si exigence forte. |
+| **Géolocalisation** | Signature HMAC serveur à usage unique + vérification d'horloge + vitesse + précision | Reste contournable par un utilisateur déterminé (devtools) — une app native reste la solution ultime si exigence forte. Les présences suspectes sont marquées (`suspect`, `motif_suspicion`). |
 | **`APP_DEBUG`** | `true` en dev | Passer à `false` en production. |

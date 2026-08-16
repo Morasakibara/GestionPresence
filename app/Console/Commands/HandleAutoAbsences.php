@@ -12,7 +12,8 @@ class HandleAutoAbsences extends Command
 
     public function handle()
     {
-        $controller = new PreController();
+        // Résolution via le conteneur pour injecter les dépendances du contrôleur
+        $controller = app(PreController::class);
         $result = $controller->handleAutoAbsences();
         $this->info($result);
 
