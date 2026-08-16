@@ -118,6 +118,7 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | **Générer un rapport** | Rapport de présence sur une période → **PDF** téléchargeable + enregistré. |
 | **Lieux de travail** | CRUD complet des zones de géofencing (nom, GPS, rayon, actif/inactif). |
 | **Profil** | Modification du profil et de l'avatar (modal). |
+| **Présences suspectes** | Page dédiée listant les pointages marqués suspects (motif, distance, vitesse) avec filtres recherche + période. |
 
 ### 🧑‍💼 Superviseur (`/superviseur/*`)
 | Fonctionnalité | Détail |
@@ -165,6 +166,7 @@ Un service dédié (`App\Services\GeolocationVerificationService`) protège le p
 | **Vérification croisée de vitesse** | Distance Haversine arrivée↔départ ÷ temps écoulé. Une vitesse > 40 km/h (ex. pointage à Paris le matin et Lyon le soir) marque la présence **suspecte**. |
 | **Précision GPS** | L'`accuracy` du navigateur est contrôlée (> 300 m → suspect). |
 | **Traçabilité** | IP, user-agent, horodatages, précision et coordonnées sont enregistrés sur chaque présence. |
+| **Visibilité** | Les présences suspectes sont marquées dans la liste des employés et les rapports (HTML + PDF) ; une page admin `/admin/suspect-presences` les liste avec filtres. |
 
 Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `motif_suspicion`). Les seuils sont configurables dans `config/geolocation.php` et via variables d'environnement (`GEOLOC_*`).
 

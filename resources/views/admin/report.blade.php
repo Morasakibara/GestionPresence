@@ -15,6 +15,7 @@
                     <tr class="bg-3hcig-blue text-white">
                         <th class="border border-gray-300 px-4 py-3 text-left">Nom de l'employé</th>
                         <th class="border border-gray-300 px-4 py-3 text-left">Total Présence</th>
+                        <th class="border border-gray-300 px-4 py-3 text-left">Suspectes</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -22,6 +23,15 @@
                     <tr class="hover:bg-gray-100">
                         <td class="border border-gray-300 px-4 py-3">{{ $data->employer_nom }}</td>
                         <td class="border border-gray-300 px-4 py-3">{{ $data->total_presence }}</td>
+                        <td class="border border-gray-300 px-4 py-3">
+                            @if(isset($data->suspect_count) && $data->suspect_count > 0)
+                                <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                    {{ $data->suspect_count }}
+                                </span>
+                            @else
+                                <span class="text-gray-400">0</span>
+                            @endif
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>

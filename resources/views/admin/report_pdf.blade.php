@@ -213,6 +213,7 @@
                         <tr>
                             <th>Nom de l'employé</th>
                             <th>Total de présences</th>
+                            <th>Suspectes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -220,6 +221,13 @@
                         <tr>
                             <td>{{ $data->employer_nom }}</td>
                             <td><span class="badge">{{ $data->total_presence }}</span></td>
+                            <td>
+                                @if(isset($data->suspect_count) && $data->suspect_count > 0)
+                                    <span class="badge" style="background-color: rgba(239, 68, 68, 0.1); color: #b91c1c;">{{ $data->suspect_count }}</span>
+                                @else
+                                    <span style="color: #9ca3af;">0</span>
+                                @endif
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>

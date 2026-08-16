@@ -188,6 +188,41 @@ class GeolocationAntiCheatTest extends TestCase
         $this->assertEquals(1, $count, 'Une seule arrivée doit exister.');
     }
 
+    public function test_page_admin_suspectes_affiche_les_presences(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        // Créer une présence marquée suspecte (avec le vrai superviseur de l'employé)
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Vitesse de déplacement irréaliste (43.5 km/h).',
+            'vitesse_kmh' => 43.5,
+            'distance_km' => 391.49,
+        ]);
+
+        // Se connecter en admin et vérifier la page
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $response = $this->get('/admin/suspect-presences');
+        $response->assertOk();
+        $response->assertSee('Vitesse de déplacement irréaliste');
+        $response->assertSee($employe->nom);
+
+        // Filtre par recherche
+        $response = $this->get('/admin/suspect-presences?search=' . urlencode($employe->nom));
+        $response->assertOk();
+        $response->assertSee($employe->nom);
+    }
+
     public function test_vitesse_irrealiste_marque_suspect(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));

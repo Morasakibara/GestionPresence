@@ -216,10 +216,7 @@ class AdminController extends Controller
     public function showGenerateReportForm()
     {
         return view('admin.generateReport');
-    }
-
-
- // Générer le rapport et exporter en PDF
+    }    // Générer le rapport et exporter en PDF
 public function generateReport(Request $request)
 {
     $request->validate([
@@ -237,7 +234,7 @@ public function generateReport(Request $request)
         ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
         ->whereBetween('presence.date', [$startDate, $endDate])
         ->where('presence.status', 'présent')
-        ->select('utilisateur.nom as employer_nom', DB::raw('count(presence.status) as total_presence'))
+        ->select('utilisateur.nom as employer_nom', DB::raw('count(presence.status) as total_presence'), DB::raw('SUM(CASE WHEN presence.suspect = 1 THEN 1 ELSE 0 END) as suspect_count'))
         ->groupBy('utilisateur.nom')
         ->get();
 
@@ -330,7 +327,7 @@ public function exportReport(Request $request)
         ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
         ->whereBetween('presence.date', [$startDate, $endDate])
         ->where('presence.status', 'présent')
-        ->select('utilisateur.nom as employer_nom', DB::raw('count(presence.status) as total_presence'))
+        ->select('utilisateur.nom as employer_nom', DB::raw('count(presence.status) as total_presence'), DB::raw('SUM(CASE WHEN presence.suspect = 1 THEN 1 ELSE 0 END) as suspect_count'))
         ->groupBy('utilisateur.nom')
         ->get();
 
@@ -344,10 +341,11 @@ public function exportReport(Request $request)
         $search = $request->input('search');
         $roles = $request->input('roles',[]);
 
-        //Recuperer tous les employes avec leur nom,poste et email
+        //Recuperer tous les employes avec leur nom,poste, email et nb de présences suspectes
         $query = DB::table('utilisateur')
         ->whereIn('role',['Superviseur','Employer'])
-        ->select('nom','role','email');
+        ->select('nom','role','email')
+        ->selectRaw('(SELECT COUNT(*) FROM presence WHERE presence.employerID = utilisateur.id AND presence.suspect = 1) as suspect_count');
 
        if ($roles) {
         $query->whereIn('role',$roles);
@@ -360,6 +358,39 @@ public function exportReport(Request $request)
 
         //Retourner la vue avec les donnees des employes
         return view('admin.showEmployeeList',compact('employees','search','roles'));
+    }
+
+    /**
+     * Liste les présences suspectes (anti-triche géolocalisation) avec filtres.
+     */
+    public function showSuspectPresences(Request $request)
+    {
+        $search = $request->input('search');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $query = DB::table('presence')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->where('presence.suspect', true)
+            ->select(
+                'presence.*',
+                'utilisateur.nom as employer_nom',
+                'utilisateur.email as employer_email'
+            );
+
+        if ($search) {
+            $query->where('utilisateur.nom', 'like', '%' . $search . '%');
+        }
+        if ($startDate) {
+            $query->whereDate('presence.date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->whereDate('presence.date', '<=', $endDate);
+        }
+
+        $suspectPresences = $query->orderByDesc('presence.date')->orderByDesc('presence.heureArrivee')->paginate(20);
+
+        return view('admin.suspectPresences', compact('suspectPresences', 'search', 'startDate', 'endDate'));
     }
 
     /**
