@@ -215,6 +215,92 @@ class SuperviseurController extends Controller
         return view('superviseur.suspectPresences', compact('suspectPresences', 'search', 'startDate', 'endDate', 'statut'));
     }
 
+    /**
+     * Tableau de bord des statistiques des suspicions pour SON équipe.
+     */
+    public function suspectStats()
+    {
+        $superviseur = Auth::user();
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+
+        if (!$superviseurInfo) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+
+        $employerIds = Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
+
+        $blocageMax = (int) config('geolocation.blocage_suspects_max', 3);
+        $blocageJours = (int) config('geolocation.blocage_periode_jours', 30);
+
+        // 1. Total suspectes de l'équipe + répartition par statut
+        $totalSuspectes = Presence::where('suspect', true)->whereIn('employerID', $employerIds)->count();
+        $parStatut = Presence::where('suspect', true)->whereIn('employerID', $employerIds)
+            ->select('statut_traitement', DB::raw('count(*) as total'))
+            ->groupBy('statut_traitement')
+            ->pluck('total', 'statut_traitement');
+
+        // 2. Répartition par motif
+        $base = fn ($motif) => Presence::where('suspect', true)->whereIn('employerID', $employerIds)->where('motif_suspicion', 'like', '%' . $motif . '%')->count();
+        $motifCounts = [
+            'Vitesse irréaliste' => $base('Vitesse'),
+            'Précision GPS faible' => $base('Précision GPS'),
+            'Autres motifs' => 0,
+        ];
+        $motifCounts['Autres motifs'] = max(0, $totalSuspectes - $motifCounts['Vitesse irréaliste'] - $motifCounts['Précision GPS faible']);
+
+        // 3. Contestations de l'équipe
+        $totalContestations = Presence::whereNotNull('commentaire_contestation')->whereIn('employerID', $employerIds)->count();
+        $contestationsEnAttente = Presence::whereNotNull('commentaire_contestation')->whereNull('reponse_contestation')->whereIn('employerID', $employerIds)->count();
+        $contestationsAccordees = Presence::where('reponse_contestation', 'accordé')->whereIn('employerID', $employerIds)->count();
+        $contestationsRefusees = Presence::where('reponse_contestation', 'refusé')->whereIn('employerID', $employerIds)->count();
+
+        // 4. Membres de l'équipe actuellement bloqués
+        $employesBloques = collect();
+        $employes = DB::table('employer')
+            ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
+            ->whereIn('employer.id', $employerIds)
+            ->select('employer.id', 'utilisateur.nom')
+            ->get();
+
+        foreach ($employes as $employe) {
+            $count = Presence::where('employerID', $employe->id)
+                ->where('suspect', true)
+                ->where('statut_traitement', '!=', 'justifié')
+                ->whereDate('date', '>=', now()->subDays($blocageJours))
+                ->count();
+            if ($count >= $blocageMax) {
+                $employesBloques->push((object) ['nom' => $employe->nom, 'suspectes' => $count]);
+            }
+        }
+
+        // 5. Évolution mensuelle (6 derniers mois)
+        $evolutionMensuelle = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $mois = now()->subMonths($i);
+            $evolutionMensuelle[] = [
+                'mois' => $mois->translatedFormat('M Y'),
+                'total' => Presence::where('suspect', true)->whereIn('employerID', $employerIds)
+                    ->whereYear('date', $mois->year)
+                    ->whereMonth('date', $mois->month)
+                    ->count(),
+            ];
+        }
+
+        return view('superviseur.suspectStats', compact(
+            'totalSuspectes',
+            'parStatut',
+            'motifCounts',
+            'totalContestations',
+            'contestationsEnAttente',
+            'contestationsAccordees',
+            'contestationsRefusees',
+            'employesBloques',
+            'evolutionMensuelle',
+            'blocageMax',
+            'blocageJours'
+        ));
+    }
+
     public function showGenerateReport()
     {
         return view('superviseur.generateReport2');

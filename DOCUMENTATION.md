@@ -131,6 +131,7 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | **Rapport d'équipe** | Rapport mensuel de son équipe + **export PDF**. |
 | **Changer de rôle** | Bascule Employé ↔ Superviseur. |
 | **Présences suspectes** | Vue en lecture seule des pointages suspects des membres de son équipe (motif, distance, vitesse) + filtres. Le traitement reste réservé à l'admin. |
+| **Statistiques des suspicions** | Page `/superviseur/stats-suspects` : mêmes statistiques que l'admin mais **limitées à son équipe** — total suspectes par statut et motif, contestations, membres bloqués et évolution mensuelle. Lien dans la sidebar. |
 | **Notifications** | Reçoit les retards/absences des membres de son équipe. |
 
 ### 🧑‍🔧 Employé (`/user/*`)
@@ -191,6 +192,7 @@ Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `m
 14. **Export PDF de la timeline** : chaque timeline (employé, admin ou superviseur) peut être **exportée en PDF** (bouton « Export PDF ») pour l'archivage — récapitulatif complet, suspicion, contestation, réponse et historique des statuts.
 15. **Statistiques globales (admin)** : le tableau de bord `/admin/stats-suspects` agrège les suspicions (total, statuts, motifs, contestations, employés bloqués, évolution mensuelle sur 6 mois) pour piloter l'activité de contrôle.
 16. **Déblocage manuel (admin)** : quand un employé est bloqué au pointage, l'admin peut le **débloquer** depuis sa timeline — les suspectes non justifiées passent en `justifié` avec traçabilité (`presence_traitements`) et la levée du blocage est immédiate.
+17. **Statistiques superviseur** : `/superviseur/stats-suspects` fournit au superviseur le même tableau de bord que l'admin mais **restreint à son équipe** (les suspectes des autres équipes n'y figurent jamais).
 
 ### 6.2 Notifications (retard & absence)
 - **Retard** : notifié au superviseur direct + à l'administrateur principal, en **email** et **notification interne**.

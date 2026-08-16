@@ -105,6 +105,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/exportPDF', [SuperviseurController::class, 'exportPDF'])->name('export.pdf');
         Route::get('/showAddMember', [SuperviseurController::class, 'showAddMember'])->name('superviseur.showAddMember');
         Route::get('/suspect-presences', [SuperviseurController::class, 'showSuspectPresences'])->name('superviseur.suspectPresences');
+        Route::get('/stats-suspects', [SuperviseurController::class, 'suspectStats'])->name('superviseur.suspectStats');
         Route::get('/presence-history/{id}', [PresenceHistoryController::class, 'show'])->name('superviseur.presenceHistory');
         Route::get('/presence-history/{id}/pdf', [PresenceHistoryController::class, 'exportPdf'])->name('superviseur.presenceHistory.pdf');
         Route::post('/addMemberToTeam/{id}', [SuperviseurController::class, 'addMemberToTeam'])->name('superviseur.addMemberToTeam');

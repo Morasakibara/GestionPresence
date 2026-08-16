@@ -1266,4 +1266,69 @@ class GeolocationAntiCheatTest extends TestCase
 
         $response->assertRedirect('/');
     }
+
+    public function test_stats_superviseur_affiche_suspectes_de_son_equipe(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->assertNotNull($superviseur);
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        // Membres de l'équipe du superviseur
+        $superviseurInfo = \App\Models\Superviseur::where('id', $superviseur->id)->first();
+        $employerIds = \App\Models\Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
+        $this->assertNotEmpty($employerIds);
+
+        // 2 suspectes pour le premier membre de l'équipe + 1 pour un employé hors équipe
+        $membre = Utilisateur::find($employerIds[0]);
+        foreach (['2026-08-01', '2026-08-03'] as $date) {
+            Presence::create([
+                'employerID' => $membre->id,
+                'Sup_id' => $superviseur->id,
+                'date' => $date,
+                'heureArrivee' => $date . ' 08:05:00',
+                'heureDepart' => $date . ' 17:30:00',
+                'status' => 'présent',
+                'suspect' => true,
+                'motif_suspicion' => 'Vitesse irréaliste (43.5 km/h).',
+                'statut_traitement' => 'nouveau',
+            ]);
+        }
+
+        // Employé d'une autre équipe
+        $autreEmploye = Utilisateur::where('role', 'Employer')->whereNotIn('id', $employerIds)->first();
+        if ($autreEmploye) {
+            Presence::create([
+                'employerID' => $autreEmploye->id,
+                'Sup_id' => 5,
+                'date' => '2026-08-05',
+                'heureArrivee' => '2026-08-05 08:05:00',
+                'heureDepart' => '2026-08-05 17:30:00',
+                'status' => 'présent',
+                'suspect' => true,
+                'motif_suspicion' => 'Précision GPS insuffisante.',
+                'statut_traitement' => 'nouveau',
+            ]);
+        }
+
+        $response = $this->get('/superviseur/stats-suspects');
+        $response->assertOk();
+        $response->assertSee('Statistiques des suspicions', false);
+        $response->assertSee('2', false); // total suspectes = équipe uniquement
+
+        // L'employé hors équipe ne doit pas apparaître dans les stats de ce superviseur
+        if ($autreEmploye) {
+            $response->assertDontSee($autreEmploye->nom);
+        }
+    }
+
+    public function test_stats_superviseur_refuse_pour_employe(): void
+    {
+        $this->loginEmploye();
+
+        $response = $this->get('/superviseur/stats-suspects');
+        $response->assertStatus(302);
+    }
 }
