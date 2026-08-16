@@ -118,7 +118,7 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | **Générer un rapport** | Rapport de présence sur une période → **PDF** téléchargeable + enregistré. |
 | **Lieux de travail** | CRUD complet des zones de géofencing (nom, GPS, rayon, actif/inactif). |
 | **Profil** | Modification du profil et de l'avatar (modal). |
-| **Présences suspectes** | Page dédiée listant les pointages marqués suspects (motif, distance, vitesse) avec filtres recherche + période. **Workflow de traitement** : statut (`nouveau`/`examiné`/`justifié`/`rejeté`) + commentaire + historique de traitement (`presence_traitements`). |
+| **Présences suspectes** | Page dédiée listant les pointages marqués suspects (motif, distance, vitesse) avec filtres recherche + période. **Workflow de traitement** : statut (`nouveau`/`examiné`/`justifié`/`rejeté`) + commentaire + historique de traitement (`presence_traitements`). **Export CSV/PDF** des résultats filtrés. **Badge sidebar** : compteur de présences suspectes non traitées. |
 
 ### 🧑‍💼 Superviseur (`/superviseur/*`)
 | Fonctionnalité | Détail |
@@ -178,6 +178,9 @@ Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `m
 3. **Traitement** : l'admin choisit un statut — `nouveau`, `examiné`, `justifié` ou `rejeté` — et ajoute un commentaire. La présence enregistre `statut_traitement`, `commentaire_traitement`, `traite_par` et `traite_le`.
 4. **Historique** : chaque changement de statut est journalisé dans la table `presence_traitements` (`statut_avant` → `statut_apres`, commentaire, auteur, date) — traçabilité complète.
 5. **Visibilité superviseur** : le superviseur voit les pointages suspects de son équipe en lecture seule (pas de droit de traitement).
+6. **Notification au superviseur** : quand l'admin traite une présence d'un membre de son équipe, le superviseur reçoit un **email + notification interne** (`PresenceTraiteeNotification`) avec le nouveau statut, le commentaire de l'admin et un lien vers ses présences suspectes.
+7. **Badge sidebar** : la sidebar admin affiche un badge rouge avec le nombre de présences suspectes **non traitées** (statut `nouveau`) — il disparaît dès qu'elles sont traitées.
+8. **Export d'audit** : la page admin permet d'exporter la liste filtrée en **CSV** (BOM UTF-8, séparateur `;`, compatible Excel FR) ou en **PDF** stylé (même gabarit que les rapports).
 
 ### 6.2 Notifications (retard & absence)
 - **Retard** : notifié au superviseur direct + à l'administrateur principal, en **email** et **notification interne**.

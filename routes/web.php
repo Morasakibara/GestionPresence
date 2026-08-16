@@ -65,6 +65,7 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::post('/report',[AdminController::class, 'exportReport'])->name('exportReport');
     Route::get('/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('showEmployeeList');
     Route::get('/suspect-presences', [AdminController::class, 'showSuspectPresences'])->name('suspectPresences');
+    Route::get('/suspect-presences/export', [AdminController::class, 'exportSuspectPresences'])->name('suspectPresences.export');
     Route::post('/suspect-presences/{id}/update', [AdminController::class, 'updateSuspectPresence'])->name('updateSuspectPresence');
     Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee']);
     Route::post('/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('updateProfile');

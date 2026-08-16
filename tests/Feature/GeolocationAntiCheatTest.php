@@ -301,6 +301,136 @@ class GeolocationAntiCheatTest extends TestCase
         $response->assertSee($employe->nom);
     }
 
+    public function test_badge_suspect_non_traitees_dans_sidebar_admin(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Précision GPS insuffisante.',
+            'statut_traitement' => 'nouveau',
+        ]);
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        // La page suspectes utilise layouts.app (sidebar admin) où se trouve le badge
+        $response = $this->get('/admin/suspect-presences');
+        $response->assertOk();
+        $response->assertSee('Présences suspectes');
+        // Le badge doit apparaître dans la sidebar (compteur non traitées) — classe unique du badge
+        $response->assertSee('bg-red-500 text-white');
+
+        // Après traitement, le badge disparaît
+        $this->post("/admin/suspect-presences/{$presence->id}/update", [
+            'statut_traitement' => 'examiné',
+        ])->assertSessionHas('success');
+        $response = $this->get('/admin/suspect-presences');
+        $response->assertOk();
+        $response->assertDontSee('bg-red-500 text-white');
+    }
+
+    public function test_export_csv_suspect_presences(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Vitesse de déplacement irréaliste (43.5 km/h).',
+            'distance_km' => 391.49,
+            'vitesse_kmh' => 43.5,
+            'statut_traitement' => 'nouveau',
+        ]);
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $response = $this->get('/admin/suspect-presences/export?format=csv');
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+        $content = $response->getContent();
+        $this->assertStringContainsString($employe->nom, $content);
+        $this->assertStringContainsString('Motif de suspicion', $content);
+        $this->assertStringContainsString('391,49', $content);
+    }
+
+    public function test_export_pdf_suspect_presences(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Vitesse de déplacement irréaliste (43.5 km/h).',
+        ]);
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $response = $this->get('/admin/suspect-presences/export?format=pdf');
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('%PDF', substr($response->getContent(), 0, 20));
+    }
+
+    public function test_superviseur_notifie_quand_presence_traitee(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Précision GPS insuffisante (320 m).',
+            'statut_traitement' => 'nouveau',
+        ]);
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        // Traiter la présence -> le superviseur de l'équipe doit être notifié
+        $this->post("/admin/suspect-presences/{$presence->id}/update", [
+            'statut_traitement' => 'justifié',
+            'commentaire' => 'Déplacement validé.',
+        ])->assertSessionHas('success');
+
+        $superviseurUser = Utilisateur::find($presence->Sup_id);
+        $this->assertNotNull($superviseurUser);
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $superviseurUser->id,
+            'type' => \App\Notifications\PresenceTraiteeNotification::class,
+        ]);
+    }
+
     public function test_vitesse_irrealiste_marque_suspect(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));

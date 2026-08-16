@@ -394,6 +394,75 @@ public function exportReport(Request $request)
     }
 
     /**
+     * Exporte la liste des présences suspectes (CSV ou PDF) avec les filtres.
+     */
+    public function exportSuspectPresences(Request $request)
+    {
+        $format = $request->input('format', 'csv');
+        $search = $request->input('search');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $query = DB::table('presence')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->where('presence.suspect', true)
+            ->select(
+                'presence.*',
+                'utilisateur.nom as employer_nom',
+                'utilisateur.email as employer_email'
+            );
+
+        if ($search) {
+            $query->where('utilisateur.nom', 'like', '%' . $search . '%');
+        }
+        if ($startDate) {
+            $query->whereDate('presence.date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->whereDate('presence.date', '<=', $endDate);
+        }
+
+        $suspectPresences = $query->orderByDesc('presence.date')->orderByDesc('presence.heureArrivee')->get();
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('admin.suspect_presences_pdf', [
+                'suspectPresences' => $suspectPresences,
+                'search' => $search,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'admin' => Auth::user()->nom,
+                'generatedDate' => now()->format('d/m/Y H:i'),
+            ]);
+
+            return $pdf->download('presences_suspectes_' . now()->format('Y_m_d_His') . '.pdf');
+        }
+
+        // Export CSV (séparateur point-virgule pour Excel FR, BOM UTF-8)
+        $csv = "\xEF\xBB\xBF"; // BOM UTF-8
+        $csv .= "Employé;Email;Date;Arrivée;Départ;Statut de traitement;Distance (km);Vitesse (km/h);Motif de suspicion\n";
+
+        foreach ($suspectPresences as $p) {
+            $statut = $p->statut_traitement ?? 'nouveau';
+            $csv .= implode(';', [
+                $p->employer_nom,
+                $p->employer_email,
+                $p->date,
+                $p->heureArrivee ? date('H:i', strtotime($p->heureArrivee)) : '',
+                $p->heureDepart ? date('H:i', strtotime($p->heureDepart)) : '',
+                $statut,
+                $p->distance_km ? number_format($p->distance_km, 2, ',', '') : '',
+                $p->vitesse_kmh ? number_format($p->vitesse_kmh, 2, ',', '') : '',
+                $p->motif_suspicion ?? '',
+            ]) . "\n";
+        }
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="presences_suspectes_' . now()->format('Y_m_d_His') . '.csv"',
+        ]);
+    }
+
+    /**
      * Met à jour le statut de traitement d'une présence suspecte
      * et journalise la modification dans l'historique.
      */
@@ -427,6 +496,20 @@ public function exportReport(Request $request)
             'traite_par' => Auth::id(),
             'traite_le' => now(),
         ]);
+
+        // Notifier le superviseur de l'équipe quand une présence de son membre est traitée
+        if ($presence->Sup_id) {
+            $superviseurUser = \App\Models\Utilisateur::find($presence->Sup_id);
+            if ($superviseurUser && $superviseurUser->role === 'Superviseur') {
+                $employeUser = \App\Models\Utilisateur::find($presence->employerID);
+                $superviseurUser->notify(new \App\Notifications\PresenceTraiteeNotification(
+                    $employeUser ?? $superviseurUser,
+                    $presence,
+                    $request->statut_traitement,
+                    $request->commentaire
+                ));
+            }
+        }
 
         return redirect()->route('admin.suspectPresences')->with('success', 'Statut de la présence suspecte mis à jour.');
     }

@@ -45,13 +45,35 @@
                         value="{{ old('end_date', $endDate) }}">
                 </div>
             </div>
-            <div class="flex justify-end">
+            <div class="flex justify-end gap-2">
                 <button type="submit"
                     class="px-4 py-2 text-sm font-medium text-white rounded-md bg-3hcig-blue shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
                     Filtrer
                 </button>
             </div>
         </form>
+    </div>
+
+    <div class="flex items-center justify-between mb-4">
+        <p class="text-sm text-gray-600">
+            {{ $suspectPresences->total() }} présence(s) suspecte(s) au total
+        </p>
+        <div class="flex gap-2">
+            <a href="{{ route('admin.suspectPresences.export', array_merge(request()->query(), ['format' => 'csv'])) }}"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-3hcig-blue-dark bg-3hcig-blue-light/20 rounded-md hover:bg-3hcig-blue-light/30 focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Exporter CSV
+            </a>
+            <a href="{{ route('admin.suspectPresences.export', array_merge(request()->query(), ['format' => 'pdf'])) }}"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-md bg-red-600 shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19h6m-6-4h6" />
+                </svg>
+                Exporter PDF
+            </a>
+        </div>
     </div>
 
     <div class="overflow-hidden rounded-lg bg-white shadow">
