@@ -5,7 +5,7 @@
 @section('content')
 <div class="mx-auto max-w-md px-4 py-8 sm:px-6 lg:px-8">
     <div class="mb-8 text-center">
-        <h1 class="text-2xl font-bold text-3hcig-blue-dark">Supprimer un employé</h1>
+        <h1 class="text-2xl font-bold text-[#080808]">Supprimer un employé</h1>
         <p class="mt-2 text-sm text-gray-600">Saisissez l'email de l'employé à supprimer</p>
     </div>
 

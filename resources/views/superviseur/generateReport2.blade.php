@@ -5,7 +5,7 @@
 @section('content')
 <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-3hcig-blue-dark sm:text-3xl">Rapport d'équipe</h1>
+        <h1 class="text-2xl font-bold text-[#080808] sm:text-3xl">Rapport d'équipe</h1>
         <p class="mt-2 text-sm text-gray-600">Consultez les statistiques de présence et le rendement de votre équipe (mois en cours)</p>
     </div>
 
@@ -42,7 +42,7 @@
     <div class="mt-8 overflow-hidden rounded-lg bg-white shadow">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-3hcig-blue-dark">
+                <thead class="bg-[#080808]">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom de l'employé</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Total de Présences (Mois en cours)</th>

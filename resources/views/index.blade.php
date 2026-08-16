@@ -5,7 +5,7 @@
     <!-- Header avec le logo -->
     <header class="py-6 bg-white shadow-md z-10">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-center">
-            <img class="h-20" src="{{ asset('storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
+            <img class="h-16 w-auto" src="{{ asset('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
         </div>
     </header>
 
@@ -22,9 +22,13 @@
             <div class="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <!-- Titre et sous-titre -->
                 <div class="text-center mb-16">
-                    <h1 class="text-4xl font-bold text-3hcig-blue-dark mb-4">Bienvenue sur l'application de gestion de présence Le Pharaon</h1>
-                    <p class="text-xl text-gray-700 max-w-3xl mx-auto">
-                        Suivez et gérez facilement les présences, générez des rapports détaillés et optimisez le suivi de vos collaborateurs au sein de notre coopérative.
+                    <div class="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-pharaoh-gold/40 bg-pharaoh-gold/10 px-4 py-1.5 text-sm font-semibold text-pharaoh-bronze">
+                        <span class="h-2 w-2 rounded-full bg-pharaoh-gold"></span>
+                        Gestion de présence · Rendement · Évaluation
+                    </div>
+                    <h1 class="text-4xl font-extrabold text-[#080808] mb-4 tracking-tight">Bienvenue sur <span class="text-pharaoh-bronze">Le Pharaon</span></h1>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        Suivez et gérez facilement les présences, générez des rapports détaillés et optimisez le suivi du rendement de vos collaborateurs.
                     </p>
                 </div>
 
@@ -44,7 +48,7 @@
             <p class="text-gray-700 mb-8">
                 Déjà membre ? Connectez-vous pour accéder à votre espace personnel et gérer vos présences ou celles de votre équipe.
             </p>
-            <a href="{{ route('login') }}" class="block w-full bg-3hcig-blue hover:bg-3hcig-blue-light text-white font-bold py-4 px-6 rounded-lg text-center transition-colors duration-300">
+            <a href="{{ route('login') }}" class="btn-gold block w-full py-4 px-6 text-center text-base">
                 Se connecter
             </a>
         </div>
@@ -66,7 +70,7 @@
             </p>
             <button
                 onclick="document.getElementById('accessCodeModal').classList.remove('hidden')"
-                class="block w-full bg-3hcig-green hover:bg-3hcig-green-light text-white font-bold py-4 px-6 rounded-lg text-center transition-colors duration-300">
+                class="btn-press block w-full rounded-lg bg-3hcig-green px-6 py-4 text-center text-base font-bold text-white shadow-lg transition-colors duration-150 hover:bg-3hcig-green-light">
                 S'enregistrer
             </button>
         </div>
@@ -85,49 +89,50 @@
     </footer>
 
     <!-- Modal pour code d'accès -->
-    <div id="accessCodeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative">
-            <button type="button" onclick="document.getElementById('accessCodeModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
+    <div id="accessCodeModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-60 backdrop-blur-sm">
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-md rounded-lg bg-white p-8 shadow-xl">
+                <button type="button" onclick="document.getElementById('accessCodeModal').classList.add('hidden')" class="absolute right-4 top-4 text-gray-400 transition-colors hover:text-gray-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
 
-            <div class="text-center mb-6">
-                <h3 class="text-2xl font-bold text-3hcig-blue-dark">Accès restreint</h3>
-                <p class="text-gray-600 mt-2">Veuillez saisir le code d'accès pour continuer</p>
+                <div class="mb-6 text-center">
+                    <h3 class="text-2xl font-bold text-3hcig-blue-dark">Accès restreint</h3>
+                    <p class="mt-2 text-gray-600">Veuillez saisir le code d'accès pour continuer</p>
+                </div>
+
+                <form action="{{ route('verify.registration.access') }}" method="POST">
+                    @csrf
+                    <div class="mb-6">
+                        <label for="access_code" class="mb-2 block text-sm font-medium text-gray-700">Code d'accès</label>
+                        <input
+                            id="access_code"
+                            type="password"
+                            name="access_code"
+                            class="block w-full rounded-md border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors focus:border-3hcig-green focus:outline-none focus:ring-1 focus:ring-3hcig-green"
+                            placeholder="Entrez votre code d'accès"
+                            required
+                        >
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button
+                            type="button"
+                            onclick="document.getElementById('accessCodeModal').classList.add('hidden')"
+                            class="rounded-lg bg-gray-200 px-6 py-3 font-bold text-gray-800 transition-colors duration-300 hover:bg-gray-300">
+                            Annuler
+                        </button>
+                        <button
+                            type="submit"
+                            class="rounded-lg bg-3hcig-green px-6 py-3 font-bold text-white transition-colors duration-300 hover:bg-3hcig-green-light">
+                            Valider
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <form action="{{ route('verify.registration.access') }}" method="POST">
-                @csrf
-                <div class="mb-6">
-                    <label for="access_code" class="block text-sm font-medium text-gray-700 mb-2">Code d'accès</label>
-                    <input
-                        id="access_code"
-                        type="password"
-                        name="access_code"
-                        class="block w-full rounded-md bg-white px-4 py-3 text-gray-900 border-2 border-gray-300 focus:border-3hcig-green focus:outline-none focus:ring-1 focus:ring-3hcig-green transition-colors"
-                        placeholder="Entrez votre code d'accès"
-                        required
-                    >
-                </div>
-                <div class="flex justify-end space-x-3">
-                    <button
-                        type="button"
-                        onclick="document.getElementById('accessCodeModal').classList.add('hidden')"
-                        class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg transition-colors duration-300">
-                        Annuler
-                    </button>
-                    <button
-                        type="submit"
-                        class="bg-3hcig-green hover:bg-3hcig-green-light text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300">
-                        Valider
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
-</div>
 
 @if(session('error'))
 <div id="errorAlert" class="fixed top-4 right-4 bg-red-600 text-white px-6 py-4 rounded-lg shadow-lg z-50">

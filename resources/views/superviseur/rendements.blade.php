@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-3hcig-blue-dark sm:text-3xl">Rendement de l'équipe</h1>
+            <h1 class="text-2xl font-bold text-[#080808] sm:text-3xl">Rendement de l'équipe</h1>
             <p class="mt-2 text-sm text-gray-600">Fiches de rendement remplies par les membres de votre équipe.</p>
         </div>
         <div class="flex items-center gap-3">
@@ -39,7 +39,7 @@
     <div class="overflow-hidden rounded-lg bg-white shadow">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-3hcig-blue-dark">
+                <thead class="bg-[#080808]">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Employé</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Date</th>

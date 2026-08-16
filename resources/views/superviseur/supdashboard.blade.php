@@ -55,7 +55,7 @@
     <h2 class="text-lg font-semibold text-gray-800 mb-3">Statut de l'équipe aujourd'hui</h2>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <!-- Nombre de membres -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="pharaoh-card p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
                     <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,7 +70,7 @@
         </div>
 
         <!-- Présents aujourd'hui -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="pharaoh-card p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
                     <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,7 +85,7 @@
         </div>
 
         <!-- Absents aujourd'hui -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="pharaoh-card p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-red-100 rounded-md p-3">
                     <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -100,7 +100,7 @@
         </div>
 
         <!-- Retards aujourd'hui -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="pharaoh-card p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
                     <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -120,8 +120,8 @@
 <div class="mb-6">
     <h2 class="text-lg font-semibold text-gray-800 mb-3">Accès rapides</h2>
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <a href="{{ route('superviseur.showAddMember') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
+        <a href="{{ route('superviseur.showAddMember') }}" class="pharaoh-card btn-press flex flex-col items-center justify-center p-6 hover:shadow-lg transition-shadow">
+            <div class="rounded-full bg-pharaoh-gold/10 p-3 text-pharaoh-gold">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
@@ -130,7 +130,7 @@
             <p class="mt-1 text-sm text-gray-500">Ajouter un nouveau membre à votre équipe</p>
         </a>
 
-        <a href="{{ route('superviseur.showFollowPresence') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+        <a href="{{ route('superviseur.showFollowPresence') }}" class="pharaoh-card btn-press flex flex-col items-center justify-center p-6 hover:shadow-lg transition-shadow">
             <div class="rounded-full bg-3hcig-green/10 p-3 text-3hcig-green">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -140,8 +140,8 @@
             <p class="mt-1 text-sm text-gray-500">Superviser les présences de votre équipe</p>
         </a>
 
-        <a href="{{ route('superviseur.generateReport2') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
+        <a href="{{ route('superviseur.generateReport2') }}" class="pharaoh-card btn-press flex flex-col items-center justify-center p-6 hover:shadow-lg transition-shadow">
+            <div class="rounded-full bg-pharaoh-gold/10 p-3 text-pharaoh-gold">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -150,8 +150,8 @@
             <p class="mt-1 text-sm text-gray-500">Créer des rapports détaillés sur votre équipe</p>
         </a>
 
-        <a href="{{ route('notifications.index') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow relative">
-            <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
+        <a href="{{ route('notifications.index') }}" class="pharaoh-card btn-press flex flex-col items-center justify-center p-6 hover:shadow-lg transition-shadow relative">
+            <div class="rounded-full bg-pharaoh-gold/10 p-3 text-pharaoh-gold">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>

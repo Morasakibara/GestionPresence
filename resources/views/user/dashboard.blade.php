@@ -51,7 +51,7 @@
 
 @section('content')
 <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-    <div class="p-6 bg-white rounded-lg shadow-sm">
+    <div class="pharaoh-card p-6">
         <h2 class="mb-4 text-xl font-semibold text-gray-900">Marquer la présence</h2>
 
         <div class="space-y-4">
@@ -192,7 +192,7 @@
         </div>
     </div>
 
-    <div class="p-6 bg-white rounded-lg shadow-sm">
+    <div class="pharaoh-card p-6">
         <h2 class="mb-4 text-xl font-semibold text-gray-900">Résumé de présence</h2>
 
         <div class="space-y-4">
@@ -230,7 +230,7 @@
         ];
         $c = $couleurClasses[$evaluation['couleur']] ?? $couleurClasses['orange'];
     @endphp
-    <div class="p-6 bg-white rounded-lg shadow-sm">
+    <div class="pharaoh-card p-6">
         <h2 class="mb-4 text-xl font-semibold text-gray-900">Mon évaluation du mois</h2>
         <div class="flex items-center justify-center">
             <div class="w-full rounded-lg border p-5 text-center {{ $c[0] }}">
@@ -247,7 +247,7 @@
         <p class="mt-3 text-xs text-gray-500 text-center">{{ $evaluation['commentaire'] }}</p>
     </div>
 
-    <div class="p-6 bg-white rounded-lg shadow-sm">
+    <div class="pharaoh-card p-6">
         <h2 class="mb-4 text-xl font-semibold text-gray-900">Mon historique d'évaluation (6 mois)</h2>
         <div class="space-y-2">
             @php
@@ -292,7 +292,7 @@
         </div>
     </div>
 
-    <div class="p-6 bg-white rounded-lg shadow-sm">
+    <div class="pharaoh-card p-6">
         <h2 class="flex items-center justify-between mb-4 text-xl font-semibold text-gray-900">
             <span>Notifications</span>
             @if(Auth::user()->unreadNotifications->count() > 0)

@@ -5,14 +5,14 @@
 @section('content')
 <div class="container px-4 py-6 mx-auto sm:px-6 lg:px-8">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-3hcig-blue-dark sm:text-3xl">Mes fiches de rendement</h1>
+        <h1 class="text-2xl font-bold text-[#080808] sm:text-3xl">Mes fiches de rendement</h1>
         <p class="mt-2 text-sm text-gray-600">Historique de vos tâches effectuées, enregistrées à chaque départ.</p>
     </div>
 
     <div class="overflow-hidden rounded-lg bg-white shadow">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-3hcig-blue-dark">
+                <thead class="bg-[#080808]">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Date</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Arrivée</th>

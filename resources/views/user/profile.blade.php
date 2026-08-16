@@ -8,7 +8,7 @@
         <div class="overflow-hidden rounded-lg bg-white shadow-sm">
             <div class="px-4 py-5 sm:p-6">
                 <div class="flex flex-col items-center">
-                    <h1 class="mb-6 text-2xl font-bold text-3hcig-blue-dark">Mon profil</h1>
+                    <h1 class="mb-6 text-2xl font-bold text-[#080808]">Mon profil</h1>
 
                     <!-- Photo de profil en haut -->
                     <div class="mb-6 flex flex-col items-center">

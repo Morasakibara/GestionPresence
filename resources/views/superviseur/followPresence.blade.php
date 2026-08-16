@@ -28,7 +28,7 @@
         <div class="mt-8 overflow-hidden rounded-lg bg-white shadow">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-3hcig-blue-dark">
+                    <thead class="bg-[#080808]">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Photo de profil</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom</th>
@@ -105,11 +105,12 @@
 </div>
 
 <!-- Modal - Version corrigée -->
-<div id="userModal" class="modal hidden fixed inset-0 z-50 overflow-y-auto flex items-center justify-center" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div id="userModal" class="modal hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <!-- Background overlay -->
     <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity modal-overlay"></div>
 
     <!-- Modal panel -->
+    <div class="flex min-h-full items-center justify-center p-4">
     <div class="relative bg-white rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 rounded-t-lg">
             <div class="sm:flex sm:items-start">
@@ -145,6 +146,7 @@
                 Fermer
             </button>
         </div>
+    </div>
     </div>
 </div>
 @endsection

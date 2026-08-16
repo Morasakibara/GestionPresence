@@ -16,24 +16,24 @@
     @if (Auth::check())
     <div class="flex flex-col h-full md:flex-row">
         <!-- Mobile Navbar Toggle -->
-        <div class="block p-3 text-white md:hidden bg-3hcig-blue-dark">
-            <button id="mobile-menu-button" class="flex items-center" aria-expanded="false" aria-controls="mobile-sidebar">
-                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="block p-3 text-white md:hidden bg-[#080808]">
+            <button id="mobile-menu-button" class="flex items-center gap-2" aria-expanded="false" aria-controls="mobile-sidebar">
+                <svg class="w-6 h-6 text-pharaoh-gold-light" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
-                <span class="ml-2">Menu</span>
+                <span class="ml-1 font-medium">Menu</span>
             </button>
         </div>
 
         <!-- Sidebar pour Desktop - visible uniquement sur les écrans moyens et plus grands -->
-        <div id="desktop-sidebar" class="hidden md:block fixed inset-y-0 left-0 z-50 w-64 text-white bg-3hcig-blue-dark">
+        <div id="desktop-sidebar" class="hidden md:flex fixed inset-y-0 left-0 z-50 w-64 flex-col bg-[#080808] text-white shadow-2xl">
             <!-- Logo in Sidebar Header -->
-            <div class="flex items-center justify-center h-16 border-b border-3hcig-blue">
-                <img class="w-auto h-20" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
+            <div class="flex items-center justify-center h-20 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent">
+                <img class="h-14 w-auto drop-shadow-[0_2px_8px_rgba(211,155,35,0.35)]" src="{{ asset('/storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
             </div>
             
             <!-- Nav Links pour Desktop -->
-            <nav class="flex flex-col flex-1 px-2 mt-5 overflow-y-auto h-[calc(100%-144px)]">
+            <nav class="flex flex-col flex-1 gap-0.5 px-3 mt-4 pb-4 overflow-y-auto">
                 @if ($user->role === 'Superviseur' && $currentRole === 'Employer')
                 <a href="{{ route('user.dashboard') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('user.dashboard') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
                     <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('user.dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -207,14 +207,14 @@
         </div>
 
         <!-- Sidebar pour Mobile - visible uniquement sur les petits écrans -->
-        <div id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 text-white transition-transform duration-300 ease-in-out transform -translate-x-full bg-3hcig-blue-dark md:hidden">
+        <div id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col text-white transition-transform duration-300 ease-in-out transform -translate-x-full bg-[#080808] shadow-2xl md:hidden">
             <!-- Logo in Sidebar Header -->
-            <div class="flex items-center justify-center h-16 border-b border-3hcig-blue">
-                <img class="w-auto h-20" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
+            <div class="flex items-center justify-center h-20 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent">
+                <img class="h-14 w-auto drop-shadow-[0_2px_8px_rgba(211,155,35,0.35)]" src="{{ asset('/storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
             </div>
             
             <!-- Nav Links pour Mobile -->
-            <nav class="flex flex-col flex-1 px-2 mt-5 overflow-y-auto h-[calc(100%-144px)]">
+            <nav class="flex flex-col flex-1 gap-0.5 px-3 mt-4 pb-4 overflow-y-auto">
                 @if ($user->role === 'Superviseur' && $currentRole === 'Employer')
                 <a href="{{ route('user.dashboard') }}" class="group mt-1 flex items-center rounded-md px-2 py-2 text-base font-medium {{ request()->routeIs('user.dashboard') ? 'bg-3hcig-blue text-white' : 'text-gray-300 hover:bg-3hcig-blue hover:text-white' }}">
                     <svg class="mr-3 h-6 w-6 flex-shrink-0 {{ request()->routeIs('user.dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -390,37 +390,39 @@
         <!-- Main Content -->
         <div class="flex flex-col flex-1 md:pl-64">
             <!-- Top Navigation Bar -->
-            <header class="bg-white shadow">
+            <header class="sticky top-0 z-40 border-b border-gray-200/70 bg-white/80 backdrop-blur-md">
                 <div class="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-                    <h1 class="text-xl font-semibold text-3hcig-blue-dark">
+                    <h1 class="text-lg font-bold text-[#080808] sm:text-xl">
                         @yield('title', config('app.name', 'Le Pharaon'))
                     </h1>
                     <div class="flex items-center">
                         <!-- Notification Icon -->
-                        <a href="{{ route('notifications.index') }}" class="relative mr-4">
-                            <svg class="w-6 h-6 text-gray-500 hover:text-3hcig-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <a href="{{ route('notifications.index') }}" class="relative mr-4 rounded-full p-2 transition-colors duration-150 hover:bg-gray-100" aria-label="Notifications">
+                            <svg class="w-5 h-5 text-gray-600 hover:text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
                             @if(Auth::user()->unreadNotifications->count() > 0)
-                                <span class="absolute flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-600 rounded-full -top-1 -right-1">
+                                <span class="absolute flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-600 rounded-full -top-0.5 -right-0.5">
                                     {{ Auth::user()->unreadNotifications->count() > 9 ? '9+' : Auth::user()->unreadNotifications->count() }}
                                 </span>
                             @endif
                         </a>
 
                         <!-- User Profile Menu -->
-                        <div class="relative ml-3">
+                        <div class="relative ml-1">
                             <div>
-                                <button type="button" class="relative flex items-center max-w-xs text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2"
+                                <button type="button" class="relative flex items-center max-w-xs text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2"
                                         id="user-menu-button"
                                         aria-expanded="false"
                                         aria-haspopup="true"
                                         aria-controls="user-dropdown-menu">
                                     <span class="sr-only">Open user menu</span>
-                                    <img class="w-8 h-8 rounded-full" src="{{ Auth::user()->avatar ? asset('storage/avatars/' . Auth::user()->avatar) : asset('storage/avatars/default.png') }}" alt="{{ $user->nom }}">
+                                    <span class="relative">
+                                        <img class="w-9 h-9 rounded-full ring-2 ring-pharaoh-gold/30" src="{{ Auth::user()->avatar ? asset('storage/avatars/' . Auth::user()->avatar) : asset('storage/avatars/default.png') }}" alt="{{ $user->nom }}">
+                                    </span>
                                 </button>
                             </div>
-                            <div class="absolute right-0 z-10 hidden w-48 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" id="user-dropdown-menu" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                            <div class="absolute right-0 z-10 hidden w-48 py-1 mt-2 origin-top-right bg-white rounded-xl shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" id="user-dropdown-menu" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
                                 @if(Auth::check() && Auth::user()->role === 'Administrateur')
                                 <a href="{{route('admin.showProfile')}}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">
                                     Votre Profil
@@ -448,15 +450,15 @@
             </header>
 
             <!-- Main Content Area -->
-            <main class="flex-1 p-0 overflow-x-hidden bg-gray-100">
-                <div class="container mx-auto">
+            <main class="flex-1 p-0 overflow-x-hidden bg-[#F8F8F8]">
+                <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
                     @yield('content')
                 </div>
             </main>
 
             <!-- Footer -->
-            <footer class="px-4 py-4 text-sm text-center text-gray-500 bg-white shadow-inner sm:px-6 lg:px-8">
-                <p>&copy; {{ date('Y') }} Le Pharaon. Tous droits réservés.</p>
+            <footer class="px-4 py-5 text-sm text-center text-gray-500 bg-white border-t border-gray-200/70 sm:px-6 lg:px-8">
+                <p>&copy; {{ date('Y') }} <span class="font-semibold text-pharaoh-bronze">Le Pharaon</span>. Tous droits réservés.</p>
             </footer>
         </div>
     </div>

@@ -4,7 +4,7 @@
 <div class="container mx-auto px-4 py-8">
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-3hcig-blue-dark">Rapport de présence et de rendement</h1>
+            <h1 class="text-2xl font-bold text-[#080808]">Rapport de présence et de rendement</h1>
             <p class="text-gray-600">Période: <span class="font-medium">{{ request('start_date') }} - {{ request('end_date') }}</span></p>
         </div>
 

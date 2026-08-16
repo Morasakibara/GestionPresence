@@ -24,15 +24,15 @@
     </div>
 
     <div class="min-h-full relative z-[1]">
-        <nav class="bg-3hcig-blue-dark">
+        <nav class="bg-[#080808] shadow-lg">
             <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center">
                         <div class="shrink-0">
-                            <img class="w-auto h-20" src="{{ asset('/storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
+                            <img class="h-12 w-auto drop-shadow-[0_2px_8px_rgba(211,155,35,0.35)]" src="{{ asset('/storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
                         </div>
                         <div class="hidden md:block">
-                            <div class="flex items-baseline ml-10 space-x-4">
+                            <div class="flex items-center ml-10 space-x-1">
                                 @yield('navigation')
                             </div>
                         </div>
@@ -42,7 +42,7 @@
                             <!-- Profile dropdown -->
                             <div class="relative ml-3">
                                 <div>
-                                    <button type="button" class="relative flex items-center max-w-xs text-sm rounded-full profile-button bg-3hcig-blue-dark focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-3hcig-blue focus:outline-none" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                                    <button type="button" class="relative flex items-center max-w-xs text-sm rounded-full profile-button focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2 focus:ring-offset-[#080808] focus:outline-none" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
                                         <span class="absolute -inset-1.5"></span>
                                         <span class="sr-only">Open user menu</span>
                                         <img class="w-8 h-8 rounded-full" src="{{ $user->avatar ?? asset('storage/avatars/default.png') }}" alt="{{ auth()->user()->nom }}">
@@ -352,7 +352,7 @@
                     </div>
                     <div class="flex -mr-2 md:hidden">
                         <!-- Mobile menu button -->
-                        <button type="button" id="mobile-menu-button" class="relative inline-flex items-center justify-center p-2 text-gray-400 rounded-md mobile-menu-button bg-3hcig-blue-dark hover:bg-3hcig-blue hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-3hcig-blue-dark" aria-controls="mobile-menu" aria-expanded="false">
+                        <button type="button" id="mobile-menu-button" class="relative inline-flex items-center justify-center p-2 text-gray-300 rounded-md mobile-menu-button bg-white/10 hover:bg-pharaoh-gold hover:text-white focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2 focus:ring-offset-[#080808]" aria-controls="mobile-menu" aria-expanded="false">
                             <span class="absolute -inset-0.5"></span>
                             <span class="sr-only">Open main menu</span>
                             <!-- Menu open: "hidden", Menu closed: "block" -->
@@ -373,7 +373,7 @@
                 <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                     @yield('mobile-navigation')
                 </div>
-                <div class="pt-4 pb-3 border-t border-3hcig-blue">
+                <div class="pt-4 pb-3 border-t border-white/10">
                     <div class="flex items-center px-5">
                         <div class="shrink-0">
                             <img class="w-10 h-10 rounded-full" src="{{ auth()->user()->avatar ?? asset('storage/avatars/default.png') }}" alt="{{ auth()->user()->nom }}">
@@ -394,27 +394,27 @@
             </div>
         </nav>
 
-        <header class="bg-white shadow-sm bg-opacity-90">
+        <header class="bg-white/80 shadow-sm backdrop-blur-md">
             <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <h1 class="text-3xl font-bold tracking-tight text-3hcig-blue-dark">@yield('header')</h1>
+                <h1 class="text-3xl font-bold tracking-tight text-[#080808]">@yield('header')</h1>
             </div>
         </header>
 
         <main>
             <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 @if (session('success'))
-                <div class="p-4 mb-6 rounded-md bg-3hcig-green-light/20 text-3hcig-green-dark">
+                <div class="p-4 mb-6 rounded-xl bg-3hcig-green-light/20 text-3hcig-green-dark">
                     {{ session('success') }}
                 </div>
                 @endif
 
                 @if (session('error'))
-                <div class="p-4 mb-6 text-red-600 rounded-md bg-red-50">
+                <div class="p-4 mb-6 text-red-600 rounded-xl bg-red-50">
                     {{ session('error') }}
                 </div>
                 @endif
 
-                <div class="p-6 bg-white rounded-lg shadow-sm bg-opacity-90">
+                <div class="p-6 bg-white rounded-2xl shadow-card bg-opacity-95">
                     @yield('content')
                 </div>
             </div>

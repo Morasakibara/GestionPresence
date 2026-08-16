@@ -1,12 +1,100 @@
+/* Police Inter via Google Fonts — doit précéder tout le reste */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('login.css');
+@import './components/tailwind/auth.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 
-@import url('login.css');
-@import './components/tailwind/auth.css';
-
 [x-cloak]{
     display: none!important;
+}
+
+/* ============================================================
+   Charte « Le Pharaon » — variables globales
+   ============================================================ */
+:root {
+  /* BRAND */
+  --pharaoh-black: #080808;
+  --pharaoh-gold: #D39B23;
+  --pharaoh-gold-light: #E9B533;
+  --pharaoh-gold-bright: #FACE4A;
+  --pharaoh-bronze: #B77F1D;
+  --pharaoh-bronze-dark: #885910;
+
+  /* BACKGROUNDS */
+  --background: #F8F8F8;
+  --surface: #FFFFFF;
+  --surface-dark: #111111;
+
+  /* TEXT */
+  --text-primary: #080808;
+  --text-secondary: #555555;
+  --text-muted: #888888;
+  --text-light: #FFFFFF;
+
+  /* BORDERS */
+  --border: #E7E7E7;
+
+  /* SYSTEM */
+  --success: #2E8B57;
+  --info: #3B82C4;
+  --warning: #D97706;
+  --danger: #D64545;
+
+  /* MOTION — courbes personnalisées (design engineering) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   Composants réutilisables
+   ============================================================ */
+@layer components {
+  /* Cartes modernes */
+  .pharaoh-card {
+    @apply rounded-2xl border border-gray-200/70 bg-white shadow-card;
+  }
+
+  /* Boutons avec retour d'appui immédiat (scale 0.97) */
+  .btn-press {
+    @apply transition-[transform] duration-150;
+    transition-timing-function: var(--ease-out);
+  }
+  .btn-press:active {
+    transform: scale(0.97);
+  }
+
+  /* Bouton principal or */
+  .btn-gold {
+    @apply btn-press inline-flex items-center justify-center rounded-lg bg-pharaoh-gold px-4 py-2 text-sm font-semibold text-white shadow-gold hover:bg-pharaoh-gold-light focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2;
+  }
+
+  /* Lien nav actif avec pastille or */
+  .nav-link {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150;
+  }
+}
+
+/* Respect des préférences de mouvement réduit */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

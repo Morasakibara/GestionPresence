@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
     <div class="mx-auto max-w-3xl">
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-3hcig-blue-dark sm:text-3xl">Bilan de présence du mois</h1>
+            <h1 class="text-2xl font-bold text-[#080808] sm:text-3xl">Bilan de présence du mois</h1>
             <p class="mt-2 text-sm text-gray-600">Récapitulatif de vos présences et absences</p>
         </div>
 

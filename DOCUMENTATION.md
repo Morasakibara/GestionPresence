@@ -27,6 +27,7 @@ L'application repose sur une architecture **multi-rôles** : Administrateur, Sup
 | **Frontend** | Blade + Tailwind CSS + Alpine.js | Tailwind 3.4, Alpine 3.14 |
 | **Build frontend** | Vite | 6.x |
 | **Graphiques** | Chart.js | 4.4 |
+| **Design system** | Charte « Le Pharaon » (noir & or) + Skills Design Engineering | — |
 | **Génération PDF** | barryvdh/laravel-dompdf (dompdf 3.x) | ^3.0 |
 | **API tokens** | Laravel Sanctum | ^4.0 |
 | **Auth** | Sessions Laravel (login/mot de passe, bcrypt) | — |
@@ -38,6 +39,26 @@ L'application repose sur une architecture **multi-rôles** : Administrateur, Sup
 - **Laravel 12** : framework moderne, compatible PHP 8.2–8.4, aucune vulnérabilité connue (`composer audit` propre).
 - **dompdf 3.x** : mise à jour de sécurité majeure (les versions 2.x présentaient des failles documentées).
 - **Blade + Tailwind** : rendu côté serveur rapide, design responsive, aucune dépendance JS lourde au chargement (Alpine pour l'interactivité).
+
+### 🎨 Charte graphique « Le Pharaon »
+Le frontend a été entièrement refondu avec une identité **noir & or** (niveau expert) :
+
+| Token | Valeur | Usage |
+|---|---|---|
+| `--pharaoh-black` | `#080808` | Sidebars, en-têtes de tableaux, textes principaux, fond des pages publiques |
+| `--pharaoh-gold` | `#D39B23` | Actions principales (boutons, liens actifs) |
+| `--pharaoh-gold-light` | `#E9B533` | Survols or |
+| `--pharaoh-gold-bright` | `#FACE4A` | Accents texte (titres de bienvenue) |
+| `--pharaoh-bronze` / `--pharaoh-bronze-dark` | `#B77F1D` / `#885910` | Secondaires bronze (footer, badges) |
+| `--background` / `--surface` | `#F8F8F8` / `#FFFFFF` | Fonds d'application et cartes |
+| `--success` / `--danger` | `#2E8B57` / `#D64545` | Succès / erreurs |
+
+- Les anciennes classes Tailwind `3hcig-blue*` / `3hcig-green*` sont **remappées** sur la nouvelle charte (or pour l'action, vert succès) : le design s'applique automatiquement sur **toutes** les vues (296 usages).
+- **Nouvelles classes** : palette `pharaoh-*` complète, composants `pharaoh-card` (cartes arrondies avec ombre douce), `btn-gold` (bouton or avec halo), `btn-press` (retour d'appui `scale(0.97)` — principe design engineering).
+- **Police Inter** via Google Fonts, courbes d'animation personnalisées (`--ease-out`, `--ease-in-out`), `prefers-reduced-motion` respecté.
+- **Logo** : `logo-pharaon.png` (606×610) remplace `logo-3HCIG.png` sur toutes les pages (sidebar desktop/mobile, login, register, index) avec une taille harmonisée.
+- **Skills de design** installés dans `.agents/skills/` : `emil-design-eng`, `apple-design`, `improve-animations`, `review-animations`, `animation-vocabulary` (Skills For Design Engineers d'Emil Kowalski) — utilisés pour les choix de design et d'animation.
+- **Correctifs frontend** : conflits `hidden` + `flex` sur les modales corrigés (wrapper `flex` interne, `hidden` sur le conteneur) — plus d'avertissement navigateur « hidden applies the same CSS properties as flex ».
 
 ---
 

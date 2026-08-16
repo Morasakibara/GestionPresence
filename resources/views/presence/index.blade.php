@@ -7,7 +7,7 @@
     <div class="max-w-md mx-auto">
         <div class="p-6 bg-white rounded-lg shadow-sm">
             <div class="mb-6 text-center">
-                <h1 class="text-2xl font-bold text-3hcig-blue-dark">Marquer la présence</h1>
+                <h1 class="text-2xl font-bold text-[#080808]">Marquer la présence</h1>
                 <p class="mt-2 text-sm text-gray-600">Enregistrez vos heures d'arrivée et de départ</p>
             </div>
 

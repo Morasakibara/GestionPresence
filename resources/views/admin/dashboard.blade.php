@@ -61,7 +61,7 @@
     <h2 class="text-lg font-semibold text-gray-800 mb-3">Vue d'ensemble du système</h2>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <!-- Total des employés -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="pharaoh-card p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
                     <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,7 +76,7 @@
         </div>
 
         <!-- Total des superviseurs -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="pharaoh-card p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
                     <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -91,7 +91,7 @@
         </div>
 
         <!-- Présents aujourd'hui -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="pharaoh-card p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-indigo-100 rounded-md p-3">
                     <svg class="h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -106,7 +106,7 @@
         </div>
 
         <!-- Absents aujourd'hui -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="pharaoh-card p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-red-100 rounded-md p-3">
                     <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -127,7 +127,7 @@
     <h2 class="text-lg font-semibold text-gray-800 mb-3">Statistiques mensuelles</h2>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <!-- Total des présences ce mois -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="pharaoh-card p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
                     <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,7 +142,7 @@
         </div>
 
         <!-- Total des absences ce mois -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="pharaoh-card p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-red-100 rounded-md p-3">
                     <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -157,7 +157,7 @@
         </div>
 
         <!-- Total des retards ce mois -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="pharaoh-card p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
                     <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -177,8 +177,8 @@
 <div class="mb-6">
     <h2 class="text-lg font-semibold text-gray-800 mb-3">Accès rapides</h2>
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <a href="{{ route('admin.addEmployee') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
+        <a href="{{ route('admin.addEmployee') }}" class="pharaoh-card btn-press flex flex-col items-center justify-center p-6 hover:shadow-lg transition-shadow">
+            <div class="rounded-full bg-pharaoh-gold/10 p-3 text-pharaoh-gold">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -187,8 +187,8 @@
             <p class="mt-1 text-sm text-gray-500">Ajouter un nouvel employé au système</p>
         </a>
 
-        <a href="{{ route('admin.showEmployeeList') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
+        <a href="{{ route('admin.showEmployeeList') }}" class="pharaoh-card btn-press flex flex-col items-center justify-center p-6 hover:shadow-lg transition-shadow">
+            <div class="rounded-full bg-pharaoh-gold/10 p-3 text-pharaoh-gold">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
@@ -197,7 +197,7 @@
             <p class="mt-1 text-sm text-gray-500">Voir et gérer tous les employés</p>
         </a>
 
-        <a href="{{ route('admin.generateReport') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+        <a href="{{ route('admin.generateReport') }}" class="pharaoh-card btn-press flex flex-col items-center justify-center p-6 hover:shadow-lg transition-shadow">
             <div class="rounded-full bg-3hcig-green/10 p-3 text-3hcig-green">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -207,8 +207,8 @@
             <p class="mt-1 text-sm text-gray-500">Créer des rapports détaillés</p>
         </a>
 
-        <a href="{{ route('notifications.index') }}" class="flex flex-col items-center justify-center rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow relative">
-            <div class="rounded-full bg-3hcig-blue/10 p-3 text-3hcig-blue">
+        <a href="{{ route('notifications.index') }}" class="pharaoh-card btn-press flex flex-col items-center justify-center p-6 hover:shadow-lg transition-shadow relative">
+            <div class="rounded-full bg-pharaoh-gold/10 p-3 text-pharaoh-gold">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>

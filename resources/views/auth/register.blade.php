@@ -3,26 +3,31 @@
 @section('content')
 <div class="flex min-h-screen">
   <!-- Bloc gauche avec image en arrière-plan et texte d'accueil -->
-  <div class="hidden md:flex md:w-1/2 relative bg-gray-900 overflow-hidden">
+  <div class="hidden md:flex md:w-1/2 relative bg-[#080808] overflow-hidden">
     <!-- Image en arrière-plan -->
     <div class="absolute inset-0 z-0">
       <img src="{{ asset('storage/avatars/regiterBackground.jpg') }}" alt="Background" class="w-full h-full object-cover">
     </div>
     
-    <!-- Couche noir transparente -->
-    <div class="absolute inset-0 bg-black bg-opacity-20 z-10"></div>
+    <!-- Couche noir + dégradé or -->
+    <div class="absolute inset-0 bg-gradient-to-br from-black/85 via-black/70 to-black/40 z-10"></div>
+    <div class="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-pharaoh-gold/20 blur-3xl z-10"></div>
     
     <!-- Contenu du bloc gauche -->
     <div class="relative z-20 flex flex-col justify-center items-start px-12 w-full h-full">
-      <img class="h-24 mb-8" src="{{ asset('storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
+      <img class="h-28 mb-10 rounded-2xl bg-white/10 p-3 shadow-gold backdrop-blur-md" src="{{ asset('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
       
       <!-- Texte d'accueil animé -->
-      <h1 class="text-4xl font-bold mb-4 text-white text-shadow animate-fade-in">Rejoignez Le Pharaon</h1>
-      <p class="text-xl text-white text-shadow mb-6 max-w-md animate-slide-up">
-        Créez votre compte pour faire partie de notre coopérative et contribuer à nos projets communs.
+      <div class="inline-flex items-center gap-2 mb-4 rounded-full border border-pharaoh-gold/40 bg-pharaoh-gold/10 px-4 py-1.5 text-sm font-medium text-pharaoh-gold-light animate-fade-in">
+        <span class="h-2 w-2 rounded-full bg-pharaoh-gold-bright"></span>
+        Création de compte
+      </div>
+      <h1 class="text-4xl font-extrabold leading-tight mb-4 text-white text-shadow animate-fade-in">Rejoignez <span class="text-pharaoh-gold-bright">Le Pharaon</span></h1>
+      <p class="text-lg text-gray-200 mb-6 max-w-md animate-slide-up">
+        Créez votre compte pour faire partie de notre structure et contribuer à nos projets communs.
       </p>
       <div class="animate-bounce-slow mt-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-pharaoh-gold-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
         </svg>
       </div>
@@ -30,12 +35,13 @@
   </div>
 
   <!-- Bloc droit avec formulaire d'inscription -->
-  <div class="w-full md:w-1/2 flex flex-col justify-center bg-gray-100 px-6 py-12 lg:px-8">
+  <div class="w-full md:w-1/2 flex flex-col justify-center bg-[#F8F8F8] px-6 py-12 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-sm">
       <div class="md:hidden">
-        <img class="mx-auto h-20 w-auto" src="{{ asset('storage/avatars/logo-3HCIG.png') }}" alt="Le Pharaon">
+        <img class="mx-auto h-20 w-auto" src="{{ asset('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
       </div>
-      <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-3hcig-blue-dark">Création de compte</h2>
+      <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-[#080808]">Création de compte</h2>
+      <p class="mt-2 text-center text-sm text-gray-500">Un code d'accès est requis pour continuer</p>
     </div>
 
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
@@ -131,7 +137,7 @@
 
         <div>
           <button type="submit"
-                  class="flex w-full justify-center rounded-md bg-3hcig-green px-3 py-2 text-sm font-semibold leading-6 text-white shadow-md hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-3hcig-green transition-colors duration-300">
+                  class="btn-press flex w-full justify-center rounded-xl bg-3hcig-green px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-lg transition-colors duration-150 hover:bg-3hcig-green-light">
             S'enregistrer
           </button>
         </div>

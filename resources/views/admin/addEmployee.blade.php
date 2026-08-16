@@ -5,7 +5,7 @@
 @section('content')
 <div class="max-w-md px-4 py-8 mx-auto sm:px-6 lg:px-8">
     <div class="mb-8 text-center">
-        <h1 class="text-2xl font-bold text-3hcig-blue-dark">Ajouter Employé</h1>
+        <h1 class="text-2xl font-bold text-[#080808]">Ajouter Employé</h1>
         <p class="mt-2 text-sm text-gray-600">Créez un nouveau compte employé ou superviseur</p>
     </div>
 
