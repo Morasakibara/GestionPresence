@@ -91,13 +91,6 @@ class PreController extends Controller
     $isRetard = $now->hour > 8 || ($now->hour == 8 && $now->minute > 0);
 
     if ($isRetard) {
-        // Récupérer les administrateurs pour les notifications
-        $admins = Utilisateur::where('role', 'administrateur')
-                ->orWhere('role', 'Administrateur')
-                ->orWhere('role', 'ADMINISTRATEUR')
-                ->orWhere('role', 'Admin')
-                ->get();
-
         // Notifier le superviseur direct si disponible
         if ($superviseurId) {
             $superviseur = Utilisateur::find($superviseurId);
@@ -106,9 +99,10 @@ class PreController extends Controller
             }
         }
 
-        // Notifier tous les administrateurs
-        foreach ($admins as $admin) {
-            $admin->notify(new RetardNotification($user, $presence));
+        // Notifier uniquement l'administrateur principal (au lieu de tous les admins)
+        $adminPrincipal = $this->primaryAdmin();
+        if ($adminPrincipal) {
+            $adminPrincipal->notify(new RetardNotification($user, $presence));
         }
     }
 
@@ -186,10 +180,6 @@ public function markDeparture(Request $request)
 
         \Log::info("Présences mises à jour (arrivée sans départ): {$presencesUpdated}");
 
-        // Récupérer tous les superviseurs et administrateurs pour les notifications
-        $admins = Utilisateur::where('role', 'administrateur')->get();
-        $superviseurs = Utilisateur::where('role', 'Superviseur')->get();
-
         // Notifier pour les présences avec arrivée mais sans départ
         $employesArriveesSansDepart = DB::table('presence')
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
@@ -213,9 +203,10 @@ public function markDeparture(Request $request)
                 }
             }
 
-            // Notifier tous les administrateurs
-            foreach ($admins as $admin) {
-                $admin->notify(new AbsenceNotification($employeUser, $today));
+            // Notifier uniquement l'administrateur principal
+            $adminPrincipal = $this->primaryAdmin();
+            if ($adminPrincipal) {
+                $adminPrincipal->notify(new AbsenceNotification($employeUser, $today));
             }
         }
 
@@ -253,14 +244,23 @@ public function markDeparture(Request $request)
                 }
             }
 
-            // Notifier tous les administrateurs
-            foreach ($admins as $admin) {
-                $admin->notify(new AbsenceNotification($employeUser, $today));
+            // Notifier uniquement l'administrateur principal
+            $adminPrincipal = $this->primaryAdmin();
+            if ($adminPrincipal) {
+                $adminPrincipal->notify(new AbsenceNotification($employeUser, $today));
             }
         }
 
         \Log::info("Absences créées pour employés sans présence: {$absencesCreated}");
 
         return "Absences traitées avec succès. Mises à jour: {$presencesUpdated}, Créées: {$absencesCreated}";
+    }
+
+    /**
+     * Retourne l'administrateur principal (le plus ancien) pour les notifications.
+     */
+    private function primaryAdmin(): ?Utilisateur
+    {
+        return Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
     }
 }
