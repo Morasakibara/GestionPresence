@@ -220,11 +220,55 @@ class SuperviseurController extends Controller
      */
     public function suspectStats()
     {
+        $data = $this->computeTeamSuspectStats();
+
+        if (!$data) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+
+        return view('superviseur.suspectStats', $data);
+    }
+
+    /**
+     * Export PDF du tableau de bord des statistiques (superviseur, équipe).
+     */
+    public function suspectStatsPdf()
+    {
+        $data = $this->computeTeamSuspectStats();
+
+        if (!$data) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+
+        $data['generatedDate'] = now()->format('d/m/Y H:i');
+        $data['equipe'] = $this->getSuperviseurEquipe();
+
+        $pdf = Pdf::loadView('superviseur.suspect_stats_pdf', $data);
+
+        return $pdf->download('statistiques_suspicions_equipe_' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Nom de l'équipe du superviseur connecté (ou null).
+     */
+    private function getSuperviseurEquipe(): ?string
+    {
+        $info = Superviseur::where('id', Auth::id())->first();
+
+        return $info?->equipe;
+    }
+
+    /**
+     * Calcule les statistiques des suspicions de l'équipe du superviseur connecté.
+     * Retourne null si le superviseur n'a pas d'informations d'équipe.
+     */
+    private function computeTeamSuspectStats(): ?array
+    {
         $superviseur = Auth::user();
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
 
         if (!$superviseurInfo) {
-            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+            return null;
         }
 
         $employerIds = Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
@@ -286,7 +330,24 @@ class SuperviseurController extends Controller
             ];
         }
 
-        return view('superviseur.suspectStats', compact(
+        // 6. Détail par employé de l'équipe (total suspectes + répartition par statut)
+        $detailParEmploye = DB::table('presence')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->where('presence.suspect', true)
+            ->whereIn('presence.employerID', $employerIds)
+            ->select(
+                'utilisateur.nom as nom',
+                DB::raw('count(*) as total'),
+                DB::raw("SUM(CASE WHEN presence.statut_traitement = 'nouveau' THEN 1 ELSE 0 END) as nouveau"),
+                DB::raw("SUM(CASE WHEN presence.statut_traitement = 'examiné' THEN 1 ELSE 0 END) as examine"),
+                DB::raw("SUM(CASE WHEN presence.statut_traitement = 'justifié' THEN 1 ELSE 0 END) as justifie"),
+                DB::raw("SUM(CASE WHEN presence.statut_traitement = 'rejeté' THEN 1 ELSE 0 END) as rejete")
+            )
+            ->groupBy('utilisateur.id', 'utilisateur.nom')
+            ->orderByDesc('total')
+            ->get();
+
+        return compact(
             'totalSuspectes',
             'parStatut',
             'motifCounts',
@@ -296,9 +357,10 @@ class SuperviseurController extends Controller
             'contestationsRefusees',
             'employesBloques',
             'evolutionMensuelle',
+            'detailParEmploye',
             'blocageMax',
             'blocageJours'
-        ));
+        );
     }
 
     public function showGenerateReport()

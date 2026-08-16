@@ -119,7 +119,7 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | **Lieux de travail** | CRUD complet des zones de géofencing (nom, GPS, rayon, actif/inactif). |
 | **Profil** | Modification du profil et de l'avatar (modal). |
 | **Présences suspectes** | Page dédiée listant les pointages marqués suspects (motif, distance, vitesse) avec filtres recherche + période. **Workflow de traitement** : statut (`nouveau`/`examiné`/`justifié`/`rejeté`) + commentaire + historique de traitement (`presence_traitements`). **Export CSV/PDF** des résultats filtrés. **Badge sidebar** : compteur de présences suspectes non traitées. |
-| **Statistiques des suspicions** | Page `/admin/stats-suspects` : tableau de bord des **suspicions et blocages** — total suspectes + répartition par statut, par motif (vitesse / GPS / autres), contestations (total, en attente, accordées, refusées), **employés actuellement bloqués** et évolution mensuelle sur 6 mois. Lien dans la sidebar. |
+| **Statistiques des suspicions** | Page `/admin/stats-suspects` : tableau de bord des **suspicions et blocages** — total suspectes + répartition par statut, par motif (vitesse / GPS / autres), contestations (total, en attente, accordées, refusées), **employés actuellement bloqués**, **détail par employé** (total + statuts) et évolution mensuelle sur 6 mois. **Export PDF** du tableau de bord. Lien dans la sidebar. |
 | **Déblocage manuel** | Depuis la timeline d'un employé (admin), bouton **« Débloquer l'employé »** si celui-ci est bloqué : toutes ses présences suspectes non justifiées passent en `justifié` (commentaire de déblocage), levée immédiate du blocage de pointage. Chaque présence est journalisée dans l'historique (`presence_traitements`). |
 
 ### 🧑‍💼 Superviseur (`/superviseur/*`)
@@ -131,7 +131,7 @@ notifications (uuid, type, notifiable morph, data, read_at)   -- notifications i
 | **Rapport d'équipe** | Rapport mensuel de son équipe + **export PDF**. |
 | **Changer de rôle** | Bascule Employé ↔ Superviseur. |
 | **Présences suspectes** | Vue en lecture seule des pointages suspects des membres de son équipe (motif, distance, vitesse) + filtres. Le traitement reste réservé à l'admin. |
-| **Statistiques des suspicions** | Page `/superviseur/stats-suspects` : mêmes statistiques que l'admin mais **limitées à son équipe** — total suspectes par statut et motif, contestations, membres bloqués et évolution mensuelle. Lien dans la sidebar. |
+| **Statistiques des suspicions** | Page `/superviseur/stats-suspects` : mêmes statistiques que l'admin mais **limitées à son équipe** — total suspectes par statut et motif, contestations, membres bloqués, **détail par membre** et évolution mensuelle. **Export PDF**. Lien dans la sidebar. |
 | **Notifications** | Reçoit les retards/absences des membres de son équipe. |
 
 ### 🧑‍🔧 Employé (`/user/*`)
@@ -193,6 +193,8 @@ Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `m
 15. **Statistiques globales (admin)** : le tableau de bord `/admin/stats-suspects` agrège les suspicions (total, statuts, motifs, contestations, employés bloqués, évolution mensuelle sur 6 mois) pour piloter l'activité de contrôle.
 16. **Déblocage manuel (admin)** : quand un employé est bloqué au pointage, l'admin peut le **débloquer** depuis sa timeline — les suspectes non justifiées passent en `justifié` avec traçabilité (`presence_traitements`) et la levée du blocage est immédiate.
 17. **Statistiques superviseur** : `/superviseur/stats-suspects` fournit au superviseur le même tableau de bord que l'admin mais **restreint à son équipe** (les suspectes des autres équipes n'y figurent jamais).
+18. **Détail par employé** : les deux tableaux de bord (admin + superviseur) affichent un tableau **par employé/membre** — total de suspectes et répartition par statut de traitement (en attente / examinées / justifiées / rejetées).
+19. **Export PDF des statistiques** : boutons « Exporter PDF » sur les deux tableaux de bord (`/admin/stats-suspects/pdf` et `/superviseur/stats-suspects/pdf`) — même gabarit que les rapports (en-tête 3HCIG, cartes récapitulatives, tableaux par statut/motif/contestation/détail par employé).
 
 ### 6.2 Notifications (retard & absence)
 - **Retard** : notifié au superviseur direct + à l'administrateur principal, en **email** et **notification interne**.

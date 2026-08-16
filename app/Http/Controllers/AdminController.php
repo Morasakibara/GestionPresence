@@ -398,38 +398,54 @@ public function exportReport(Request $request)
     }
 
     /**
-     * Tableau de bord des statistiques globales : suspicions et blocages.
+     * Calcule les statistiques des suspicions (toutes ou restreintes à des employés).
+     * Retourne un tableau associatif réutilisable par la page et l'export PDF.
      */
-    public function suspectStats()
+    private function computeSuspectStats(?array $employerIds = null): array
     {
+        $scope = $employerIds !== null ? fn ($q) => $q->whereIn('employerID', $employerIds) : fn ($q) => $q;
+        $presenceScope = fn () => $scope(Presence::where('suspect', true));
+
         $blocageMax = (int) config('geolocation.blocage_suspects_max', 3);
         $blocageJours = (int) config('geolocation.blocage_periode_jours', 30);
 
         // 1. Total suspectes + répartition par statut de traitement
-        $totalSuspectes = Presence::where('suspect', true)->count();
-        $parStatut = Presence::where('suspect', true)
+        $totalSuspectes = $presenceScope()->count();
+        $parStatut = $presenceScope()
             ->select('statut_traitement', DB::raw('count(*) as total'))
             ->groupBy('statut_traitement')
             ->pluck('total', 'statut_traitement');
 
-        // 2. Répartition par motif (les motifs sont des phrases ; on compte les catégories clés)
+        // 2. Répartition par motif
+        $countMotif = function (string $motif) use ($presenceScope) {
+            return $presenceScope()->where('motif_suspicion', 'like', '%' . $motif . '%')->count();
+        };
         $motifCounts = [
-            'Vitesse irréaliste' => Presence::where('suspect', true)->where('motif_suspicion', 'like', '%Vitesse%')->count(),
-            'Précision GPS faible' => Presence::where('suspect', true)->where('motif_suspicion', 'like', '%Précision GPS%')->count(),
+            'Vitesse irréaliste' => $countMotif('Vitesse'),
+            'Précision GPS faible' => $countMotif('Précision GPS'),
             'Autres motifs' => 0,
         ];
         $motifCounts['Autres motifs'] = max(0, $totalSuspectes - $motifCounts['Vitesse irréaliste'] - $motifCounts['Précision GPS faible']);
 
-        // 3. Contestations : total, en attente, accordées, refusées
-        $totalContestations = Presence::whereNotNull('commentaire_contestation')->count();
-        $contestationsEnAttente = Presence::whereNotNull('commentaire_contestation')->whereNull('reponse_contestation')->count();
-        $contestationsAccordees = Presence::where('reponse_contestation', 'accordé')->count();
-        $contestationsRefusees = Presence::where('reponse_contestation', 'refusé')->count();
+        // 3. Contestations
+        $totalContestations = Presence::whereNotNull('commentaire_contestation')->where(function ($q) use ($employerIds) {
+            if ($employerIds !== null) { $q->whereIn('employerID', $employerIds); }
+        })->count();
+        $contestationsEnAttente = Presence::whereNotNull('commentaire_contestation')->whereNull('reponse_contestation')->where(function ($q) use ($employerIds) {
+            if ($employerIds !== null) { $q->whereIn('employerID', $employerIds); }
+        })->count();
+        $contestationsAccordees = Presence::where('reponse_contestation', 'accordé')->where(function ($q) use ($employerIds) {
+            if ($employerIds !== null) { $q->whereIn('employerID', $employerIds); }
+        })->count();
+        $contestationsRefusees = Presence::where('reponse_contestation', 'refusé')->where(function ($q) use ($employerIds) {
+            if ($employerIds !== null) { $q->whereIn('employerID', $employerIds); }
+        })->count();
 
         // 4. Employés actuellement bloqués
         $employesBloques = collect();
         $employes = DB::table('employer')
             ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
+            ->when($employerIds !== null, fn ($q) => $q->whereIn('employer.id', $employerIds))
             ->select('employer.id', 'utilisateur.nom')
             ->get();
 
@@ -450,14 +466,31 @@ public function exportReport(Request $request)
             $mois = now()->subMonths($i);
             $evolutionMensuelle[] = [
                 'mois' => $mois->translatedFormat('M Y'),
-                'total' => Presence::where('suspect', true)
+                'total' => $presenceScope()
                     ->whereYear('date', $mois->year)
                     ->whereMonth('date', $mois->month)
                     ->count(),
             ];
         }
 
-        return view('admin.suspectStats', compact(
+        // 6. Détail par employé
+        $detailParEmploye = DB::table('presence')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->where('presence.suspect', true)
+            ->when($employerIds !== null, fn ($q) => $q->whereIn('presence.employerID', $employerIds))
+            ->select(
+                'utilisateur.nom as nom',
+                DB::raw('count(*) as total'),
+                DB::raw("SUM(CASE WHEN presence.statut_traitement = 'nouveau' THEN 1 ELSE 0 END) as nouveau"),
+                DB::raw("SUM(CASE WHEN presence.statut_traitement = 'examiné' THEN 1 ELSE 0 END) as examine"),
+                DB::raw("SUM(CASE WHEN presence.statut_traitement = 'justifié' THEN 1 ELSE 0 END) as justifie"),
+                DB::raw("SUM(CASE WHEN presence.statut_traitement = 'rejeté' THEN 1 ELSE 0 END) as rejete")
+            )
+            ->groupBy('utilisateur.id', 'utilisateur.nom')
+            ->orderByDesc('total')
+            ->get();
+
+        return compact(
             'totalSuspectes',
             'parStatut',
             'motifCounts',
@@ -467,9 +500,31 @@ public function exportReport(Request $request)
             'contestationsRefusees',
             'employesBloques',
             'evolutionMensuelle',
+            'detailParEmploye',
             'blocageMax',
             'blocageJours'
-        ));
+        );
+    }
+
+    /**
+     * Tableau de bord des statistiques globales : suspicions et blocages.
+     */
+    public function suspectStats()
+    {
+        return view('admin.suspectStats', $this->computeSuspectStats());
+    }
+
+    /**
+     * Export PDF du tableau de bord des statistiques (admin).
+     */
+    public function suspectStatsPdf()
+    {
+        $data = $this->computeSuspectStats();
+        $data['generatedDate'] = now()->format('d/m/Y H:i');
+
+        $pdf = Pdf::loadView('admin.suspect_stats_pdf', $data);
+
+        return $pdf->download('statistiques_suspicions_' . now()->format('Y-m-d') . '.pdf');
     }
 
     /**

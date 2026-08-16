@@ -1331,4 +1331,101 @@ class GeolocationAntiCheatTest extends TestCase
         $response = $this->get('/superviseur/stats-suspects');
         $response->assertStatus(302);
     }
+
+    public function test_stats_admin_affiche_detail_par_employe(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-01',
+            'heureArrivee' => '2026-08-01 08:05:00',
+            'heureDepart' => '2026-08-01 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Précision GPS insuffisante.',
+            'statut_traitement' => 'nouveau',
+        ]);
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $response = $this->get('/admin/stats-suspects');
+        $response->assertOk();
+        $response->assertSee('Détail par employé', false);
+        $response->assertSee($employe->nom);
+        $response->assertSee('En attente', false);
+    }
+
+    public function test_stats_superviseur_affiche_detail_par_membre(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $superviseurInfo = \App\Models\Superviseur::where('id', $superviseur->id)->first();
+        $membre = Utilisateur::find(\App\Models\Employer::where('equipe', $superviseurInfo->equipe)->first()->id);
+
+        Presence::create([
+            'employerID' => $membre->id,
+            'Sup_id' => $superviseur->id,
+            'date' => '2026-08-01',
+            'heureArrivee' => '2026-08-01 08:05:00',
+            'heureDepart' => '2026-08-01 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Précision GPS insuffisante.',
+            'statut_traitement' => 'nouveau',
+        ]);
+
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        $response = $this->get('/superviseur/stats-suspects');
+        $response->assertOk();
+        $response->assertSee("Détail par membre de l'équipe", false);
+        $response->assertSee($membre->nom);
+    }
+
+    public function test_export_pdf_stats_admin(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-01',
+            'heureArrivee' => '2026-08-01 08:05:00',
+            'heureDepart' => '2026-08-01 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Vitesse irréaliste (43.5 km/h).',
+            'statut_traitement' => 'nouveau',
+        ]);
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $response = $this->get('/admin/stats-suspects/pdf');
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('%PDF', substr($response->getContent(), 0, 20));
+    }
+
+    public function test_export_pdf_stats_superviseur(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        $response = $this->get('/superviseur/stats-suspects/pdf');
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('%PDF', substr($response->getContent(), 0, 20));
+    }
 }
