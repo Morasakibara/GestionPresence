@@ -174,11 +174,11 @@ Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `m
 
 ### 6.1ter Workflow de traitement des présences suspectes
 1. **Détection** : l'anti-triche marque une présence `suspect = true` + `motif_suspicion` ; l'admin est notifié automatiquement.
-2. **Examen** : l'admin consulte `/admin/suspect-presences` (motif, distance, vitesse, employé, période) avec filtres nom + période.
+2. **Examen** : l'admin consulte `/admin/suspect-presences` (motif, distance, vitesse, employé, période) avec filtres nom + période + **statut de traitement** (nouveau/examiné/justifié/rejeté) — le superviseur a le même filtre sur sa vue d'équipe.
 3. **Traitement** : l'admin choisit un statut — `nouveau`, `examiné`, `justifié` ou `rejeté` — et ajoute un commentaire. La présence enregistre `statut_traitement`, `commentaire_traitement`, `traite_par` et `traite_le`.
 4. **Historique** : chaque changement de statut est journalisé dans la table `presence_traitements` (`statut_avant` → `statut_apres`, commentaire, auteur, date) — traçabilité complète.
 5. **Visibilité superviseur** : le superviseur voit les pointages suspects de son équipe en lecture seule (pas de droit de traitement).
-6. **Notification au superviseur** : quand l'admin traite une présence d'un membre de son équipe, le superviseur reçoit un **email + notification interne** (`PresenceTraiteeNotification`) avec le nouveau statut, le commentaire de l'admin et un lien vers ses présences suspectes.
+6. **Notifications au traitement** : quand l'admin traite une présence, le **superviseur de l'équipe** ET **l'employé concerné** reçoivent un **email + notification interne** (`PresenceTraiteeNotification`, adaptée au rôle du destinataire) avec le nouveau statut, le commentaire de l'admin et un lien pertinent.
 7. **Badge sidebar** : la sidebar admin affiche un badge rouge avec le nombre de présences suspectes **non traitées** (statut `nouveau`) — il disparaît dès qu'elles sont traitées.
 8. **Export d'audit** : la page admin permet d'exporter la liste filtrée en **CSV** (BOM UTF-8, séparateur `;`, compatible Excel FR) ou en **PDF** stylé (même gabarit que les rapports).
 
@@ -199,6 +199,7 @@ Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `m
 | Commande | Cadence | Effet |
 |---|---|---|
 | `presence:auto-absences` | **Tous les jours à 18h45** | ① Passe en `Absent` les présences « arrivée sans départ » ; ② crée des absences pour les employés sans aucune présence du jour ; notifie le superviseur + l'admin principal pour chaque cas. |
+| `presence:rappel-suspectes` | **Tous les lundis à 9h00** | Notifie l'admin principal des présences suspectes restées **non traitées** (statut `nouveau`) depuis plus de `GEOLOC_RAPPEL_SUSPECTES_JOURS` jours (défaut 7). Option `--days=N` pour forcer le seuil. |
 
 Configuré dans `bootstrap/app.php` (`withSchedule`). En production, un cron `* * * * * php artisan schedule:run` est requis.
 
