@@ -849,6 +849,146 @@ class GeolocationAntiCheatTest extends TestCase
         $response->assertSessionHas('success');
     }
 
+    public function test_export_csv_inclut_contestation_et_reponse(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Vitesse irréaliste.',
+            'statut_traitement' => 'justifié',
+            'commentaire_contestation' => 'GPS défaillant ce jour-là',
+            'conteste_le' => now(),
+            'reponse_contestation' => 'accordé',
+            'commentaire_reponse_contestation' => 'Preuve fournie',
+            'reponse_contestation_le' => now(),
+        ]);
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $response = $this->get('/admin/suspect-presences/export?format=csv');
+        $response->assertOk();
+        $content = $response->getContent();
+
+        // En-têtes des nouvelles colonnes
+        $this->assertStringContainsString('Contestation;Réponse admin', $content);
+        // Contenu : contestation + réponse
+        $this->assertStringContainsString('Contesté le', $content);
+        $this->assertStringContainsString('GPS défaillant', $content);
+        $this->assertStringContainsString('Accordé', $content);
+        $this->assertStringContainsString('Preuve fournie', $content);
+    }
+
+    public function test_employe_voit_historique_complet_de_sa_presence(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Précision GPS insuffisante.',
+            'statut_traitement' => 'justifié',
+            'commentaire_contestation' => 'Je conteste ce pointage.',
+            'conteste_le' => now(),
+            'reponse_contestation' => 'accordé',
+            'commentaire_reponse_contestation' => 'Validé par l\'admin.',
+            'reponse_contestation_le' => now(),
+        ]);
+
+        // Un changement de statut dans l'historique
+        \App\Models\PresenceTraitement::create([
+            'presence_id' => $presence->id,
+            'statut_avant' => 'nouveau',
+            'statut_apres' => 'justifié',
+            'commentaire' => 'Contestation acceptée',
+            'traite_par' => Utilisateur::where('role', 'Administrateur')->value('id'),
+        ]);
+
+        $response = $this->get("/user/presence-history/{$presence->id}");
+        $response->assertOk();
+        $response->assertSee('Historique de la présence');
+        $response->assertSee('Arrivée pointée');
+        $response->assertSee('⚠️ Présence marquée suspecte');
+        $response->assertSee('Contestation envoyée');
+        $response->assertSee('✅ Contestation acceptée');
+        $response->assertSee('Nouveau → Justifié');
+    }
+
+    public function test_employe_ne_voit_pas_historique_des_autres(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $this->loginEmploye();
+
+        $autre = Utilisateur::where('role', 'Employer')->where('id', '!=', auth()->id())->first();
+        $autreInfo = \App\Models\Employer::where('id', $autre->id)->first();
+        $presenceAutre = Presence::create([
+            'employerID' => $autre->id,
+            'Sup_id' => $autreInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+        ]);
+
+        $response = $this->get("/user/presence-history/{$presenceAutre->id}");
+        $response->assertSessionHas('error');
+    }
+
+    public function test_superviseur_notifie_quand_membre_bloque(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+
+        // Créer 3 présences suspectes non justifiées (seuil de blocage)
+        foreach (['2026-07-20', '2026-07-21', '2026-07-22'] as $date) {
+            Presence::create([
+                'employerID' => $employe->id,
+                'Sup_id' => $employerInfo->Sup_id,
+                'date' => $date,
+                'heureArrivee' => $date . ' 08:05:00',
+                'heureDepart' => $date . ' 17:30:00',
+                'status' => 'présent',
+                'suspect' => true,
+                'motif_suspicion' => 'Précision GPS insuffisante.',
+                'statut_traitement' => 'nouveau',
+            ]);
+        }
+
+        // Tentative de pointage bloquée
+        $signature = $this->getSignature(self::PARIS_LAT, self::PARIS_LON);
+        $this->post('/mark-arrival', [
+            'latitude' => self::PARIS_LAT,
+            'longitude' => self::PARIS_LON,
+            'accuracy' => 10,
+            'client_timestamp' => now()->timestamp,
+            'signature' => $signature,
+        ])->assertSessionHasErrors();
+
+        // Le superviseur de l'employé doit avoir reçu la notification
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $employerInfo->Sup_id,
+            'type' => \App\Notifications\MembresBloquesNotification::class,
+        ]);
+    }
+
     public function test_vitesse_irrealiste_marque_suspect(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));

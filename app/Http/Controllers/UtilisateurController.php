@@ -68,6 +68,27 @@ class UtilisateurController extends Controller
     }
 
     /**
+     * Historique complet d'une présence (pointage, suspicion, contestation, réponses).
+     */
+    public function presenceHistory($id)
+    {
+        $user = Auth::user();
+
+        $presence = Presence::where('employerID', $user->id)->find($id);
+
+        if (!$presence) {
+            return redirect()->back()->with('error', 'Présence introuvable.');
+        }
+
+        // Historique des changements de statut de traitement
+        $traitements = \App\Models\PresenceTraitement::where('presence_id', $presence->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('user.presence-history', compact('presence', 'traitements'));
+    }
+
+    /**
      * L'employé conteste une de ses présences marquées suspecte.
      */
     public function contesterPresence(Request $request, $id)

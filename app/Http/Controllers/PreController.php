@@ -56,6 +56,8 @@ class PreController extends Controller
             ->count();
 
         if ($suspectsNonJustifies >= $blocageMax) {
+            $this->notifySuperviseurMembresBloques();
+
             return redirect()->back()->withErrors(
                 'Votre pointage est bloqué : ' . $suspectsNonJustifies
                 . ' de vos présences sont marquées suspectes sans justification. '
@@ -395,6 +397,61 @@ public function markDeparture(Request $request)
     private function primaryAdmin(): ?Utilisateur
     {
         return Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+    }
+
+    /**
+     * Notifie le superviseur quand plusieurs membres de son équipe sont bloqués
+     * (dépassement du seuil de présences suspectes non justifiées).
+     */
+    private function notifySuperviseurMembresBloques(): void
+    {
+        $employeId = Auth::id();
+        $blocageMax = (int) config('geolocation.blocage_suspects_max', 3);
+        $blocageJours = (int) config('geolocation.blocage_periode_jours', 30);
+
+        // Trouver le superviseur de l'employé
+        $employerInfo = DB::table('employer')->where('id', $employeId)->first();
+        if (!$employerInfo || !$employerInfo->Sup_id) {
+            return;
+        }
+
+        $superviseurUser = Utilisateur::find($employerInfo->Sup_id);
+        if (!$superviseurUser || $superviseurUser->role !== 'Superviseur') {
+            return;
+        }
+
+        // Équipe du superviseur
+        $superviseurInfo = DB::table('Superviseur')->where('id', $superviseurUser->id)->first();
+        if (!$superviseurInfo || !$superviseurInfo->equipe) {
+            return;
+        }
+
+        $membresEquipe = DB::table('employer')->where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
+        if (empty($membresEquipe)) {
+            return;
+        }
+
+        // Compter les membres bloqués de l'équipe
+        $membresBloques = [];
+        foreach ($membresEquipe as $membreId) {
+            $count = Presence::where('employerID', $membreId)
+                ->where('suspect', true)
+                ->where('statut_traitement', '!=', 'justifié')
+                ->whereDate('date', '>=', now()->subDays($blocageJours))
+                ->count();
+
+            if ($count >= $blocageMax) {
+                $nom = DB::table('utilisateur')->where('id', $membreId)->value('nom') ?? 'Employé #' . $membreId;
+                $membresBloques[] = ['nom' => $nom, 'suspects' => $count];
+            }
+        }
+
+        if (empty($membresBloques)) {
+            return;
+        }
+
+        // Notifier le superviseur avec la liste complète des membres bloqués de son équipe
+        $superviseurUser->notify(new \App\Notifications\MembresBloquesNotification($membresBloques));
     }
 
     /**

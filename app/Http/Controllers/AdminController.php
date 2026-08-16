@@ -447,21 +447,32 @@ public function exportReport(Request $request)
         }
 
         // Export CSV (séparateur point-virgule pour Excel FR, BOM UTF-8)
+        $escape = function ($value) {
+            return '"' . str_replace('"', '""', (string) $value) . '"';
+        };
+
         $csv = "\xEF\xBB\xBF"; // BOM UTF-8
-        $csv .= "Employé;Email;Date;Arrivée;Départ;Statut de traitement;Distance (km);Vitesse (km/h);Motif de suspicion\n";
+        $csv .= "Employé;Email;Date;Arrivée;Départ;Statut de traitement;Distance (km);Vitesse (km/h);Motif de suspicion;Contestation;Réponse admin\n";
 
         foreach ($suspectPresences as $p) {
             $statut = $p->statut_traitement ?? 'nouveau';
             $csv .= implode(';', [
-                $p->employer_nom,
-                $p->employer_email,
+                $escape($p->employer_nom),
+                $escape($p->employer_email),
                 $p->date,
                 $p->heureArrivee ? date('H:i', strtotime($p->heureArrivee)) : '',
                 $p->heureDepart ? date('H:i', strtotime($p->heureDepart)) : '',
-                $statut,
+                $escape($statut),
                 $p->distance_km ? number_format($p->distance_km, 2, ',', '') : '',
                 $p->vitesse_kmh ? number_format($p->vitesse_kmh, 2, ',', '') : '',
-                $p->motif_suspicion ?? '',
+                $escape($p->motif_suspicion ?? ''),
+                $escape($p->commentaire_contestation
+                    ? 'Contesté le ' . date('d/m/Y', strtotime($p->conteste_le)) . ' : ' . $p->commentaire_contestation
+                    : ''),
+                $escape($p->reponse_contestation
+                    ? ($p->reponse_contestation === 'accordé' ? 'Accordé' : 'Refusé')
+                      . ($p->commentaire_reponse_contestation ? ' : ' . $p->commentaire_reponse_contestation : '')
+                    : ''),
             ]) . "\n";
         }
 

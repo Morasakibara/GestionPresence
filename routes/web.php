@@ -85,6 +85,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::put('/update', [UtilisateurController::class, 'update'])->name('user.update');
         Route::get('/presence-report', [UtilisateurController::class, 'presenceReport'])->name('user.presence.report');
         Route::post('/contester-presence/{id}', [UtilisateurController::class, 'contesterPresence'])->name('user.contesterPresence');
+        Route::get('/presence-history/{id}', [UtilisateurController::class, 'presenceHistory'])->name('user.presenceHistory');
     });
 
     // Superviseur routes

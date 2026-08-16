@@ -133,6 +133,10 @@
                             Contestation envoyée
                         </span>
                         @endif
+                        <a href="{{ route('user.presenceHistory', $suspect->id) }}"
+                            class="mt-2 inline-flex items-center text-xs font-medium text-3hcig-blue hover:text-3hcig-blue-light">
+                            Voir l'historique complet →
+                        </a>
                     </div>
                 </div>
                 @endforeach
