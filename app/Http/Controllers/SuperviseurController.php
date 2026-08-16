@@ -51,7 +51,7 @@ class SuperviseurController extends Controller
         // Récupérer les retards du jour
         $lateToday = Presence::whereIn('employerID', $employerIds)
                             ->whereDate('date', $today)
-                            ->whereRaw('HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0)')
+                            ->whereRaw('(HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0))')
                             ->count();
 
         // Récupérer le nombre de notifications non lues
@@ -390,8 +390,9 @@ class SuperviseurController extends Controller
             return redirect()->back()->with('error', 'Cet employé ne fait pas partie de votre équipe.');
         }
 
-        // Vider le champ équipe (plutôt que de supprimer l'enregistrement)
-        $employer->equipe = 'rienuzg9u7h'; // Valeur par défaut comme dans la structure de la base de données
+        // Vider le champ équipe (plutôt que de supprimer l'enregistrement).
+        // Le Sup_id reste inchangé (colonne obligatoire pour l'intégrité de la clé étrangère).
+        $employer->equipe = null;
         $employer->save();
 
         return redirect()->back()->with('success', 'Employé retiré avec succès de votre équipe.');

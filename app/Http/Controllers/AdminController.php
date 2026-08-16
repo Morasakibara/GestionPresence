@@ -54,7 +54,7 @@ class AdminController extends Controller
     // Calculer les retards pour le mois en cours
     $monthlyLates = Presence::whereMonth('date', $currentMonth)
                          ->whereYear('date', $currentYear)
-                         ->whereRaw('HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0)')
+                         ->whereRaw('(HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0))')
                          ->count();
 
     return view('admin.dashboard', compact(

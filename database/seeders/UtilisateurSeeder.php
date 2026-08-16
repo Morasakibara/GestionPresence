@@ -14,8 +14,9 @@ class UtilisateurSeeder extends Seeder
     public function run(): void
     {
         $utilisateurs = [
-            // Administrateur principal
+            // Administrateurs
             ['nom' => 'Administrateur Principal', 'email' => 'admin@3hcig.com', 'role' => 'Administrateur'],
+            ['nom' => 'Administratrice Adjointe', 'email' => 'admin2@3hcig.com', 'role' => 'Administrateur'],
             // Superviseurs
             ['nom' => 'Marie Dupont', 'email' => 'superviseur.alpha@3hcig.com', 'role' => 'Superviseur'],
             ['nom' => 'Jean Kouassi', 'email' => 'superviseur.beta@3hcig.com', 'role' => 'Superviseur'],
