@@ -535,6 +535,57 @@ public function exportReport(Request $request)
     }
 
     /**
+     * Répond à une contestation d'employé (accord ou refus).
+     * - Accordé : la présence passe en statut 'justifié' (suspicion levée).
+     * - Refusé  : la présence reste marquée suspecte (statut 'rejeté').
+     */
+    public function repondreContestation(Request $request, $id)
+    {
+        $request->validate([
+            'reponse' => 'required|in:accordé,refusé',
+            'commentaire' => 'nullable|string|max:2000',
+        ]);
+
+        $presence = Presence::find($id);
+
+        if (!$presence || !$presence->suspect) {
+            return redirect()->route('admin.suspectPresences')->with('error', 'Présence suspecte introuvable.');
+        }
+
+        if (!$presence->commentaire_contestation) {
+            return redirect()->route('admin.suspectPresences')->with('error', 'Cette présence n\'a pas de contestation en attente.');
+        }
+
+        $nouveauStatut = $request->reponse === 'accordé' ? 'justifié' : 'rejeté';
+
+        // Journaliser le changement de statut dans l'historique
+        if ($presence->statut_traitement !== $nouveauStatut) {
+            \App\Models\PresenceTraitement::create([
+                'presence_id' => $presence->id,
+                'statut_avant' => $presence->statut_traitement ?? 'nouveau',
+                'statut_apres' => $nouveauStatut,
+                'commentaire' => $request->commentaire ?: ('Contestation ' . $request->reponse),
+                'traite_par' => Auth::id(),
+            ]);
+        }
+
+        $presence->update([
+            'statut_traitement' => $nouveauStatut,
+            'reponse_contestation' => $request->reponse,
+            'commentaire_reponse_contestation' => $request->commentaire,
+            'reponse_contestation_le' => now(),
+        ]);
+
+        // Notifier l'employé concerné
+        $employeUser = \App\Models\Utilisateur::find($presence->employerID);
+        if ($employeUser) {
+            $employeUser->notify(new \App\Notifications\ContestationReponseNotification($employeUser, $presence));
+        }
+
+        return redirect()->route('admin.suspectPresences')->with('success', 'Réponse à la contestation enregistrée.');
+    }
+
+    /**
  * Mettre à jour le profil de l'administrateur
  *
  * @param  \Illuminate\Http\Request  $request

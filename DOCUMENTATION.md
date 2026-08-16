@@ -182,6 +182,8 @@ Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `m
 7. **Badge sidebar** : la sidebar admin affiche un badge rouge avec le nombre de présences suspectes **non traitées** (statut `nouveau`) — il disparaît dès qu'elles sont traitées.
 8. **Export d'audit** : la page admin permet d'exporter la liste filtrée en **CSV** (BOM UTF-8, séparateur `;`, compatible Excel FR) ou en **PDF** stylé (même gabarit que les rapports).
 9. **Contestation employé** : l'employé voit ses présences suspectes dans son bilan (`/user/presence-report`) et peut les **contester** (commentaire requis). La présence enregistre `commentaire_contestation` + `conteste_le`, l'admin est notifié (`PresenceContesteeNotification`) et la contestation s'affiche avec badge « Contesté » sur les pages admin, superviseur et l'export PDF.
+10. **Réponse de l'admin à la contestation** : boutons **Accorder / Refuser** sur la page suspectes (uniquement quand une contestation est en attente). Accord → statut `justifié` (suspicion levée) ; refus → statut `rejeté` (avec motif du refus). Chaque réponse journalise l'historique (`presence_traitements`) et **notifie l'employé** (`ContestationReponseNotification` — email + interne).
+11. **Blocage des récidivistes** : si un employé cumule ≥ `GEOLOC_BLOCAGE_SUSPECTS_MAX` (défaut 3) présences suspectes **non justifiées** sur les `GEOLOC_BLOCAGE_PERIODE_JOURS` derniers jours (défaut 30), son **arrivée est refusée** avec un message invitant à contacter l'admin — jusqu'à examen des présences.
 
 ### 6.2 Notifications (retard & absence)
 - **Retard** : notifié au superviseur direct + à l'administrateur principal, en **email** et **notification interne**.
@@ -201,7 +203,7 @@ Toute présence douteuse est marquée `suspect = true` avec un motif (colonne `m
 |---|---|---|
 | `presence:auto-absences` | **Tous les jours à 18h45** | ① Passe en `Absent` les présences « arrivée sans départ » ; ② crée des absences pour les employés sans aucune présence du jour ; notifie le superviseur + l'admin principal pour chaque cas. |
 | `presence:rappel-suspectes` | **Tous les lundis à 9h00** | Notifie l'admin principal des présences suspectes restées **non traitées** (statut `nouveau`) depuis plus de `GEOLOC_RAPPEL_SUSPECTES_JOURS` jours (défaut 7). Option `--days=N` pour forcer le seuil. |
-| `presence:bilan-hebdo` | **Tous les lundis à 9h30** | Envoie à l'admin un **bilan email + interne** (`BilanHebdoNotification`) des présences suspectes de la semaine précédente : total, en attente, examinées, justifiées, rejetées. |
+| `presence:bilan-hebdo` | **Tous les lundis à 9h30** | Envoie à l'admin un **bilan email + interne** (`BilanHebdoNotification`) des présences suspectes de la semaine précédente : total, en attente, examinées, justifiées, rejetées, **avec un PDF joint** (détail par employé/date/statut/motif). |
 
 Configuré dans `bootstrap/app.php` (`withSchedule`). En production, un cron `* * * * * php artisan schedule:run` est requis.
 

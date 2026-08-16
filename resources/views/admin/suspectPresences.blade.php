@@ -156,7 +156,34 @@
                                     <div class="mt-1 text-xs text-gray-500 max-w-xs">{{ $presence->commentaire_traitement }}</div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 space-y-3">
+                                @if($presence->commentaire_contestation && !$presence->reponse_contestation)
+                                <form method="POST" action="{{ route('admin.repondreContestation', $presence->id) }}" class="flex items-center gap-2">
+                                    @csrf
+                                    <input type="hidden" name="reponse" value="accordé">
+                                    <button type="submit"
+                                        class="px-3 py-1.5 text-xs font-medium text-white rounded-md bg-green-600 hover:bg-green-700">
+                                        ✅ Accorder
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.repondreContestation', $presence->id) }}" class="flex items-center gap-2">
+                                    @csrf
+                                    <input type="hidden" name="reponse" value="refusé">
+                                    <input type="text" name="commentaire" placeholder="Motif du refus..."
+                                        class="w-36 rounded-md border-gray-300 text-sm shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20">
+                                    <button type="submit"
+                                        class="px-3 py-1.5 text-xs font-medium text-white rounded-md bg-red-600 hover:bg-red-700">
+                                        ❌ Refuser
+                                    </button>
+                                </form>
+                                @elseif($presence->reponse_contestation)
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $presence->reponse_contestation === 'accordé' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                        Contestation {{ $presence->reponse_contestation }}
+                                    </span>
+                                    @if($presence->commentaire_reponse_contestation)
+                                        <div class="mt-1 text-xs text-gray-500 max-w-xs">{{ $presence->commentaire_reponse_contestation }}</div>
+                                    @endif
+                                @endif
                                 <form method="POST" action="{{ route('admin.updateSuspectPresence', $presence->id) }}" class="flex items-center gap-2">
                                     @csrf
                                     <select name="statut_traitement"

@@ -688,6 +688,167 @@ class GeolocationAntiCheatTest extends TestCase
         $this->assertEquals(1, $data['justifie']);
     }
 
+    public function test_admin_repond_a_la_contestation(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Vitesse irréaliste.',
+            'statut_traitement' => 'nouveau',
+            'commentaire_contestation' => 'La géolocalisation a échoué.',
+            'conteste_le' => now(),
+        ]);
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        // Accord de la contestation -> statut justifié + notif employé
+        $response = $this->post("/admin/suspect-presences/{$presence->id}/repondre-contestation", [
+            'reponse' => 'accordé',
+            'commentaire' => 'Preuve fournie par l\'employé.',
+        ]);
+        $response->assertSessionHas('success');
+
+        $presence->refresh();
+        $this->assertEquals('justifié', $presence->statut_traitement);
+        $this->assertEquals('accordé', $presence->reponse_contestation);
+        $this->assertNotNull($presence->reponse_contestation_le);
+
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $employe->id,
+            'type' => \App\Notifications\ContestationReponseNotification::class,
+        ]);
+
+        // La page admin affiche la réponse
+        $response = $this->get('/admin/suspect-presences');
+        $response->assertOk();
+        $response->assertSee('Contestation accordé');
+    }
+
+    public function test_refus_contestation_rejette_la_presence(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Vitesse irréaliste.',
+            'statut_traitement' => 'examiné',
+            'commentaire_contestation' => 'Je conteste.',
+            'conteste_le' => now(),
+        ]);
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $response = $this->post("/admin/suspect-presences/{$presence->id}/repondre-contestation", [
+            'reponse' => 'refusé',
+            'commentaire' => 'Incohérence avec les logs.',
+        ]);
+        $response->assertSessionHas('success');
+
+        $presence->refresh();
+        $this->assertEquals('rejeté', $presence->statut_traitement);
+        $this->assertEquals('refusé', $presence->reponse_contestation);
+
+        // Historique journalisé
+        $this->assertDatabaseHas('presence_traitements', [
+            'presence_id' => $presence->id,
+            'statut_avant' => 'examiné',
+            'statut_apres' => 'rejeté',
+        ]);
+    }
+
+    public function test_pointage_bloque_pour_recidiviste(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+
+        // Créer 3 présences suspectes non justifiées (seuil par défaut)
+        foreach (['2026-07-20', '2026-07-21', '2026-07-22'] as $date) {
+            Presence::create([
+                'employerID' => $employe->id,
+                'Sup_id' => $employerInfo->Sup_id,
+                'date' => $date,
+                'heureArrivee' => $date . ' 08:05:00',
+                'heureDepart' => $date . ' 17:30:00',
+                'status' => 'présent',
+                'suspect' => true,
+                'motif_suspicion' => 'Précision GPS insuffisante.',
+                'statut_traitement' => 'nouveau',
+            ]);
+        }
+
+        $signature = $this->getSignature(self::PARIS_LAT, self::PARIS_LON);
+
+        $response = $this->post('/mark-arrival', [
+            'latitude' => self::PARIS_LAT,
+            'longitude' => self::PARIS_LON,
+            'accuracy' => 10,
+            'client_timestamp' => now()->timestamp,
+            'signature' => $signature,
+        ]);
+
+        $response->assertSessionHasErrors();
+        $this->assertStringContainsString('bloqué', session('errors')->first());
+
+        // Aucune nouvelle présence créée
+        $this->assertDatabaseMissing('presence', [
+            'employerID' => $employe->id,
+            'date' => '2026-08-17',
+        ]);
+    }
+
+    public function test_pointage_autorise_avec_peu_de_suspectes(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+
+        // Une seule suspecte non justifiée (< seuil)
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-07-20',
+            'heureArrivee' => '2026-07-20 08:05:00',
+            'heureDepart' => '2026-07-20 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Précision GPS insuffisante.',
+            'statut_traitement' => 'nouveau',
+        ]);
+
+        $signature = $this->getSignature(self::PARIS_LAT, self::PARIS_LON);
+
+        $response = $this->post('/mark-arrival', [
+            'latitude' => self::PARIS_LAT,
+            'longitude' => self::PARIS_LON,
+            'accuracy' => 10,
+            'client_timestamp' => now()->timestamp,
+            'signature' => $signature,
+        ]);
+        $response->assertSessionHas('success');
+    }
+
     public function test_vitesse_irrealiste_marque_suspect(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));

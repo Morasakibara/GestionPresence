@@ -45,6 +45,25 @@ class PreController extends Controller
         return redirect()->back()->withErrors('Vous ne pouvez marquer l\'arrivée qu\'entre 7h00 et 10h00.');
     }
 
+    // Blocage des récidivistes : trop de présences suspectes non justifiées
+    $blocageMax = (int) config('geolocation.blocage_suspects_max', 3);
+    $blocageJours = (int) config('geolocation.blocage_periode_jours', 30);
+    if ($blocageMax > 0) {
+        $suspectsNonJustifies = Presence::where('employerID', Auth::id())
+            ->where('suspect', true)
+            ->where('statut_traitement', '!=', 'justifié')
+            ->whereDate('date', '>=', now()->subDays($blocageJours))
+            ->count();
+
+        if ($suspectsNonJustifies >= $blocageMax) {
+            return redirect()->back()->withErrors(
+                'Votre pointage est bloqué : ' . $suspectsNonJustifies
+                . ' de vos présences sont marquées suspectes sans justification. '
+                . 'Contactez l\'administrateur pour les faire examiner.'
+            );
+        }
+    }
+
     // Vérifier la géolocalisation
     $latitude = (float) $request->input('latitude');
     $longitude = (float) $request->input('longitude');

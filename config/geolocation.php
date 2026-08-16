@@ -52,4 +52,22 @@ return [
     */
     'rappel_suspectes_jours' => env('GEOLOC_RAPPEL_SUSPECTES_JOURS', 7),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Blocage du pointage des récidivistes
+    |--------------------------------------------------------------------------
+    | Un employé dont le nombre de présences suspectes NON justifiées sur les
+    | derniers jours dépasse ce seuil ne peut plus pointer (arrivée refusée)
+    | tant que l'administrateur n'a pas traité ses présences. Le but est de
+    | pousser l'examen des suspicions avant de laisser re-pointer.
+    */
+    'blocage_suspects_max' => env('GEOLOC_BLOCAGE_SUSPECTS_MAX', 3),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Période de référence pour le comptage des récidives (jours)
+    |--------------------------------------------------------------------------
+    */
+    'blocage_periode_jours' => env('GEOLOC_BLOCAGE_PERIODE_JOURS', 30),
+
 ];

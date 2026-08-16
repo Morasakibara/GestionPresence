@@ -43,7 +43,10 @@ class Presence extends Model
         'traite_par',
         'traite_le',
         'commentaire_contestation',
-        'conteste_le'
+        'conteste_le',
+        'reponse_contestation',
+        'commentaire_reponse_contestation',
+        'reponse_contestation_le'
     ];
 
     public function superviseur()
