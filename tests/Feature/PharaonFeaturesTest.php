@@ -414,4 +414,78 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee('Rendement de l\'équipe');
         $response->assertSee('Préparation de la revue hebdomadaire.');
     }
+
+    /** S5 — Le superviseur exporte le CSV des rendements de son équipe. */
+    public function test_superviseur_export_csv_rendements(): void
+    {
+        $employe = $this->loginEmploye();
+        $employerInfo = DB::table('employer')->where('id', $employe->id)->first();
+
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:00:00',
+            'heureDepart' => '2026-08-17 17:00:00',
+            'status' => 'présent',
+            'rendement' => 'Traitement des commandes de la semaine.',
+        ]);
+
+        $response = $this->get('/superviseur/rendements/export?debut=2026-08-10&fin=2026-08-17');
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+        $this->assertStringContainsString('Employé', $response->getContent());
+        $this->assertStringContainsString($employe->nom, $response->getContent());
+        $this->assertStringContainsString('Traitement des commandes de la semaine.', $response->getContent());
+    }
+
+    /** S6 — Le dashboard employé affiche son évaluation colorée du mois. */
+    public function test_dashboard_employe_affiche_evaluation(): void
+    {
+        $employe = $this->loginEmploye();
+
+        $response = $this->get('/user/dashboard');
+        $response->assertOk();
+        $response->assertSee('Mon évaluation du mois');
+        $response->assertSee('/20');
+    }
+
+    /** S7 — Le rappel hebdomadaire notifie le superviseur des fiches manquantes. */
+    public function test_rappel_hebdo_fiches_rendement(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 21, 17, 0)); // vendredi
+        $employe = $this->loginEmploye();
+        $employerInfo = DB::table('employer')->where('id', $employe->id)->first();
+
+        // Le membre a travaillé cette semaine mais sans fiche de rendement
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:00:00',
+            'heureDepart' => '2026-08-17 17:00:00',
+            'status' => 'présent',
+            'rendement' => null, // fiche manquante
+        ]);
+
+        $superviseurUser = Utilisateur::find($employerInfo->Sup_id);
+        $this->assertNotNull($superviseurUser);
+
+        $this->artisan('presence:rappel-fiches-rendement')
+            ->expectsOutputToContain('notifié');
+
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $employerInfo->Sup_id,
+            'type' => \App\Notifications\FicheRendementRappelNotification::class,
+        ]);
+
+        // Si toutes les fiches sont remplies -> plus de notification
+        Presence::where('employerID', $employe->id)->update(['rendement' => 'Tâches terminées.']);
+        $this->artisan('presence:rappel-fiches-rendement')
+            ->expectsOutputToContain('Aucun superviseur concerné');
+    }
 }

@@ -526,6 +526,60 @@ class SuperviseurController extends Controller
         return view('superviseur.rendements', compact('rendements', 'membresSansFiche', 'date', 'employerIds'));
     }
 
+    /**
+     * Export CSV des fiches de rendement de l'équipe pour une date (ou période).
+     */
+    public function exportTeamRendementsCsv(Request $request)
+    {
+        $superviseur = Auth::user();
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+
+        if (!$superviseurInfo) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+
+        $employerIds = Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
+
+        $debut = $request->input('debut', now()->toDateString());
+        $fin = $request->input('fin', $debut);
+
+        $lignes = [];
+        $lignes[] = ['Équipe', 'Employé', 'Date', 'Arrivée', 'Départ', 'Rendement'];
+
+        $rows = DB::table('presence')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->whereIn('presence.employerID', $employerIds)
+            ->whereDate('presence.date', '>=', $debut)
+            ->whereDate('presence.date', '<=', $fin)
+            ->whereNotNull('presence.rendement')
+            ->where('presence.rendement', '!=', '')
+            ->select('presence.date', 'presence.heureArrivee', 'presence.heureDepart', 'presence.rendement', 'utilisateur.nom')
+            ->orderBy('utilisateur.nom')
+            ->orderBy('presence.date')
+            ->get();
+
+        foreach ($rows as $r) {
+            $lignes[] = [
+                $superviseurInfo->equipe,
+                $r->nom,
+                date('d/m/Y', strtotime($r->date)),
+                $r->heureArrivee ? date('H:i', strtotime($r->heureArrivee)) : '',
+                $r->heureDepart ? date('H:i', strtotime($r->heureDepart)) : '',
+                $r->rendement,
+            ];
+        }
+
+        $contenu = "\xEF\xBB\xBF"; // BOM UTF-8 pour Excel
+        foreach ($lignes as $ligne) {
+            $contenu .= implode(';', array_map(fn ($cell) => '"' . str_replace('"', '""', (string) $cell) . '"', $ligne)) . "\r\n";
+        }
+
+        return response($contenu, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename=rendements_equipe_' . $debut . '_' . $fin . '.csv',
+        ]);
+    }
+
     public function showAddMemberForm(Request $request)
     {
         $search = $request->input('search'); // Récupérer le terme de recherche

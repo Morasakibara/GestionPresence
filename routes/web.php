@@ -93,6 +93,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/generateReport2', [SuperviseurController::class, 'generateReport'])->name('superviseur.generateReport2');
         Route::post('/evaluations', [SuperviseurController::class, 'storeEvaluation'])->name('superviseur.storeEvaluation');
         Route::get('/rendements', [SuperviseurController::class, 'teamRendements'])->name('superviseur.rendements');
+        Route::get('/rendements/export', [SuperviseurController::class, 'exportTeamRendementsCsv'])->name('superviseur.rendements.export');
         Route::get('/getUserDetails/{id}', [SuperviseurController::class, 'getUserDetails'])->name('superviseur.getUserDetails');
         Route::get('/viewUser/{id}', [SuperviseurController::class, 'viewUser'])->name('viewUser');
         Route::get('/showUser/{id}', [SuperviseurController::class, 'showUser'])->name('user.show');

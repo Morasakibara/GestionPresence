@@ -141,14 +141,14 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 | **Suivre les présences** | Liste des membres de son équipe + détail par utilisateur (frise graphique Chart.js). |
 | **Ajouter / retirer un membre** | Gestion de l'équipe (rattache `Sup_id` + `equipe` de façon cohérente). |
 | **Rapport d'équipe** | Rapport mensuel de son équipe avec **évaluations colorées /20** et **réalisations** (fiches de rendement) + **export PDF** + évaluation manuelle des membres. |
-| **Rendement équipe** | Page `/superviseur/rendements` : **suivi quotidien** des fiches de rendement des membres (filtre par date) + alerte des membres n'ayant pas encore rempli leur fiche. |
+| **Rendement équipe** | Page `/superviseur/rendements` : **suivi quotidien** des fiches de rendement des membres (filtre par date) + alerte des membres n'ayant pas encore rempli leur fiche. **Export CSV** de la période (bouton sur la page). |
 | **Changer de rôle** | Bascule Employé ↔ Superviseur. |
 | **Notifications** | Reçoit les retards/absences des membres de son équipe. |
 
 ### 🧑‍🔧 Employé (`/user/*`)
 | Fonctionnalité | Détail |
 |---|---|
-| **Dashboard** | Présences du mois, dernière arrivée / dernier départ. |
+| **Dashboard** | Présences du mois, dernière arrivée / dernier départ, **évaluation colorée du mois** (note /20 + 🟢/🟠/🔴). |
 | **Pointer** | Marquage d'**arrivée** et de **départ** à **toute heure** (y compris le week-end), validé par géolocalisation. Au départ, **fiche de rendement obligatoire** (tâches effectuées). |
 | **Bilan de présence** | Historique du mois + total présences/absences. |
 | **Mes rendements** | Page `/user/rendement` : historique de ses **fiches de rendement** (date, arrivée, départ, tâches effectuées). |
@@ -189,6 +189,7 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 |---|---|---|
 | `presence:auto-absences` | **Tous les jours à 18h45** | ① Passe en `Absent` les présences « arrivée sans départ » ; ② crée des absences pour les employés sans aucune présence du jour ; notifie le superviseur + l'admin principal pour chaque cas. |
 | `presence:alertes-evaluations-rouges` | **Le 1er de chaque mois à 8h00** | Notifie l'admin principal des employés dont l'évaluation (auto-calculée) est passée en **rouge** sur le mois précédent. Option `--mois=Y-m`. |
+| `presence:rappel-fiches-rendement` | **Tous les vendredis à 17h00** | Notifie chaque superviseur des membres de son équipe ayant **travaillé sans remplir leur fiche de rendement** sur la semaine (`FicheRendementRappelNotification` — email + interne). S'arrête dès que les fiches sont remplies. |
 
 Configuré dans `bootstrap/app.php` (`withSchedule`). En production, un cron `* * * * * php artisan schedule:run` est requis.
 

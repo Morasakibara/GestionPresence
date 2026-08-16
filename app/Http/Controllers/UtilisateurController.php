@@ -42,7 +42,12 @@ class UtilisateurController extends Controller
                                ->orderBy('heureDepart', 'desc')
                                ->value('heureDepart');
 
-        return view('user.dashboard', compact('presenceCount', 'lastArrival', 'lastDeparture'));
+        // Évaluation du mois en cours (note /20 + couleur)
+        $debut = Carbon::now()->startOfMonth()->toDateString();
+        $fin = Carbon::now()->endOfMonth()->toDateString();
+        $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
+
+        return view('user.dashboard', compact('presenceCount', 'lastArrival', 'lastDeparture', 'evaluation'));
     }
 
     public function presenceReport()

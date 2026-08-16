@@ -222,6 +222,31 @@
         </div>
     </div>
 
+    @php
+        $couleurClasses = [
+            'vert' => ['bg-green-100 text-green-800 border-green-300', '🟢'],
+            'orange' => ['bg-orange-100 text-orange-800 border-orange-300', '🟠'],
+            'rouge' => ['bg-red-100 text-red-800 border-red-300', '🔴'],
+        ];
+        $c = $couleurClasses[$evaluation['couleur']] ?? $couleurClasses['orange'];
+    @endphp
+    <div class="p-6 bg-white rounded-lg shadow-sm">
+        <h2 class="mb-4 text-xl font-semibold text-gray-900">Mon évaluation du mois</h2>
+        <div class="flex items-center justify-center">
+            <div class="w-full rounded-lg border p-5 text-center {{ $c[0] }}">
+                <div class="text-3xl">{{ $c[1] }}</div>
+                <div class="mt-2 text-3xl font-bold">{{ $evaluation['note'] }}/20</div>
+                <div class="mt-1 text-sm font-medium">
+                    {{ $evaluation['couleur'] === 'vert' ? 'Excellent — discipline et rendement au rendez-vous' : ($evaluation['couleur'] === 'orange' ? 'Satisfaisant — à surveiller' : 'Critique — attention discipline et rendement') }}
+                </div>
+                @if($evaluation['manuelle'])
+                    <div class="mt-2 text-xs">Évaluation manuelle de votre hiérarchie</div>
+                @endif
+            </div>
+        </div>
+        <p class="mt-3 text-xs text-gray-500 text-center">{{ $evaluation['commentaire'] }}</p>
+    </div>
+
     <div class="p-6 bg-white rounded-lg shadow-sm">
         <h2 class="flex items-center justify-between mb-4 text-xl font-semibold text-gray-900">
             <span>Notifications</span>
