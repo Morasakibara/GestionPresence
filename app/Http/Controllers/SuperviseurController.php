@@ -352,8 +352,9 @@ class SuperviseurController extends Controller
             $employer->poste = 'Employer';
         }
 
-        // Mettre à jour le champ "equipe" de l'employé avec l'équipe du superviseur
+        // Mettre à jour l'équipe ET le superviseur de l'employé pour rester cohérent
         $employer->equipe = $superviseurData->equipe;
+        $employer->Sup_id = $superviseur->id;
         $employer->save();
 
         return redirect()->back()->with('success', 'Employé ajouté avec succès à votre équipe.');

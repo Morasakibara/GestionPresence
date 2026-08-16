@@ -3,39 +3,46 @@
 namespace Database\Seeders;
 
 use App\Models\Utilisateur;
-use App\Models\Administrateur;
-use App\Models\Superviseur;
-use App\Models\Employer;
 use Illuminate\Database\Seeder;
 
 class UtilisateurSeeder extends Seeder
 {
-    
+    /**
+     * Crée les utilisateurs de démonstration (1 admin, 3 superviseurs, 15 employés).
+     * Tous les comptes ont pour mot de passe : password
+     */
     public function run(): void
     {
-        $utilisateurs=Utilisateur::factory()->count(40)->create();
-        foreach($utilisateurs as $user){
-            if($user->role == 'Administrateur'){
-                Administrateur::factory()->create(['id' => $user->id]);
-            }elseif($user->role == 'Superviseur'){
-                Superviseur::factory()->create(['id'=> $user->id]);
-            }elseif($user->role == 'Employer'){
-                $superviseur = Superviseur::inRandomOrder()->first();
-                if($superviseur){
-                    Employer::factory()->create([
-                        'id' =>$user->id,
-                        'Sup_id' =>$superviseur->id,
-                    ]);
-                }else{
-                    $superviseur = Superviseur::factory()->create();
-                    Employer::factory()->create([
-                        'id' =>$user->id,
-                        'Sup_id' => $superviseur->id,
-                    ]);
-                }
-            }
+        $utilisateurs = [
+            // Administrateur principal
+            ['nom' => 'Administrateur Principal', 'email' => 'admin@3hcig.com', 'role' => 'Administrateur'],
+            // Superviseurs
+            ['nom' => 'Marie Dupont', 'email' => 'superviseur.alpha@3hcig.com', 'role' => 'Superviseur'],
+            ['nom' => 'Jean Kouassi', 'email' => 'superviseur.beta@3hcig.com', 'role' => 'Superviseur'],
+            ['nom' => 'Aline Mbarga', 'email' => 'superviseur.gamma@3hcig.com', 'role' => 'Superviseur'],
+        ];
+
+        // 15 employés
+        $prenoms = ['Paul', 'Claire', 'Luc', 'Sonia', 'David', 'Emma', 'Karim', 'Nadia', 'Thomas', 'Awa', 'Marc', 'Léa', 'Boris', 'Inès', 'Hugo'];
+        $noms = ['Martin', 'Nkolo', 'Bernard', 'Fokou', 'Petit', 'Ngono', 'Robert', 'Tchoupo', 'Durand', 'Bella', 'Leroy', 'Mballa', 'Garcia', 'Ateba', 'Moreau'];
+
+        foreach ($prenoms as $i => $prenom) {
+            $utilisateurs[] = [
+                'nom' => $prenom . ' ' . $noms[$i],
+                'email' => 'employe.' . ($i + 1) . '@3hcig.com',
+                'role' => 'Employer',
+            ];
         }
 
-        echo '50 utilisateur ajourter';
+        foreach ($utilisateurs as $data) {
+            Utilisateur::create([
+                'nom' => $data['nom'],
+                'email' => $data['email'],
+                'motDePasse' => 'password', // hashé automatiquement par le modèle
+                'role' => $data['role'],
+            ]);
+        }
+
+        $this->command->info(count($utilisateurs) . ' utilisateurs créés (mot de passe : password).');
     }
 }
