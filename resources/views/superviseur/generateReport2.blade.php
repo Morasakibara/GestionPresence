@@ -15,7 +15,29 @@
             'orange' => 'bg-orange-100 text-orange-800',
             'rouge' => 'bg-red-100 text-red-800',
         ];
+
+        // Couleurs stables pour chaque membre du graphique de comparaison
+        $palette = ['#115293', '#16a34a', '#ea580c', '#9333ea', '#dc2626', '#0891b2', '#ca8a04', '#db2777', '#4f46e5', '#65a30d'];
+        $chartLabels = $reports[0]['historique'] ?? [];
+        $chartLabels = array_map(fn ($h) => $h['label'], $chartLabels);
+        $chartDatasets = [];
+        foreach ($reports as $idx => $report) {
+            $chartDatasets[] = [
+                'label' => $report['name'],
+                'data' => array_map(fn ($h) => (float) $h['note'], $report['historique']),
+                'color' => $palette[$idx % count($palette)],
+            ];
+        }
     @endphp
+
+    @if(count($reports) > 0)
+    <div class="mt-8 rounded-lg bg-white p-6 shadow">
+        <h2 class="mb-1 text-lg font-semibold text-gray-900">Évolution des évaluations de l'équipe (6 mois)</h2>
+        <p class="mb-4 text-sm text-gray-600">Comparaison de la note /20 de chaque membre, mois par mois.</p>
+        <canvas id="teamEvaluationChart" height="110"></canvas>
+        <p class="mt-3 text-xs text-gray-500">Échelle de 0 à 20. 🟢 Vert ≥ 14 · 🟠 Orange 10-13 · 🔴 Rouge &lt; 10</p>
+    </div>
+    @endif
 
     <div class="mt-8 overflow-hidden rounded-lg bg-white shadow">
         <div class="overflow-x-auto">
@@ -112,4 +134,57 @@
         </a>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('teamEvaluationChart');
+        if (!ctx) {
+            return;
+        }
+        const labels = @json($chartLabels);
+        const datasets = @json($chartDatasets).map(d => ({
+            label: d.label,
+            data: d.data,
+            borderColor: d.color,
+            backgroundColor: d.color,
+            borderWidth: 2,
+            tension: 0.35,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: d.color,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1.5
+        }));
+
+        new Chart(ctx, {
+            type: 'line',
+            data: { labels: labels, datasets: datasets },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ' : ' + context.parsed.y + '/20';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 20,
+                        ticks: { stepSize: 4 },
+                        title: { display: true, text: 'Note sur 20' }
+                    },
+                    x: {
+                        ticks: { maxRotation: 45, minRotation: 0 }
+                    }
+                }
+            }
+        });
+    });
+</script>
 @endsection

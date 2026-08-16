@@ -274,6 +274,10 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee('Rapport d\'équipe');
         $response->assertSee('Réunion client et suivi des livrables.');
         $response->assertSee('/20');
+        // Graphique de comparaison des évaluations de l'équipe
+        $response->assertSee('Évolution des évaluations');
+        $response->assertSee('teamEvaluationChart');
+        $response->assertSee('chart.js');
     }
 
     /** S1 — L'employé consulte l'historique de ses fiches de rendement. */

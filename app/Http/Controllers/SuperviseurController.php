@@ -214,6 +214,25 @@ class SuperviseurController extends Controller
 
             $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
 
+            $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
+
+            // Historique d'évaluation des 6 derniers mois (pour le graphique de comparaison)
+            $historique = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $mois = now()->subMonths($i);
+                $eval = \App\Services\EvaluationService::evaluer(
+                    $user->id,
+                    $mois->copy()->startOfMonth()->toDateString(),
+                    $mois->copy()->endOfMonth()->toDateString()
+                );
+                $historique[] = [
+                    'mois' => $mois->format('Y-m'),
+                    'label' => ucfirst($mois->locale('fr')->isoFormat('MMMM')),
+                    'note' => $eval['note'],
+                    'couleur' => $eval['couleur'],
+                ];
+            }
+
             $reports[] = [
                 'name' => $user->nom,
                 'employerID' => $user->id,
@@ -224,6 +243,7 @@ class SuperviseurController extends Controller
                 'evaluation_couleur' => $evaluation['couleur'],
                 'evaluation_commentaire' => $evaluation['commentaire'],
                 'evaluation_manuelle' => $evaluation['manuelle'],
+                'historique' => $historique,
             ];
         }
 

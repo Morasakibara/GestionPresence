@@ -142,7 +142,7 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 | **Dashboard d'équipe** | Statistiques de son équipe (membres, présents, absents, retards du jour). |
 | **Suivre les présences** | Liste des membres de son équipe + détail par utilisateur (frise graphique Chart.js). |
 | **Ajouter / retirer un membre** | Gestion de l'équipe (rattache `Sup_id` + `equipe` de façon cohérente). |
-| **Rapport d'équipe** | Rapport mensuel de son équipe avec **total heures**, **évaluations colorées /20** et **réalisations** (fiches de rendement) + **export PDF** + évaluation manuelle + **bulletin PDF individuel** des membres (équipe uniquement). |
+| **Rapport d'équipe** | Rapport mensuel de son équipe avec **total heures**, **évaluations colorées /20** et **réalisations** (fiches de rendement) + **graphique Chart.js de comparaison** (une courbe par membre sur 6 mois) + **export PDF** + évaluation manuelle + **bulletin PDF individuel** des membres (équipe uniquement). |
 | **Rendement équipe** | Page `/superviseur/rendements` : **suivi quotidien** des fiches de rendement des membres (filtre par date) avec **durée travaillée + total du jour** + alerte des membres n'ayant pas encore rempli leur fiche. **Export CSV** (avec durée) de la période (bouton sur la page). |
 | **Changer de rôle** | Bascule Employé ↔ Superviseur. |
 | **Notifications** | Reçoit les retards/absences des membres de son équipe. |
