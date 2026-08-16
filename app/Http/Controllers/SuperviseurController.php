@@ -185,6 +185,7 @@ class SuperviseurController extends Controller
         $search = $request->input('search');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $statut = $request->input('statut');
 
         $query = DB::table('presence')
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
@@ -205,10 +206,13 @@ class SuperviseurController extends Controller
         if ($endDate) {
             $query->whereDate('presence.date', '<=', $endDate);
         }
+        if ($statut && in_array($statut, ['nouveau', 'examiné', 'justifié', 'rejeté'], true)) {
+            $query->where('presence.statut_traitement', $statut);
+        }
 
         $suspectPresences = $query->orderByDesc('presence.date')->orderByDesc('presence.heureArrivee')->paginate(20);
 
-        return view('superviseur.suspectPresences', compact('suspectPresences', 'search', 'startDate', 'endDate'));
+        return view('superviseur.suspectPresences', compact('suspectPresences', 'search', 'startDate', 'endDate', 'statut'));
     }
 
     public function showGenerateReport()

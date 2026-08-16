@@ -25,7 +25,7 @@
 
     <div class="p-6 mb-6 rounded-lg bg-white shadow-sm">
         <form method="GET" action="{{ route('admin.suspectPresences') }}" class="space-y-4">
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
                 <div class="md:col-span-2">
                     <label for="search" class="sr-only">Rechercher un employé</label>
                     <input type="text" name="search" id="search"
@@ -43,6 +43,16 @@
                     <input type="date" name="end_date" id="end_date"
                         class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20 sm:text-sm"
                         value="{{ old('end_date', $endDate) }}">
+                </div>
+                <div>
+                    <label for="statut" class="sr-only">Statut de traitement</label>
+                    <select name="statut" id="statut"
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20 sm:text-sm">
+                        <option value="">Tous les statuts</option>
+                        @foreach(['nouveau', 'examiné', 'justifié', 'rejeté'] as $option)
+                            <option value="{{ $option }}" {{ ($statut ?? '') === $option ? 'selected' : '' }}>{{ ucfirst($option) }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
             <div class="flex justify-end gap-2">

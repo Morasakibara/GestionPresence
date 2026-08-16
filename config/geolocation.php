@@ -42,4 +42,14 @@ return [
     */
     'max_accuracy_m' => env('GEOLOC_MAX_ACCURACY_M', 300),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Rappel des présences suspectes non traitées (jours)
+    |--------------------------------------------------------------------------
+    | La commande planifiée presence:rappel-suspectes notifie l'administrateur
+    | des présences marquées suspectes dont le statut de traitement est encore
+    | "nouveau" depuis plus de ce nombre de jours.
+    */
+    'rappel_suspectes_jours' => env('GEOLOC_RAPPEL_SUSPECTES_JOURS', 7),
+
 ];

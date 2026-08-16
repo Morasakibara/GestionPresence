@@ -40,16 +40,28 @@ class PresenceTraiteeNotification extends Notification implements ShouldQueue
             default => 'traitée',
         };
 
+        $isSuperviseur = $notifiable->role === 'Superviseur';
+        $isEmploye = $notifiable->id === $this->employe->id;
+
+        $greeting = $isEmploye ? 'Bonjour ' . $this->employe->nom . ',' : 'Bonjour Superviseur,';
+        $subject = '🔍 Présence suspecte ' . $statutLabel . ' — ' . $this->employe->nom;
+        $ligne1 = $isEmploye
+            ? 'Le statut de votre présence suspecte du ' . $this->presence->date . ' a été mis à jour par l\'administrateur.'
+            : 'La présence suspecte d\'un membre de votre équipe a été traitée par l\'administrateur.';
+        $lien = $isSuperviseur
+            ? url('/superviseur/suspect-presences')
+            : url('/user/presence-report');
+
         return (new MailMessage)
-            ->subject('🔍 Présence suspecte ' . $statutLabel . ' — ' . $this->employe->nom)
-            ->greeting('Bonjour Superviseur,')
-            ->line('La présence suspecte d\'un membre de votre équipe a été traitée par l\'administrateur.')
+            ->subject($subject)
+            ->greeting($greeting)
+            ->line($ligne1)
             ->line('Nom de l\'employé: ' . $this->employe->nom)
             ->line('Date: ' . $this->presence->date)
             ->line('Motif de suspicion: ' . ($this->presence->motif_suspicion ?? 'Non renseigné'))
             ->line('Nouveau statut: ' . $statutLabel)
             ->when($this->commentaire, fn ($message) => $message->line('Commentaire de l\'administrateur: ' . $this->commentaire))
-            ->action('Voir les présences suspectes', url('/superviseur/suspect-presences'))
+            ->action('Voir les détails', $lien)
             ->line('Merci d\'utiliser notre application de gestion de présence!');
     }
 

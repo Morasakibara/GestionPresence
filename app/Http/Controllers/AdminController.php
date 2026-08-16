@@ -368,6 +368,7 @@ public function exportReport(Request $request)
         $search = $request->input('search');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $statut = $request->input('statut');
 
         $query = DB::table('presence')
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
@@ -387,10 +388,13 @@ public function exportReport(Request $request)
         if ($endDate) {
             $query->whereDate('presence.date', '<=', $endDate);
         }
+        if ($statut && in_array($statut, ['nouveau', 'examiné', 'justifié', 'rejeté'], true)) {
+            $query->where('presence.statut_traitement', $statut);
+        }
 
         $suspectPresences = $query->orderByDesc('presence.date')->orderByDesc('presence.heureArrivee')->paginate(20);
 
-        return view('admin.suspectPresences', compact('suspectPresences', 'search', 'startDate', 'endDate'));
+        return view('admin.suspectPresences', compact('suspectPresences', 'search', 'startDate', 'endDate', 'statut'));
     }
 
     /**
@@ -402,6 +406,7 @@ public function exportReport(Request $request)
         $search = $request->input('search');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $statut = $request->input('statut');
 
         $query = DB::table('presence')
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
@@ -421,6 +426,9 @@ public function exportReport(Request $request)
         if ($endDate) {
             $query->whereDate('presence.date', '<=', $endDate);
         }
+        if ($statut && in_array($statut, ['nouveau', 'examiné', 'justifié', 'rejeté'], true)) {
+            $query->where('presence.statut_traitement', $statut);
+        }
 
         $suspectPresences = $query->orderByDesc('presence.date')->orderByDesc('presence.heureArrivee')->get();
 
@@ -430,6 +438,7 @@ public function exportReport(Request $request)
                 'search' => $search,
                 'startDate' => $startDate,
                 'endDate' => $endDate,
+                'statut' => $statut,
                 'admin' => Auth::user()->nom,
                 'generatedDate' => now()->format('d/m/Y H:i'),
             ]);
@@ -497,11 +506,12 @@ public function exportReport(Request $request)
             'traite_le' => now(),
         ]);
 
-        // Notifier le superviseur de l'équipe quand une présence de son membre est traitée
+        // Notifier le superviseur de l'équipe + l'employé concerné
+        $employeUser = \App\Models\Utilisateur::find($presence->employerID);
+
         if ($presence->Sup_id) {
             $superviseurUser = \App\Models\Utilisateur::find($presence->Sup_id);
             if ($superviseurUser && $superviseurUser->role === 'Superviseur') {
-                $employeUser = \App\Models\Utilisateur::find($presence->employerID);
                 $superviseurUser->notify(new \App\Notifications\PresenceTraiteeNotification(
                     $employeUser ?? $superviseurUser,
                     $presence,
@@ -509,6 +519,16 @@ public function exportReport(Request $request)
                     $request->commentaire
                 ));
             }
+        }
+
+        // L'employé concerné est aussi informé du traitement de sa présence
+        if ($employeUser) {
+            $employeUser->notify(new \App\Notifications\PresenceTraiteeNotification(
+                $employeUser,
+                $presence,
+                $request->statut_traitement,
+                $request->commentaire
+            ));
         }
 
         return redirect()->route('admin.suspectPresences')->with('success', 'Statut de la présence suspecte mis à jour.');

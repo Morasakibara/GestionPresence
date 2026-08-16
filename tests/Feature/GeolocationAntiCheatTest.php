@@ -431,6 +431,132 @@ class GeolocationAntiCheatTest extends TestCase
         ]);
     }
 
+    public function test_employe_notifie_quand_sa_presence_est_traitee(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Précision GPS insuffisante (320 m).',
+            'statut_traitement' => 'nouveau',
+        ]);
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        $this->post("/admin/suspect-presences/{$presence->id}/update", [
+            'statut_traitement' => 'justifié',
+            'commentaire' => 'Déplacement validé.',
+        ])->assertSessionHas('success');
+
+        // L'employé concerné doit aussi être notifié
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $employe->id,
+            'type' => \App\Notifications\PresenceTraiteeNotification::class,
+        ]);
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $presence->Sup_id,
+            'type' => \App\Notifications\PresenceTraiteeNotification::class,
+        ]);
+    }
+
+    public function test_filtre_par_statut_sur_page_suspectes(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+        // Deux présences suspectes : une 'nouveau', une 'justifié'
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-17',
+            'heureArrivee' => '2026-08-17 08:05:00',
+            'heureDepart' => '2026-08-17 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Motif A (nouveau).',
+            'statut_traitement' => 'nouveau',
+        ]);
+        Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-16',
+            'heureArrivee' => '2026-08-16 08:05:00',
+            'heureDepart' => '2026-08-16 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Motif B (justifié).',
+            'statut_traitement' => 'justifié',
+        ]);
+
+        $admin = Utilisateur::where('role', 'Administrateur')->first();
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+
+        // Sans filtre : les deux motifs visibles
+        $response = $this->get('/admin/suspect-presences');
+        $response->assertOk();
+        $response->assertSee('Motif A (nouveau)');
+        $response->assertSee('Motif B (justifié)');
+
+        // Filtre statut=justifié : seul le motif B reste
+        $response = $this->get('/admin/suspect-presences?statut=justifié');
+        $response->assertOk();
+        $response->assertSee('Motif B (justifié)');
+        $response->assertDontSee('Motif A (nouveau)');
+
+        // Le select conserve la sélection
+        $response->assertSee('value="justifié" selected', false);
+    }
+
+    public function test_commande_rappel_suspectes_non_traitees(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));
+        $employe = $this->loginEmploye();
+
+        $employerInfo = \App\Models\Employer::where('id', $employe->id)->first();
+
+        // Présence suspecte ancienne (créée il y a 10 jours) non traitée
+        // created_at n'est pas fillable -> on le fixe après création
+        $presence = Presence::create([
+            'employerID' => $employe->id,
+            'Sup_id' => $employerInfo->Sup_id,
+            'date' => '2026-08-01',
+            'heureArrivee' => '2026-08-01 08:05:00',
+            'heureDepart' => '2026-08-01 17:30:00',
+            'status' => 'présent',
+            'suspect' => true,
+            'motif_suspicion' => 'Ancien motif non traité.',
+            'statut_traitement' => 'nouveau',
+        ]);
+        \Illuminate\Support\Facades\DB::table('presence')
+            ->where('id', $presence->id)
+            ->update(['created_at' => now()->subDays(10), 'updated_at' => now()->subDays(10)]);
+
+        // La commande doit notifier l'admin
+        $this->artisan('presence:rappel-suspectes', ['--days' => 7])
+            ->expectsOutputToContain('Rappel envoyé');
+
+        $admin = Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $admin->id,
+            'type' => \App\Notifications\SuspectRappelNotification::class,
+        ]);
+
+        // Après traitement, plus de rappel
+        $presence->update(['statut_traitement' => 'examiné']);
+        $this->artisan('presence:rappel-suspectes', ['--days' => 7])
+            ->expectsOutputToContain('Aucune présence suspecte');
+    }
+
     public function test_vitesse_irrealiste_marque_suspect(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 30));

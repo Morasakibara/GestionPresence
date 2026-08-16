@@ -127,6 +127,9 @@
             @if($search)
                 <p>Recherche: {{ $search }}</p>
             @endif
+            @if(!empty($statut))
+                <p>Statut: {{ ucfirst($statut) }}</p>
+            @endif
             <p>Généré le: {{ $generatedDate }}</p>
             <p>Administrateur: {{ $admin }}</p>
         </div>
