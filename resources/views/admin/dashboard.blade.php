@@ -265,6 +265,34 @@
         <div class="h-64">
             <canvas id="evaluationEvolChart"></canvas>
         </div>
+
+        <!-- Moyenne globale + tendance -->
+        @php
+            $moyenneEvol = $statsEvolution['moyenne'] ?? 0;
+            $tendanceEvol = $statsEvolution['tendance'] ?? 'stable';
+            $deltaEvol = $statsEvolution['delta'] ?? 0;
+        @endphp
+        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="rounded-xl border border-gray-200/70 bg-gray-50 p-4">
+                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Moyenne globale (6 mois)</div>
+                <div class="mt-1 flex items-baseline gap-2">
+                    <span class="text-2xl font-bold text-[#080808]">{{ number_format($moyenneEvol, 1, ',', '') }}</span>
+                    <span class="text-sm text-gray-500">/20</span>
+                </div>
+            </div>
+            <div class="rounded-xl border border-gray-200/70 bg-gray-50 p-4">
+                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Tendance (dernier mois)</div>
+                <div class="mt-1 flex items-center gap-2">
+                    @if($tendanceEvol === 'hausse')
+                        <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-bold text-green-700">▲ Hausse {{ $deltaEvol > 0 ? '+' . number_format($deltaEvol, 1, ',', '') : '' }} pt</span>
+                    @elseif($tendanceEvol === 'baisse')
+                        <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-sm font-bold text-red-700">▼ Baisse {{ number_format(abs($deltaEvol), 1, ',', '') }} pt</span>
+                    @else
+                        <span class="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-sm font-bold text-gray-600">— Stable</span>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

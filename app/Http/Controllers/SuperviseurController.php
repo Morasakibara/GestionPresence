@@ -60,6 +60,9 @@ class SuperviseurController extends Controller
         // Évolution de la note moyenne de l'équipe sur 6 mois
         $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIds, 6);
 
+        // Moyenne globale (périodes avec données) + tendance (dernier mois vs précédent)
+        $statsEvolution = \App\Services\EvaluationService::statsEvolution($evolutionEvaluations);
+
         return view('superviseur.supdashboard', compact(
             'equipe',
             'teamMemberCount',
@@ -67,7 +70,8 @@ class SuperviseurController extends Controller
             'absentToday',
             'lateToday',
             'unreadNotifications',
-            'evolutionEvaluations'
+            'evolutionEvaluations',
+            'statsEvolution'
         ));
     }
 
@@ -628,6 +632,41 @@ class SuperviseurController extends Controller
         return response($contenu, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename=rendements_equipe_' . $debut . '_' . $fin . '.xlsx',
+        ]);
+    }
+
+    /**
+     * Export CSV de l'évolution mensuelle des évaluations de l'équipe (6 mois).
+     */
+    public function exportEvolutionEvaluationsCsv(Request $request)
+    {
+        $superviseur = Auth::user();
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+
+        if (!$superviseurInfo) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+
+        $employerIds = Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
+        $evolution = \App\Services\EvaluationService::evolutionMensuelle($employerIds, 6);
+
+        $lignes = ["Équipe;Mois;Note moyenne /20;Couleur"];
+        $couleurLibelle = [
+            '#2E8B57' => 'Vert (>=14)',
+            '#D97706' => 'Orange (10-13)',
+            '#D64545' => 'Rouge (<10)',
+            '#888888' => 'Aucune donnée',
+        ];
+        foreach ($evolution['labels'] as $i => $label) {
+            $lignes[] = $superviseurInfo->equipe . ';' . $label . ';' . str_replace('.', ',', (string) $evolution['notes'][$i]) . ';' . ($couleurLibelle[$evolution['couleurs'][$i]] ?? $evolution['couleurs'][$i]);
+        }
+
+        $contenu = implode("\n", $lignes) . "\n";
+        $nomFichier = 'evolution_evaluations_equipe_' . str_replace(' ', '_', $superviseurInfo->equipe) . '.csv';
+
+        return response($contenu, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename=' . $nomFichier,
         ]);
     }
 

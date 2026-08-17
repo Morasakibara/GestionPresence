@@ -783,6 +783,69 @@ class PharaonFeaturesTest extends TestCase
         $this->assertStringContainsString('/20', $html);
     }
 
+    /** S25 — Le dashboard superviseur propose les exports PNG/CSV et la moyenne/tendance. */
+    public function test_dashboard_superviseur_exports_et_moyenne(): void
+    {
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        $response = $this->get('/superviseur/supdashboard');
+        $response->assertOk();
+        $response->assertSee('evaluationEvolChart');
+        $response->assertSee('Exporter PNG');
+        $response->assertSee('Exporter CSV');
+        $response->assertSee('Moyenne globale (6 mois)');
+        $response->assertSee('Tendance (dernier mois)');
+    }
+
+    /** S26 — L'export CSV de l'évolution des évaluations de l'équipe fonctionne. */
+    public function test_export_csv_evolution_superviseur(): void
+    {
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        $response = $this->get('/superviseur/evaluations/evolution/export');
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+        $this->assertStringContainsString('Équipe;Mois;Note moyenne /20;Couleur', $response->getContent());
+    }
+
+    /** S27 — Le dashboard admin affiche la moyenne globale et la tendance sous le graphique. */
+    public function test_dashboard_admin_affiche_moyenne_et_tendance(): void
+    {
+        $this->loginAdmin();
+
+        $response = $this->get('/admin/dashboard');
+        $response->assertOk();
+        $response->assertSee('Moyenne globale (6 mois)');
+        $response->assertSee('Tendance (dernier mois)');
+    }
+
+    /** S28 — statsEvolution calcule moyenne et tendance correctement. */
+    public function test_stats_evolution_calcule_moyenne_tendance(): void
+    {
+        $evolution = [
+            'labels' => ['Mars', 'Avril', 'Mai'],
+            'notes' => [10.0, 12.0, 15.0],
+            'couleurs' => ['#D97706', '#D97706', '#2E8B57'],
+        ];
+
+        $stats = \App\Services\EvaluationService::statsEvolution($evolution);
+        $this->assertEquals(12.3, $stats['moyenne']);
+        $this->assertEquals('hausse', $stats['tendance']);
+        $this->assertEquals(3.0, $stats['delta']);
+
+        // Baisse
+        $stats2 = \App\Services\EvaluationService::statsEvolution([
+            'labels' => ['Mars', 'Avril', 'Mai'],
+            'notes' => [15.0, 12.0, 10.0],
+            'couleurs' => ['#2E8B57', '#D97706', '#D64545'],
+        ]);
+        $this->assertEquals('baisse', $stats2['tendance']);
+    }
+
     /** S17 — La configuration mail utilise le transport Resend avec un expéditeur dédié. */
     public function test_config_mail_utilise_le_transport_resend(): void
     {

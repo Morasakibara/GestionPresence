@@ -253,4 +253,38 @@ class EvaluationService
             'couleurs' => $couleurs,
         ];
     }
+
+    /**
+     * Statistiques d'une série d'évolution : moyenne globale et tendance.
+     *
+     * @param  array  $evolution  Sortie de evolutionMensuelle()
+     * @return array{moyenne: float, tendance: string, delta: float, dernier: float, avant: float}
+     */
+    public static function statsEvolution(array $evolution): array
+    {
+        $notes = array_values(array_filter($evolution['notes'] ?? [], fn ($n) => $n > 0));
+        $moyenne = count($notes) > 0 ? round(array_sum($notes) / count($notes), 1) : 0;
+
+        $toutes = $evolution['notes'] ?? [];
+        $dernier = (float) (end($toutes) ?: 0);
+        $avant = (float) (count($toutes) >= 2 ? $toutes[count($toutes) - 2] : 0);
+
+        if ($dernier <= 0 || $avant <= 0) {
+            $tendance = 'stable';
+        } elseif ($dernier > $avant) {
+            $tendance = 'hausse';
+        } elseif ($dernier < $avant) {
+            $tendance = 'baisse';
+        } else {
+            $tendance = 'stable';
+        }
+
+        return [
+            'moyenne' => $moyenne,
+            'tendance' => $tendance,
+            'delta' => round($dernier - $avant, 1),
+            'dernier' => $dernier,
+            'avant' => $avant,
+        ];
+    }
 }

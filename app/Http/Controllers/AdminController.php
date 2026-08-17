@@ -66,6 +66,7 @@ class AdminController extends Controller
         $employerIdsFiltre = \App\Models\Employer::where('equipe', $equipeSelectionnee)->pluck('id')->toArray();
     }
     $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIdsFiltre, 6);
+    $statsEvolution = \App\Services\EvaluationService::statsEvolution($evolutionEvaluations);
 
     return view('admin.dashboard', compact(
         'totalEmployees',
@@ -76,6 +77,7 @@ class AdminController extends Controller
         'monthlyAbsences',
         'monthlyLates',
         'evolutionEvaluations',
+        'statsEvolution',
         'equipes',
         'equipeSelectionnee'
     ));

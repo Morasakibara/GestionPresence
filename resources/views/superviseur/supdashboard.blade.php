@@ -190,8 +190,49 @@
             </div>
             <span class="badge badge-gold">Moyenne /20</span>
         </div>
+
+        <!-- Exports PNG/CSV -->
+        <div class="mb-4 flex flex-wrap items-center gap-3">
+            <button type="button" onclick="exporterGraphiquePNG()" class="btn-secondary">
+                <svg class="-ml-1 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Exporter PNG
+            </button>
+            <a href="{{ route('superviseur.evaluations.evolution.export') }}" class="btn-gold">
+                <svg class="-ml-1 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Exporter CSV
+            </a>
+        </div>
+
         <div class="h-64">
             <canvas id="evaluationEvolChart"></canvas>
+        </div>
+
+        <!-- Moyenne globale + tendance -->
+        @php
+            $moyenneEvol = $statsEvolution['moyenne'] ?? 0;
+            $tendanceEvol = $statsEvolution['tendance'] ?? 'stable';
+            $deltaEvol = $statsEvolution['delta'] ?? 0;
+        @endphp
+        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="rounded-xl border border-gray-200/70 bg-gray-50 p-4">
+                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Moyenne globale (6 mois)</div>
+                <div class="mt-1 flex items-baseline gap-2">
+                    <span class="text-2xl font-bold text-[#080808]">{{ number_format($moyenneEvol, 1, ',', '') }}</span>
+                    <span class="text-sm text-gray-500">/20</span>
+                </div>
+            </div>
+            <div class="rounded-xl border border-gray-200/70 bg-gray-50 p-4">
+                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Tendance (dernier mois)</div>
+                <div class="mt-1 flex items-center gap-2">
+                    @if($tendanceEvol === 'hausse')
+                        <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-bold text-green-700">▲ Hausse {{ $deltaEvol > 0 ? '+' . number_format($deltaEvol, 1, ',', '') : '' }} pt</span>
+                    @elseif($tendanceEvol === 'baisse')
+                        <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-sm font-bold text-red-700">▼ Baisse {{ number_format(abs($deltaEvol), 1, ',', '') }} pt</span>
+                    @else
+                        <span class="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-sm font-bold text-gray-600">— Stable</span>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -250,6 +291,21 @@
                 }
             }
         });
+
+        // Export PNG du graphique
+        window.exporterGraphiquePNG = function () {
+            const canvas = document.getElementById('evaluationEvolChart');
+            if (!canvas) {
+                return;
+            }
+            const url = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'evolution_evaluations_equipe_' + new Date().toISOString().slice(0, 10) + '.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
     });
 </script>
 @endpush
