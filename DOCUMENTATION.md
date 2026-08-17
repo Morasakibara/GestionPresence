@@ -300,8 +300,12 @@ composer audit --locked        # sécurité des dépendances
 
 ## 11. Tests
 
-Suite PHPUnit (`tests/`) — tests de base Laravel (réponse 200, assertion simple).
-Pour étendre la couverture : tests Feature pour les flux de pointage, géolocalisation et notifications.
+Suite PHPUnit (`tests/`) — **28 tests / 183 assertions**, tous verts (`env -u APP_ENV MAIL_MAILER=array php artisan test`).
+Couverture : flux de pointage (arrivée/départ, fiche de rendement obligatoire), géolocalisation, évaluations, rapports, exports CSV, bulletins PDF, notifications et **rendu frontend des pages harmonisées** (lieux de travail, notifications, présence — vérification de la charte Pharaon).
+
+### Rapports et bulletins PDF
+
+Les 4 PDF (rapport admin, rapport superviseur, bulletin admin, bulletin superviseur) intègrent **le logo Pharaon** (`logo-pharaon.png`, stocké dans `storage/app/public`) et **la charte de couleurs** (en-tête noir `#080808`, accents or `#D39B23`/`#E9B533`, badges d'évaluation rouge/orange/vert) — remplaçant l'ancien bleu `#115293`.
 
 ---
 

@@ -21,13 +21,22 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 20px;
-            border-bottom: 2px solid #115293;
+            border-bottom: 2px solid #D39B23;
             padding-bottom: 12px;
+        }
+        .brand-header .brand-left {
+            display: flex;
+            align-items: center;
+        }
+        .logo {
+            width: 55px;
+            height: auto;
+            margin-right: 12px;
         }
         .company-name {
             font-size: 22px;
             font-weight: bold;
-            color: #115293;
+            color: #D39B23;
         }
         .brand-header .right {
             font-size: 11px;
@@ -35,11 +44,12 @@
             text-align: right;
         }
         .header {
-            background-color: #115293;
+            background-color: #080808;
             color: white;
             padding: 18px 20px;
             margin-bottom: 24px;
             border-radius: 6px;
+            border-left: 4px solid #D39B23;
         }
         .header h1 {
             font-size: 20px;
@@ -82,7 +92,7 @@
             font-size: 11px;
         }
         thead {
-            background-color: #115293;
+            background-color: #080808;
             color: white;
         }
         th {
@@ -111,7 +121,7 @@
         .stat .value {
             font-size: 18px;
             font-weight: bold;
-            color: #115293;
+            color: #885910;
         }
         .stat .label {
             font-size: 10px;
@@ -132,7 +142,10 @@
 <body>
     <div class="container">
         <div class="brand-header">
-            <div class="company-name">Le Pharaon</div>
+            <div class="brand-left">
+                <img class="logo" src="{{ public_path('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
+                <div class="company-name">Le Pharaon</div>
+            </div>
             <div class="right">
                 Bulletin individuel d'évaluation<br>
                 Généré le {{ now()->format('d/m/Y H:i') }}

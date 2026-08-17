@@ -602,4 +602,59 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee('evaluationChart'); // graphique Chart.js
         $response->assertSee('chart.js');
     }
+
+    /** S13 — La page des lieux de travail (admin) rend avec la charte Pharaon. */
+    public function test_workplace_locations_index_rendu_charte(): void
+    {
+        $this->loginAdmin();
+
+        $response = $this->get('/admin/workplace-locations');
+        $response->assertOk();
+        $response->assertSee('Lieux de travail');
+        $response->assertSee('Nom');
+        $response->assertSee('Latitude');
+        $response->assertSee('Longitude');
+        $response->assertSee('Rayon');
+        $response->assertSee('Actions');
+        // Charte Pharaon : titre en noir #080808
+        $response->assertSee('text-[#080808]');
+    }
+
+    /** S14 — Le formulaire d'ajout d'un lieu de travail rend avec la charte. */
+    public function test_workplace_locations_create_rendu_charte(): void
+    {
+        $this->loginAdmin();
+
+        $response = $this->get('/admin/workplace-locations/create');
+        $response->assertOk();
+        $response->assertSee('Ajouter un lieu');
+        $response->assertSee('latitude');
+        $response->assertSee('rayon');
+        $response->assertSee('btn-gold'); // bouton or de la charte
+    }
+
+    /** S15 — La page de notifications rend avec la charte et l'état vide. */
+    public function test_notifications_page_rendu_charte(): void
+    {
+        $this->loginAdmin();
+
+        $response = $this->get('/notifications');
+        $response->assertOk();
+        $response->assertSee('Notifications');
+        $response->assertSee('text-[#080808]'); // titre noir Pharaon
+    }
+
+    /** S16 — La page de pointage de présence (employé) rend avec la charte. */
+    public function test_presence_page_rendu_charte(): void
+    {
+        $employe = $this->loginEmploye();
+        $this->assertNotNull($employe);
+
+        $response = $this->get('/presence');
+        $response->assertOk();
+        $response->assertSee('Marquer la présence');
+        $response->assertSee('Marquer l'); // bouton arrivée (apostrophe encodée)
+        $response->assertSee('départ');
+        $response->assertSee('bg-[#080808]'); // sidebar noire Pharaon
+    }
 }

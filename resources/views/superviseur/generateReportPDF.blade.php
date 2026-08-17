@@ -20,11 +20,27 @@
         
         /* En-tête */
         .header {
-            background-color: #115293; /* 3hcig-blue-dark */
+            background-color: #080808; /* Noir Le Pharaon */
             color: white;
             padding: 20px;
             margin-bottom: 24px;
             border-radius: 6px;
+            border-left: 4px solid #D39B23;
+        }
+        .brand-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .logo {
+            width: 60px;
+            height: auto;
+            margin-right: 12px;
+        }
+        .company-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #D39B23;
         }
         .header h1 {
             font-size: 24px;
@@ -50,7 +66,7 @@
             background-color: white;
         }
         thead {
-            background-color: #115293; /* 3hcig-blue-dark */
+            background-color: #080808; /* Noir Le Pharaon */
             color: white;
         }
         th {
@@ -81,8 +97,8 @@
             font-weight: 500;
             line-height: 1;
             border-radius: 9999px;
-            background-color: rgba(25, 118, 210, 0.1); /* 3hcig-blue avec opacité */
-            color: #115293; /* 3hcig-blue-dark */
+            background-color: rgba(211, 155, 35, 0.12); /* Or Le Pharaon avec opacité */
+            color: #885910; /* Bronze foncé */
         }
         
         /* Résumé */
@@ -96,7 +112,7 @@
         .summary h2 {
             font-size: 18px;
             font-weight: 600;
-            color: #115293; /* 3hcig-blue-dark */
+            color: #080808; /* Noir Le Pharaon */
             margin-top: 0;
             margin-bottom: 12px;
         }
@@ -165,6 +181,10 @@
 </head>
 <body>
     <div class="container">
+        <div class="brand-header">
+            <img class="logo" src="{{ public_path('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
+            <div class="company-name">Le Pharaon</div>
+        </div>
         <div class="header">
             <h1>Rapport de présence - Équipe {{ $equipe }}</h1>
             <p>Généré le: {{ $date }}</p>

@@ -32,16 +32,21 @@
         .company-name {
             font-size: 22px;
             font-weight: bold;
-            color: #115293; /* 3hcig-blue-dark */
+            color: #D39B23; /* Or Le Pharaon */
+        }
+        .company-sub {
+            font-size: 12px;
+            color: #885910; /* Bronze foncé */
         }
 
         /* En-tête du rapport */
         .header {
-            background-color: #115293; /* 3hcig-blue-dark */
+            background-color: #080808; /* Noir Le Pharaon */
             color: white;
             padding: 20px;
             margin-bottom: 24px;
             border-radius: 6px;
+            border-left: 4px solid #D39B23;
             position: relative;
             overflow: hidden;
         }
@@ -83,7 +88,7 @@
             background-color: white;
         }
         thead {
-            background-color: #115293; /* 3hcig-blue-dark */
+            background-color: #080808; /* Noir Le Pharaon */
             color: white;
         }
         th {
@@ -111,8 +116,8 @@
             font-weight: 500;
             line-height: 1;
             border-radius: 9999px;
-            background-color: rgba(25, 118, 210, 0.1); /* 3hcig-blue avec opacité */
-            color: #115293; /* 3hcig-blue-dark */
+            background-color: rgba(211, 155, 35, 0.12); /* Or Le Pharaon avec opacité */
+            color: #885910; /* Bronze foncé */
         }
 
         /* Résumé */
@@ -126,7 +131,7 @@
         .summary h2 {
             font-size: 18px;
             font-weight: 600;
-            color: #115293; /* 3hcig-blue-dark */
+            color: #080808; /* Noir Le Pharaon */
             margin-top: 0;
             margin-bottom: 12px;
             padding-bottom: 8px;
@@ -192,7 +197,11 @@
     <div class="container">
         <!-- En-tête avec logo -->
         <div class="brand-header">
-            <div class="company-name">Le Pharaon</div>
+            <img class="logo" src="{{ public_path('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
+            <div>
+                <div class="company-name">Le Pharaon</div>
+                <div class="company-sub">Gestion des présences &amp; évaluations</div>
+            </div>
         </div>
 
         <!-- En-tête du rapport -->
