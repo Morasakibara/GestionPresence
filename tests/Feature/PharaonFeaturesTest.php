@@ -305,8 +305,8 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee('Analyse des besoins client.');
     }
 
-    /** S2 — L'admin exporte le CSV des évaluations et rendements. */
-    public function test_admin_export_csv_evaluations_rendements(): void
+    /** S2 — L'admin exporte les évaluations et rendements en Excel (charte Pharaon). */
+    public function test_admin_export_excel_evaluations_rendements(): void
     {
         $admin = $this->loginAdmin();
         $employe = Utilisateur::where('role', 'Employer')->first();
@@ -324,11 +324,33 @@ class PharaonFeaturesTest extends TestCase
 
         $response = $this->get('/admin/evaluations/export?mois=2026-08');
         $response->assertOk();
-        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
-        $this->assertStringContainsString('Employé', $response->getContent());
-        $this->assertStringContainsString('Note /20', $response->getContent());
-        $this->assertStringContainsString($employe->nom, $response->getContent());
-        $this->assertStringContainsString('Livraison du module de facturation.', $response->getContent());
+        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $xml = $this->decompresseXlsx($response->getContent());
+        $this->assertStringContainsString('Évaluations', $xml); // '&' est encodé &amp; dans le XML
+        $this->assertStringContainsString('Le Pharaon', $xml);
+        $this->assertStringContainsString('Livraison du module de facturation.', $xml);
+    }
+
+    /** Décompresse un XLSX et renvoie le contenu texte (sharedStrings + sheet). */
+    private function decompresseXlsx(string $contenu): string
+    {
+        $fichier = tempnam(sys_get_temp_dir(), 'xlsx') . '.xlsx';
+        file_put_contents($fichier, $contenu);
+        $zip = new \ZipArchive();
+        $texte = '';
+        if ($zip->open($fichier) === true) {
+            foreach (['xl/sharedStrings.xml', 'xl/worksheets/sheet1.xml'] as $entree) {
+                $donnees = $zip->getFromName($entree);
+                if ($donnees !== false) {
+                    $texte .= $donnees;
+                }
+            }
+            $zip->close();
+        }
+        @unlink($fichier);
+
+        return $texte;
     }
 
     /** S3 — Une évaluation rouge notifie l'administrateur principal. */
@@ -423,8 +445,8 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee('Préparation de la revue hebdomadaire.');
     }
 
-    /** S5 — Le superviseur exporte le CSV des rendements de son équipe. */
-    public function test_superviseur_export_csv_rendements(): void
+    /** S5 — Le superviseur exporte les rendements de son équipe en Excel (charte Pharaon). */
+    public function test_superviseur_export_excel_rendements(): void
     {
         $employe = $this->loginEmploye();
         $employerInfo = DB::table('employer')->where('id', $employe->id)->first();
@@ -445,10 +467,12 @@ class PharaonFeaturesTest extends TestCase
 
         $response = $this->get('/superviseur/rendements/export?debut=2026-08-10&fin=2026-08-17');
         $response->assertOk();
-        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
-        $this->assertStringContainsString('Employé', $response->getContent());
-        $this->assertStringContainsString($employe->nom, $response->getContent());
-        $this->assertStringContainsString('Traitement des commandes de la semaine.', $response->getContent());
+        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $xml = $this->decompresseXlsx($response->getContent());
+        $this->assertStringContainsString('Rendement de l\'équipe', $xml);
+        $this->assertStringContainsString('Le Pharaon', $xml);
+        $this->assertStringContainsString('Traitement des commandes de la semaine.', $xml);
     }
 
     /** S6 — Le dashboard employé affiche son évaluation colorée du mois. */
@@ -542,8 +566,10 @@ class PharaonFeaturesTest extends TestCase
 
         $response = $this->get('/superviseur/rendements/export?debut=2026-08-10&fin=2026-08-17');
         $response->assertOk();
-        $this->assertStringContainsString('Durée', $response->getContent());
-        $this->assertStringContainsString('7h45', $response->getContent()); // 09:00 -> 16:45
+
+        $xml = $this->decompresseXlsx($response->getContent());
+        $this->assertStringContainsString('Durée', $xml);
+        $this->assertStringContainsString('7h45', $xml); // 09:00 -> 16:45
     }
 
     /** S10 — L'admin télécharge le bulletin individuel d'évaluation PDF. */

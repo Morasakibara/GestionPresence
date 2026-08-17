@@ -614,14 +614,16 @@ class SuperviseurController extends Controller
             ];
         }
 
-        $contenu = "\xEF\xBB\xBF"; // BOM UTF-8 pour Excel
-        foreach ($lignes as $ligne) {
-            $contenu .= implode(';', array_map(fn ($cell) => '"' . str_replace('"', '""', (string) $cell) . '"', $ligne)) . "\r\n";
-        }
+        $contenu = \App\Services\ExcelExportService::creer(
+            'Rendement de l\'équipe ' . $superviseurInfo->equipe,
+            'Période du ' . date('d/m/Y', strtotime($debut)) . ' au ' . date('d/m/Y', strtotime($fin)) . ' — Le Pharaon',
+            ['Équipe', 'Employé', 'Date', 'Arrivée', 'Départ', 'Durée', 'Rendement'],
+            $lignes
+        )->contenu();
 
         return response($contenu, 200, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename=rendements_equipe_' . $debut . '_' . $fin . '.csv',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename=rendements_equipe_' . $debut . '_' . $fin . '.xlsx',
         ]);
     }
 

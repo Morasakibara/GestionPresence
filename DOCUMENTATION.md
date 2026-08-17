@@ -142,8 +142,8 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 - **Évaluation manuelle** : l'admin (fondateur) et le superviseur (directeur / directeur adjoint) peuvent enregistrer une note + couleur + commentaire par employé et par mois (elle prime sur l'auto-calcul).
 - **Intégrée aux rapports** : badge coloré par employé dans les rapports HTML et PDF (admin et superviseur).
 - **Alerte automatique 🔴** : quand une évaluation passe en **rouge** (manuelle ou auto-détectée), l'**administrateur principal est notifié** (`EvaluationRougeNotification` — email + interne) — déclenchée à l'enregistrement d'une évaluation rouge et via la commande planifiée `presence:alertes-evaluations-rouges` (le 1er de chaque mois, 8h00).
-- **Export CSV** : `GET /admin/evaluations/export?mois=YYYY-MM` génère un CSV (BOM UTF-8, séparateur `;`) avec par employé : note, couleur, commentaire, **heures travaillées** et **rendements du mois**. Bouton sur la page rapport admin.
-- **Temps de travail automatique** : durée travaillée calculée à chaque présence (départ − arrivée, via `EvaluationService::minutesTravail` / `dureeTravail`) et affichée partout : rendement employé (avec total), suivi superviseur (avec total du jour), rapports admin/superviseur (colonne **Total heures**) et exports CSV.
+- **Export Excel** : `GET /admin/evaluations/export?mois=YYYY-MM` génère un **fichier Excel (.xlsx)** aux **couleurs de la charte Pharaon** (logo en en-tête, bandeau titre, en-têtes noirs texte or, zébrures, notes colorées vert/orange/rouge) avec par employé : note, couleur, commentaire, **heures travaillées** et **rendements du mois**. Bouton sur la page rapport admin.
+- **Temps de travail automatique** : durée travaillée calculée à chaque présence (départ − arrivée, via `EvaluationService::minutesTravail` / `dureeTravail`) et affichée partout : rendement employé (avec total), suivi superviseur (avec total du jour), rapports admin/superviseur (colonne **Total heures**) et exports Excel.
 - **Bulletin individuel PDF** : `GET /admin/employe/{id}/bulletin?mois=YYYY-MM` génère le bulletin d'évaluation d'un employé (note /20 colorée, commentaire, statistiques de la période, fiches de rendement du mois). Lien **« Bulletin PDF »** par employé dans le rapport admin (et superviseur).
 
 ---
@@ -167,7 +167,7 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 | **Suivre les présences** | Liste des membres de son équipe + détail par utilisateur (frise graphique Chart.js). |
 | **Ajouter / retirer un membre** | Gestion de l'équipe (rattache `Sup_id` + `equipe` de façon cohérente). |
 | **Rapport d'équipe** | Rapport mensuel de son équipe avec **total heures**, **évaluations colorées /20** et **réalisations** (fiches de rendement) + **graphique Chart.js de comparaison** (une courbe par membre sur 6 mois) + **export PDF** + évaluation manuelle + **bulletin PDF individuel** des membres (équipe uniquement). |
-| **Rendement équipe** | Page `/superviseur/rendements` : **suivi quotidien** des fiches de rendement des membres (filtre par date) avec **durée travaillée + total du jour** + alerte des membres n'ayant pas encore rempli leur fiche. **Export CSV** (avec durée) de la période (bouton sur la page). |
+| **Rendement équipe** | Page `/superviseur/rendements` : **suivi quotidien** des fiches de rendement des membres (filtre par date) avec **durée travaillée + total du jour** + alerte des membres n'ayant pas encore rempli leur fiche. **Export Excel** charté (avec durée) de la période (bouton sur la page). |
 | **Changer de rôle** | Bascule Employé ↔ Superviseur. |
 | **Notifications** | Reçoit les retards/absences des membres de son équipe. |
 
@@ -301,7 +301,11 @@ composer audit --locked        # sécurité des dépendances
 ## 11. Tests
 
 Suite PHPUnit (`tests/`) — **28 tests / 183 assertions**, tous verts (`env -u APP_ENV MAIL_MAILER=array php artisan test`).
-Couverture : flux de pointage (arrivée/départ, fiche de rendement obligatoire), géolocalisation, évaluations, rapports, exports CSV, bulletins PDF, notifications et **rendu frontend des pages harmonisées** (lieux de travail, notifications, présence — vérification de la charte Pharaon).
+Couverture : flux de pointage (arrivée/départ, fiche de rendement obligatoire), géolocalisation, évaluations, rapports, exports Excel chartés, bulletins PDF, notifications et **rendu frontend des pages harmonisées** (lieux de travail, notifications, présence — vérification de la charte Pharaon).
+
+### Déploiement
+
+Un **guide de déploiement complet** (`GUIDE_DEPLOIEMENT.md`) détaille l'installation serveur (PHP/MySQL/Nginx/Apache), le HTTPS, le scheduler, la configuration email de production (Resend), la géolocalisation, les sauvegardes, la mise à jour et la checklist sécurité.
 
 ### Rapports et bulletins PDF
 
@@ -314,7 +318,7 @@ Les 4 PDF (rapport admin, rapport superviseur, bulletin admin, bulletin supervis
 | Sujet | État actuel | Recommandation |
 |---|---|---|
 | **Queue** | `QUEUE_CONNECTION=sync` (envoi immédiat) | Passer à une queue (Redis / database) si volume important. |
-| **Emails** | SMTP configurable, Mailpit en dev | Configurer un vrai SMTP (transactionnel) en production. |
+| **Emails** | SMTP configurable — **Resend** recommandé en production (relais SMTP `smtp.resend.com:587`, clé API) ; Mailpit en dev | Vérifier les DNS (DKIM/SPF) du domaine sur Resend pour une bonne délivrabilité. |
 | **Restriction réseau** | Code prêt mais commenté | Activer si l'usage est limité au Wi-Fi de l'entreprise. |
 | **Notifications** | Limitée au superviseur direct + admin principal (optimisation faite) | Vérifier le volume si beaucoup d'équipes. |
 | **Backups** | Non configurés | Planifier des sauvegardes MySQL + `storage/app/public/rapports`. |

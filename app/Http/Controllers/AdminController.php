@@ -479,14 +479,35 @@ public function exportReport(Request $request)
             ];
         }
 
-        $contenu = "\xEF\xBB\xBF"; // BOM UTF-8 pour Excel
-        foreach ($lignes as $ligne) {
-            $contenu .= implode(';', array_map(fn ($cell) => '"' . str_replace('"', '""', (string) $cell) . '"', $ligne)) . "\r\n";
+        // Export Excel aux couleurs de la charte Pharaon (logo + en-tête noir/or)
+        $service = \App\Services\ExcelExportService::creer(
+            'Évaluations & rendements — Le Pharaon',
+            'Mois de ' . ucfirst(\Carbon\Carbon::parse($debut)->locale('fr')->isoFormat('MMMM YYYY')),
+            ['Employé', 'Mois', 'Note /20', 'Couleur', 'Commentaire', 'Heures travaillées', 'Rendements du mois'],
+            $lignes
+        );
+
+        // Coloration des notes selon la couleur d'évaluation (vert/orange/rouge de la charte)
+        $ligneEnTete = 5;
+        foreach ($employes as $i => $employe) {
+            $evaluation = \App\Services\EvaluationService::evaluer($employe->id, $debut, $fin);
+            $couleur = match ($evaluation['couleur']) {
+                'vert' => \App\Services\ExcelExportService::SUCCES,
+                'orange' => \App\Services\ExcelExportService::ALERTE,
+                'rouge' => \App\Services\ExcelExportService::DANGER,
+                default => \App\Services\ExcelExportService::NOIR,
+            };
+            // Colonne 3 = Note /20
+            $service->colorerCellule($ligneEnTete + 1 + $i, 3, $couleur);
+            // Colonne 4 = libellé de couleur, coloré aussi
+            $service->colorerCellule($ligneEnTete + 1 + $i, 4, $couleur);
         }
 
+        $contenu = $service->contenu();
+
         return response($contenu, 200, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename=evaluations_rendements_' . $mois . '.csv',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename=evaluations_rendements_' . $mois . '.xlsx',
         ]);
     }
 
