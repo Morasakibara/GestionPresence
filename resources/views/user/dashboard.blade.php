@@ -491,8 +491,8 @@
                 datasets: [{
                     label: 'Note /20',
                     data: data,
-                    borderColor: '#115293',
-                    backgroundColor: 'rgba(17, 82, 147, 0.08)',
+                    borderColor: '#D39B23',
+                    backgroundColor: 'rgba(211, 155, 35, 0.10)',
                     borderWidth: 2,
                     tension: 0.35,
                     fill: true,

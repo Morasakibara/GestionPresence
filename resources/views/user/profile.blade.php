@@ -5,19 +5,22 @@
 @section('content')
 <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
     <div class="mx-auto max-w-md">
-        <div class="overflow-hidden rounded-lg bg-white shadow-sm">
+        <div class="overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-card">
             <div class="px-4 py-5 sm:p-6">
                 <div class="flex flex-col items-center">
-                    <h1 class="mb-6 text-2xl font-bold text-[#080808]">Mon profil</h1>
+                    <div class="mb-6 text-center">
+                        <h1 class="page-heading-title">Mon profil</h1>
+                        <p class="mt-1 page-heading-sub">Gérez vos informations personnelles</p>
+                    </div>
 
                     <!-- Photo de profil en haut -->
                     <div class="mb-6 flex flex-col items-center">
                         @if($user->avatar)
-                            <div class="mb-3 h-32 w-32 overflow-hidden rounded-full border-4 border-3hcig-blue-light">
+                            <div class="mb-3 h-32 w-32 overflow-hidden rounded-full border-4 border-[#E9B533]/60 shadow-gold">
                                 <img src="{{ asset('storage/' . $user->avatar) }}" alt="Avatar" class="h-full w-full object-cover">
                             </div>
                         @else
-                            <div class="mb-3 flex h-32 w-32 items-center justify-center rounded-full bg-3hcig-blue-light/10 text-3hcig-blue">
+                            <div class="mb-3 flex h-32 w-32 items-center justify-center rounded-full bg-[#FBF3E6] text-pharaoh-bronze">
                                 <svg class="h-20 w-20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
@@ -35,7 +38,7 @@
                             <label for="name" class="block text-sm font-medium text-gray-700">Nom</label>
                             <div class="mt-1">
                                 <input type="text" id="name" name="name" value="{{ $user->nom }}" required
-                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                                       class="input-field">
                             </div>
                         </div>
 
@@ -43,7 +46,7 @@
                             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                             <div class="mt-1">
                                 <input type="email" id="email" name="email" value="{{ $user->email }}" required
-                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                                       class="input-field">
                             </div>
                         </div>
 
@@ -51,7 +54,7 @@
                             <label for="password" class="block text-sm font-medium text-gray-700">Nouveau mot de passe</label>
                             <div class="mt-1">
                                 <input type="password" id="password" name="password" placeholder="Laisser vide pour ne pas changer"
-                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                                       class="input-field">
                             </div>
                         </div>
 
@@ -59,7 +62,7 @@
                             <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirmer le nouveau mot de passe</label>
                             <div class="mt-1">
                                 <input type="password" id="password_confirmation" name="password_confirmation"
-                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                                       class="input-field">
                             </div>
                         </div>
 
@@ -67,20 +70,19 @@
                             <label for="avatar" class="block text-sm font-medium text-gray-700">Photo de profil</label>
                             <div class="mt-1">
                                 <input type="file" id="avatar" name="avatar"
-                                       class="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-3hcig-blue focus:outline-none focus:ring-3hcig-blue sm:text-sm">
+                                       class="input-field">
                             </div>
                         </div>
 
                         <div class="pt-2">
-                            <button type="submit"
-                                    class="flex w-full justify-center rounded-md bg-3hcig-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                            <button type="submit" class="btn-gold w-full">
                                 Mettre à jour le profil
                             </button>
                         </div>
                     </form>
 
                     @if(session('success'))
-                    <div class="mt-6 rounded-md bg-3hcig-green-light/20 p-4 text-3hcig-green-dark">
+                    <div class="alert alert-success mt-6">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <svg class="h-5 w-5 text-3hcig-green" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -97,7 +99,7 @@
                     @endif
 
                     @if($errors->any())
-                    <div class="mt-6 rounded-md bg-red-50 p-4">
+                    <div class="alert alert-danger mt-6">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

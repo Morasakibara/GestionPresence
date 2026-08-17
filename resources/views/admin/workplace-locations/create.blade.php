@@ -9,16 +9,20 @@
 @section('content')
 <div class="px-4 py-8 mx-auto sm:px-6 lg:px-8">
     <div class="p-6 bg-white rounded-2xl border border-gray-200/70 shadow-card">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-[#080808]">Ajouter un lieu de travail</h1>
-            <a href="{{ route('admin.workplace-locations.index') }}" class="btn-press inline-flex items-center rounded-lg bg-pharaoh-gold/10 px-3 py-1.5 text-sm font-semibold text-pharaoh-bronze-dark hover:bg-pharaoh-gold/20">
+        <div class="page-heading mb-6">
+            <div>
+                <h1 class="page-heading-title">Ajouter un lieu de travail</h1>
+                <p class="page-heading-sub">Définissez une zone géographique autorisée pour le pointage</p>
+            </div>
+            <a href="{{ route('admin.workplace-locations.index') }}" class="btn-secondary">
                 Retour à la liste
             </a>
         </div>
 
         @if ($errors->any())
-            <div class="px-4 py-3 mb-4 text-red-700 bg-red-50 border border-red-200 rounded-lg">
-                <ul>
+            <div class="alert alert-danger mb-4">
+                <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <ul class="list-disc pl-4">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -30,30 +34,30 @@
             @csrf
             <div class="mb-4">
                 <label for="nom" class="block text-sm font-medium text-gray-700">Nom du lieu</label>
-                <input type="text" name="nom" id="nom" value="{{ old('nom') }}" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-3hcig-blue focus:border-3hcig-blue sm:text-sm">
+                <input type="text" name="nom" id="nom" value="{{ old('nom') }}" class="input-field mt-1">
             </div>
 
             <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
                 <div>
                     <label for="latitude" class="block text-sm font-medium text-gray-700">Latitude</label>
-                    <input type="text" name="latitude" id="latitude" value="{{ old('latitude') }}" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-3hcig-blue focus:border-3hcig-blue sm:text-sm">
+                    <input type="text" name="latitude" id="latitude" value="{{ old('latitude') }}" class="input-field mt-1">
                 </div>
                 <div>
                     <label for="longitude" class="block text-sm font-medium text-gray-700">Longitude</label>
-                    <input type="text" name="longitude" id="longitude" value="{{ old('longitude') }}" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-3hcig-blue focus:border-3hcig-blue sm:text-sm">
+                    <input type="text" name="longitude" id="longitude" value="{{ old('longitude') }}" class="input-field mt-1">
                 </div>
             </div>
 
             <div class="mb-4">
                 <label for="rayon" class="block text-sm font-medium text-gray-700">Rayon (en mètres)</label>
-                <input type="number" name="rayon" id="rayon" value="{{ old('rayon', 100) }}" min="10" max="1000" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-3hcig-blue focus:border-3hcig-blue sm:text-sm">
+                <input type="number" name="rayon" id="rayon" value="{{ old('rayon', 100) }}" min="10" max="1000" class="input-field mt-1">
                 <p class="mt-1 text-sm text-gray-500">Distance maximale autorisée pour le marquage de présence, mesurée en mètres depuis le point central.</p>
             </div>
 
             <div class="mb-6">
-                <label class="flex items-center">
-                    <input type="checkbox" name="actif" value="1" checked class="w-4 h-4 border-gray-300 rounded focus:ring-3hcig-blue text-3hcig-blue">
-                    <span class="ml-2 text-sm text-gray-700">Actif</span>
+                <label class="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                    <input type="checkbox" name="actif" value="1" checked class="h-4 w-4 rounded border-gray-300 text-pharaoh-gold focus:ring-pharaoh-gold">
+                    <span class="ml-2 text-sm font-medium text-gray-700">Actif</span>
                 </label>
             </div>
 

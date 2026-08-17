@@ -684,6 +684,32 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee('bg-[#080808]'); // sidebar noire Pharaon
     }
 
+    /** S19 — Le dashboard admin affiche le graphique d'évolution des évaluations. */
+    public function test_dashboard_admin_affiche_graphique_evolution_evaluations(): void
+    {
+        $this->loginAdmin();
+
+        $response = $this->get('/admin/dashboard');
+        $response->assertOk();
+        $response->assertSee('evaluationEvolChart'); // canvas Chart.js
+        $response->assertSee('Évolution des évaluations');
+        $response->assertSee('stat-card'); // cartes de stats modernes
+    }
+
+    /** S20 — Le dashboard superviseur affiche le graphique d'évolution de son équipe. */
+    public function test_dashboard_superviseur_affiche_graphique_evolution(): void
+    {
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        $response = $this->get('/superviseur/supdashboard');
+        $response->assertOk();
+        $response->assertSee('evaluationEvolChart');
+        $response->assertSee('Évolution des évaluations');
+        $response->assertSee('stat-card');
+    }
+
     /** S17 — La configuration mail utilise le transport Resend avec un expéditeur dédié. */
     public function test_config_mail_utilise_le_transport_resend(): void
     {

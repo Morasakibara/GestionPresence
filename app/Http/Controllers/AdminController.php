@@ -57,6 +57,9 @@ class AdminController extends Controller
                          ->whereRaw('(HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0))')
                          ->count();
 
+    // Évolution de la note moyenne sur 6 mois (toute l'entreprise)
+    $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle(null, 6);
+
     return view('admin.dashboard', compact(
         'totalEmployees',
         'totalSupervisors',
@@ -64,7 +67,8 @@ class AdminController extends Controller
         'absentToday',
         'monthlyPresences',
         'monthlyAbsences',
-        'monthlyLates'
+        'monthlyLates',
+        'evolutionEvaluations'
     ));
 }
 

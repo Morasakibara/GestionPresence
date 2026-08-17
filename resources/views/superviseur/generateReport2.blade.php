@@ -4,20 +4,26 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-[#080808] sm:text-3xl">Rapport d'équipe</h1>
-        <p class="mt-2 text-sm text-gray-600">Consultez les statistiques de présence et le rendement de votre équipe (mois en cours)</p>
+    <div class="page-heading mb-6">
+        <div>
+            <h1 class="page-heading-title">Rapport d'équipe</h1>
+            <p class="page-heading-sub">Consultez les statistiques de présence et le rendement de votre équipe (mois en cours)</p>
+        </div>
+        <a href="{{ route('export.pdf') }}" class="btn-gold">
+            <svg class="-ml-1 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Exporter en PDF
+        </a>
     </div>
 
     @php
         $couleurBadge = [
-            'vert' => 'bg-green-100 text-green-800',
-            'orange' => 'bg-orange-100 text-orange-800',
-            'rouge' => 'bg-red-100 text-red-800',
+            'vert' => 'badge-success',
+            'orange' => 'badge-warning',
+            'rouge' => 'badge-danger',
         ];
 
         // Couleurs stables pour chaque membre du graphique de comparaison
-        $palette = ['#115293', '#16a34a', '#ea580c', '#9333ea', '#dc2626', '#0891b2', '#ca8a04', '#db2777', '#4f46e5', '#65a30d'];
+        $palette = ['#D39B23', '#2E8B57', '#D97706', '#9333ea', '#D64545', '#0891b2', '#ca8a04', '#db2777', '#3B82C4', '#65a30d'];
         $chartLabels = $reports[0]['historique'] ?? [];
         $chartLabels = array_map(fn ($h) => $h['label'], $chartLabels);
         $chartDatasets = [];
@@ -31,29 +37,29 @@
     @endphp
 
     @if(count($reports) > 0)
-    <div class="mt-8 rounded-lg bg-white p-6 shadow">
-        <h2 class="mb-1 text-lg font-semibold text-gray-900">Évolution des évaluations de l'équipe (6 mois)</h2>
-        <p class="mb-4 text-sm text-gray-600">Comparaison de la note /20 de chaque membre, mois par mois.</p>
+    <div class="mt-8 rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card">
+        <h2 class="mb-1 text-lg font-semibold text-[#080808]">Évolution des évaluations de l'équipe (6 mois)</h2>
+        <p class="mb-4 text-sm text-gray-500">Comparaison de la note /20 de chaque membre, mois par mois.</p>
         <canvas id="teamEvaluationChart" height="110"></canvas>
         <p class="mt-3 text-xs text-gray-500">Échelle de 0 à 20. 🟢 Vert ≥ 14 · 🟠 Orange 10-13 · 🔴 Rouge &lt; 10</p>
     </div>
     @endif
 
-    <div class="mt-8 overflow-hidden rounded-lg bg-white shadow">
-        <div class="overflow-x-auto">
+    <div class="mt-8 table-wrap">
+        <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-[#080808]">
+                <thead class="table-head">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom de l'employé</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Total de Présences (Mois en cours)</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Total Heures</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Évaluation</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Réalisations (rendement)</th>
+                        <th scope="col">Nom de l'employé</th>
+                        <th scope="col">Total de Présences (Mois en cours)</th>
+                        <th scope="col">Total Heures</th>
+                        <th scope="col">Évaluation</th>
+                        <th scope="col">Réalisations (rendement)</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
+                <tbody class="table-body divide-y divide-gray-200 bg-white">
                     @forelse($reports as $report)
-                    <tr class="hover:bg-gray-50 align-top">
+                    <tr class="align-top">
                         <td class="whitespace-nowrap px-6 py-4">
                             <div class="font-medium text-gray-900">{{ $report['name'] }}</div>
                             @if(isset($report['employerID']) && $report['employerID'])
@@ -67,16 +73,14 @@
                         </td>
                         <td class="whitespace-nowrap px-6 py-4">
                             <div class="text-sm text-gray-900">
-                                <span class="inline-flex items-center rounded-full bg-3hcig-blue-light/10 px-3 py-0.5 text-sm font-medium text-3hcig-blue-dark">
-                                    {{ $report['totalPresences'] }}
-                                </span>
+                                <span class="badge badge-gold">{{ $report['totalPresences'] }}</span>
                             </div>
                         </td>
                         <td class="whitespace-nowrap px-6 py-4">
-                            <div class="text-sm font-medium text-3hcig-blue-dark">{{ $report['totalHeures'] ?? '-' }}</div>
+                            <div class="text-sm font-semibold text-[#885910]">{{ $report['totalHeures'] ?? '-' }}</div>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold {{ $couleurBadge[$report['evaluation_couleur']] ?? $couleurBadge['orange'] }}">
+                            <span class="badge {{ $couleurBadge[$report['evaluation_couleur']] ?? $couleurBadge['orange'] }}">
                                 {{ $report['evaluation_note'] }}/20
                             </span>
                             @if($report['evaluation_manuelle'])
@@ -90,15 +94,15 @@
                                 <input type="hidden" name="employerID" value="{{ $report['employerID'] ?? '' }}">
                                 <input type="hidden" name="mois" value="{{ now()->format('Y-m') }}">
                                 <div class="flex items-center gap-1">
-                                    <input type="number" name="note" min="0" max="20" step="0.5" value="{{ $report['evaluation_note'] }}" class="w-16 rounded border border-gray-300 px-2 py-1 text-xs" title="Note sur 20">
-                                    <select name="couleur" class="rounded border border-gray-300 px-1 py-1 text-xs">
+                                    <input type="number" name="note" min="0" max="20" step="0.5" value="{{ $report['evaluation_note'] }}" class="w-16 rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold" title="Note sur 20">
+                                    <select name="couleur" class="rounded-lg border border-gray-300 px-1 py-1 text-xs focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold">
                                         <option value="vert" {{ $report['evaluation_couleur'] === 'vert' ? 'selected' : '' }}>🟢 Vert</option>
                                         <option value="orange" {{ $report['evaluation_couleur'] === 'orange' ? 'selected' : '' }}>🟠 Orange</option>
                                         <option value="rouge" {{ $report['evaluation_couleur'] === 'rouge' ? 'selected' : '' }}>🔴 Rouge</option>
                                     </select>
                                 </div>
-                                <input type="text" name="commentaire" placeholder="Commentaire (optionnel)" class="w-full rounded border border-gray-300 px-2 py-1 text-xs">
-                                <button type="submit" class="rounded bg-3hcig-blue px-2 py-1 text-xs text-white hover:bg-3hcig-blue-light">Enregistrer l'évaluation</button>
+                                <input type="text" name="commentaire" placeholder="Commentaire (optionnel)" class="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold">
+                                <button type="submit" class="rounded-lg bg-pharaoh-gold px-2 py-1 text-xs font-semibold text-white transition-colors duration-150 hover:bg-pharaoh-gold-light">Enregistrer l'évaluation</button>
                             </form>
                         </td>
                         <td class="px-6 py-4">
@@ -115,23 +119,20 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-6 text-center text-sm text-gray-500">
-                            Aucun rapport disponible — il n'y a aucune donnée de présence pour le mois en cours.
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <svg class="h-7 w-7 text-[#B77F1D]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                </div>
+                                <h3 class="mt-4 text-sm font-semibold text-gray-900">Aucun rapport disponible</h3>
+                                <p class="mt-1 text-sm text-gray-500">Aucune donnée de présence pour le mois en cours.</p>
+                            </div>
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
-        </div>
-    </div>
-
-    <div class="mt-6 flex justify-end">
-        <a href="{{ route('export.pdf') }}" class="inline-flex items-center rounded-md bg-3hcig-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
-            <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Exporter en PDF
-        </a>
+            </div>
     </div>
 </div>
 

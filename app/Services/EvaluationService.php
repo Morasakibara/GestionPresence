@@ -169,4 +169,57 @@ class EvaluationService
 
         return 'Évaluation automatique (' . implode(', ', $parts) . '). Note: ' . $note . '/20.';
     }
+
+    /**
+     * Évolution mensuelle de la note moyenne sur les $mois derniers mois.
+     *
+     * @param  array  $employerIds  IDs des employés (null = tout le monde)
+     * @return array{labels: string[], notes: float[], couleurs: string[]}
+     */
+    public static function evolutionMensuelle(?array $employerIds = null, int $mois = 6): array
+    {
+        $labels = [];
+        $notes = [];
+        $couleurs = [];
+
+        for ($i = $mois - 1; $i >= 0; $i--) {
+            $start = now()->subMonths($i)->startOfMonth()->toDateString();
+            $end = now()->subMonths($i)->endOfMonth()->toDateString();
+
+            $query = Presence::whereDate('date', '>=', $start)->whereDate('date', '<=', $end);
+            if ($employerIds !== null) {
+                $query->whereIn('employerID', $employerIds);
+            }
+            $presences = $query->get();
+
+            if ($presences->isEmpty()) {
+                $labels[] = ucfirst(now()->subMonths($i)->translatedFormat('M Y'));
+                $notes[] = 0;
+                $couleurs[] = '#888888';
+                continue;
+            }
+
+            $ids = $presences->pluck('employerID')->unique();
+            $total = 0;
+            $count = 0;
+            foreach ($ids as $id) {
+                $eval = self::evaluer((int) $id, $start, $end);
+                if ($eval['note'] > 0) {
+                    $total += $eval['note'];
+                    $count++;
+                }
+            }
+
+            $moyenne = $count > 0 ? round($total / $count, 1) : 0;
+            $labels[] = ucfirst(now()->subMonths($i)->translatedFormat('M Y'));
+            $notes[] = $moyenne;
+            $couleurs[] = $moyenne >= 14 ? '#2E8B57' : ($moyenne >= 10 ? '#D97706' : '#D64545');
+        }
+
+        return [
+            'labels' => $labels,
+            'notes' => $notes,
+            'couleurs' => $couleurs,
+        ];
+    }
 }

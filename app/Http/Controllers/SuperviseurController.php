@@ -57,13 +57,17 @@ class SuperviseurController extends Controller
         // Récupérer le nombre de notifications non lues
         $unreadNotifications = $superviseur->unreadNotifications->count();
 
+        // Évolution de la note moyenne de l'équipe sur 6 mois
+        $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIds, 6);
+
         return view('superviseur.supdashboard', compact(
             'equipe',
             'teamMemberCount',
             'presentToday',
             'absentToday',
             'lateToday',
-            'unreadNotifications'
+            'unreadNotifications',
+            'evolutionEvaluations'
         ));
     }
 

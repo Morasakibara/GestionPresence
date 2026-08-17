@@ -179,4 +179,78 @@
     </div>
 </div>
 @endif
+
+<!-- Évolution des évaluations de l'équipe (6 mois) -->
+<div class="mb-6">
+    <div class="pharaoh-card p-6">
+        <div class="mb-4 flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-[#080808]">Évolution des évaluations de l'équipe</h2>
+                <p class="text-sm text-gray-500">Note moyenne de l'équipe {{ $equipe ?? '' }} sur 6 mois</p>
+            </div>
+            <span class="badge badge-gold">Moyenne /20</span>
+        </div>
+        <div class="h-64">
+            <canvas id="evaluationEvolChart"></canvas>
+        </div>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('evaluationEvolChart');
+        if (!ctx) {
+            return;
+        }
+        const evolution = @json($evolutionEvaluations ?? ['labels' => [], 'notes' => [], 'couleurs' => []]);
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: evolution.labels,
+                datasets: [{
+                    label: 'Note moyenne /20',
+                    data: evolution.notes,
+                    borderColor: '#D39B23',
+                    backgroundColor: 'rgba(211, 155, 35, 0.10)',
+                    borderWidth: 2,
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: evolution.couleurs,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return 'Moyenne : ' + context.parsed.y + '/20';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 20,
+                        ticks: { stepSize: 4 }
+                    },
+                    x: {
+                        ticks: { maxRotation: 45, minRotation: 0 }
+                    }
+                }
+            }
+        });
+    });
+</script>
+@endpush
+
