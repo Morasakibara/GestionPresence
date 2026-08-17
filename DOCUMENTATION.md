@@ -31,7 +31,7 @@ L'application repose sur une architecture **multi-rôles** : Administrateur, Sup
 | **Génération PDF** | barryvdh/laravel-dompdf (dompdf 3.x) | ^3.0 |
 | **API tokens** | Laravel Sanctum | ^4.0 |
 | **Auth** | Sessions Laravel (login/mot de passe, bcrypt) | — |
-| **Emails** | SMTP (Mailpit en dev) | — |
+| **Emails** | Resend (API, transport natif Laravel) ; Mailpit en dev | ^1.9 |
 | **Tests** | PHPUnit 11.5 | ^11.5 |
 | **Outils dev** | Laravel Tinker, Breeze, Sail, Pint, Ignition | — |
 
@@ -318,7 +318,7 @@ Les 4 PDF (rapport admin, rapport superviseur, bulletin admin, bulletin supervis
 | Sujet | État actuel | Recommandation |
 |---|---|---|
 | **Queue** | `QUEUE_CONNECTION=sync` (envoi immédiat) | Passer à une queue (Redis / database) si volume important. |
-| **Emails** | SMTP configurable — **Resend** recommandé en production (relais SMTP `smtp.resend.com:587`, clé API) ; Mailpit en dev | Vérifier les DNS (DKIM/SPF) du domaine sur Resend pour une bonne délivrabilité. |
+| **Emails** | **Resend** (transport natif Laravel, API `resend.com`) en production ; Mailpit en dev | Vérifier les DNS (DKIM/SPF) du domaine sur Resend pour une bonne délivrabilité. |
 | **Restriction réseau** | Code prêt mais commenté | Activer si l'usage est limité au Wi-Fi de l'entreprise. |
 | **Notifications** | Limitée au superviseur direct + admin principal (optimisation faite) | Vérifier le volume si beaucoup d'équipes. |
 | **Backups** | Non configurés | Planifier des sauvegardes MySQL + `storage/app/public/rapports`. |

@@ -58,6 +58,10 @@ return [
             // ],
         ],
 
+        'resend' => [
+            'transport' => 'resend',
+        ],
+
         'mailgun' => [
             'transport' => 'mailgun',
             // 'client' => [

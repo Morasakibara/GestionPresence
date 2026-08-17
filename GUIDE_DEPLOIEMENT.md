@@ -73,14 +73,10 @@ DB_DATABASE=gestionpresence
 DB_USERNAME=lepharaon
 DB_PASSWORD=UN_MOT_DE_PASSE_FORT
 
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.resend.com
-MAIL_PORT=587
-MAIL_USERNAME=re_VOTRE_CLE_API
-MAIL_PASSWORD=re_VOTRE_CLE_API
-MAIL_ENCRYPTION=tls
+MAIL_MAILER=resend
 MAIL_FROM_ADDRESS="no-reply@votre-domaine.com"
-MAIL_FROM_NAME="Le Pharaon"
+MAIL_FROM_NAME="Le Pharaon — Gestion de présence"
+RESEND_KEY=re_VOTRE_CLE_API
 ```
 
 > ⚠️ **En production** : `APP_DEBUG=false` (sinon les erreurs et mots de passe hashés sont exposés). Le mot de passe de la base doit être unique et fort.
@@ -203,7 +199,7 @@ Après le seed, les comptes de démonstration existent. **Avant la mise en produ
 1. Créer un compte sur [resend.com](https://resend.com).
 2. **Ajouter le domaine** de l'entreprise et valider la **vérification DNS** (DKIM + SPF) — indispensable pour la délivrabilité.
 3. Générer une **clé API** (`re_...`).
-4. Renseigner `MAIL_HOST=smtp.resend.com`, `MAIL_PORT=587`, `MAIL_USERNAME=clé`, `MAIL_PASSWORD=clé`, `MAIL_ENCRYPTION=tls`.
+4. Renseigner dans `.env` : `MAIL_MAILER=resend`, `RESEND_KEY=re_...` (transport natif Laravel → API Resend) et `MAIL_FROM_ADDRESS=no-reply@votre-domaine.com`.
 5. Tester l'envoi d'une notification (ex. marquer un retard) et vérifier la réception.
 
 > 📬 Les emails envoyés : alertes de **retard**, alertes d'**absence**, alertes d'**évaluation rouge**, **rappels de fiches de rendement** manquantes.
