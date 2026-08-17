@@ -196,11 +196,53 @@ Après le seed, les comptes de démonstration existent. **Avant la mise en produ
 
 ## 7. Emails (Resend)
 
+L'application utilise le **transport natif Laravel → Resend** (`MAIL_MAILER=resend`, `RESEND_KEY`). Avec un compte gratuit, Resend n'envoie **que vers l'adresse du propriétaire du compte** ; pour envoyer aux destinataires réels (administrateurs, superviseurs, employés), il faut **ajouter et vérifier un domaine**.
+
+### 7.1 Ajouter le domaine (une seule fois)
+
 1. Créer un compte sur [resend.com](https://resend.com).
-2. **Ajouter le domaine** de l'entreprise et valider la **vérification DNS** (DKIM + SPF) — indispensable pour la délivrabilité.
-3. Générer une **clé API** (`re_...`).
-4. Renseigner dans `.env` : `MAIL_MAILER=resend`, `RESEND_KEY=re_...` (transport natif Laravel → API Resend) et `MAIL_FROM_ADDRESS=no-reply@votre-domaine.com`.
-5. Tester l'envoi d'une notification (ex. marquer un retard) et vérifier la réception.
+2. Aller dans **Domains → Add Domain**, saisir le domaine de l'entreprise (ex. `lepharaon.com` — ou un sous-domaine dédié `mail.lepharaon.com`).
+3. Resend génère des **enregistrements DNS uniques** à copier chez votre registrar/hébergeur DNS (Cloudflare, OVH, Namecheap, GoDaddy…).
+
+### 7.2 Enregistrements DNS à créer
+
+Les 3 enregistrements ci-dessous sont générés par Resend (les **valeurs exactes** s'affichent dans le dashboard ; le tableau donne le format) :
+
+| Type | Hôte / Nom | Valeur | Remarque |
+|------|-----------|--------|----------|
+| **MX** | `send` | `feedback-smtp.us-east-1.amazonses.com` | Priorité `10` — acheminement des retours |
+| **TXT** | `send` | `v=spf1 include:amazonses.com ~all` | SPF — autorise les serveurs Resend |
+| **TXT** | `resend._domainkey` | `p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC...` (clé publique générée par Resend) | **DKIM** — signature des emails |
+
+> ⚠️ Copier chaque valeur **exactement** (sans guillemets supplémentaires, sans espaces en trop, sans tronquer la longue clé DKIM) — c'est la cause n°1 d'échec de vérification. Attention aussi : saisir `resend._domainkey` (pas `resend._domainkey.votre-domaine.com`).
+
+**Recommandé** — ajouter aussi un enregistrement DMARC :
+| Type | Hôte / Nom | Valeur |
+|------|-----------|--------|
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@votre-domaine.com` |
+
+4. Retourner sur Resend → **Verify DNS Records**. La vérification prend de quelques minutes à 24 h (propagation DNS).
+5. Une fois le domaine **vérifié**, mettre à jour `.env` :
+   ```
+   MAIL_FROM_ADDRESS="no-reply@lepharaon.com"
+   ```
+   puis `php artisan config:clear` et re-tester.
+
+### 7.3 Clé API et envoi
+
+1. Générer une **clé API** dans [resend.com/api-keys](https://resend.com/api-keys) (domaine restreint au domaine vérifié pour la sécurité).
+2. Renseigner dans `.env` :
+   ```
+   MAIL_MAILER=resend
+   RESEND_KEY=re_...
+   MAIL_FROM_ADDRESS="no-reply@votre-domaine.com"
+   MAIL_FROM_NAME="Le Pharaon — Gestion de présence"
+   ```
+3. Tester avec une vraie notification (marquer un retard) ou :
+   ```bash
+   php artisan tinker
+   Mail::raw('Test', fn ($m) => $m->to('destinataire@domaine.com')->subject('Test'));
+   ```
 
 > 📬 Les emails envoyés : alertes de **retard**, alertes d'**absence**, alertes d'**évaluation rouge**, **rappels de fiches de rendement** manquantes.
 
