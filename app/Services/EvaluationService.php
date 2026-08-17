@@ -22,6 +22,9 @@ class EvaluationService
 
     /**
      * Minutes travaillées entre l'arrivée et le départ (0 si invalide).
+     *
+     * @param  \DateTimeInterface|string|null  $heureArrivee
+     * @param  \DateTimeInterface|string|null  $heureDepart
      */
     public static function minutesTravail($heureArrivee, $heureDepart): int
     {
@@ -41,6 +44,9 @@ class EvaluationService
 
     /**
      * Durée de travail formatée (ex: "7h30") ou null si indisponible.
+     *
+     * @param  \DateTimeInterface|string|null  $heureArrivee
+     * @param  \DateTimeInterface|string|null  $heureDepart
      */
     public static function dureeTravail($heureArrivee, $heureDepart): ?string
     {
@@ -168,6 +174,31 @@ class EvaluationService
         }
 
         return 'Évaluation automatique (' . implode(', ', $parts) . '). Note: ' . $note . '/20.';
+    }
+
+    /**
+     * Historique mensuel de la note d'un employé sur les $mois derniers mois.
+     * Retourne un tableau de ['mois' => 'Y-m', 'label' => 'Mois', 'note' => float, 'couleur' => string].
+     */
+    public static function historiqueMensuel(int $employerID, int $mois = 6): array
+    {
+        $historique = [];
+        for ($i = $mois - 1; $i >= 0; $i--) {
+            $moisDate = now()->subMonths($i);
+            $eval = self::evaluer(
+                $employerID,
+                $moisDate->copy()->startOfMonth()->toDateString(),
+                $moisDate->copy()->endOfMonth()->toDateString()
+            );
+            $historique[] = [
+                'mois' => $moisDate->format('Y-m'),
+                'label' => ucfirst($moisDate->locale('fr')->isoFormat('MMMM')),
+                'note' => $eval['note'],
+                'couleur' => $eval['couleur'],
+            ];
+        }
+
+        return $historique;
     }
 
     /**

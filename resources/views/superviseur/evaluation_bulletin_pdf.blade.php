@@ -175,6 +175,40 @@
             <p class="legend">Légende : 🟢 Vert ≥ 14/20 · 🟠 Orange 10-13/20 · 🔴 Rouge &lt; 10/20</p>
         </div>
 
+        @if(!empty($historique))
+        <div class="card">
+            <h2>Évolution de la note (6 derniers mois)</h2>
+            @php
+                $maxNote = 20;
+                $couleurHex = [
+                    'vert' => '#2E8B57',
+                    'orange' => '#D97706',
+                    'rouge' => '#D64545',
+                ];
+            @endphp
+            <table style="width:100%; border-collapse:collapse;">
+                <tr>
+                    @foreach($historique as $h)
+                    <td style="text-align:center; vertical-align:bottom; padding:0 4px;">
+                        <div style="display:inline-block; width:60%; height:{{ max(4, round(($h['note'] / $maxNote) * 90)) }}px; background-color:{{ $couleurHex[$h['couleur']] ?? '#888888' }}; border-radius:3px 3px 0 0;"></div>
+                    </td>
+                    @endforeach
+                </tr>
+                <tr>
+                    @foreach($historique as $h)
+                    <td style="text-align:center; font-size:9px; color:#6b7280; padding-top:4px;">{{ \Illuminate\Support\Str::limit($h['label'], 3, '') }}</td>
+                    @endforeach
+                </tr>
+                <tr>
+                    @foreach($historique as $h)
+                    <td style="text-align:center; font-size:10px; font-weight:bold; color:#374151; padding-top:2px;">{{ $h['note'] }}/20</td>
+                    @endforeach
+                </tr>
+            </table>
+            <p class="legend">Évolution mensuelle de la note sur 20 — 🟢 Vert ≥ 14 · 🟠 Orange 10-13 · 🔴 Rouge &lt; 10</p>
+        </div>
+        @endif
+
         <div class="card">
             <h2>Statistiques de la période</h2>
             <div class="stats-grid">

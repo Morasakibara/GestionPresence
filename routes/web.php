@@ -63,6 +63,11 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::post('/report',[AdminController::class, 'exportReport'])->name('exportReport');
     Route::post('/evaluations', [AdminController::class, 'storeEvaluation'])->name('storeEvaluation');
     Route::get('/evaluations/export', [AdminController::class, 'exportEvaluationsCsv'])->name('evaluations.export');
+    Route::get('/evaluations/evolution/export', [AdminController::class, 'exportEvolutionEvaluationsCsv'])->name('evaluations.evolution.export');
+    // Redirection propre si un GET arrive sur /admin/evaluations (ex. lien direct)
+    Route::get('/evaluations', function () {
+        return redirect()->route('admin.generateReport');
+    })->name('admin.evaluations.get');
     Route::get('/employe/{id}/bulletin', [AdminController::class, 'evaluationBulletin'])->name('evaluation.bulletin');
     Route::get('/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('showEmployeeList');
     Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee']);
@@ -91,6 +96,10 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/followPresence', [SuperviseurController::class, 'showFollowPresence'])->name('superviseur.showFollowPresence');
         Route::get('/generateReport2', [SuperviseurController::class, 'generateReport'])->name('superviseur.generateReport2');
         Route::post('/evaluations', [SuperviseurController::class, 'storeEvaluation'])->name('superviseur.storeEvaluation');
+        // Redirection propre si un GET arrive sur /superviseur/evaluations (ex. lien direct)
+        Route::get('/evaluations', function () {
+            return redirect()->route('superviseur.generateReport2');
+        })->name('superviseur.evaluations.get');
         Route::get('/rendements', [SuperviseurController::class, 'teamRendements'])->name('superviseur.rendements');
         Route::get('/rendements/export', [SuperviseurController::class, 'exportTeamRendementsCsv'])->name('superviseur.rendements.export');
         Route::get('/employe/{id}/bulletin', [SuperviseurController::class, 'evaluationBulletin'])->name('superviseur.evaluation.bulletin');

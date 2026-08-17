@@ -673,7 +673,10 @@ class SuperviseurController extends Controller
             ->orderBy('date')
             ->get(['date', 'heureArrivee', 'heureDepart', 'rendement']);
 
-        $pdf = Pdf::loadView('superviseur.evaluation_bulletin_pdf', compact('employe', 'evaluation', 'stats', 'rendements', 'mois', 'debut', 'fin'));
+        // Historique 6 mois pour le graphique d'évolution du bulletin
+        $historique = \App\Services\EvaluationService::historiqueMensuel((int) $id, 6);
+
+        $pdf = Pdf::loadView('superviseur.evaluation_bulletin_pdf', compact('employe', 'evaluation', 'stats', 'rendements', 'mois', 'debut', 'fin', 'historique'));
         $filename = 'bulletin_evaluation_' . $mois . '_' . $id . '.pdf';
 
         return $pdf->download($filename);

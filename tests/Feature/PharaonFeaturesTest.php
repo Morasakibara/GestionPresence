@@ -710,6 +710,79 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee('stat-card');
     }
 
+    /** S21 — Un GET sur /superviseur/evaluations redirige proprement (au lieu d'erreur 405). */
+    public function test_get_superviseur_evaluations_redirige(): void
+    {
+        $superviseur = Utilisateur::where('role', 'Superviseur')->first();
+        $this->post('/login', ['email' => $superviseur->email, 'password' => 'password']);
+        $this->post('/select-role', ['role' => 'Superviseur']);
+
+        $response = $this->get('/superviseur/evaluations');
+        $response->assertRedirect();
+        $this->assertStringContainsString('superviseur/generateReport2', $response->headers->get('Location'));
+    }
+
+    /** S22 — Le dashboard admin propose le filtre par équipe et les exports du graphique. */
+    public function test_dashboard_admin_filtre_equipe_et_exports(): void
+    {
+        $this->loginAdmin();
+
+        $response = $this->get('/admin/dashboard');
+        $response->assertOk();
+        $response->assertSee('evaluationEvolChart');
+        $response->assertSee('equipe'); // filtre par équipe
+        $response->assertSee('Exporter PNG');
+        $response->assertSee('Exporter CSV');
+    }
+
+    /** S23 — L'export CSV de l'évolution des évaluations fonctionne (entreprise + équipe). */
+    public function test_export_csv_evolution_evaluations(): void
+    {
+        $this->loginAdmin();
+
+        $response = $this->get('/admin/evaluations/evolution/export');
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+        $this->assertStringContainsString('Mois;Note moyenne /20;Couleur', $response->getContent());
+
+        // Avec filtre équipe
+        $equipe = \App\Models\Superviseur::whereNotNull('equipe')->value('equipe');
+        if ($equipe) {
+            $response2 = $this->get('/admin/evaluations/evolution/export?equipe=' . urlencode($equipe));
+            $response2->assertOk();
+            $this->assertStringContainsString('Mois;Note moyenne /20;Couleur', $response2->getContent());
+        }
+    }
+
+    /** S24 — Le bulletin PDF admin contient le bloc d'évolution (6 mois). */
+    public function test_bulletin_pdf_contient_evolution(): void
+    {
+        $employe = $this->loginEmploye();
+        $this->loginAdmin();
+        $this->post('/select-role', ['role' => 'Administrateur']);
+
+        $response = $this->get('/admin/employe/' . $employe->id . '/bulletin?mois=2026-08');
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+
+        // La vue du bulletin contient bien le bloc d'évolution (6 mois)
+        $historique = \App\Services\EvaluationService::historiqueMensuel((int) $employe->id, 6);
+        $html = view('admin.evaluation_bulletin_pdf', [
+            'employe' => (object) ['nom' => 'Test'],
+            'evaluation' => ['note' => 12.0, 'couleur' => 'orange', 'commentaire' => 'Test', 'manuelle' => false],
+            'stats' => ['presences_completes' => 0, 'retards' => 0, 'absences' => 0, 'suspectes' => 0, 'rendements_remplis' => 0],
+            'rendements' => collect([]),
+            'mois' => '2026-08',
+            'debut' => '2026-08-01',
+            'fin' => '2026-08-31',
+            'historique' => $historique,
+        ])->render();
+
+        $this->assertStringContainsString('Évolution de la note (6 derniers mois)', $html);
+        $this->assertStringContainsString('/20', $html);
+    }
+
     /** S17 — La configuration mail utilise le transport Resend avec un expéditeur dédié. */
     public function test_config_mail_utilise_le_transport_resend(): void
     {

@@ -57,8 +57,15 @@ class AdminController extends Controller
                          ->whereRaw('(HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0))')
                          ->count();
 
-    // Évolution de la note moyenne sur 6 mois (toute l'entreprise)
-    $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle(null, 6);
+    // Évolution de la note moyenne sur 6 mois, filtrable par équipe
+    $equipes = \App\Models\Superviseur::whereNotNull('equipe')->where('equipe', '!=', '')->distinct()->pluck('equipe')->sort()->values();
+    $equipeSelectionnee = request()->query('equipe');
+
+    $employerIdsFiltre = null;
+    if ($equipeSelectionnee) {
+        $employerIdsFiltre = \App\Models\Employer::where('equipe', $equipeSelectionnee)->pluck('id')->toArray();
+    }
+    $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIdsFiltre, 6);
 
     return view('admin.dashboard', compact(
         'totalEmployees',
@@ -68,7 +75,9 @@ class AdminController extends Controller
         'monthlyPresences',
         'monthlyAbsences',
         'monthlyLates',
-        'evolutionEvaluations'
+        'evolutionEvaluations',
+        'equipes',
+        'equipeSelectionnee'
     ));
 }
 
@@ -516,6 +525,42 @@ public function exportReport(Request $request)
     }
 
     /**
+     * Export CSV de l'évolution mensuelle des évaluations (6 mois).
+     * Filtrable par équipe via ?equipe=Nom.
+     */
+    public function exportEvolutionEvaluationsCsv(Request $request)
+    {
+        $equipe = $request->query('equipe');
+        $employerIds = null;
+
+        if ($equipe) {
+            $employerIds = \App\Models\Employer::where('equipe', $equipe)->pluck('id')->toArray();
+        }
+
+        $evolution = \App\Services\EvaluationService::evolutionMensuelle($employerIds, 6);
+
+        // Construire le CSV
+        $lignes = ["Mois;Note moyenne /20;Couleur"];
+        $couleurLibelle = [
+            '#2E8B57' => 'Vert (>=14)',
+            '#D97706' => 'Orange (10-13)',
+            '#D64545' => 'Rouge (<10)',
+            '#888888' => 'Aucune donnée',
+        ];
+        foreach ($evolution['labels'] as $i => $label) {
+            $lignes[] = $label . ';' . str_replace('.', ',', (string) $evolution['notes'][$i]) . ';' . ($couleurLibelle[$evolution['couleurs'][$i]] ?? $evolution['couleurs'][$i]);
+        }
+
+        $contenu = implode("\n", $lignes) . "\n";
+        $nomFichier = 'evolution_evaluations_' . ($equipe ? str_replace(' ', '_', $equipe) : 'entreprise') . '.csv';
+
+        return response($contenu, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename=' . $nomFichier,
+        ]);
+    }
+
+    /**
      * Bulletin individuel d'évaluation PDF pour un employé et un mois.
      */
     public function evaluationBulletin(Request $request, $id)
@@ -548,7 +593,10 @@ public function exportReport(Request $request)
             ->orderBy('date')
             ->get(['date', 'heureArrivee', 'heureDepart', 'rendement']);
 
-        $pdf = Pdf::loadView('admin.evaluation_bulletin_pdf', compact('employe', 'evaluation', 'stats', 'rendements', 'mois', 'debut', 'fin'));
+        // Historique 6 mois pour le graphique d'évolution du bulletin
+        $historique = \App\Services\EvaluationService::historiqueMensuel((int) $id, 6);
+
+        $pdf = Pdf::loadView('admin.evaluation_bulletin_pdf', compact('employe', 'evaluation', 'stats', 'rendements', 'mois', 'debut', 'fin', 'historique'));
         $filename = 'bulletin_evaluation_' . $mois . '_' . $id . '.pdf';
 
         return $pdf->download($filename);

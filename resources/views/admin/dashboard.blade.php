@@ -236,10 +236,32 @@
         <div class="mb-4 flex items-center justify-between">
             <div>
                 <h2 class="text-lg font-semibold text-[#080808]">Évolution des évaluations</h2>
-                <p class="text-sm text-gray-500">Note moyenne de toute l'entreprise sur 6 mois</p>
+                <p class="text-sm text-gray-500">Note moyenne sur 6 mois{{ $equipeSelectionnee ? ' — équipe ' . e($equipeSelectionnee) : ' — toute l\'entreprise' }}</p>
             </div>
             <span class="badge badge-gold">Moyenne /20</span>
         </div>
+
+        <!-- Filtre par équipe + exports -->
+        <div class="mb-4 flex flex-wrap items-center gap-3">
+            <form method="GET" action="{{ route('admin.dashboard') }}" class="flex items-center gap-2">
+                <label for="equipe" class="text-sm font-medium text-gray-700">Équipe :</label>
+                <select name="equipe" id="equipe" onchange="this.form.submit()" class="rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold">
+                    <option value="">Toute l'entreprise</option>
+                    @foreach($equipes ?? [] as $eq)
+                        <option value="{{ $eq }}" {{ $equipeSelectionnee === $eq ? 'selected' : '' }}>{{ $eq }}</option>
+                    @endforeach
+                </select>
+            </form>
+            <button type="button" onclick="exporterGraphiquePNG()" class="btn-secondary">
+                <svg class="-ml-1 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Exporter PNG
+            </button>
+            <a href="{{ route('admin.evaluations.evolution.export', ['equipe' => $equipeSelectionnee]) }}" class="btn-gold">
+                <svg class="-ml-1 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Exporter CSV
+            </a>
+        </div>
+
         <div class="h-64">
             <canvas id="evaluationEvolChart"></canvas>
         </div>
@@ -300,6 +322,21 @@
                 }
             }
         });
+
+        // Export PNG du graphique (S3)
+        window.exporterGraphiquePNG = function () {
+            const canvas = document.getElementById('evaluationEvolChart');
+            if (!canvas) {
+                return;
+            }
+            const url = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'evolution_evaluations_' + new Date().toISOString().slice(0, 10) + '.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
     });
 </script>
 @endpush
