@@ -83,7 +83,7 @@
                             @csrf
                             <input type="hidden" name="latitude" id="latitude-arrival">
                             <input type="hidden" name="longitude" id="longitude-arrival">
-                            <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="flex items-center justify-center w-full px-4 py-2 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-blue hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                            <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="btn-gold w-full px-4 py-2.5 text-base">
                                 <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                                 </svg>
@@ -119,7 +119,7 @@
                             <textarea name="rendement" id="rendement" rows="3" required
                                 placeholder="Décrivez ce que vous avez fait aujourd'hui..."
                                 class="block w-full px-3 py-2 mb-3 text-sm border border-gray-300 rounded-md shadow-sm focus:border-3hcig-blue focus:outline-none focus:ring-3hcig-blue"></textarea>
-                            <button type="button" onclick="getLocationAndSubmit('departure-form')" class="flex items-center justify-center w-full px-4 py-2 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-green hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2">
+                            <button type="button" onclick="getLocationAndSubmit('departure-form')" class="btn-press inline-flex items-center justify-center w-full rounded-lg bg-green-600 px-4 py-2.5 text-base font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
                                 <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                 </svg>
@@ -224,19 +224,22 @@
 
     @php
         $couleurClasses = [
-            'vert' => ['bg-green-100 text-green-800 border-green-300', '🟢'],
-            'orange' => ['bg-orange-100 text-orange-800 border-orange-300', '🟠'],
-            'rouge' => ['bg-red-100 text-red-800 border-red-300', '🔴'],
+            'vert' => ['bg-green-50 text-green-700 ring-green-600/20', '🟢'],
+            'orange' => ['bg-yellow-50 text-yellow-700 ring-yellow-600/20', '🟠'],
+            'rouge' => ['bg-red-50 text-red-700 ring-red-600/20', '🔴'],
         ];
         $c = $couleurClasses[$evaluation['couleur']] ?? $couleurClasses['orange'];
     @endphp
     <div class="pharaoh-card p-6">
-        <h2 class="mb-4 text-xl font-semibold text-gray-900">Mon évaluation du mois</h2>
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-[#080808]">Mon évaluation du mois</h2>
+            <span class="badge {{ $c[0] }} ring-1 ring-inset">{{ $evaluation['couleur'] }}</span>
+        </div>
         <div class="flex items-center justify-center">
-            <div class="w-full rounded-lg border p-5 text-center {{ $c[0] }}">
-                <div class="text-3xl">{{ $c[1] }}</div>
-                <div class="mt-2 text-3xl font-bold">{{ $evaluation['note'] }}/20</div>
-                <div class="mt-1 text-sm font-medium">
+            <div class="w-full rounded-2xl ring-1 ring-inset p-6 text-center {{ $c[0] }}">
+                <div class="text-4xl">{{ $c[1] }}</div>
+                <div class="mt-2 text-4xl font-bold tracking-tight">{{ $evaluation['note'] }}/20</div>
+                <div class="mt-2 text-sm font-medium">
                     {{ $evaluation['couleur'] === 'vert' ? 'Excellent — discipline et rendement au rendez-vous' : ($evaluation['couleur'] === 'orange' ? 'Satisfaisant — à surveiller' : 'Critique — attention discipline et rendement') }}
                 </div>
                 @if($evaluation['manuelle'])
@@ -323,11 +326,11 @@
                     </a>
                 </div>
             @else
-                <div class="py-8 text-center text-gray-500">
-                    <svg class="w-12 h-12 mx-auto text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    <p class="mt-2">Vous n'avez aucune notification</p>
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <svg class="h-7 w-7 text-[#B77F1D]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    </div>
+                    <p class="mt-3 text-sm text-gray-500">Vous n'avez aucune notification</p>
                 </div>
             @endif
         </div>

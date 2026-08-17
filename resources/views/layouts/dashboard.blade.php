@@ -172,20 +172,20 @@
                                                 <div class="px-4 py-3 bg-gray-50 sm:flex sm:flex-row-reverse sm:px-6">
                                                     <!-- Bouttons pour vue d'affichage -->
                                                     <div id="view-buttons">
-                                                        <button type="button" onclick="showEditMode()" class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white border border-transparent rounded-md shadow-sm bg-3hcig-blue hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">
+                                                        <button type="button" onclick="showEditMode()" class="btn-gold btn-press w-full px-4 py-2 text-base sm:ml-3 sm:w-auto sm:text-sm">
                                                             Éditer
                                                         </button>
-                                                        <button type="button" onclick="closeProfileModal()" class="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                                        <button type="button" onclick="closeProfileModal()" class="btn-secondary btn-press w-full px-4 py-2 mt-3 text-base sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                                                             Fermer
                                                         </button>
                                                     </div>
 
                                                     <!-- Bouttons pour vue d'édition -->
                                                     <div id="edit-buttons" class="hidden">
-                                                        <button type="button" onclick="saveProfileChanges()" class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white border border-transparent rounded-md shadow-sm bg-3hcig-green hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">
+                                                        <button type="button" onclick="saveProfileChanges()" class="btn-press inline-flex justify-center w-full rounded-lg bg-green-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">
                                                             Enregistrer
                                                         </button>
-                                                        <button type="button" onclick="cancelEdit()" class="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                                        <button type="button" onclick="cancelEdit()" class="btn-secondary btn-press w-full px-4 py-2 mt-3 text-base sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                                                             Annuler
                                                         </button>
                                                     </div>

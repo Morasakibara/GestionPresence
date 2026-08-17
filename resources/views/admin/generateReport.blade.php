@@ -5,18 +5,21 @@
 @section('content')
 <div class="mx-auto max-w-md px-4 py-8 sm:px-6 lg:px-8">
     <div class="mb-8 text-center">
-        <h1 class="text-2xl font-bold text-[#080808]">Générer le bilan de présence</h1>
-        <p class="mt-2 text-sm text-gray-600">Sélectionnez la période et le format pour votre rapport</p>
+        <div class="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FBF3E6]">
+            <svg class="h-7 w-7 text-[#B77F1D]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <h1 class="page-heading-title">Générer le bilan de présence</h1>
+        <p class="mt-2 text-sm text-gray-500">Sélectionnez la période et le format pour votre rapport</p>
     </div>
 
-    <div class="overflow-hidden rounded-lg bg-white p-6 shadow-sm">
+    <div class="overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card">
         <form action="{{ route('admin.generateReport') }}" method="POST" class="space-y-6">
             @csrf
             <div>
                 <label for="start_date" class="block text-sm font-medium text-gray-700">Date de début</label>
                 <div class="mt-1">
                     <input type="date" id="start_date" name="start_date" required
-                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                           class="input-field">
                 </div>
             </div>
 
@@ -24,7 +27,7 @@
                 <label for="end_date" class="block text-sm font-medium text-gray-700">Date de fin</label>
                 <div class="mt-1">
                     <input type="date" id="end_date" name="end_date" required
-                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                           class="input-field">
                 </div>
             </div>
 
@@ -32,7 +35,7 @@
                 <label for="export_format" class="block text-sm font-medium text-gray-700">Format d'exportation</label>
                 <div class="mt-1">
                     <select id="export_format" name="export_format" required
-                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                            class="input-field">
                         <option value="rien">Choisir le format d'exportation</option>
                         <option value="pdf">PDF</option>
                     </select>
@@ -41,7 +44,7 @@
 
             <div class="pt-2">
                 <button type="submit"
-                        class="flex w-full justify-center rounded-md bg-3hcig-green px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2">
+                        class="btn-gold w-full">
                     <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
@@ -50,7 +53,7 @@
             </div>
         </form>
 
-        <div class="mt-6 rounded-md bg-blue-50 p-4">
+        <div class="mt-6 alert alert-info">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

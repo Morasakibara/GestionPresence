@@ -22,47 +22,40 @@
             </div>
         @endif
     
-        <div class="overflow-x-auto">
+        <div class="table-wrap">
+            <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-[#080808]">
+                <thead class="table-head">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                            Nom
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                            Latitude
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                            Longitude
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                            Rayon (m)
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                            Statut
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">
-                            Actions
-                        </th>
+                        <th scope="col">Nom</th>
+                        <th scope="col">Latitude</th>
+                        <th scope="col">Longitude</th>
+                        <th scope="col">Rayon (m)</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col" class="text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($locations as $location)
+                <tbody class="table-body bg-white divide-y divide-gray-200">
+                    @forelse($locations as $location)
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $location->nom }}</div>
+                                <div class="flex items-center">
+                                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FBF3E6] text-[#B77F1D]">
+                                        <svg class="h-4.5 w-4.5 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-semibold text-gray-900">{{ $location->nom }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $location->latitude }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $location->longitude }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="badge badge-info">{{ $location->rayon }} m</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ $location->latitude }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ $location->longitude }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ $location->rayon }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2.5 inline-flex text-xs leading-5 font-semibold rounded-full {{ $location->actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                <span class="badge {{ $location->actif ? 'badge-success' : 'badge-danger' }}">
+                                    <span class="h-1.5 w-1.5 rounded-full {{ $location->actif ? 'bg-green-500' : 'bg-red-500' }}"></span>
                                     {{ $location->actif ? 'Actif' : 'Inactif' }}
                                 </span>
                             </td>
@@ -73,23 +66,29 @@
                                 <form action="{{ route('admin.workplace-locations.destroy', $location) }}" method="POST" class="inline-block">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900 transition-colors duration-150" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce lieu de travail?')">
+                                    <button type="submit" class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-red-600 ring-1 ring-inset ring-red-600/20 transition-colors duration-150 hover:bg-red-50" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce lieu de travail?')">
                                         Supprimer
                                     </button>
                                 </form>
                             </td>
                         </tr>
-                    @endforeach
-    
-                    @if(count($locations) === 0)
+                    @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
-                                Aucun lieu de travail défini. <a href="{{ route('admin.workplace-locations.create') }}" class="text-3hcig-blue hover:text-3hcig-blue-dark">Ajoutez-en un</a>.
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">
+                                        <svg class="h-7 w-7 text-[#B77F1D]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    </div>
+                                    <h3 class="mt-4 text-sm font-semibold text-gray-900">Aucun lieu de travail défini</h3>
+                                    <p class="mt-1 text-sm text-gray-500">Ajoutez un lieu pour autoriser le pointage géolocalisé.</p>
+                                    <a href="{{ route('admin.workplace-locations.create') }}" class="btn-gold mt-5">Ajouter un lieu</a>
+                                </div>
                             </td>
                         </tr>
-                    @endif
+                    @endforelse
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
     

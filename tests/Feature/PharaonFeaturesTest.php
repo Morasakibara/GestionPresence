@@ -683,4 +683,53 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee('départ');
         $response->assertSee('bg-[#080808]'); // sidebar noire Pharaon
     }
+
+    /** S17 — La configuration mail utilise le transport Resend avec un expéditeur dédié. */
+    public function test_config_mail_utilise_le_transport_resend(): void
+    {
+        // En CI/tests la MAIL_MAILER=array est forcée : on vérifie que le mailer 'resend'
+        // est bien configuré (transport resend) et que RESEND_KEY est présent.
+        $config = config('mail.mailers.resend');
+        $this->assertNotNull($config, 'Le mailer "resend" doit être déclaré dans config/mail.php');
+        $this->assertSame('resend', $config['transport']);
+
+        // La clé Resend doit exister (depuis .env ou services.php).
+        $key = config('services.resend.key');
+        $this->assertNotEmpty($key, 'services.resend.key doit contenir la clé API Resend');
+        $this->assertStringStartsWith('re_', $key);
+
+        // L'expéditeur doit être une adresse valide (ex. no-reply@domaine.com après vérif. du domaine).
+        $from = config('mail.from.address');
+        $this->assertNotEmpty($from);
+        $this->assertStringContainsString('@', $from);
+
+        // Le transport natif Laravel doit être disponible.
+        $this->assertTrue(class_exists('Resend'), 'Le package resend/resend-php doit être installé');
+    }
+
+    /** S18 — Le transport Resend envoie réellement un email de notification de retard (bout en bout). */
+    public function test_transport_resend_envoie_notification_retard(): void
+    {
+        // Seulement si la clé Resend est réelle (non placeholder) et si le mailer est resend.
+        $key = config('services.resend.key');
+        if (! $key || str_contains($key, 'VOTRE_CLE') || config('mail.default') !== 'resend') {
+            $this->markTestSkipped('Clé Resend non configurée ou mailer non resend (test hors production).');
+        }
+
+        $employe = Utilisateur::where('role', 'Employer')->first();
+        $this->assertNotNull($employe);
+        $presence = Presence::latest()->first();
+        $this->assertNotNull($presence);
+
+        // Route la notification vers une adresse de test (adresse du propriétaire du compte Resend).
+        $owner = env('RESEND_TEST_EMAIL', 'adriannchare@gmail.com');
+
+        try {
+            \Illuminate\Support\Facades\Notification::route('mail', $owner)
+                ->notify(new \App\Notifications\RetardNotification($employe, $presence));
+            $this->assertTrue(true); // aucun TransportException = envoi réussi
+        } catch (\Throwable $e) {
+            $this->fail('L\'envoi via Resend a échoué : ' . $e->getMessage());
+        }
+    }
 }

@@ -35,42 +35,40 @@
                 <!-- Cartes pour connexion et inscription -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
     <!-- Carte connexion -->
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105">
-        <div class="h-64 relative overflow-hidden">
-            <!-- Image d'arrière-plan avec couche noire transparente -->
-            <img src="{{ asset('storage/avatars/loginBackground.jpg') }}" alt="Connexion" class="absolute inset-0 w-full h-full object-cover">
-            <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+    <div class="group overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-card transition-shadow duration-200 hover:shadow-lg">
+        <div class="relative h-56 overflow-hidden">
+            <img src="{{ asset('storage/avatars/loginBackground.jpg') }}" alt="Connexion" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20"></div>
             <div class="absolute inset-0 flex items-center justify-center">
-                <h2 class="text-4xl font-bold text-white z-10">Espace connexion</h2>
+                <h2 class="text-4xl font-bold text-white drop-shadow">Espace connexion</h2>
             </div>
         </div>
         <div class="p-8">
-            <p class="text-gray-700 mb-8">
+            <p class="mb-8 text-gray-600">
                 Déjà membre ? Connectez-vous pour accéder à votre espace personnel et gérer vos présences ou celles de votre équipe.
             </p>
-            <a href="{{ route('login') }}" class="btn-gold block w-full py-4 px-6 text-center text-base">
+            <a href="{{ route('login') }}" class="btn-gold block w-full px-6 py-4 text-center text-base">
                 Se connecter
             </a>
         </div>
     </div>
 
     <!-- Carte inscription -->
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105">
-        <div class="h-64 relative overflow-hidden">
-            <!-- Image d'arrière-plan avec couche noire transparente -->
-            <img src="{{ asset('storage/avatars/regiterBackground.jpg') }}" alt="Inscription" class="absolute inset-0 w-full h-full object-cover">
-            <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+    <div class="group overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-card transition-shadow duration-200 hover:shadow-lg">
+        <div class="relative h-56 overflow-hidden">
+            <img src="{{ asset('storage/avatars/regiterBackground.jpg') }}" alt="Inscription" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20"></div>
             <div class="absolute inset-0 flex items-center justify-center">
-                <h2 class="text-4xl font-bold text-white z-10">Nouvel administrateur</h2>
+                <h2 class="text-4xl font-bold text-white drop-shadow">Nouvel administrateur</h2>
             </div>
         </div>
         <div class="p-8">
-            <p class="text-gray-700 mb-8">
+            <p class="mb-8 text-gray-600">
                 Nouveau membre ? Rejoignez notre coopérative pour bénéficier de notre outil de gestion de présence. Un code d'accès est requis.
             </p>
             <button
                 onclick="document.getElementById('accessCodeModal').classList.remove('hidden')"
-                class="btn-press block w-full rounded-lg bg-3hcig-green px-6 py-4 text-center text-base font-bold text-white shadow-lg transition-colors duration-150 hover:bg-3hcig-green-light">
+                class="btn-press block w-full rounded-lg bg-green-600 px-6 py-4 text-center text-base font-bold text-white shadow-lg transition-colors duration-150 hover:bg-green-500">
                 S'enregistrer
             </button>
         </div>

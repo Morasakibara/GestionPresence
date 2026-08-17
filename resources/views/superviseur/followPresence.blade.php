@@ -4,13 +4,19 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Suivi des Présences</h1>
-        <p class="mt-2 text-sm text-gray-600">Consultez et gérez les présences des employés de votre équipe</p>
+    <div class="page-heading mb-6">
+        <div>
+            <h1 class="page-heading-title">Suivi des Présences</h1>
+            <p class="page-heading-sub">Consultez et gérez les présences des employés de votre équipe</p>
+        </div>
+        <a href="{{ route('superviseur.showAddMember') }}" class="btn-secondary">
+            <svg class="-ml-1 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+            Ajouter membre
+        </a>
     </div>
 
     @if(count($utilisateurs) === 0)
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <div class="alert alert-warning mb-6">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -25,24 +31,20 @@
             </div>
         </div>
     @else
-        <div class="mt-8 overflow-hidden rounded-lg bg-white shadow">
-            <div class="overflow-x-auto">
+        <div class="table-wrap">
+            <div class="table-scroll">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-[#080808]">
+                    <thead class="table-head">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Photo de profil</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Nom</th>
-                            <!-- Geolocalisation -->
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Dernière localisation</th>
-
-                            <!-- Et dans le corps de la table, après la colonne nom et avant la colonne action pour chaque employé -->
-
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Action</th>
+                            <th scope="col">Photo de profil</th>
+                            <th scope="col">Nom</th>
+                            <th scope="col">Dernière localisation</th>
+                            <th scope="col">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
+                    <tbody class="table-body divide-y divide-gray-200 bg-white">
                         @foreach($utilisateurs as $utilisateur)
-                        <tr class="hover:bg-gray-50">
+                        <tr>
                             <td class="whitespace-nowrap px-6 py-4">
                                 <div class="h-12 w-12 flex-shrink-0">
                                     @if($utilisateur->avatar)
@@ -64,24 +66,18 @@
                                 @endphp
 
                                 @if($lastPresence && ($lastPresence->localisation_validee_arrivee || $lastPresence->localisation_validee_depart))
-                                    <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
-                                            <circle cx="4" cy="4" r="3" />
-                                        </svg>
+                                    <span class="badge badge-success">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
                                         Validée
                                     </span>
                                 @elseif($lastPresence)
-                                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8">
-                                            <circle cx="4" cy="4" r="3" />
-                                        </svg>
+                                    <span class="badge badge-warning">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-yellow-500"></span>
                                         Non validée
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-gray-400" fill="currentColor" viewBox="0 0 8 8">
-                                            <circle cx="4" cy="4" r="3" />
-                                        </svg>
+                                    <span class="badge badge-info">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
                                         Non disponible
                                     </span>
                                 @endif

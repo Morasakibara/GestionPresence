@@ -18,7 +18,7 @@
                         @csrf
                         <input type="hidden" name="latitude" id="latitude-arrival">
                         <input type="hidden" name="longitude" id="longitude-arrival">
-                        <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-blue hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                        <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="btn-gold w-full px-4 py-3 text-base">
                             <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                             </svg>
@@ -39,7 +39,7 @@
                         <textarea name="rendement" id="rendement" rows="4" required
                             placeholder="Décrivez ce que vous avez fait aujourd'hui : tâches effectuées, projets avancés, résultats obtenus..."
                             class="block w-full px-3 py-2 mb-3 text-sm border border-gray-300 rounded-md shadow-sm focus:border-3hcig-blue focus:outline-none focus:ring-3hcig-blue"></textarea>
-                        <button type="button" onclick="getLocationAndSubmit('departure-form')" class="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-white rounded-md shadow-sm bg-3hcig-green hover:bg-3hcig-green-light focus:outline-none focus:ring-2 focus:ring-3hcig-green focus:ring-offset-2">
+                        <button type="button" onclick="getLocationAndSubmit('departure-form')" class="btn-press inline-flex items-center justify-center w-full rounded-lg bg-green-600 px-4 py-3 text-base font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
                             <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
@@ -50,7 +50,7 @@
 
                 <!-- Messages de feedback -->
                 @if(session('success'))
-                    <div class="p-4 rounded-md bg-3hcig-green-light/20 text-3hcig-green-dark">
+                    <div class="alert alert-success">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <svg class="w-5 h-5 text-3hcig-green" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -67,7 +67,7 @@
                 @endif
 
                 @if($errors->any())
-                    <div class="p-4 rounded-md bg-red-50">
+                    <div class="alert alert-danger">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <svg class="w-5 h-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

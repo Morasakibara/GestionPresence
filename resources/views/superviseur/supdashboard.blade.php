@@ -52,66 +52,55 @@
 @section('content')
 <!-- Statut de l'équipe aujourd'hui -->
 <div class="mb-6">
-    <h2 class="text-lg font-semibold text-gray-800 mb-3">Statut de l'équipe aujourd'hui</h2>
+    <div class="mb-4 flex items-center justify-between">
+        <div>
+            <h2 class="text-lg font-semibold text-[#080808]">Statut de l'équipe aujourd'hui</h2>
+            <p class="text-sm text-gray-500">Présence et discipline des membres de votre équipe</p>
+        </div>
+    </div>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <!-- Nombre de membres -->
-        <div class="pharaoh-card p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                    <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Membres d'équipe</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ $teamMemberCount ?? 0 }}</p>
-                </div>
+        <div class="stat-card">
+            <div class="stat-card-icon bg-blue-50 text-blue-600">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
             </div>
+            <div class="stat-card-value">{{ $teamMemberCount ?? 0 }}</div>
+            <div class="stat-card-label">Membres d'équipe</div>
         </div>
 
         <!-- Présents aujourd'hui -->
-        <div class="pharaoh-card p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
-                    <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Présents aujourd'hui</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ $presentToday ?? 0 }}</p>
-                </div>
+        <div class="stat-card">
+            <div class="stat-card-icon bg-green-50 text-green-600">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
             </div>
+            <div class="stat-card-value">{{ $presentToday ?? 0 }}</div>
+            <div class="stat-card-label">Présents aujourd'hui</div>
         </div>
 
         <!-- Absents aujourd'hui -->
-        <div class="pharaoh-card p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 bg-red-100 rounded-md p-3">
-                    <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Absents aujourd'hui</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ $absentToday ?? 0 }}</p>
-                </div>
+        <div class="stat-card">
+            <div class="stat-card-icon bg-red-50 text-red-600">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
             </div>
+            <div class="stat-card-value">{{ $absentToday ?? 0 }}</div>
+            <div class="stat-card-label">Absents aujourd'hui</div>
         </div>
 
         <!-- Retards aujourd'hui -->
-        <div class="pharaoh-card p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
-                    <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Retards aujourd'hui</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ $lateToday ?? 0 }}</p>
-                </div>
+        <div class="stat-card">
+            <div class="stat-card-icon bg-yellow-50 text-yellow-600">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
             </div>
+            <div class="stat-card-value">{{ $lateToday ?? 0 }}</div>
+            <div class="stat-card-label">Retards aujourd'hui</div>
         </div>
     </div>
 </div>
