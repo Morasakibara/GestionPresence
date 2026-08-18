@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Exports\ReportExport;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\DB;use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 class AdminController extends Controller
 {
@@ -66,26 +68,28 @@ class AdminController extends Controller
     $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIdsFiltre, 6);
     $statsEvolution = \App\Services\EvaluationService::statsEvolution($evolutionEvaluations);
 
-    // ── Graphique CA consolidé (7 derniers jours) ──
-    $caisseLabels = [];
-    $caisseEntrees = [];
-    $caisseSorties = [];
-    for ($i = 6; $i >= 0; $i--) {
-        $jour = now()->subDays($i)->toDateString();
-        $caisseLabels[] = now()->subDays($i)->format('d/m');
-        $entreesJour = 0;
-        $sortiesJour = 0;
-        foreach (['directrice', 'secretaire'] as $type) {
-            $sup = Superviseur::where('type_superviseur', $type)->first();
-            if (!$sup) continue;
-            $entreesJour += (float) \App\Models\Commande::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant')
-                + (float) \App\Models\ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
-            $sortiesJour += (float) \App\Models\Retrait::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
+    // ── Graphique CA consolidé (7 derniers jours, caché 5 min) ──
+    $caisseChart = Cache::remember('admin_caisse_chart_' . now()->format('Y-m-d'), 300, function () {
+        $labels = [];
+        $entrees = [];
+        $sorties = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $jour = now()->subDays($i)->toDateString();
+            $labels[] = now()->subDays($i)->format('d/m');
+            $e = 0;
+            $s = 0;
+            foreach (['directrice', 'secretaire'] as $type) {
+                $sup = Superviseur::where('type_superviseur', $type)->first();
+                if (!$sup) continue;
+                $e += (float) \App\Models\Commande::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant')
+                    + (float) \App\Models\ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
+                $s += (float) \App\Models\Retrait::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
+            }
+            $entrees[] = $e;
+            $sorties[] = $s;
         }
-        $caisseEntrees[] = $entreesJour;
-        $caisseSorties[] = $sortiesJour;
-    }
-    $caisseChart = ['labels' => $caisseLabels, 'entrees' => $caisseEntrees, 'sorties' => $caisseSorties];
+        return ['labels' => $labels, 'entrees' => $entrees, 'sorties' => $sorties];
+    });
 
     // ── État des caisses (directrice + secrétaire) ──
     $today = now()->toDateString();

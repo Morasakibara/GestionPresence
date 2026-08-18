@@ -9,6 +9,7 @@ use App\Models\Utilisateur;
 use App\Notifications\StockAlertNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class GestionnaireStockController extends Controller
 {
@@ -61,32 +62,33 @@ class GestionnaireStockController extends Controller
             'seuil_alerte' => 'nullable|integer|min:0',
         ]);
 
-        $existing = StockTshirt::where('superviseur_id', Auth::id())
-            ->where('couleur', $request->couleur)
-            ->where('taille', $request->taille)
-            ->first();
+        DB::transaction(function () use ($request) {
+            $existing = StockTshirt::where('superviseur_id', Auth::id())
+                ->where('couleur', $request->couleur)
+                ->where('taille', $request->taille)
+                ->first();
 
-        $seuil = $request->seuil_alerte ?? ($existing ? $existing->seuil_alerte : 5);
+            $seuil = $request->seuil_alerte ?? ($existing ? $existing->seuil_alerte : 5);
 
-        if ($existing) {
-            $existing->update([
-                'quantite' => $request->quantite,
-                'seuil_alerte' => $seuil,
-            ]);
+            if ($existing) {
+                $existing->update([
+                    'quantite' => $request->quantite,
+                    'seuil_alerte' => $seuil,
+                ]);
+            } else {
+                StockTshirt::create([
+                    'superviseur_id' => Auth::id(),
+                    'couleur' => $request->couleur,
+                    'taille' => $request->taille,
+                    'quantite' => $request->quantite,
+                    'seuil_alerte' => $seuil,
+                ]);
+            }
+
             $this->alerteSiSeuilFracchie(Auth::id(), 'tshirt', $request->couleur . ' ' . $request->taille, $request->quantite, $seuil);
-            return redirect()->route('gestionnaire.tshirts')->with('success', 'Stock mis à jour.');
-        }
+        });
 
-        StockTshirt::create([
-            'superviseur_id' => Auth::id(),
-            'couleur' => $request->couleur,
-            'taille' => $request->taille,
-            'quantite' => $request->quantite,
-            'seuil_alerte' => $seuil,
-        ]);
-        $this->alerteSiSeuilFracchie(Auth::id(), 'tshirt', $request->couleur . ' ' . $request->taille, $request->quantite, $seuil);
-
-        return redirect()->route('gestionnaire.tshirts')->with('success', 'T-shirt ajouté au stock.');
+        return redirect()->route('gestionnaire.tshirts')->with('success', 'Stock T-shirt enregistré.');
     }
 
     public function updateTshirt(Request $request, int $id)

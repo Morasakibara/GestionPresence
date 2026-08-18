@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use App\Models\Utilisateur;
 use Illuminate\Support\Facades\Log;
 
@@ -19,6 +20,15 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
+        // Throttle : max 5 tentatives par minute par email/IP
+        $throttleKey = 'login:' . ($request->input('email') ?: $request->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            throw ValidationException::withMessages([
+                'email' => ['Trop de tentatives. Réessayez dans ' . $seconds . ' secondes.'],
+            ]);
+        }
+
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -59,6 +69,7 @@ class LoginController extends Controller
         ]);
 
         if ($passwordMatches) {
+            RateLimiter::clear($throttleKey);
             // Connecter manuellement l'utilisateur
             Auth::login($user);
             Log::info('Utilisateur connecté avec succès', ['id' => $user->id]);
@@ -78,6 +89,7 @@ class LoginController extends Controller
         }
 
         // Authentification échouée
+        RateLimiter::hit($throttleKey, 60);
         Log::warning('Échec d\'authentification - mot de passe incorrect', ['email' => $request->email]);
         throw ValidationException::withMessages([
             'email' => ['Email ou mot de passe incorrect.'],
