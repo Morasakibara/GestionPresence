@@ -293,6 +293,45 @@
         <div class="mt-4">
             <canvas id="evaluationChart" height="120"></canvas>
         </div>
+
+        @php
+            $notesEvolUser = array_values(array_filter(array_column($historique, 'note'), fn ($n) => $n > 0));
+            $moyenneEvolUser = count($notesEvolUser) > 0 ? round(array_sum($notesEvolUser) / count($notesEvolUser), 1) : 0;
+            $seqUser = array_column($historique, 'note');
+            $dernierUser = (float) (end($seqUser) ?: 0);
+            $avantUser = (float) (count($seqUser) >= 2 ? $seqUser[count($seqUser) - 2] : 0);
+            if ($dernierUser <= 0 || $avantUser <= 0) {
+                $tendanceUser = 'stable';
+            } elseif ($dernierUser > $avantUser) {
+                $tendanceUser = 'hausse';
+            } elseif ($dernierUser < $avantUser) {
+                $tendanceUser = 'baisse';
+            } else {
+                $tendanceUser = 'stable';
+            }
+            $deltaUser = round($dernierUser - $avantUser, 1);
+        @endphp
+        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="rounded-xl border border-gray-200/70 bg-gray-50 p-4">
+                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Moyenne (6 mois)</div>
+                <div class="mt-1 flex items-baseline gap-2">
+                    <span class="text-2xl font-bold text-[#080808]">{{ number_format($moyenneEvolUser, 1, ',', '') }}</span>
+                    <span class="text-sm text-gray-500">/20</span>
+                </div>
+            </div>
+            <div class="rounded-xl border border-gray-200/70 bg-gray-50 p-4">
+                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Tendance (dernier mois)</div>
+                <div class="mt-1 flex items-center gap-2">
+                    @if($tendanceUser === 'hausse')
+                        <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-bold text-green-700">▲ Hausse {{ $deltaUser > 0 ? '+' . number_format($deltaUser, 1, ',', '') : '' }} pt</span>
+                    @elseif($tendanceUser === 'baisse')
+                        <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-sm font-bold text-red-700">▼ Baisse {{ number_format(abs($deltaUser), 1, ',', '') }} pt</span>
+                    @else
+                        <span class="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-sm font-bold text-gray-600">— Stable</span>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="pharaoh-card p-6">

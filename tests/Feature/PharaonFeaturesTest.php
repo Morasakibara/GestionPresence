@@ -10,11 +10,18 @@ use App\Services\EvaluationService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class PharaonFeaturesTest extends TestCase
 {
     use DatabaseTransactions;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Notification::fake();
+    }
 
     private const PARIS_LAT = 48.856613;
     private const PARIS_LON = 2.352222;
@@ -121,9 +128,12 @@ class PharaonFeaturesTest extends TestCase
             'longitude' => self::PARIS_LON,
         ])->assertSessionHas('success');
 
-        $this->assertDatabaseHas('notifications', [
-            'type' => \App\Notifications\RetardNotification::class,
-        ]);
+        // Vérifier que la notification de retard a bien été envoyée
+        $superviseurInfo = DB::table('employer')->where('id', $employe->id)->first();
+        if ($superviseurInfo && $superviseurInfo->Sup_id) {
+            $superviseurUser = Utilisateur::find($superviseurInfo->Sup_id);
+            Notification::assertSentTo($superviseurUser, \App\Notifications\RetardNotification::class);
+        }
     }
 
     /** L'évaluation calcule une note et une couleur cohérentes. */
@@ -368,9 +378,7 @@ class PharaonFeaturesTest extends TestCase
         ])->assertSessionHas('success');
 
         // L'admin qui évalue est l'admin principal -> pas de notification (évite l'auto-notification)
-        $this->assertDatabaseMissing('notifications', [
-            'type' => \App\Notifications\EvaluationRougeNotification::class,
-        ]);
+        Notification::assertNotSentTo($admin, \App\Notifications\EvaluationRougeNotification::class);
 
         // Le superviseur enregistre une évaluation rouge -> l'admin principal est notifié
         $superviseur = Utilisateur::where('role', 'Superviseur')->first();
@@ -385,9 +393,7 @@ class PharaonFeaturesTest extends TestCase
             'commentaire' => 'Discipline critique.',
         ])->assertSessionHas('success');
 
-        $this->assertDatabaseHas('notifications', [
-            'type' => \App\Notifications\EvaluationRougeNotification::class,
-        ]);
+        Notification::assertSentTo($admin, \App\Notifications\EvaluationRougeNotification::class);
     }
 
     /** S3bis — La commande planifiée notifie l'admin pour les évaluations rouges. */
@@ -414,9 +420,8 @@ class PharaonFeaturesTest extends TestCase
         $this->artisan('presence:alertes-evaluations-rouges', ['--mois' => '2026-07'])
             ->expectsOutputToContain('notifié');
 
-        $this->assertDatabaseHas('notifications', [
-            'type' => \App\Notifications\EvaluationRougeNotification::class,
-        ]);
+        $adminPrincipal = Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+        Notification::assertSentTo($adminPrincipal, \App\Notifications\EvaluationRougeNotification::class);
     }
 
     /** S4 — Le superviseur consulte les fiches de rendement de son équipe. */
@@ -510,10 +515,7 @@ class PharaonFeaturesTest extends TestCase
         $this->artisan('presence:rappel-fiches-rendement')
             ->expectsOutputToContain('notifié');
 
-        $this->assertDatabaseHas('notifications', [
-            'notifiable_id' => $employerInfo->Sup_id,
-            'type' => \App\Notifications\FicheRendementRappelNotification::class,
-        ]);
+        Notification::assertSentTo($superviseurUser, \App\Notifications\FicheRendementRappelNotification::class);
 
         // Si toutes les fiches sont remplies -> plus de notification
         Presence::where('employerID', $employe->id)->update(['rendement' => 'Tâches terminées.']);

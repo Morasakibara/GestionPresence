@@ -185,6 +185,19 @@
                     'orange' => '#D97706',
                     'rouge' => '#D64545',
                 ];
+                $notesWithValues = array_column(array_filter($historique, fn($h) => $h['note'] > 0), 'note');
+                $moyEvol = count($notesWithValues) > 0 ? round(array_sum($notesWithValues) / count($notesWithValues), 1) : 0;
+                $tendanceLabel = '—';
+                $tendanceCouleur = 'vert';
+                $deltaVal = 0;
+                if (count($notesWithValues) >= 2) {
+                    $prev = $notesWithValues[count($notesWithValues) - 2];
+                    $last = end($notesWithValues);
+                    $deltaVal = round($last - $prev, 1);
+                    if ($deltaVal > 0.5) { $tendanceLabel = '▲ Hausse'; $tendanceCouleur = 'vert'; }
+                    elseif ($deltaVal < -0.5) { $tendanceLabel = '▼ Baisse'; $tendanceCouleur = 'rouge'; }
+                    else { $tendanceLabel = '— Stable'; $tendanceCouleur = 'orange'; }
+                }
             @endphp
             <table style="width:100%; border-collapse:collapse;">
                 <tr>
@@ -206,6 +219,18 @@
                 </tr>
             </table>
             <p class="legend">Évolution mensuelle de la note sur 20 — 🟢 Vert ≥ 14 · 🟠 Orange 10-13 · 🔴 Rouge &lt; 10</p>
+            <div style="display:flex; gap:16px; margin-top:14px;">
+                <div style="flex:1; border:1px solid #e5e7eb; border-radius:6px; padding:10px; text-align:center; background:#f9fafb;">
+                    <div style="font-size:20px; font-weight:bold; color:#885910;">{{ $moyEvol }}/20</div>
+                    <div style="font-size:10px; color:#6b7280; margin-top:2px;">Moyenne (6 mois)</div>
+                </div>
+                <div style="flex:1; border:1px solid #e5e7eb; border-radius:6px; padding:10px; text-align:center; background:#f9fafb;">
+                    <div style="font-size:16px; font-weight:bold; color:{{ $tendanceCouleur === 'vert' ? '#15803d' : ($tendanceCouleur === 'rouge' ? '#b91c1c' : '#92400e') }};">
+                        {{ $tendanceLabel }} {{ $deltaVal != 0 ? ($deltaVal > 0 ? '+' : '') . $deltaVal . ' pt' : '' }}
+                    </div>
+                    <div style="font-size:10px; color:#6b7280; margin-top:2px;">Tendance</div>
+                </div>
+            </div>
         </div>
         @endif
 

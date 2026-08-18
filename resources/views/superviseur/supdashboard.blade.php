@@ -234,6 +234,46 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tableau comparatif des notes par membre -->
+        @if(!empty($notesParEmploye))
+        <div class="mt-6">
+            <h3 class="mb-3 text-base font-semibold text-[#080808]">Notes par membre (6 mois)</h3>
+            <div class="table-wrap">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="table-head">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Employé</th>
+                            @foreach(($notesParEmploye[0]['moisListe'] ?? []) as $m)
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">{{ $m['label'] }}</th>
+                            @endforeach
+                            <th scope="col" class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Moyenne</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-body">
+                        @foreach($notesParEmploye as $emp)
+                        <tr>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ $emp['nom'] }}</td>
+                            @foreach($emp['moisListe'] as $m)
+                                @php $cell = $emp['notes'][$m['mois']] ?? null; @endphp
+                                <td class="px-4 py-3 text-center">
+                                    @if($cell && $cell['note'] > 0)
+                                        <span class="badge {{ $cell['couleur'] === 'vert' ? 'badge-green' : ($cell['couleur'] === 'rouge' ? 'badge-red' : 'badge-orange') }}">{{ $cell['note'] }}/20</span>
+                                    @else
+                                        <span class="text-xs text-gray-400">—</span>
+                                    @endif
+                                </td>
+                            @endforeach
+                            <td class="px-4 py-3 text-center">
+                                <span class="badge {{ $emp['couleur'] === 'vert' ? 'badge-green' : ($emp['couleur'] === 'rouge' ? 'badge-red' : 'badge-orange') }}">{{ $emp['moyenne'] }}/20</span>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 @endsection

@@ -255,6 +255,59 @@ class EvaluationService
     }
 
     /**
+     * Notes mensuelles par employé sur les $mois derniers mois (pour tableau comparatif).
+     *
+     * @param  array  $employerIds  IDs des employés
+     * @return array  Liste de ['employerID', 'nom', 'notes' => [mois => note], 'moyenne', 'couleur']
+     */
+    public static function notesParEmploye(array $employerIds, int $mois = 6): array
+    {
+        if (empty($employerIds)) {
+            return [];
+        }
+
+        $moisListe = [];
+        for ($i = $mois - 1; $i >= 0; $i--) {
+            $moisListe[] = [
+                'mois' => now()->subMonths($i)->format('Y-m'),
+                'label' => ucfirst(now()->subMonths($i)->translatedFormat('M Y')),
+                'debut' => now()->subMonths($i)->startOfMonth()->toDateString(),
+                'fin' => now()->subMonths($i)->endOfMonth()->toDateString(),
+            ];
+        }
+
+        $noms = \App\Models\Utilisateur::whereIn('id', $employerIds)->pluck('nom', 'id')->toArray();
+        $resultats = [];
+
+        foreach ($employerIds as $id) {
+            $notes = [];
+            foreach ($moisListe as $m) {
+                $eval = self::evaluer((int) $id, $m['debut'], $m['fin']);
+                $notes[$m['mois']] = [
+                    'note' => $eval['note'],
+                    'couleur' => $eval['couleur'],
+                ];
+            }
+            $valeurs = array_values(array_filter(array_column($notes, 'note'), fn ($n) => $n > 0));
+            $moyenne = count($valeurs) > 0 ? round(array_sum($valeurs) / count($valeurs), 1) : 0;
+
+            $resultats[] = [
+                'employerID' => (int) $id,
+                'nom' => $noms[$id] ?? ('Employé #' . $id),
+                'notes' => $notes,
+                'moisListe' => $moisListe,
+                'moyenne' => $moyenne,
+                'couleur' => self::couleurPourNote($moyenne),
+            ];
+        }
+
+        // Tri par moyenne décroissante
+        usort($resultats, fn ($a, $b) => $b['moyenne'] <=> $a['moyenne']);
+
+        return $resultats;
+    }
+
+    /**
      * Statistiques d'une série d'évolution : moyenne globale et tendance.
      *
      * @param  array  $evolution  Sortie de evolutionMensuelle()

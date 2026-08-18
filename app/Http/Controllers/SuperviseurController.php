@@ -63,6 +63,9 @@ class SuperviseurController extends Controller
         // Moyenne globale (périodes avec données) + tendance (dernier mois vs précédent)
         $statsEvolution = \App\Services\EvaluationService::statsEvolution($evolutionEvaluations);
 
+        // Tableau comparatif des notes par membre de l'équipe (6 mois)
+        $notesParEmploye = \App\Services\EvaluationService::notesParEmploye($employerIds, 6);
+
         return view('superviseur.supdashboard', compact(
             'equipe',
             'teamMemberCount',
@@ -71,7 +74,8 @@ class SuperviseurController extends Controller
             'lateToday',
             'unreadNotifications',
             'evolutionEvaluations',
-            'statsEvolution'
+            'statsEvolution',
+            'notesParEmploye'
         ));
     }
 

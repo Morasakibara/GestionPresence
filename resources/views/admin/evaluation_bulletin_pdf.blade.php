@@ -186,6 +186,22 @@
                     'orange' => '#D97706',
                     'rouge' => '#D64545',
                 ];
+                // Moyenne globale + tendance (dernier mois vs précédent)
+                $notesEvol = array_values(array_filter(array_column($historique, 'note'), fn ($n) => $n > 0));
+                $moyenneEvol = count($notesEvol) > 0 ? round(array_sum($notesEvol) / count($notesEvol), 1) : 0;
+                $notesSeq = array_column($historique, 'note');
+                $dernierEvol = (float) (end($notesSeq) ?: 0);
+                $avantEvol = (float) (count($notesSeq) >= 2 ? $notesSeq[count($notesSeq) - 2] : 0);
+                if ($dernierEvol <= 0 || $avantEvol <= 0) {
+                    $tendanceEvol = 'stable';
+                } elseif ($dernierEvol > $avantEvol) {
+                    $tendanceEvol = 'hausse';
+                } elseif ($dernierEvol < $avantEvol) {
+                    $tendanceEvol = 'baisse';
+                } else {
+                    $tendanceEvol = 'stable';
+                }
+                $deltaEvol = round($dernierEvol - $avantEvol, 1);
             @endphp
             <table style="width:100%; border-collapse:collapse;">
                 <tr>
@@ -207,6 +223,17 @@
                 </tr>
             </table>
             <p class="legend">Évolution mensuelle de la note sur 20 — 🟢 Vert ≥ 14 · 🟠 Orange 10-13 · 🔴 Rouge &lt; 10</p>
+            <div style="margin-top:10px; padding:10px 12px; background-color:#f9fafb; border:1px solid #e5e7eb; border-radius:6px;">
+                <strong style="font-size:12px; color:#374151;">Moyenne globale (6 mois) :</strong>
+                <span style="font-size:13px; font-weight:bold; color:#885910;">{{ $moyenneEvol }}/20</span>
+                &nbsp;&nbsp;·&nbsp;&nbsp;
+                <strong style="font-size:12px; color:#374151;">Tendance (dernier mois) :</strong>
+                <span style="font-size:12px; font-weight:bold; {{ $tendanceEvol === 'hausse' ? 'color:#15803d;' : ($tendanceEvol === 'baisse' ? 'color:#b91c1c;' : 'color:#6b7280;') }}">
+                    @if($tendanceEvol === 'hausse') ▲ Hausse {{ $deltaEvol > 0 ? '+' . $deltaEvol : '' }} pt
+                    @elseif($tendanceEvol === 'baisse') ▼ Baisse {{ abs($deltaEvol) }} pt
+                    @else — Stable @endif
+                </span>
+            </div>
         </div>
         @endif
 
