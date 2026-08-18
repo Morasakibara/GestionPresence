@@ -93,6 +93,24 @@ class SecretaireController extends Controller
         return redirect()->route('secretaire.commandes')->with('success', 'Commande enregistrée.');
     }
 
+    public function editCommande($id)
+    {
+        $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        return view('secretaire.commandes_edit', compact('commande'))->with('typesPhoto', self::TYPES_SECRETAIRE);
+    }
+
+    public function updateCommande(Request $request, $id)
+    {
+        $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $request->validate([
+            'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_SECRETAIRE)),
+            'montant' => 'required|numeric|min:0.01',
+            'details' => 'nullable|string|max:1000',
+        ]);
+        $commande->update($request->only('type', 'montant', 'details'));
+        return redirect()->route('secretaire.commandes')->with('success', 'Commande mise à jour.');
+    }
+
     public function destroyCommande($id)
     {
         $commande = Commande::where('id', $id)
@@ -133,6 +151,24 @@ class SecretaireController extends Controller
         ]);
 
         return redirect()->route('secretaire.services')->with('success', 'Service enregistré.');
+    }
+
+    public function editService($id)
+    {
+        $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        return view('secretaire.services_edit', compact('service'))->with('typesPhoto', self::TYPES_SECRETAIRE);
+    }
+
+    public function updateService(Request $request, $id)
+    {
+        $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $request->validate([
+            'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_SECRETAIRE)),
+            'montant' => 'required|numeric|min:0.01',
+            'details' => 'nullable|string|max:1000',
+        ]);
+        $service->update($request->only('type', 'montant', 'details'));
+        return redirect()->route('secretaire.services')->with('success', 'Service mis à jour.');
     }
 
     public function destroyService($id)

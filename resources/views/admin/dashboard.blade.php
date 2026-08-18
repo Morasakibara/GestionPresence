@@ -206,6 +206,67 @@
     </div>
 </div>
 
+<!-- ═══════════ ÉTAT DES CAISSES ═══════════ -->
+@if(!empty($caisses) && count($caisses) > 0)
+<div class="mb-6">
+    <div class="mb-4 flex items-center justify-between">
+        <div>
+            <h2 class="text-lg font-semibold text-[#080808]">État des caisses — {{ now()->format('d/m/Y') }}</h2>
+            <p class="text-sm text-gray-500">Chiffre d'affaire journalier par poste</p>
+        </div>
+        <a href="{{ route('admin.caisse') }}" class="text-sm font-medium text-pharaoh-gold hover:text-pharaoh-bronze">Voir tout →</a>
+    </div>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        @foreach($caisses as $label => $c)
+            <div class="pharaoh-card p-5">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="rounded-full bg-pharaoh-gold/10 p-2 text-pharaoh-gold">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    </div>
+                    <span class="text-sm font-semibold text-[#080808]">{{ $c['nom'] }}</span>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="rounded-lg bg-green-50 p-3 text-center"><div class="text-lg font-bold text-green-700">{{ number_format($c['entrees'], 0, ',', '.') }}</div><div class="text-[11px] text-green-600">Entrées</div></div>
+                    <div class="rounded-lg bg-red-50 p-3 text-center"><div class="text-lg font-bold text-red-600">{{ number_format($c['sorties'], 0, ',', '.') }}</div><div class="text-[11px] text-red-500">Sorties</div></div>
+                    <div class="rounded-lg bg-[#FBF3E6] p-3 text-center"><div class="text-lg font-bold text-pharaoh-gold">{{ number_format($c['net'], 0, ',', '.') }}</div><div class="text-[11px] text-pharaoh-bronze">Net (FCFA)</div></div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
+<!-- ═══════════ ÉTAT DU STOCK ═══════════ -->
+@if($stockTshirts->isNotEmpty() || $stockPapiers->isNotEmpty())
+<div class="mb-6">
+    <div class="mb-4 flex items-center justify-between">
+        <div>
+            <h2 class="text-lg font-semibold text-[#080808]">État du stock</h2>
+            <p class="text-sm text-gray-500">{{ $totalStockTshirts }} T-shirts · {{ $stockPapiers->count() }} imprimante(s) @if($alertesStock > 0)<span class="ml-2 inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">{{ $alertesStock }} alerte(s)</span>@endif</p>
+        </div>
+        <a href="{{ route('admin.stock') }}" class="text-sm font-medium text-pharaoh-gold hover:text-pharaoh-bronze">Voir tout →</a>
+    </div>
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        @if($stockTshirts->isNotEmpty())
+            <div class="pharaoh-card overflow-hidden">
+                <div class="px-5 py-3 bg-[#080808]"><span class="text-xs font-semibold uppercase tracking-wider text-[#FACE4A]">T-Shirts</span></div>
+                <div class="table-scroll"><table class="min-w-full"><thead class="table-head"><tr><th>Couleur</th><th>Taille</th><th class="text-right">Qté</th><th>Statut</th></tr></thead>
+                    <tbody class="table-body">@foreach($stockTshirts->take(5) as $t)<tr><td class="px-5 py-2.5 text-sm">{{ $t->couleur }}</td><td class="px-5 py-2.5 text-sm">{{ $t->taille }}</td><td class="px-5 py-2.5 text-sm text-right font-semibold">{{ $t->quantite }}</td><td class="px-5 py-2.5"><span class="badge {{ $t->quantite <= $t->seuil_alerte ? 'badge-danger' : 'badge-success' }}">{{ $t->quantite <= $t->seuil_alerte ? '⚠' : '✓' }}</span></td></tr>@endforeach</tbody>
+                </table></div>
+            </div>
+        @endif
+        @if($stockPapiers->isNotEmpty())
+            <div class="pharaoh-card overflow-hidden">
+                <div class="px-5 py-3 bg-[#080808]"><span class="text-xs font-semibold uppercase tracking-wider text-[#FACE4A]">Papier</span></div>
+                <div class="table-scroll"><table class="min-w-full"><thead class="table-head"><tr><th>Imprimante</th><th class="text-right">Reste (m)</th><th class="text-right">%</th><th>Statut</th></tr></thead>
+                    <tbody class="table-body">@foreach($stockPapiers as $p)<tr><td class="px-5 py-2.5 text-sm">{{ $p->imprimante }}</td><td class="px-5 py-2.5 text-sm text-right font-semibold">{{ number_format($p->metres_restants, 1) }}</td><td class="px-5 py-2.5 text-sm text-right">{{ $p->pourcentageRestant() }}%</td><td class="px-5 py-2.5"><span class="badge {{ $p->metres_restants <= $p->seuil_alerte ? 'badge-danger' : 'badge-success' }}">{{ $p->metres_restants <= $p->seuil_alerte ? '⚠' : '✓' }}</span></td></tr>@endforeach</tbody>
+                </table></div>
+            </div>
+        @endif
+    </div>
+</div>
+@endif
+
 <!-- Dernières notifications -->
 @if(Auth::user()->notifications->count() > 0)
 <div class="mb-6">

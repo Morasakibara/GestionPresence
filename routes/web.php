@@ -122,9 +122,13 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/dashboard', [DirectriceController::class, 'dashboard'])->name('dashboard');
         Route::get('/commandes', [DirectriceController::class, 'showCommandes'])->name('commandes');
         Route::post('/commandes', [DirectriceController::class, 'storeCommande'])->name('commandes.store');
+        Route::get('/commandes/{id}/edit', [DirectriceController::class, 'editCommande'])->name('commandes.edit');
+        Route::put('/commandes/{id}', [DirectriceController::class, 'updateCommande'])->name('commandes.update');
         Route::delete('/commandes/{id}', [DirectriceController::class, 'destroyCommande'])->name('commandes.destroy');
         Route::get('/services', [DirectriceController::class, 'showServices'])->name('services');
         Route::post('/services', [DirectriceController::class, 'storeService'])->name('services.store');
+        Route::get('/services/{id}/edit', [DirectriceController::class, 'editService'])->name('services.edit');
+        Route::put('/services/{id}', [DirectriceController::class, 'updateService'])->name('services.update');
         Route::delete('/services/{id}', [DirectriceController::class, 'destroyService'])->name('services.destroy');
         Route::get('/retraits', [DirectriceController::class, 'showRetraits'])->name('retraits');
         Route::post('/retraits', [DirectriceController::class, 'storeRetrait'])->name('retraits.store');
@@ -137,9 +141,13 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/dashboard', [SecretaireController::class, 'dashboard'])->name('dashboard');
         Route::get('/commandes', [SecretaireController::class, 'showCommandes'])->name('commandes');
         Route::post('/commandes', [SecretaireController::class, 'storeCommande'])->name('commandes.store');
+        Route::get('/commandes/{id}/edit', [SecretaireController::class, 'editCommande'])->name('commandes.edit');
+        Route::put('/commandes/{id}', [SecretaireController::class, 'updateCommande'])->name('commandes.update');
         Route::delete('/commandes/{id}', [SecretaireController::class, 'destroyCommande'])->name('commandes.destroy');
         Route::get('/services', [SecretaireController::class, 'showServices'])->name('services');
         Route::post('/services', [SecretaireController::class, 'storeService'])->name('services.store');
+        Route::get('/services/{id}/edit', [SecretaireController::class, 'editService'])->name('services.edit');
+        Route::put('/services/{id}', [SecretaireController::class, 'updateService'])->name('services.update');
         Route::delete('/services/{id}', [SecretaireController::class, 'destroyService'])->name('services.destroy');
         Route::get('/retraits', [SecretaireController::class, 'showRetraits'])->name('retraits');
         Route::post('/retraits', [SecretaireController::class, 'storeRetrait'])->name('retraits.store');

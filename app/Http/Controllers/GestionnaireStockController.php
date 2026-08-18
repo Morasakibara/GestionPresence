@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\StockTshirt;
 use App\Models\StockPapier;
 use App\Models\Superviseur;
+use App\Models\Utilisateur;
+use App\Notifications\StockAlertNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -41,6 +43,15 @@ class GestionnaireStockController extends Controller
         return view('gestionnaire_stock.tshirts', compact('tshirts'));
     }
 
+    private function alerteSiSeuilFracchie(int $superviseurId, string $type, string $details, float $quantite, float $seuil): void
+    {
+        if ($quantite > $seuil) return;
+        $adminPrincipal = Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+        if ($adminPrincipal) {
+            $adminPrincipal->notify(new StockAlertNotification($type, $details, $quantite, $seuil));
+        }
+    }
+
     public function storeTshirt(Request $request)
     {
         $request->validate([
@@ -50,17 +61,19 @@ class GestionnaireStockController extends Controller
             'seuil_alerte' => 'nullable|integer|min:0',
         ]);
 
-        // Upsert : si même couleur+taille existe déjà, mettre à jour
         $existing = StockTshirt::where('superviseur_id', Auth::id())
             ->where('couleur', $request->couleur)
             ->where('taille', $request->taille)
             ->first();
 
+        $seuil = $request->seuil_alerte ?? ($existing ? $existing->seuil_alerte : 5);
+
         if ($existing) {
             $existing->update([
                 'quantite' => $request->quantite,
-                'seuil_alerte' => $request->seuil_alerte ?? $existing->seuil_alerte,
+                'seuil_alerte' => $seuil,
             ]);
+            $this->alerteSiSeuilFracchie(Auth::id(), 'tshirt', $request->couleur . ' ' . $request->taille, $request->quantite, $seuil);
             return redirect()->route('gestionnaire.tshirts')->with('success', 'Stock mis à jour.');
         }
 
@@ -69,13 +82,14 @@ class GestionnaireStockController extends Controller
             'couleur' => $request->couleur,
             'taille' => $request->taille,
             'quantite' => $request->quantite,
-            'seuil_alerte' => $request->seuil_alerte ?? 5,
+            'seuil_alerte' => $seuil,
         ]);
+        $this->alerteSiSeuilFracchie(Auth::id(), 'tshirt', $request->couleur . ' ' . $request->taille, $request->quantite, $seuil);
 
         return redirect()->route('gestionnaire.tshirts')->with('success', 'T-shirt ajouté au stock.');
     }
 
-    public function updateTshirt(Request $request, $id)
+    public function updateTshirt(Request $request, int $id)
     {
         $request->validate([
             'quantite' => 'required|integer|min:0',
@@ -85,10 +99,12 @@ class GestionnaireStockController extends Controller
         $tshirt = StockTshirt::where('id', $id)
             ->where('superviseur_id', Auth::id())->firstOrFail();
 
+        $seuil = $request->seuil_alerte ?? $tshirt->seuil_alerte;
         $tshirt->update([
             'quantite' => $request->quantite,
-            'seuil_alerte' => $request->seuil_alerte ?? $tshirt->seuil_alerte,
+            'seuil_alerte' => $seuil,
         ]);
+        $this->alerteSiSeuilFracchie(Auth::id(), 'tshirt', $tshirt->couleur . ' ' . $tshirt->taille, $request->quantite, $seuil);
 
         return redirect()->route('gestionnaire.tshirts')->with('success', 'Stock mis à jour.');
     }
@@ -126,12 +142,15 @@ class GestionnaireStockController extends Controller
             ->where('imprimante', $request->imprimante)
             ->first();
 
+        $seuil = $request->seuil_alerte ?? ($existing ? $existing->seuil_alerte : 50);
+
         if ($existing) {
             $existing->update([
                 'metres_restants' => $request->metres_restants,
                 'metres_total' => $request->metres_total,
-                'seuil_alerte' => $request->seuil_alerte ?? $existing->seuil_alerte,
+                'seuil_alerte' => $seuil,
             ]);
+            $this->alerteSiSeuilFracchie(Auth::id(), 'papier', $request->imprimante, $request->metres_restants, $seuil);
             return redirect()->route('gestionnaire.papier')->with('success', 'Stock papier mis à jour.');
         }
 
@@ -140,13 +159,14 @@ class GestionnaireStockController extends Controller
             'imprimante' => $request->imprimante,
             'metres_restants' => $request->metres_restants,
             'metres_total' => $request->metres_total,
-            'seuil_alerte' => $request->seuil_alerte ?? 50,
+            'seuil_alerte' => $seuil,
         ]);
+        $this->alerteSiSeuilFracchie(Auth::id(), 'papier', $request->imprimante, $request->metres_restants, $seuil);
 
         return redirect()->route('gestionnaire.papier')->with('success', 'Stock papier ajouté.');
     }
 
-    public function updatePapier(Request $request, $id)
+    public function updatePapier(Request $request, int $id)
     {
         $request->validate([
             'metres_restants' => 'required|numeric|min:0',
@@ -156,10 +176,12 @@ class GestionnaireStockController extends Controller
         $papier = StockPapier::where('id', $id)
             ->where('superviseur_id', Auth::id())->firstOrFail();
 
+        $seuil = $request->seuil_alerte ?? $papier->seuil_alerte;
         $papier->update([
             'metres_restants' => $request->metres_restants,
-            'seuil_alerte' => $request->seuil_alerte ?? $papier->seuil_alerte,
+            'seuil_alerte' => $seuil,
         ]);
+        $this->alerteSiSeuilFracchie(Auth::id(), 'papier', $papier->imprimante, $request->metres_restants, $seuil);
 
         return redirect()->route('gestionnaire.papier')->with('success', 'Stock papier mis à jour.');
     }

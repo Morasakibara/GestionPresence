@@ -84,8 +84,9 @@
                             <td class="px-6 py-4 text-sm font-medium text-[#080808]">{{ $typesCaisse[$cmd->type] ?? $cmd->type }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ $cmd->details ?? '—' }}</td>
                             <td class="px-6 py-4 text-sm font-semibold text-right text-green-700">{{ number_format($cmd->montant, 0, ',', '.') }} FCFA</td>
-                            <td class="px-6 py-4 text-right">
-                                <form action="{{ route('directrice.commandes.destroy', $cmd->id) }}" method="POST" onsubmit="return confirm('Supprimer cette commande ?')">
+                            <td class="px-6 py-4 text-right space-x-2">
+                                <a href="{{ route('directrice.commandes.edit', $cmd->id) }}" class="text-pharaoh-gold hover:text-pharaoh-bronze text-sm font-medium">Modifier</a>
+                                <form action="{{ route('directrice.commandes.destroy', $cmd->id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer cette commande ?')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="text-red-500 hover:text-red-700 text-sm">Supprimer</button>
                                 </form>

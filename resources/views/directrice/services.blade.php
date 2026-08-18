@@ -69,8 +69,9 @@
                             <td class="px-6 py-4 text-sm font-medium text-[#080808]">{{ $typesCaisse[$svc->type] ?? $svc->type }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ $svc->details ?? '—' }}</td>
                             <td class="px-6 py-4 text-sm font-semibold text-right text-blue-700">{{ number_format($svc->montant, 0, ',', '.') }} FCFA</td>
-                            <td class="px-6 py-4 text-right">
-                                <form action="{{ route('directrice.services.destroy', $svc->id) }}" method="POST" onsubmit="return confirm('Supprimer ?')">
+                            <td class="px-6 py-4 text-right space-x-2">
+                                <a href="{{ route('directrice.services.edit', $svc->id) }}" class="text-pharaoh-gold hover:text-pharaoh-bronze text-sm font-medium">Modifier</a>
+                                <form action="{{ route('directrice.services.destroy', $svc->id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer ?')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="text-red-500 hover:text-red-700 text-sm">Supprimer</button>
                                 </form>

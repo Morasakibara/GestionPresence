@@ -8,13 +8,11 @@ use App\Models\Utilisateur;
 use App\Models\Superviseur;
 use App\Models\Presence;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Exports\ReportExport;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\DB;use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -68,18 +66,44 @@ class AdminController extends Controller
     $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIdsFiltre, 6);
     $statsEvolution = \App\Services\EvaluationService::statsEvolution($evolutionEvaluations);
 
+    // ── État des caisses (directrice + secrétaire) ──
+    $today = now()->toDateString();
+    $caisses = [];
+    foreach (['directrice' => 'directrice', 'secretaire' => 'secretaire'] as $label => $type) {
+        $sup = Superviseur::where('type_superviseur', $type)->first();
+        if (!$sup) continue;
+        $entrees = \App\Models\Commande::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant')
+            + \App\Models\ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
+        $sorties = \App\Models\Retrait::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
+        $caisses[$label] = [
+            'nom' => Utilisateur::find($sup->id)->nom ?? $label,
+            'entrees' => $entrees,
+            'sorties' => $sorties,
+            'net' => $entrees - $sorties,
+        ];
+    }
+
+    // ── État du stock (gestionnaire) ──
+    $gestionnaireStock = Superviseur::where('type_superviseur', 'gestionnaire_stock')->first();
+    $stockTshirts = $stockPapiers = collect();
+    $totalStockTshirts = 0;
+    $alertesStock = 0;
+    if ($gestionnaireStock) {
+        $stockTshirts = \App\Models\StockTshirt::where('superviseur_id', $gestionnaireStock->id)->get();
+        $stockPapiers = \App\Models\StockPapier::where('superviseur_id', $gestionnaireStock->id)->get();
+        $totalStockTshirts = $stockTshirts->sum('quantite');
+        $alertesStock = $stockTshirts->filter(fn($t) => $t->quantite <= $t->seuil_alerte)->count()
+            + $stockPapiers->filter(fn($p) => $p->metres_restants <= $p->seuil_alerte)->count();
+    }
+
     return view('admin.dashboard', compact(
-        'totalEmployees',
-        'totalSupervisors',
-        'presentToday',
-        'absentToday',
-        'monthlyPresences',
-        'monthlyAbsences',
-        'monthlyLates',
-        'evolutionEvaluations',
-        'statsEvolution',
-        'equipes',
-        'equipeSelectionnee'
+        'totalEmployees', 'totalSupervisors',
+        'presentToday', 'absentToday',
+        'monthlyPresences', 'monthlyAbsences', 'monthlyLates',
+        'evolutionEvaluations', 'statsEvolution',
+        'equipes', 'equipeSelectionnee',
+        'caisses', 'stockTshirts', 'stockPapiers',
+        'totalStockTshirts', 'alertesStock'
     ));
 }
 
@@ -321,7 +345,7 @@ public function generateReport(Request $request)
 }
 
 // Exporter le rapport en PDF
-public function exportToPDF($reportData, $startDate = null, $endDate = null)
+public function exportToPDF($reportData, ?string $startDate = null, ?string $endDate = null)
 {
     // Les données arrivent déjà enrichies (reportData), on les passe telles quelles au PDF.
 
@@ -566,8 +590,9 @@ public function exportReport(Request $request)
     /**
      * Bulletin individuel d'évaluation PDF pour un employé et un mois.
      */
-    public function evaluationBulletin(Request $request, $id)
+    public function evaluationBulletin(Request $request, int $id)
     {
+        /** @var Utilisateur|null $admin */
         $admin = auth()->user();
         if (!$admin || $admin->role !== 'Administrateur') {
             return redirect()->back()->with('error', 'Accès réservé à l\'administrateur.');
@@ -683,7 +708,7 @@ public function exportReport(Request $request)
     }
 
     public function updateProfile(Request $request)
-{
+    {
     // Validation des données
     $validator = Validator::make($request->all(), [
         'nom' => 'required|string|max:255',
