@@ -58,12 +58,14 @@ class DirectriceController extends Controller
         $derniersServices = $servicesJour->sortByDesc('created_at')->take(5);
         $derniersRetraits = $retraitsJour->sortByDesc('created_at')->take(5);
 
+        $typesCaisse = self::TYPES_CAISSIERE;
+
         return view('directrice.dashboard', compact(
             'superviseurInfo', 'totalCommandes', 'totalServices', 'totalRetraits',
             'sommeEnCaisse', 'commandesParType', 'servicesParType',
             'derniersCommandes', 'derniersServices', 'derniersRetraits',
             'typesCaisse'
-        ))->with('typesCaisse', self::TYPES_CAISSIERE);
+        ));
     }
 
     /**
