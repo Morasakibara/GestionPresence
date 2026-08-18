@@ -349,8 +349,8 @@ public function exportToPDF($reportData, ?string $startDate = null, ?string $end
 {
     // Les données arrivent déjà enrichies (reportData), on les passe telles quelles au PDF.
 
-    // Récupérer l'administrateur connecté
-    $admin = auth()->user();
+    /** @var Utilisateur|null $admin */
+    $admin = Auth::user();
 
     // Vérifier si l'administrateur existe
     if (!$admin || $admin->role !== 'Administrateur') {
@@ -593,7 +593,7 @@ public function exportReport(Request $request)
     public function evaluationBulletin(Request $request, int $id)
     {
         /** @var Utilisateur|null $admin */
-        $admin = auth()->user();
+        $admin = Auth::user();
         if (!$admin || $admin->role !== 'Administrateur') {
             return redirect()->back()->with('error', 'Accès réservé à l\'administrateur.');
         }
@@ -725,8 +725,8 @@ public function exportReport(Request $request)
     }
 
     try {
-        // Récupérer l'utilisateur connecté
-        $user = auth()->user();
+        /** @var Utilisateur $user */
+        $user = Auth::user();
 
         // Mettre à jour les informations
         $user->nom = $request->nom;
@@ -767,7 +767,9 @@ public function exportReport(Request $request)
     }
     public function showProfileForm()
     {
-        return view('admin.profile', ['user' => auth()->user()]);
+        /** @var Utilisateur|null $user */
+        $user = Auth::user();
+        return view('admin.profile', ['user' => $user]);
     }
 
     /**
