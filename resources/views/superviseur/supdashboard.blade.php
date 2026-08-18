@@ -238,9 +238,27 @@
         <!-- Tableau comparatif des notes par membre -->
         @if(!empty($notesParEmploye))
         <div class="mt-6">
-            <h3 class="mb-3 text-base font-semibold text-[#080808]">Notes par membre (6 mois)</h3>
+            <div class="mb-3 flex items-center justify-between">
+                <h3 class="text-base font-semibold text-[#080808]">Notes par membre (6 mois)</h3>
+                <a href="{{ route('superviseur.comparatif.export') }}" class="btn-gold text-xs">
+                    <svg class="-ml-0.5 mr-1 h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Exporter PDF
+                </a>
+            </div>
+            <!-- Filtres et tri -->
+            <div class="mb-3 flex flex-wrap items-center gap-2">
+                <span class="text-xs font-medium text-gray-500">Filtrer :</span>
+                <button onclick="filtrerTableau('all')" class="badge badge-gold filter-btn active" data-filter="all">Tous</button>
+                <button onclick="filtrerTableau('vert')" class="badge badge-green filter-btn" data-filter="vert">🟢 Vert</button>
+                <button onclick="filtrerTableau('orange')" class="badge badge-orange filter-btn" data-filter="orange">🟠 Orange</button>
+                <button onclick="filtrerTableau('rouge')" class="badge badge-red filter-btn" data-filter="rouge">🔴 Rouge</button>
+                <span class="ml-2 text-xs font-medium text-gray-500">Trier :</span>
+                <button onclick="trierTableau('nom')" class="badge filter-btn" data-sort="nom">Nom</button>
+                <button onclick="trierTableau('moyenne-desc')" class="badge filter-btn" data-sort="moyenne-desc">Moyenne ↓</button>
+                <button onclick="trierTableau('moyenne-asc')" class="badge filter-btn" data-sort="moyenne-asc">Moyenne ↑</button>
+            </div>
             <div class="table-wrap">
-                <table class="min-w-full divide-y divide-gray-200">
+                <table id="tableauComparatif" class="min-w-full divide-y divide-gray-200">
                     <thead class="table-head">
                         <tr>
                             <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Employé</th>
@@ -252,7 +270,7 @@
                     </thead>
                     <tbody class="table-body">
                         @foreach($notesParEmploye as $emp)
-                        <tr>
+                        <tr data-couleur="{{ $emp['couleur'] }}" data-moyenne="{{ $emp['moyenne'] }}" data-nom="{{ $emp['nom'] }}">
                             <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ $emp['nom'] }}</td>
                             @foreach($emp['moisListe'] as $m)
                                 @php $cell = $emp['notes'][$m['mois']] ?? null; @endphp
@@ -331,6 +349,40 @@
                 }
             }
         });
+
+        // --- Filtrage et tri du tableau comparatif ---
+        window.filtrerTableau = function (couleur) {
+            const rows = document.querySelectorAll('#tableauComparatif tbody tr[data-couleur]');
+            rows.forEach(row => {
+                if (couleur === 'all' || row.dataset.couleur === couleur) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === couleur);
+            });
+        };
+
+        window.trierTableau = function (cle) {
+            const tbody = document.querySelector('#tableauComparatif tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr[data-couleur]'));
+            rows.sort((a, b) => {
+                if (cle === 'nom') {
+                    return a.dataset.nom.localeCompare(b.dataset.nom);
+                } else if (cle === 'moyenne-desc') {
+                    return parseFloat(b.dataset.moyenne) - parseFloat(a.dataset.moyenne);
+                } else if (cle === 'moyenne-asc') {
+                    return parseFloat(a.dataset.moyenne) - parseFloat(b.dataset.moyenne);
+                }
+                return 0;
+            });
+            rows.forEach(row => tbody.appendChild(row));
+            document.querySelectorAll('.filter-btn[data-sort]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.sort === cle);
+            });
+        };
 
         // Export PNG du graphique
         window.exporterGraphiquePNG = function () {

@@ -340,4 +340,99 @@ class EvaluationService
             'avant' => $avant,
         ];
     }
+
+    /**
+     * Calcule les axes de compétences (0-1) pour un employé sur une période.
+     *
+     * @return array{labels: string[], valeurs: float[]}
+     */
+    public static function competences(int $employerID, string $debut, string $fin): array
+    {
+        $stats = self::statsPeriode($employerID, $debut, $fin);
+        $joursOuvres = max(1, (int) \Carbon\Carbon::parse($debut)->diffInDays(\Carbon\Carbon::parse($fin)) + 1);
+        $presences = max(1, $stats['presences_completes']);
+
+        $labels = ['Présence', 'Ponctualité', 'Discipline', 'Rendement', 'Assiduité'];
+        $valeurs = [
+            min(1, $stats['presences_completes'] / max(1, $joursOuvres)),
+            $presences > 0 ? min(1, 1 - ($stats['retards'] / $presences)) : 0,
+            $presences > 0 ? min(1, 1 - ($stats['suspectes'] / $presences)) : 0,
+            min(1, $stats['rendements_remplis'] / max(1, $presences)),
+            min(1, 1 - ($stats['absences'] / max(1, $joursOuvres))),
+        ];
+
+        return ['labels' => $labels, 'valeurs' => $valeurs];
+    }
+
+    /**
+     * Génère un graphique radar SVG (compatible DomPDF).
+     *
+     * @param  array  $comp  Sortie de competences()
+     * @param  int    $taille  Taille du canvas (carré)
+     * @return string  HTML du SVG
+     */
+    public static function radarSvg(array $comp, int $taille = 200): string
+    {
+        $cx = $taille / 2;
+        $cy = $taille / 2;
+        $rayon = $taille * 0.38;
+        $n = count($comp['labels']);
+        $angles = [];
+        for ($i = 0; $i < $n; $i++) {
+            $angles[] = (2 * M_PI * $i / $n) - (M_PI / 2);
+        }
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $taille . '" height="' . ($taille + 30) . '" viewBox="0 0 ' . $taille . ' ' . ($taille + 30) . '">';
+
+        // Grilles concentriques (25%, 50%, 75%, 100%)
+        for ($level = 1; $level <= 4; $level++) {
+            $r = $rayon * ($level / 4);
+            $points = [];
+            for ($i = 0; $i < $n; $i++) {
+                $points[] = round($cx + $r * cos($angles[$i]), 1) . ',' . round($cy + $r * sin($angles[$i]), 1);
+            }
+            $svg .= '<polygon points="' . implode(' ', $points) . '" fill="none" stroke="#E5E7EB" stroke-width="0.8"/>';
+        }
+
+        // Axes
+        for ($i = 0; $i < $n; $i++) {
+            $x = round($cx + $rayon * cos($angles[$i]), 1);
+            $y = round($cy + $rayon * sin($angles[$i]), 1);
+            $svg .= '<line x1="' . $cx . '" y1="' . $cy . '" x2="' . $x . '" y2="' . $y . '" stroke="#D1D5DB" stroke-width="0.6"/>';
+        }
+
+        // Polygone des valeurs
+        $polyPoints = [];
+        for ($i = 0; $i < $n; $i++) {
+            $v = max(0, min(1, $comp['valeurs'][$i]));
+            $px = round($cx + $rayon * $v * cos($angles[$i]), 1);
+            $py = round($cy + $rayon * $v * sin($angles[$i]), 1);
+            $polyPoints[] = $px . ',' . $py;
+        }
+        $svg .= '<polygon points="' . implode(' ', $polyPoints) . '" fill="rgba(211,155,35,0.18)" stroke="#D39B23" stroke-width="2"/>';
+
+        // Points et labels
+        for ($i = 0; $i < $n; $i++) {
+            $v = max(0, min(1, $comp['valeurs'][$i]));
+            $px = round($cx + $rayon * $v * cos($angles[$i]), 1);
+            $py = round($cy + $rayon * $v * sin($angles[$i]), 1);
+            $svg .= '<circle cx="' . $px . '" cy="' . $py . '" r="3" fill="#D39B23" stroke="#fff" stroke-width="1.2"/>';
+
+            // Labels autour
+            $lx = round($cx + ($rayon + 18) * cos($angles[$i]), 1);
+            $ly = round($cy + ($rayon + 18) * sin($angles[$i]), 1);
+            $anchor = 'middle';
+            if (cos($angles[$i]) > 0.3) $anchor = 'start';
+            elseif (cos($angles[$i]) < -0.3) $anchor = 'end';
+            $dy = '0.35em';
+            if (sin($angles[$i]) < -0.3) $dy = '0em';
+            elseif (sin($angles[$i]) > 0.3) $dy = '0.7em';
+            $score = round($v * 20, 0);
+            $svg .= '<text x="' . $lx . '" y="' . $ly . '" text-anchor="' . $anchor . '" dy="' . $dy . '" font-size="8" fill="#374151" font-weight="bold">' . htmlspecialchars($comp['labels'][$i]) . ' ' . $score . '/20</text>';
+        }
+
+        $svg .= '</svg>';
+
+        return $svg;
+    }
 }

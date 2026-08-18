@@ -97,6 +97,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/generateReport2', [SuperviseurController::class, 'generateReport'])->name('superviseur.generateReport2');
         Route::post('/evaluations', [SuperviseurController::class, 'storeEvaluation'])->name('superviseur.storeEvaluation');
         Route::get('/evaluations/evolution/export', [SuperviseurController::class, 'exportEvolutionEvaluationsCsv'])->name('superviseur.evaluations.evolution.export');
+        Route::get('/comparatif/export', [SuperviseurController::class, 'exportComparatifPdf'])->name('superviseur.comparatif.export');
         // Redirection propre si un GET arrive sur /superviseur/evaluations (ex. lien direct)
         Route::get('/evaluations', function () {
             return redirect()->route('superviseur.generateReport2');

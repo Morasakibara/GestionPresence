@@ -725,6 +725,32 @@ class SuperviseurController extends Controller
         return $pdf->download($filename);
     }
 
+    /**
+     * Export PDF du tableau comparatif des notes par membre de l'équipe (6 mois).
+     */
+    public function exportComparatifPdf()
+    {
+        $superviseur = auth()->user();
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+
+        if (!$superviseurInfo) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+
+        $equipe = $superviseurInfo->equipe;
+        $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
+        $notesParEmploye = \App\Services\EvaluationService::notesParEmploye($employerIds, 6);
+
+        $pdf = Pdf::loadView('superviseur.comparatif_notes_pdf', [
+            'notesParEmploye' => $notesParEmploye,
+            'equipe' => $equipe,
+            'date' => now()->format('d/m/Y'),
+        ]);
+
+        $filename = 'comparatif_notes_' . str_replace(' ', '_', $equipe) . '_' . now()->format('Y_m_d') . '.pdf';
+        return $pdf->download($filename);
+    }
+
     public function showAddMemberForm(Request $request)
     {
         $search = $request->input('search'); // Récupérer le terme de recherche

@@ -175,6 +175,19 @@
             <p class="legend">Légende : 🟢 Vert ≥ 14/20 · 🟠 Orange 10-13/20 · 🔴 Rouge &lt; 10/20</p>
         </div>
 
+        @if(!empty($employe->id))
+        @php
+            $comp = \App\Services\EvaluationService::competences((int) $employe->id, $debut, $fin);
+            $radarSvg = \App\Services\EvaluationService::radarSvg($comp, 200);
+        @endphp
+        <div class="card">
+            <h2>Profil de compétences</h2>
+            <div style="text-align:center;">
+                {!! $radarSvg !!}
+            </div>
+        </div>
+        @endif
+
         @if(!empty($historique))
         <div class="card">
             <h2>Évolution de la note (6 derniers mois)</h2>

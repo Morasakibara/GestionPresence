@@ -136,6 +136,12 @@ body {
   .badge-gold {
     @apply bg-[#FBF3E6] text-[#885910] ring-1 ring-inset ring-[#D39B23]/30;
   }
+  .filter-btn {
+    @apply cursor-pointer transition-all duration-150 opacity-60 hover:opacity-100;
+  }
+  .filter-btn.active {
+    @apply opacity-100 ring-2 ring-[#D39B23];
+  }
 
   /* Table moderne (bloc « Tables ») : en-tête noir, rangées hover */
   .table-wrap {
