@@ -1,0 +1,310 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Commande;
+use App\Models\ServiceFourni;
+use App\Models\Retrait;
+use App\Models\Superviseur;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
+class DirectriceController extends Controller
+{
+    /**
+     * Types de commandes/services autorisés pour la directrice.
+     */
+    private const TYPES_CAISSIERE = [
+        'impression' => 'Impressions',
+        'photocopie' => 'Photocopies',
+        'papeterie' => 'Papeteries',
+        'scan' => 'Scan',
+        'plastification' => 'Plastification',
+    ];
+
+    /**
+     * Dashboard de la directrice — vue d'ensemble de la caisse.
+     */
+    public function dashboard()
+    {
+        $superviseur = Auth::user();
+        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+        $today = now()->toDateString();
+
+        // Données du jour
+        $commandesJour = Commande::where('superviseur_id', $superviseur->id)
+            ->whereDate('date', $today)
+            ->get();
+        $servicesJour = ServiceFourni::where('superviseur_id', $superviseur->id)
+            ->whereDate('date', $today)
+            ->get();
+        $retraitsJour = Retrait::where('superviseur_id', $superviseur->id)
+            ->whereDate('date', $today)
+            ->get();
+
+        $totalCommandes = $commandesJour->sum('montant');
+        $totalServices = $servicesJour->sum('montant');
+        $totalRetraits = $retraitsJour->sum('montant');
+        $sommeEnCaisse = $totalCommandes + $totalServices - $totalRetraits;
+
+        // Répartition par type
+        $commandesParType = $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant'));
+        $servicesParType = $servicesJour->groupBy('type')->map(fn($s) => $s->sum('montant'));
+
+        // Dernières transactions
+        $derniersCommandes = $commandesJour->sortByDesc('created_at')->take(5);
+        $derniersServices = $servicesJour->sortByDesc('created_at')->take(5);
+        $derniersRetraits = $retraitsJour->sortByDesc('created_at')->take(5);
+
+        return view('directrice.dashboard', compact(
+            'superviseurInfo', 'totalCommandes', 'totalServices', 'totalRetraits',
+            'sommeEnCaisse', 'commandesParType', 'servicesParType',
+            'derniersCommandes', 'derniersServices', 'derniersRetraits',
+            'typesCaisse'
+        ))->with('typesCaisse', self::TYPES_CAISSIERE);
+    }
+
+    /**
+     * Page d'enregistrement des commandes.
+     */
+    public function showCommandes()
+    {
+        $superviseur = Auth::user();
+        $commandes = Commande::where('superviseur_id', $superviseur->id)
+            ->whereDate('date', now()->toDateString())
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('directrice.commandes', compact('commandes'))
+            ->with('typesCaisse', self::TYPES_CAISSIERE);
+    }
+
+    /**
+     * Enregistrer une commande.
+     */
+    public function storeCommande(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_CAISSIERE)),
+            'montant' => 'required|numeric|min:0.01',
+            'details' => 'nullable|string|max:1000',
+        ]);
+
+        Commande::create([
+            'superviseur_id' => Auth::id(),
+            'type' => $request->type,
+            'montant' => $request->montant,
+            'details' => $request->details,
+            'date' => now()->toDateString(),
+        ]);
+
+        return redirect()->route('directrice.commandes')->with('success', 'Commande enregistrée.');
+    }
+
+    /**
+     * Supprimer une commande.
+     */
+    public function destroyCommande($id)
+    {
+        $commande = Commande::where('id', $id)
+            ->where('superviseur_id', Auth::id())
+            ->firstOrFail();
+        $commande->delete();
+
+        return redirect()->route('directrice.commandes')->with('success', 'Commande supprimée.');
+    }
+
+    /**
+     * Page d'enregistrement des services fournis.
+     */
+    public function showServices()
+    {
+        $superviseur = Auth::user();
+        $services = ServiceFourni::where('superviseur_id', $superviseur->id)
+            ->whereDate('date', now()->toDateString())
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('directrice.services', compact('services'))
+            ->with('typesCaisse', self::TYPES_CAISSIERE);
+    }
+
+    /**
+     * Enregistrer un service fourni.
+     */
+    public function storeService(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_CAISSIERE)),
+            'montant' => 'required|numeric|min:0.01',
+            'details' => 'nullable|string|max:1000',
+        ]);
+
+        ServiceFourni::create([
+            'superviseur_id' => Auth::id(),
+            'type' => $request->type,
+            'montant' => $request->montant,
+            'details' => $request->details,
+            'date' => now()->toDateString(),
+        ]);
+
+        return redirect()->route('directrice.services')->with('success', 'Service enregistré.');
+    }
+
+    /**
+     * Supprimer un service.
+     */
+    public function destroyService($id)
+    {
+        $service = ServiceFourni::where('id', $id)
+            ->where('superviseur_id', Auth::id())
+            ->firstOrFail();
+        $service->delete();
+
+        return redirect()->route('directrice.services')->with('success', 'Service supprimé.');
+    }
+
+    /**
+     * Page des retraits.
+     */
+    public function showRetraits()
+    {
+        $superviseur = Auth::user();
+        $retraits = Retrait::where('superviseur_id', $superviseur->id)
+            ->whereDate('date', now()->toDateString())
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Somme en caisse du jour
+        $totalEntrees = Commande::where('superviseur_id', Auth::id())
+            ->whereDate('date', now()->toDateString())->sum('montant')
+            + ServiceFourni::where('superviseur_id', Auth::id())
+            ->whereDate('date', now()->toDateString())->sum('montant');
+        $totalSorties = Retrait::where('superviseur_id', Auth::id())
+            ->whereDate('date', now()->toDateString())->sum('montant');
+
+        return view('directrice.retraits', compact('retraits', 'totalEntrees', 'totalSorties'));
+    }
+
+    /**
+     * Enregistrer un retrait.
+     */
+    public function storeRetrait(Request $request)
+    {
+        $request->validate([
+            'montant' => 'required|numeric|min:0.01',
+            'motif' => 'required|string|max:1000',
+        ]);
+
+        // Vérifier que le montant ne dépasse pas la caisse
+        $totalEntrees = Commande::where('superviseur_id', Auth::id())
+            ->whereDate('date', now()->toDateString())->sum('montant')
+            + ServiceFourni::where('superviseur_id', Auth::id())
+            ->whereDate('date', now()->toDateString())->sum('montant');
+        $totalSorties = Retrait::where('superviseur_id', Auth::id())
+            ->whereDate('date', now()->toDateString())->sum('montant');
+        $disponible = $totalEntrees - $totalSorties;
+
+        if ($request->montant > $disponible) {
+            return redirect()->route('directrice.retraits')
+                ->with('error', 'Montant supérieur à la somme disponible (' . number_format($disponible, 2, ',', '') . ' FCFA).');
+        }
+
+        Retrait::create([
+            'superviseur_id' => Auth::id(),
+            'montant' => $request->montant,
+            'motif' => $request->motif,
+            'date' => now()->toDateString(),
+        ]);
+
+        return redirect()->route('directrice.retraits')->with('success', 'Retrait enregistré.');
+    }
+
+    /**
+     * Rapport journalier / hebdomadaire / mensuel / trimestriel / annuel.
+     */
+    public function rapport(Request $request)
+    {
+        $superviseur = Auth::user();
+        $periode = $request->input('periode', 'jour');
+        $dateDebut = $request->input('date_debut', now()->startOfMonth()->toDateString());
+        $dateFin = $request->input('date_fin', now()->toDateString());
+
+        $query = function ($type, $debut, $fin) use ($superviseur) {
+            return $type::where('superviseur_id', $superviseur->id)
+                ->whereBetween('date', [$debut, $fin]);
+        };
+
+        $totalCommandes = $query(Commande::class, $dateDebut, $dateFin)->sum('montant');
+        $totalServices = $query(ServiceFourni::class, $dateDebut, $dateFin)->sum('montant');
+        $totalRetraits = $query(Retrait::class, $dateDebut, $dateFin)->sum('montant');
+
+        $commandesParType = $query(Commande::class, $dateDebut, $dateFin)
+            ->get()->groupBy('type')->map(fn($c) => $c->sum('montant'));
+        $servicesParType = $query(ServiceFourni::class, $dateDebut, $dateFin)
+            ->get()->groupBy('type')->map(fn($s) => $s->sum('montant'));
+
+        // Détail journalier (pour graphique)
+        $detailJournalier = collect();
+        $debut = Carbon::parse($dateDebut);
+        $fin = Carbon::parse($dateFin);
+        while ($debut->lte($fin)) {
+            $jour = $debut->toDateString();
+            $entrees = Commande::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant')
+                + ServiceFourni::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
+            $sorties = Retrait::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
+            $detailJournalier->push([
+                'date' => $jour,
+                'label' => $debut->format('d/m'),
+                'entrees' => $entrees,
+                'sorties' => $sorties,
+            ]);
+            $debut->addDay();
+        }
+
+        return view('directrice.rapport', compact(
+            'periode', 'dateDebut', 'dateFin',
+            'totalCommandes', 'totalServices', 'totalRetraits',
+            'commandesParType', 'servicesParType', 'detailJournalier'
+        ))->with('typesCaisse', self::TYPES_CAISSIERE);
+    }
+
+    /**
+     * Export CSV du rapport.
+     */
+    public function exportCsv(Request $request)
+    {
+        $dateDebut = $request->input('date_debut', now()->startOfMonth()->toDateString());
+        $dateFin = $request->input('date_fin', now()->toDateString());
+        $superviseur = Auth::user();
+
+        $lignes = ["Type;Montant;Détails;Date"];
+
+        $commandes = Commande::where('superviseur_id', $superviseur->id)
+            ->whereBetween('date', [$dateDebut, $dateFin])->get();
+        foreach ($commandes as $c) {
+            $lignes[] = 'Commande - ' . self::TYPES_CAISSIERE[$c->type] ?? $c->type . ';' . $c->montant . ';' . ($c->details ?? '') . ';' . $c->date->format('d/m/Y');
+        }
+
+        $services = ServiceFourni::where('superviseur_id', $superviseur->id)
+            ->whereBetween('date', [$dateDebut, $dateFin])->get();
+        foreach ($services as $s) {
+            $lignes[] = 'Service - ' . self::TYPES_CAISSIERE[$s->type] ?? $s->type . ';' . $s->montant . ';' . ($s->details ?? '') . ';' . $s->date->format('d/m/Y');
+        }
+
+        $retraits = Retrait::where('superviseur_id', $superviseur->id)
+            ->whereBetween('date', [$dateDebut, $dateFin])->get();
+        foreach ($retraits as $r) {
+            $lignes[] = 'Retrait;' . $r->montant . ';' . $r->motif . ';' . $r->date->format('d/m/Y');
+        }
+
+        $contenu = implode("\n", $lignes) . "\n";
+
+        return response($contenu, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename=rapport_directrice_' . $dateDebut . '_' . $dateFin . '.csv',
+        ]);
+    }
+}

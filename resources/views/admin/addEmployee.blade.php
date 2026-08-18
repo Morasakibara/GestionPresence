@@ -78,6 +78,19 @@
                 </div>
             </div>
 
+            <div id="typeSuperviseurField" class="hidden">
+                <label for="type_superviseur" class="block text-sm font-medium text-gray-700">Type de superviseur:</label>
+                <div class="mt-1">
+                    <select id="type_superviseur" name="type_superviseur" class="input-field">
+                        <option value="">— Sélectionner un type —</option>
+                        <option value="directrice">Directrice (Caisse & Finances)</option>
+                        <option value="secretaire">Secrétaire (Services Photo)</option>
+                        <option value="gestionnaire_stock">Gestionnaire de Stock</option>
+                    </select>
+                </div>
+                <p class="mt-1 text-xs text-gray-400">Choisissez le module adapté au poste de ce superviseur.</p>
+            </div>
+
             <div class="pt-2">
                 <button type="submit" class="btn-gold w-full">
                     <svg class="-ml-1 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -111,11 +124,14 @@
     function toggleEquipeField() {
         var superviseurCheckbox = document.getElementById("role_superviseur");
         var equipeField = document.getElementById("equipeField");
+        var typeField = document.getElementById("typeSuperviseurField");
 
         if (superviseurCheckbox.checked) {
             equipeField.classList.remove("hidden");
+            typeField.classList.remove("hidden");
         } else {
             equipeField.classList.add("hidden");
+            typeField.classList.add("hidden");
         }
     }
 </script>

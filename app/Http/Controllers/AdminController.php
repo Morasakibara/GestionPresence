@@ -118,9 +118,9 @@ class AdminController extends Controller
             'role.*' => 'required|string|in:Employer,Superviseur',
         ];
 
-        // Ajout de validation pour le champ 'equipe' seulement si le rôle est 'Superviseur'
         if (in_array('Superviseur', $data['role'])) {
             $rules['equipe'] = 'required|string|max:255';
+            $rules['type_superviseur'] = 'nullable|string|in:directrice,secretaire,gestionnaire_stock';
         }
 
         return Validator::make($data, $rules);
@@ -154,6 +154,7 @@ class AdminController extends Controller
             Superviseur::create([
                 'id' => $user->id,
                 'equipe' => $data['equipe'],
+                'type_superviseur' => $data['type_superviseur'] ?? null,
             ]);
         }
 
@@ -742,5 +743,51 @@ public function exportReport(Request $request)
     public function showProfileForm()
     {
         return view('admin.profile', ['user' => auth()->user()]);
+    }
+
+    /**
+     * Vue admin : état de la caisse (directrice + secrétaire)
+     */
+    public function etatCaisse()
+    {
+        $today = now()->toDateString();
+
+        // Récupérer tous les superviseurs spécialisés
+        $directrice = \App\Models\Superviseur::where('type_superviseur', 'directrice')->first();
+        $secretaire = \App\Models\Superviseur::where('type_superviseur', 'secretaire')->first();
+
+        $data = [];
+        foreach (['directrice' => $directrice, 'secretaire' => $secretaire] as $label => $sup) {
+            if (!$sup) continue;
+            $totalCommandes = \App\Models\Commande::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
+            $totalServices = \App\Models\ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
+            $totalRetraits = \App\Models\Retrait::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
+            $data[$label] = [
+                'nom' => \App\Models\Utilisateur::find($sup->id)->nom ?? $label,
+                'entrees' => $totalCommandes + $totalServices,
+                'sorties' => $totalRetraits,
+                'chiffre_affaire' => $totalCommandes + $totalServices - $totalRetraits,
+            ];
+        }
+
+        return view('admin.etat_caisse', compact('data'));
+    }
+
+    /**
+     * Vue admin : état du stock (gestionnaire)
+     */
+    public function etatStock()
+    {
+        $gestionnaire = \App\Models\Superviseur::where('type_superviseur', 'gestionnaire_stock')->first();
+
+        $tshirts = $papiers = collect();
+        $totalTshirts = 0;
+        if ($gestionnaire) {
+            $tshirts = \App\Models\StockTshirt::where('superviseur_id', $gestionnaire->id)->get();
+            $papiers = \App\Models\StockPapier::where('superviseur_id', $gestionnaire->id)->get();
+            $totalTshirts = $tshirts->sum('quantite');
+        }
+
+        return view('admin.etat_stock', compact('tshirts', 'papiers', 'totalTshirts'));
     }
 }

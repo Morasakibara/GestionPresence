@@ -15,6 +15,9 @@ use App\Http\Controllers\PreController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\GeoLocationController;
 use App\Http\Controllers\WorkplaceLocationController;
+use App\Http\Controllers\DirectriceController;
+use App\Http\Controllers\SecretaireController;
+use App\Http\Controllers\GestionnaireStockController;
 
 //use Illuminate\Support\Facades\Auth;
 
@@ -52,7 +55,7 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('logout', [LoginController::class, 'logout'])->name('logouts');
 
 
-//ici on a les route permettant de gerer les fonctioanalite de l'Admin
+//ici on a les route permettant de gerer les fonctionalités de l'Admin
 Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('add-employee', [AdminController::class, 'showAddEmployeeForm'])->name('addEmployee');
@@ -114,6 +117,49 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::post('remove-member/{id}', [SuperviseurController::class, 'removeMemberFromTeam'])->name('superviseur.removeMemberFromTeam');
     });
 
+    // ===================== DIRECTRICE (Superviseur1) =====================
+    Route::prefix('directrice')->name('directrice.')->group(function () {
+        Route::get('/dashboard', [DirectriceController::class, 'dashboard'])->name('dashboard');
+        Route::get('/commandes', [DirectriceController::class, 'showCommandes'])->name('commandes');
+        Route::post('/commandes', [DirectriceController::class, 'storeCommande'])->name('commandes.store');
+        Route::delete('/commandes/{id}', [DirectriceController::class, 'destroyCommande'])->name('commandes.destroy');
+        Route::get('/services', [DirectriceController::class, 'showServices'])->name('services');
+        Route::post('/services', [DirectriceController::class, 'storeService'])->name('services.store');
+        Route::delete('/services/{id}', [DirectriceController::class, 'destroyService'])->name('services.destroy');
+        Route::get('/retraits', [DirectriceController::class, 'showRetraits'])->name('retraits');
+        Route::post('/retraits', [DirectriceController::class, 'storeRetrait'])->name('retraits.store');
+        Route::get('/rapport', [DirectriceController::class, 'rapport'])->name('rapport');
+        Route::get('/rapport/export', [DirectriceController::class, 'exportCsv'])->name('rapport.export');
+    });
+
+    // ===================== SECRETAIRE (SuperviseurS) =====================
+    Route::prefix('secretaire')->name('secretaire.')->group(function () {
+        Route::get('/dashboard', [SecretaireController::class, 'dashboard'])->name('dashboard');
+        Route::get('/commandes', [SecretaireController::class, 'showCommandes'])->name('commandes');
+        Route::post('/commandes', [SecretaireController::class, 'storeCommande'])->name('commandes.store');
+        Route::delete('/commandes/{id}', [SecretaireController::class, 'destroyCommande'])->name('commandes.destroy');
+        Route::get('/services', [SecretaireController::class, 'showServices'])->name('services');
+        Route::post('/services', [SecretaireController::class, 'storeService'])->name('services.store');
+        Route::delete('/services/{id}', [SecretaireController::class, 'destroyService'])->name('services.destroy');
+        Route::get('/retraits', [SecretaireController::class, 'showRetraits'])->name('retraits');
+        Route::post('/retraits', [SecretaireController::class, 'storeRetrait'])->name('retraits.store');
+        Route::get('/rapport', [SecretaireController::class, 'rapport'])->name('rapport');
+        Route::get('/rapport/export', [SecretaireController::class, 'exportCsv'])->name('rapport.export');
+    });
+
+    // ===================== GESTIONNAIRE DE STOCK (Superviseur3) =====================
+    Route::prefix('gestionnaire')->name('gestionnaire.')->group(function () {
+        Route::get('/dashboard', [GestionnaireStockController::class, 'dashboard'])->name('dashboard');
+        Route::get('/tshirts', [GestionnaireStockController::class, 'showTshirts'])->name('tshirts');
+        Route::post('/tshirts', [GestionnaireStockController::class, 'storeTshirt'])->name('tshirts.store');
+        Route::put('/tshirts/{id}', [GestionnaireStockController::class, 'updateTshirt'])->name('tshirts.update');
+        Route::delete('/tshirts/{id}', [GestionnaireStockController::class, 'destroyTshirt'])->name('tshirts.destroy');
+        Route::get('/papier', [GestionnaireStockController::class, 'showPapier'])->name('papier');
+        Route::post('/papier', [GestionnaireStockController::class, 'storePapier'])->name('papier.store');
+        Route::put('/papier/{id}', [GestionnaireStockController::class, 'updatePapier'])->name('papier.update');
+        Route::delete('/papier/{id}', [GestionnaireStockController::class, 'destroyPapier'])->name('papier.destroy');
+    });
+
     // Shared routes for both user types
     Route::get('/presence', [PreController::class, 'index'])->name('presence.index');
     Route::post('/mark-arrival', [PreController::class, 'markArrival'])->name('presence.arrival');
@@ -128,6 +174,12 @@ Route::get('/role-switch', function() {
 })->name('role.switch');
 
 // Routes de notification
+// ===================== ADMIN DASHBOARD EXTENSIONS =====================
+Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/caisse', [AdminController::class, 'etatCaisse'])->name('caisse');
+    Route::get('/stock', [AdminController::class, 'etatStock'])->name('stock');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');

@@ -35,6 +35,8 @@ class DatabaseSeeder extends Seeder
             MarquerSeeder::class,
             RapportSeeder::class,
             WorkplaceLocationSeeder::class,
+            SuperviseursSpecialisesSeeder::class,
+            StockExempleSeeder::class,
         ]);
     }
 }

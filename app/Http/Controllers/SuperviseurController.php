@@ -22,6 +22,16 @@ class SuperviseurController extends Controller
         // Récupérer les informations d'équipe du superviseur
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
 
+        // Rediriger les superviseurs spécialisés vers leur dashboard dédié
+        if ($superviseurInfo && $superviseurInfo->type_superviseur) {
+            return match($superviseurInfo->type_superviseur) {
+                'directrice' => redirect()->route('directrice.dashboard'),
+                'secretaire' => redirect()->route('secretaire.dashboard'),
+                'gestionnaire_stock' => redirect()->route('gestionnaire.dashboard'),
+                default => redirect()->route('directrice.dashboard'),
+            };
+        }
+
         // Obtenir le nom de l'équipe
         $equipe = $superviseurInfo ? $superviseurInfo->equipe : 'Non définie';
 
