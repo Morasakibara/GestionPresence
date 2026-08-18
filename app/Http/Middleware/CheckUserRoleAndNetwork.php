@@ -51,13 +51,20 @@ class CheckUserRoleAndNetwork
                 return redirect('/user/dashboard');
             }
         }
-        // Pour le rôle Superviseur
+        // Pour le rôle Superviseur — autoriser les préfixes superviseur + postes spécialisés
         elseif ($currentRole === 'Superviseur') {
-            // Si l'URL ne commence PAS par 'superviseur' et n'est pas déjà '/superviseur/supdashboard'
-            if (!Str::startsWith($path, 'superviseur') && $path !== 'superviseur/supdashboard') {
+            $allowedPrefixes = ['superviseur', 'directrice', 'secretaire', 'gestionnaire'];
+            $allowed = false;
+            foreach ($allowedPrefixes as $prefix) {
+                if (Str::startsWith($path, $prefix)) {
+                    $allowed = true;
+                    break;
+                }
+            }
+            if (!$allowed) {
                 return redirect('/superviseur/supdashboard');
             }
-}
+        }
 
         // (Optionnel) Vérification du réseau Wi-Fi (activer si nécessaire)
         /*

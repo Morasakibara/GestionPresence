@@ -66,6 +66,27 @@ class AdminController extends Controller
     $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIdsFiltre, 6);
     $statsEvolution = \App\Services\EvaluationService::statsEvolution($evolutionEvaluations);
 
+    // ── Graphique CA consolidé (7 derniers jours) ──
+    $caisseLabels = [];
+    $caisseEntrees = [];
+    $caisseSorties = [];
+    for ($i = 6; $i >= 0; $i--) {
+        $jour = now()->subDays($i)->toDateString();
+        $caisseLabels[] = now()->subDays($i)->format('d/m');
+        $entreesJour = 0;
+        $sortiesJour = 0;
+        foreach (['directrice', 'secretaire'] as $type) {
+            $sup = Superviseur::where('type_superviseur', $type)->first();
+            if (!$sup) continue;
+            $entreesJour += (float) \App\Models\Commande::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant')
+                + (float) \App\Models\ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
+            $sortiesJour += (float) \App\Models\Retrait::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
+        }
+        $caisseEntrees[] = $entreesJour;
+        $caisseSorties[] = $sortiesJour;
+    }
+    $caisseChart = ['labels' => $caisseLabels, 'entrees' => $caisseEntrees, 'sorties' => $caisseSorties];
+
     // ── État des caisses (directrice + secrétaire) ──
     $today = now()->toDateString();
     $caisses = [];
@@ -102,7 +123,8 @@ class AdminController extends Controller
         'monthlyPresences', 'monthlyAbsences', 'monthlyLates',
         'evolutionEvaluations', 'statsEvolution',
         'equipes', 'equipeSelectionnee',
-        'caisses', 'stockTshirts', 'stockPapiers',
+        'caisses', 'caisseChart',
+        'stockTshirts', 'stockPapiers',
         'totalStockTshirts', 'alertesStock'
     ));
 }
@@ -345,6 +367,7 @@ public function generateReport(Request $request)
 }
 
 // Exporter le rapport en PDF
+/** @param \Illuminate\Support\Collection|array $reportData */
 public function exportToPDF($reportData, ?string $startDate = null, ?string $endDate = null)
 {
     // Les données arrivent déjà enrichies (reportData), on les passe telles quelles au PDF.
@@ -712,7 +735,7 @@ public function exportReport(Request $request)
     // Validation des données
     $validator = Validator::make($request->all(), [
         'nom' => 'required|string|max:255',
-        'email' => 'required|string|email|max:255|unique:users,email,' . auth()->id(),
+        'email' => 'required|string|email|max:255|unique:users,email,' . Auth::id(),
         'password' => 'nullable|string|min:8|confirmed',
         'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
     ]);

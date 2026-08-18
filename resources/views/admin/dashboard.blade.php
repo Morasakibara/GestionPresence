@@ -216,7 +216,7 @@
         </div>
         <a href="{{ route('admin.caisse') }}" class="text-sm font-medium text-pharaoh-gold hover:text-pharaoh-bronze">Voir tout →</a>
     </div>
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-4">
         @foreach($caisses as $label => $c)
             <div class="pharaoh-card p-5">
                 <div class="flex items-center gap-3 mb-3">
@@ -232,6 +232,11 @@
                 </div>
             </div>
         @endforeach
+    </div>
+    <!-- Graphique CA consolidé 7 jours -->
+    <div class="pharaoh-card p-6">
+        <h3 class="text-base font-semibold text-[#080808] mb-3">Chiffre d'affaire — 7 derniers jours</h3>
+        <div class="h-48"><canvas id="caisseConsolideChart"></canvas></div>
     </div>
 </div>
 @endif
@@ -426,6 +431,28 @@
             a.click();
             document.body.removeChild(a);
         };
+    });
+
+        // Graphique CA consolidé 7 jours
+        const ctxCaisse = document.getElementById('caisseConsolideChart');
+        if (ctxCaisse) {
+            const caisseData = @json($caisseChart ?? ['labels' => [], 'entrees' => [], 'sorties' => []]);
+            new Chart(ctxCaisse, {
+                type: 'bar',
+                data: {
+                    labels: caisseData.labels,
+                    datasets: [
+                        { label: 'Entrées', data: caisseData.entrees, backgroundColor: '#2E8B57', borderRadius: 4 },
+                        { label: 'Sorties', data: caisseData.sorties, backgroundColor: '#D64545', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() + ' FCFA' } } },
+                    plugins: { legend: { position: 'top' } }
+                }
+            });
+        }
     });
 </script>
 @endpush
