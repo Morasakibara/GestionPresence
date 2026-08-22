@@ -22,6 +22,12 @@
     <a href="{{ route('admin.conges.resume.pdf') }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-pharaoh-gold px-4 py-2 text-sm font-semibold text-white hover:bg-pharaoh-gold-light transition-colors">
         📊 Résumé PDF
     </a>
+    <a href="{{ route('admin.conges.export.pivot', ['mois' => now()->format('Y-m')]) }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-emerald-500 bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 transition-colors">
+        📊 Excel Pivot
+    </a>
+    <a href="{{ route('admin.conges.export.liste') }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-blue-500 bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 transition-colors">
+        📋 Excel Liste
+    </a>
 </div>
 
 @php

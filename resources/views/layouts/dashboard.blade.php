@@ -24,7 +24,7 @@
     </div>
 
     <div class="min-h-full relative z-[1]">
-        <nav class="bg-[#080808] shadow-lg">
+        <nav class="bg-[#080808] shadow-lg sticky top-0 z-50">
             <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center">
@@ -33,7 +33,7 @@
                         </div>
                         <div class="hidden md:block">
                             <div class="flex items-center ml-10 space-x-1">
-                                {!! ltrim($__env->yieldContent('navigation')) !!}
+                                {!! preg_replace('/^[\s\r\n]+/', '', $__env->yieldContent('navigation')) !!}
                             </div>
                         </div>
                     </div>
@@ -371,7 +371,7 @@
             <!-- Mobile menu, show/hide based on menu state. -->
             <div class="hidden mobile-menu md:hidden" id="mobile-menu">
                 <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                    {!! ltrim($__env->yieldContent('mobile-navigation')) !!}
+                    {!! preg_replace('/^[\s\r\n]+/', '', $__env->yieldContent('mobile-navigation')) !!}
                 </div>
                 <div class="pt-4 pb-3 border-t border-white/10">
                     <div class="flex items-center px-5">
@@ -394,9 +394,14 @@
             </div>
         </nav>
 
-        <header class="bg-white/80 shadow-sm backdrop-blur-md">
+        <header class="bg-white/80 shadow-sm backdrop-blur-md sticky top-16 z-40">
             <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <h1 class="text-3xl font-bold tracking-tight text-[#080808]">{!! ltrim($__env->yieldContent('header')) !!}</h1>
+                <div class="flex items-center gap-3">
+                    <button onclick="history.back()" class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" title="Retour">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    </button>
+                    <h1 class="text-3xl font-bold tracking-tight text-[#080808]">{!! preg_replace('/^[\s\r\n]+/', '', $__env->yieldContent('header')) !!}</h1>
+                </div>
             </div>
         </header>
 
@@ -456,7 +461,33 @@
     });
     </script>
 
+    <!-- Dark Mode Toggle Button -->
+    <button id="darkModeToggle" onclick="toggleDarkMode()" class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-12 h-12 rounded-full bg-[#080808] text-pharaoh-gold shadow-lg hover:scale-110 transition-transform" title="Mode sombre">
+        <svg id="sunIcon" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        <svg id="moonIcon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+    </button>
+
     <!-- Additional Scripts -->
     @stack('scripts')
+
+    <script>
+    function toggleDarkMode() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        document.getElementById('sunIcon').classList.toggle('hidden', !isDark);
+        document.getElementById('moonIcon').classList.toggle('hidden', isDark);
+    }
+    // Init theme
+    (function() {
+        const saved = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', saved);
+        if (saved === 'dark') {
+            document.getElementById('sunIcon')?.classList.remove('hidden');
+            document.getElementById('moonIcon')?.classList.add('hidden');
+        }
+    })();
+    </script>
 </body>
 </html>

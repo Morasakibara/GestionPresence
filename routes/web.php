@@ -211,6 +211,12 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
         return \App\Services\CongePdfService::resume()->download('resume_conges.pdf');
     })->name('conges.resume.pdf');
     Route::get('/conges/calendar/events', [App\Http\Controllers\AdminCongeController::class, 'calendarEvents'])->name('conges.calendar.events');
+    Route::get('/conges/export/pivot', function (\Illuminate\Http\Request $request) {
+        return \App\Services\CongeExportService::pivot($request->input('mois'));
+    })->name('conges.export.pivot');
+    Route::get('/conges/export/liste', function (\Illuminate\Http\Request $request) {
+        return \App\Services\CongeExportService::liste($request->input('statut'), $request->input('equipe'));
+    })->name('conges.export.liste');
 });
 
 Route::middleware('auth')->group(function () {

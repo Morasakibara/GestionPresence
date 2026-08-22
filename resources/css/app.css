@@ -238,3 +238,62 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================================================
+   Mode Sombre — toggle via data-theme="dark" sur <html>
+   ============================================================ */
+html[data-theme="dark"] body,
+html[data-theme="dark"] {
+  background-color: #111111 !important;
+  color: #e5e5e5 !important;
+}
+html[data-theme="dark"] .bg-white,
+html[data-theme="dark"] [class*="bg-white"] {
+  background-color: #1a1a1a !important;
+}
+html[data-theme="dark"] .bg-gray-50,
+html[data-theme="dark"] .bg-gray-100,
+html[data-theme="dark"] [class*="bg-gray-50"],
+html[data-theme="dark"] [class*="bg-gray-100"] {
+  background-color: #1a1a1a !important;
+}
+html[data-theme="dark"] [class*="bg-\\[\\#F8F8F8\\]"] {
+  background-color: #111111 !important;
+}
+html[data-theme="dark"] .text-gray-900,
+html[data-theme="dark"] [class*="text-\\[\\#080808\\]"] {
+  color: #f5f5f5 !important;
+}
+html[data-theme="dark"] .text-gray-700,
+html[data-theme="dark"] .text-gray-600,
+html[data-theme="dark"] .text-gray-500 {
+  color: #a0a0a0 !important;
+}
+html[data-theme="dark"] .border-gray-200,
+html[data-theme="dark"] .border-gray-300,
+html[data-theme="dark"] [class*="border-gray"] {
+  border-color: #333 !important;
+}
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .form-card {
+  background-color: #1a1a1a !important;
+  border-color: #333 !important;
+}
+html[data-theme="dark"] .input-field,
+html[data-theme="dark"] .select-field,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] input:not([type="radio"]):not([type="hidden"]),
+html[data-theme="dark"] select {
+  background-color: #222 !important;
+  border-color: #444 !important;
+  color: #e5e5e5 !important;
+}
+html[data-theme="dark"] table,
+html[data-theme="dark"] td,
+html[data-theme="dark"] th {
+  border-color: #333 !important;
+}
+html[data-theme="dark"] thead tr:not([class*="bg-\\[\\#080808\\]"]) {
+  background-color: #1a1a1a !important;
+}
