@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between"><span>Services Photo — Secrétaire</span></div>
+<div class="flex items-center justify-between"><span> Gestion Des Services Photo</span></div>
 @endsection
 
 @section('navigation')
@@ -24,7 +24,7 @@
 <div class="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
     @if(session('success'))<div class="alert alert-success"><svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>{{ session('success') }}</span></div>@endif
 
-    <h1 class="page-heading-title mb-6">Enregistrer un service photo</h1>
+    <h1 class="page-heading-title mb-6">Enregistrer un nouveau service</h1>
 
     <div class="pharaoh-card p-6 mb-6">
         <form action="{{ route('secretaire.services.store') }}" method="POST" class="space-y-4">
