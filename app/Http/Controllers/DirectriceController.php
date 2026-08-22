@@ -34,40 +34,53 @@ class DirectriceController extends Controller
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
         $today = now()->toDateString();
 
-        // Données du jour
-        $commandesJour = Commande::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', $today)
-            ->get();
-        $servicesJour = ServiceFourni::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', $today)
-            ->get();
-        $retraitsJour = Retrait::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', $today)
-            ->get();
-
-        $totalCommandes = $commandesJour->sum('montant');
-        $totalServices = $servicesJour->sum('montant');
-        $totalRetraits = $retraitsJour->sum('montant');
+        // ── CAISSE CUMULATIVE (toutes périodes confondues) ──
+        $totalCommandes = Commande::where('superviseur_id', $superviseur->id)->sum('montant');
+        $totalServices = ServiceFourni::where('superviseur_id', $superviseur->id)->sum('montant');
+        $totalRetraits = Retrait::where('superviseur_id', $superviseur->id)->sum('montant');
         $sommeEnCaisse = $totalCommandes + $totalServices - $totalRetraits;
 
-        // Répartition par type
+        // ── Données du jour (pour graphiques) ──
+        $commandesJour = Commande::where('superviseur_id', $superviseur->id)
+            ->whereDate('date', $today)->get();
+        $servicesJour = ServiceFourni::where('superviseur_id', $superviseur->id)
+            ->whereDate('date', $today)->get();
+        $retraitsJour = Retrait::where('superviseur_id', $superviseur->id)
+            ->whereDate('date', $today)->get();
+
+        // Répartition par type (jour)
         $commandesParType = $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant'));
         $servicesParType = $servicesJour->groupBy('type')->map(fn($s) => $s->sum('montant'));
 
         // Dernières transactions
-        $derniersCommandes = $commandesJour->sortByDesc('created_at')->take(5);
-        $derniersServices = $servicesJour->sortByDesc('created_at')->take(5);
-        $derniersRetraits = $retraitsJour->sortByDesc('created_at')->take(5);
+        $derniersCommandes = Commande::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
+        $derniersServices = ServiceFourni::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
+        $derniersRetraits = Retrait::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
 
-        // Reste à encaisser (commandes partielles + à payer)
-        $resteAEncaisser = Commande::where('superviseur_id', $superviseur->id)
+        // ── Reste à encaisser (TOUTES les commandes non payées, pas juste aujourd'hui) ──
+        $commandesImpayees = Commande::where('superviseur_id', $superviseur->id)
             ->where('statut_paiement', '!=', 'paye')
-            ->sum(DB::raw('montant - montant_paye'));
+            ->orderByDesc('created_at')
+            ->get();
+        $resteAEncaisser = $commandesImpayees->sum(fn($c) => (float) $c->montant - (float) $c->montant_paye);
 
         // Montant encaissé aujourd'hui
         $montantEncaisse = Commande::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', $today)
-            ->sum('montant_paye');
+            ->whereDate('date', $today)->sum('montant_paye');
+
+        // ── Données graphique 7 derniers jours ──
+        $labels7j = [];
+        $dataEntrees7j = [];
+        $dataSorties7j = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $jour = now()->subDays($i)->toDateString();
+            $labels7j[] = now()->subDays($i)->format('d/m');
+            $entrees = Commande::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant')
+                + ServiceFourni::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
+            $sorties = Retrait::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
+            $dataEntrees7j[] = (float) $entrees;
+            $dataSorties7j[] = (float) $sorties;
+        }
 
         $typesCaisse = self::TYPES_CAISSIERE;
 
@@ -76,7 +89,8 @@ class DirectriceController extends Controller
             'sommeEnCaisse', 'resteAEncaisser', 'montantEncaisse',
             'commandesParType', 'servicesParType',
             'derniersCommandes', 'derniersServices', 'derniersRetraits',
-            'typesCaisse'
+            'typesCaisse', 'commandesImpayees',
+            'labels7j', 'dataEntrees7j', 'dataSorties7j'
         ));
     }
 
@@ -87,7 +101,6 @@ class DirectriceController extends Controller
     {
         $superviseur = Auth::user();
         $commandes = Commande::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', now()->toDateString())
             ->orderByDesc('created_at')
             ->get();
 
@@ -132,6 +145,45 @@ class DirectriceController extends Controller
         AuditService::created('directrice', "Commande {$request->type} de {$montant} FCFA ({$statut})", $cmd->toArray(), $request);
 
         return redirect()->route('directrice.commandes')->with('success', 'Commande enregistrée.');
+    }
+
+    /**
+     * Encaisser le reste d'une commande impayée (depuis la modal du dashboard).
+     */
+    public function encaisserReste(Request $request)
+    {
+        $request->validate([
+            'commande_id' => 'required|integer|exists:commandes,id',
+            'montant_verse' => 'required|numeric|min:0.01',
+        ]);
+
+        $commande = Commande::where('id', $request->commande_id)
+            ->where('superviseur_id', Auth::id())
+            ->firstOrFail();
+
+        $reste = (float) $commande->montant - (float) $commande->montant_paye;
+        if ($request->montant_verse > $reste) {
+            return redirect()->route('directrice.dashboard')
+                ->with('error', 'Montant supérieur au reste à encaisser (' . number_format($reste, 0, ',', '') . ' FCFA).');
+        }
+
+        $newMontantPaye = (float) $commande->montant_paye + (float) $request->montant_verse;
+        $newStatut = $newMontantPaye >= (float) $commande->montant ? 'paye' : 'partiel';
+
+        AuditService::updated('directrice', "Encaissement de {$request->montant_verse} FCFA sur commande #{$commande->id}",
+            ['montant_paye' => $commande->montant_paye, 'statut_paiement' => $commande->statut_paiement],
+            ['montant_paye' => $newMontantPaye, 'statut_paiement' => $newStatut], $request);
+
+        $commande->update([
+            'montant_paye' => $newMontantPaye,
+            'statut_paiement' => $newStatut,
+        ]);
+
+        $msg = $newStatut === 'paye'
+            ? "Commande #{$commande->id} entièrement payée."
+            : "Reste de {$request->montant_verse} FCFA encaissé sur commande #{$commande->id}.";
+
+        return redirect()->route('directrice.dashboard')->with('success', $msg);
     }
 
     /**

@@ -32,6 +32,13 @@ class SecretaireController extends Controller
         $superviseur = Auth::user();
         $today = now()->toDateString();
 
+        // ── CAISSE CUMULATIVE (toutes périodes confondues) ──
+        $totalCommandes = Commande::where('superviseur_id', $superviseur->id)->sum('montant_paye');
+        $totalServices = ServiceFourni::where('superviseur_id', $superviseur->id)->sum('montant');
+        $totalRetraits = Retrait::where('superviseur_id', $superviseur->id)->sum('montant');
+        $sommeEnCaisse = $totalCommandes + $totalServices - $totalRetraits;
+
+        // ── Données du jour (pour graphiques) ──
         $commandesJour = Commande::where('superviseur_id', $superviseur->id)
             ->whereDate('date', $today)->get();
         $servicesJour = ServiceFourni::where('superviseur_id', $superviseur->id)
@@ -39,27 +46,40 @@ class SecretaireController extends Controller
         $retraitsJour = Retrait::where('superviseur_id', $superviseur->id)
             ->whereDate('date', $today)->get();
 
-        // La caisse ne comptabilise que ce qui est Effectivement payé
-        $totalCommandes = $commandesJour->sum('montant_paye');
-        $totalServices = $servicesJour->sum('montant'); // services = toujours comptés
-        $totalRetraits = $retraitsJour->sum('montant');
-        $sommeEnCaisse = $totalCommandes + $totalServices - $totalRetraits;
-
-        // Montant restant à encaisser (commandes partielles + à payer)
-        $resteAEncaisser = $commandesJour->filter(fn($c) => $c->statut_paiement !== 'paye')
-            ->sum(fn($c) => (float) $c->montant - (float) $c->montant_paye);
-
         $commandesParType = $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant'));
         $servicesParType = $servicesJour->groupBy('type')->map(fn($s) => $s->sum('montant'));
 
-        $derniersCommandes = $commandesJour->sortByDesc('created_at')->take(5);
-        $derniersServices = $servicesJour->sortByDesc('created_at')->take(5);
-        $derniersRetraits = $retraitsJour->sortByDesc('created_at')->take(5);
+        // Dernières transactions (pas juste aujourd'hui)
+        $derniersCommandes = Commande::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
+        $derniersServices = ServiceFourni::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
+        $derniersRetraits = Retrait::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
+
+        // ── Reste à encaisser (TOUTES les commandes non payées) ──
+        $commandesImpayees = Commande::where('superviseur_id', $superviseur->id)
+            ->where('statut_paiement', '!=', 'paye')
+            ->orderByDesc('created_at')
+            ->get();
+        $resteAEncaisser = $commandesImpayees->sum(fn($c) => (float) $c->montant - (float) $c->montant_paye);
+
+        // ── Données graphique 7 derniers jours ──
+        $labels7j = [];
+        $dataEntrees7j = [];
+        $dataSorties7j = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $jour = now()->subDays($i)->toDateString();
+            $labels7j[] = now()->subDays($i)->format('d/m');
+            $entrees = Commande::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant_paye')
+                + ServiceFourni::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
+            $sorties = Retrait::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
+            $dataEntrees7j[] = (float) $entrees;
+            $dataSorties7j[] = (float) $sorties;
+        }
 
         return view('secretaire.dashboard', compact(
             'totalCommandes', 'totalServices', 'totalRetraits',
             'sommeEnCaisse', 'resteAEncaisser', 'commandesParType', 'servicesParType',
-            'derniersCommandes', 'derniersServices', 'derniersRetraits'
+            'derniersCommandes', 'derniersServices', 'derniersRetraits',
+            'commandesImpayees', 'labels7j', 'dataEntrees7j', 'dataSorties7j'
         ))->with('typesPhoto', self::TYPES_SECRETAIRE);
     }
 
@@ -70,7 +90,6 @@ class SecretaireController extends Controller
     {
         $superviseur = Auth::user();
         $commandes = Commande::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', now()->toDateString())
             ->orderByDesc('created_at')->get();
 
         return view('secretaire.commandes', compact('commandes'))
@@ -126,6 +145,45 @@ class SecretaireController extends Controller
         };
 
         return redirect()->route('secretaire.commandes')->with('success', $msg);
+    }
+
+    /**
+     * Encaisser le reste d'une commande impayée (depuis la modal du dashboard).
+     */
+    public function encaisserReste(Request $request)
+    {
+        $request->validate([
+            'commande_id' => 'required|integer|exists:commandes,id',
+            'montant_verse' => 'required|numeric|min:0.01',
+        ]);
+
+        $commande = Commande::where('id', $request->commande_id)
+            ->where('superviseur_id', Auth::id())
+            ->firstOrFail();
+
+        $reste = (float) $commande->montant - (float) $commande->montant_paye;
+        if ($request->montant_verse > $reste) {
+            return redirect()->route('secretaire.dashboard')
+                ->with('error', 'Montant supérieur au reste à encaisser (' . number_format($reste, 0, ',', '') . ' FCFA).');
+        }
+
+        $newMontantPaye = (float) $commande->montant_paye + (float) $request->montant_verse;
+        $newStatut = $newMontantPaye >= (float) $commande->montant ? 'paye' : 'partiel';
+
+        AuditService::updated('secretaire', "Encaissement de {$request->montant_verse} FCFA sur commande #{$commande->id}",
+            ['montant_paye' => $commande->montant_paye, 'statut_paiement' => $commande->statut_paiement],
+            ['montant_paye' => $newMontantPaye, 'statut_paiement' => $newStatut], $request);
+
+        $commande->update([
+            'montant_paye' => $newMontantPaye,
+            'statut_paiement' => $newStatut,
+        ]);
+
+        $msg = $newStatut === 'paye'
+            ? "Commande #{$commande->id} entièrement payée."
+            : "Reste de {$request->montant_verse} FCFA encaissé sur commande #{$commande->id}.";
+
+        return redirect()->route('secretaire.dashboard')->with('success', $msg);
     }
 
     public function editCommande($id)

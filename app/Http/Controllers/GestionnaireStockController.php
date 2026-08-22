@@ -7,6 +7,7 @@ use App\Models\StockPapier;
 use App\Models\Superviseur;
 use App\Models\Utilisateur;
 use App\Notifications\StockAlertNotification;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -102,11 +103,13 @@ class GestionnaireStockController extends Controller
             ->where('superviseur_id', Auth::id())->firstOrFail();
 
         $seuil = $request->seuil_alerte ?? $tshirt->seuil_alerte;
+        $old = ['quantite' => $tshirt->quantite];
         $tshirt->update([
             'quantite' => $request->quantite,
             'seuil_alerte' => $seuil,
         ]);
         $this->alerteSiSeuilFracchie(Auth::id(), 'tshirt', $tshirt->couleur . ' ' . $tshirt->taille, $request->quantite, $seuil);
+        AuditService::updated('stock', "T-shirt {$tshirt->couleur} {$tshirt->taille} mis à jour", $old, ['quantite' => $request->quantite], $request);
 
         return redirect()->route('gestionnaire.tshirts')->with('success', 'Stock mis à jour.');
     }
@@ -115,6 +118,7 @@ class GestionnaireStockController extends Controller
     {
         $tshirt = StockTshirt::where('id', $id)
             ->where('superviseur_id', Auth::id())->firstOrFail();
+        AuditService::deleted('stock', "T-shirt {$tshirt->couleur} {$tshirt->taille} supprimé", $tshirt->toArray());
         $tshirt->delete();
 
         return redirect()->route('gestionnaire.tshirts')->with('success', 'Entrée supprimée.');
