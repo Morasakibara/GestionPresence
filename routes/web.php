@@ -210,6 +210,7 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::get('/conges/resume/pdf', function () {
         return \App\Services\CongePdfService::resume()->download('resume_conges.pdf');
     })->name('conges.resume.pdf');
+    Route::get('/conges/calendar/events', [App\Http\Controllers\AdminCongeController::class, 'calendarEvents'])->name('conges.calendar.events');
 });
 
 Route::middleware('auth')->group(function () {

@@ -13,22 +13,49 @@
 <a href="{{ route('directrice.retraits') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Retraits</a>
 @endsection
 
+@section('mobile-navigation')
+<a href="{{ route('directrice.dashboard') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Dashboard</a>
+<a href="{{ route('directrice.commandes') }}" class="block rounded-md bg-pharaoh-gold px-3 py-2 text-base font-medium text-white">Commandes</a>
+@endsection
+
 @section('content')
+
+@php
+    $montantTotal = $commande->montant;
+    $montantPaye = $commande->montant_paye ?? 0;
+    $reste = $montantTotal - $montantPaye;
+@endphp
 
 <div class="flex justify-center">
     <div class="form-card w-full max-w-lg">
         <div class="form-card-header">
             <h2 class="form-card-title">Modifier la commande</h2>
-            <p class="form-card-subtitle">Mise à jour du type, montant et paiement</p>
+            <p class="form-card-subtitle">Mise à jour du paiement — Montant total fixé</p>
         </div>
 
         @if ($errors->any())
-        <div class="bg-red-600/10 border-2 border-red-600 text-red-600 px-4 py-3 rounded-md mb-6">
+        <div class="alert alert-danger mb-6">
             <ul class="list-disc list-inside text-sm">
                 @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
             </ul>
         </div>
         @endif
+
+        <!-- Résumé commande -->
+        <div class="mb-6 rounded-xl border-2 border-pharaoh-gold/30 bg-[#FBF3E6] p-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-600">Montant total</span>
+                <span class="text-lg font-bold text-[#080808]">{{ number_format($montantTotal, 0, ',', ' ') }} FCFA</span>
+            </div>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-600">Déjà payé</span>
+                <span class="text-lg font-bold text-emerald-600">{{ number_format($montantPaye, 0, ',', ' ') }} FCFA</span>
+            </div>
+            <div class="border-t border-pharaoh-gold/30 pt-2 flex items-center justify-between">
+                <span class="text-sm font-bold text-gray-800">Reste à payer</span>
+                <span class="text-lg font-bold {{ $reste > 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format($reste, 0, ',', ' ') }} FCFA</span>
+            </div>
+        </div>
 
         <form method="POST" action="{{ route('directrice.commandes.update', $commande->id) }}" class="space-y-5">
             @csrf
@@ -44,8 +71,10 @@
             </div>
 
             <div class="form-group">
-                <label for="montant" class="input-label">Montant total (FCFA)</label>
-                <input type="number" id="montant" name="montant" min="1" step="any" value="{{ old('montant', $commande->montant) }}" required class="input-field">
+                <label class="input-label">Montant total (FCFA)</label>
+                <input type="text" value="{{ number_format($montantTotal, 0, ',', ' ') }} FCFA" readonly class="input-field bg-gray-100 cursor-not-allowed text-gray-600">
+                <input type="hidden" name="montant" value="{{ $montantTotal }}">
+                <p class="text-xs text-gray-400 mt-1">🔒 Le montant total ne peut plus être modifié</p>
             </div>
 
             <div class="form-group">
@@ -68,8 +97,14 @@
 
             <div class="form-group" id="montantPayeGroup">
                 <label for="montant_paye" class="input-label">Montant payé (FCFA)</label>
-                <input type="number" id="montant_paye" name="montant_paye" min="0" step="any" value="{{ old('montant_paye', $commande->montant_paye) }}" class="input-field">
-                <p class="text-xs text-gray-400 mt-1" id="resteInfo"></p>
+                <input type="number" id="montant_paye" name="montant_paye" min="0" max="{{ $montantTotal }}" step="any" value="{{ old('montant_paye', $montantPaye) }}" class="input-field">
+                <p class="text-xs text-gray-500 mt-1" id="resteInfo">
+                    @if($reste > 0)
+                        Reste à payer : <strong class="text-red-600">{{ number_format($reste, 0, ',', ' ') }} FCFA</strong>
+                    @else
+                        <span class="text-emerald-600 font-bold">✅ Solde complet</span>
+                    @endif
+                </p>
             </div>
 
             <div class="form-group">
@@ -91,34 +126,36 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const radios = document.querySelectorAll('input[name="statut_paiement"]');
-    const montantInput = document.getElementById('montant');
+    const montantTotal = {{ $montantTotal }};
     const montantPayeInput = document.getElementById('montant_paye');
     const montantPayeGroup = document.getElementById('montantPayeGroup');
     const resteInfo = document.getElementById('resteInfo');
 
     function updatePaiement() {
         const statut = document.querySelector('input[name="statut_paiement"]:checked')?.value;
-        const montant = parseFloat(montantInput.value) || 0;
         if (statut === 'paye') {
-            montantPayeInput.value = montant; montantPayeInput.readOnly = true;
+            montantPayeInput.value = montantTotal;
+            montantPayeInput.readOnly = true;
             montantPayeGroup.classList.add('opacity-60');
-            resteInfo.textContent = '';
+            resteInfo.innerHTML = '<span class="text-emerald-600 font-bold">✅ Solde complet</span>';
         } else if (statut === 'a_payer') {
-            montantPayeInput.value = 0; montantPayeInput.readOnly = true;
+            montantPayeInput.value = 0;
+            montantPayeInput.readOnly = true;
             montantPayeGroup.classList.add('opacity-60');
-            resteInfo.textContent = '';
+            resteInfo.innerHTML = 'Reste à payer : <strong class="text-red-600">' + montantTotal.toLocaleString('fr-FR') + ' FCFA</strong>';
         } else {
             montantPayeInput.readOnly = false;
             montantPayeGroup.classList.remove('opacity-60');
-            const reste = montant - (parseFloat(montantPayeInput.value) || 0);
-            resteInfo.textContent = reste > 0 ? 'Reste : ' + reste.toLocaleString('fr-FR') + ' FCFA' : '';
+            const paye = parseFloat(montantPayeInput.value) || 0;
+            const reste = montantTotal - paye;
+            if (reste > 0) {
+                resteInfo.innerHTML = 'Reste à payer : <strong class="text-red-600">' + reste.toLocaleString('fr-FR') + ' FCFA</strong>';
+            } else {
+                resteInfo.innerHTML = '<span class="text-emerald-600 font-bold">✅ Solde complet</span>';
+            }
         }
     }
     radios.forEach(r => r.addEventListener('change', updatePaiement));
-    montantInput.addEventListener('input', function() {
-        if (document.querySelector('input[name="statut_paiement"]:checked')?.value === 'paye') montantPayeInput.value = this.value;
-        updatePaiement();
-    });
     montantPayeInput.addEventListener('input', updatePaiement);
     updatePaiement();
 });

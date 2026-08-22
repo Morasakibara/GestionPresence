@@ -160,7 +160,7 @@ class SecretaireController extends Controller
     public function editCommande($id)
     {
         $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
-        return view('secretaire.commandes_edit', compact('commande'))->with('typesPhoto', self::TYPES_SECRETAIRE);
+        return view('secretaire.commandes_edit', compact('commande'))->with('typesCaisse', self::TYPES_SECRETAIRE);
     }
 
     public function updateCommande(Request $request, $id)

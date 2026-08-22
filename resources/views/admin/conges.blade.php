@@ -61,6 +61,22 @@
     <canvas id="congesChart" height="100"></canvas>
 </div>
 
+<!-- Calendrier FullCalendar -->
+<div class="card mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h2 class="text-lg font-bold text-[#080808]">📅 Calendrier des absences</h2>
+            <p class="text-sm text-gray-500">Vue calendaire des congés approuvés</p>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#D39B23]"></span> Congé</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#D97706]"></span> Abs. justifiée</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#D64545]"></span> Abs. injustifiée</span>
+        </div>
+    </div>
+    <div id="calendar"></div>
+</div>
+
 <!-- Filtres -->
 <div class="flex flex-wrap items-center gap-3 mb-6">
     <a href="{{ route('admin.conges') }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ !$statutFilter && !$typeFilter && !$equipeFilter ? 'bg-pharaoh-gold text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
@@ -134,6 +150,8 @@
     @endif
 </div>
 
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -164,6 +182,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+    }
+});
+});
+
+// FullCalendar via CDN
+document.addEventListener('DOMContentLoaded', function() {
+    const calEl = document.getElementById('calendar');
+    if (calEl && typeof FullCalendar !== 'undefined') {
+        const cal = new FullCalendar.Calendar(calEl, {
+            plugins: ['dayGrid', 'interaction'],
+            initialView: 'dayGridMonth',
+            locale: 'fr',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth'
+            },
+            events: '{{ route('admin.conges.calendar.events') }}',
+            height: 'auto',
+            eventDisplay: 'block',
+            eventDidMount: function(info) {
+                info.el.title = info.event.extendedProps.employe + '\n' + info.event.extendedProps.motif;
+            },
+            noEventsContent: '<div class="text-center py-8 text-gray-400">Aucune absence ce mois</div>',
+        });
+        cal.render();
     }
 });
 </script>

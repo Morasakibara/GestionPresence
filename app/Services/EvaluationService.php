@@ -139,14 +139,36 @@ class EvaluationService
             ->get();
 
         $retards = $presences->filter(fn ($p) => $p->heureArrivee && now()->parse($p->heureArrivee)->format('H:i') > '08:00')->count();
-        $absences = $presences->where('status', 'Absent')->count();
+        $absencesTotales = $presences->where('status', 'Absent')->count();
         $suspectes = $presences->where('suspect', true)->count();
         $presencesCompletes = $presences->where('status', 'présent')->count();
         $rendementsRemplis = $presences->whereNotNull('rendement')->where('rendement', '!=', '')->count();
 
+        // Congés approuvés : ne pas pénaliser les absences justifiées
+        $congesApprouves = \App\Models\Conge::where('employer_id', $employerID)
+            ->where('statut', 'approuve')
+            ->where('type', '!=', 'absence_injustifiee')
+            ->where(function ($q) use ($debut, $fin) {
+                $q->whereBetween('date_debut', [$debut, $fin])
+                  ->orWhereBetween('date_fin', [$debut, $fin])
+                  ->orWhere(function ($q2) use ($debut, $fin) {
+                      $q2->where('date_debut', '<=', $debut)->where('date_fin', '>=', $fin);
+                  });
+            })
+            ->get();
+        $joursJustifies = 0;
+        foreach ($congesApprouves as $c) {
+            $cDebut = max(strtotime($debut), $c->date_debut->timestamp);
+            $cFin = min(strtotime($fin), $c->date_fin->timestamp);
+            $joursJustifies += (int) floor(($cFin - $cDebut) / 86400) + 1;
+        }
+        // Absences justifiées par congé approuvé → ne pas compter comme absence
+        $absencesInjustifiees = max(0, $absencesTotales - $joursJustifies);
+
         return [
             'retards' => $retards,
-            'absences' => $absences,
+            'absences' => $absencesInjustifiees,
+            'absences_justifiees' => min($absencesTotales, $joursJustifies),
             'suspectes' => $suspectes,
             'presences_completes' => $presencesCompletes,
             'rendements_remplis' => $rendementsRemplis,

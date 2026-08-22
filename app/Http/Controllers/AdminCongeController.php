@@ -56,4 +56,49 @@ class AdminCongeController extends Controller
 
         return view('admin.conges', compact('conges', 'stats', 'equipes', 'chartLabels', 'chartData'));
     }
+
+    /**
+     * API JSON pour FullCalendar.
+     */
+    public function calendarEvents(Request $request)
+    {
+        $start = $request->input('start');
+        $end = $request->input('end');
+
+        $conges = Conge::with('employe')
+            ->where('statut', 'approuve')
+            ->where(function ($q) use ($start, $end) {
+                if ($start && $end) {
+                    $q->whereBetween('date_debut', [$start, $end])
+                      ->orWhereBetween('date_fin', [$start, $end])
+                      ->orWhere(function ($q2) use ($start, $end) {
+                          $q2->where('date_debut', '<=', $start)->where('date_fin', '>=', $end);
+                      });
+                }
+            })
+            ->get();
+
+        $events = $conges->map(function ($c) {
+            $color = match ($c->type) {
+                'conge' => '#D39B23',
+                'absence_justifiee' => '#D97706',
+                'absence_injustifiee' => '#D64545',
+                default => '#888888',
+            };
+            return [
+                'id' => $c->id,
+                'title' => ($c->employe->nom ?? 'N/A') . ' — ' . $c->typeLabel(),
+                'start' => $c->date_debut->toDateTimeString(),
+                'end' => $c->date_fin->copy()->addDay()->toDateTimeString(),
+                'color' => $color,
+                'extendedProps' => [
+                    'type' => $c->type,
+                    'motif' => $c->motif,
+                    'employe' => $c->employe->nom ?? 'N/A',
+                ],
+            ];
+        });
+
+        return response()->json($events);
+    }
 }
