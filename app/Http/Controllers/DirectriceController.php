@@ -34,11 +34,16 @@ class DirectriceController extends Controller
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
         $today = now()->toDateString();
 
-        // ── CAISSE CUMULATIVE (toutes périodes confondues) ──
+        // ── CAISSE CUMULATIVE ──
+        // Seul le montant PAYÉ entre en caisse. Les impayés = solde négatif.
         $totalCommandes = Commande::where('superviseur_id', $superviseur->id)->sum('montant');
+        $totalCommandesPaye = Commande::where('superviseur_id', $superviseur->id)->sum('montant_paye');
         $totalServices = ServiceFourni::where('superviseur_id', $superviseur->id)->sum('montant');
         $totalRetraits = Retrait::where('superviseur_id', $superviseur->id)->sum('montant');
-        $sommeEnCaisse = $totalCommandes + $totalServices - $totalRetraits;
+        // Ce qui est réellement en caisse = ce qui a été payé + services - retraits
+        $sommeEnCaisse = $totalCommandesPaye + $totalServices - $totalRetraits;
+        // Ce qui est dû = montant total des commandes - ce qui a été payé → en négatif
+        $impayeTotal = $totalCommandes - $totalCommandesPaye;
 
         // ── Données du jour (pour graphiques) ──
         $commandesJour = Commande::where('superviseur_id', $superviseur->id)
@@ -94,7 +99,7 @@ class DirectriceController extends Controller
 
         return view('directrice.dashboard', compact(
             'superviseurInfo', 'totalCommandes', 'totalServices', 'totalRetraits',
-            'sommeEnCaisse', 'resteAEncaisser', 'montantEncaisse',
+            'sommeEnCaisse', 'resteAEncaisser', 'montantEncaisse', 'impayeTotal',
             'commandesParType', 'servicesParType',
             'derniersCommandes', 'derniersServices', 'derniersRetraits',
             'typesCaisse', 'commandesImpayees',

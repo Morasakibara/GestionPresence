@@ -32,11 +32,13 @@ class SecretaireController extends Controller
         $superviseur = Auth::user();
         $today = now()->toDateString();
 
-        // ── CAISSE CUMULATIVE (toutes périodes confondues) ──
-        $totalCommandes = Commande::where('superviseur_id', $superviseur->id)->sum('montant_paye');
+        // ── CAISSE CUMULATIVE ──
+        $totalCommandes = Commande::where('superviseur_id', $superviseur->id)->sum('montant');
+        $totalCommandesPaye = Commande::where('superviseur_id', $superviseur->id)->sum('montant_paye');
         $totalServices = ServiceFourni::where('superviseur_id', $superviseur->id)->sum('montant');
         $totalRetraits = Retrait::where('superviseur_id', $superviseur->id)->sum('montant');
-        $sommeEnCaisse = $totalCommandes + $totalServices - $totalRetraits;
+        $sommeEnCaisse = $totalCommandesPaye + $totalServices - $totalRetraits;
+        $impayeTotal = $totalCommandes - $totalCommandesPaye;
 
         // ── Données du jour (pour graphiques) ──
         $commandesJour = Commande::where('superviseur_id', $superviseur->id)
@@ -85,7 +87,7 @@ class SecretaireController extends Controller
 
         return view('secretaire.dashboard', compact(
             'totalCommandes', 'totalServices', 'totalRetraits',
-            'sommeEnCaisse', 'resteAEncaisser', 'commandesParType', 'servicesParType',
+            'sommeEnCaisse', 'resteAEncaisser', 'impayeTotal', 'commandesParType', 'servicesParType',
             'derniersCommandes', 'derniersServices', 'derniersRetraits',
             'commandesImpayees', 'labels7j', 'dataEntrees7j', 'dataSorties7j',
             'historiqueEncaissements'

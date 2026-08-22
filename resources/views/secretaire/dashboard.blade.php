@@ -29,18 +29,25 @@
     <div class="stat-card"><div class="stat-card-icon bg-red-50 text-red-600"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div><div class="stat-card-value text-red-600">{{ number_format($totalRetraits, 0, ',', '.') }} FCFA</div><div class="stat-card-label">Total Retraits</div></div>
 </div>
 
-<!-- Caisse + Reste -->
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-6">
+<!-- Caisse + Impayés -->
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
     <div class="stat-card border-pharaoh-gold/30 bg-gradient-to-br from-[#FBF3E6] to-white">
         <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>
         <div class="stat-card-value text-pharaoh-gold">{{ number_format($sommeEnCaisse, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label font-semibold">💰 Somme en caisse (cumulée)</div>
+        <div class="stat-card-label font-semibold">💰 Solde en caisse</div>
     </div>
+    @if(isset($impayeTotal) && $impayeTotal > 0)
+    <div class="stat-card border-red-200 bg-gradient-to-br from-red-50 to-white">
+        <div class="stat-card-icon bg-red-100 text-red-600"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+        <div class="stat-card-value text-red-600">-{{ number_format($impayeTotal, 0, ',', '.') }} FCFA</div>
+        <div class="stat-card-label font-semibold">📉 Impayés (non encaissé)</div>
+    </div>
+    @endif
     @if($resteAEncaisser > 0)
     <button onclick="document.getElementById('modalImpayes').classList.remove('hidden')" class="stat-card border-orange-200 bg-gradient-to-br from-orange-50 to-white text-left cursor-pointer hover:shadow-md transition-shadow">
         <div class="stat-card-icon bg-orange-100 text-orange-600"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
         <div class="stat-card-value text-orange-600">{{ number_format($resteAEncaisser, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label font-semibold">⏳ Reste à encaisser (cliquer) — {{ $commandesImpayees->count() }} commande(s)</div>
+        <div class="stat-card-label font-semibold">⏳ Reste à encaisser (cliquer)</div>
     </button>
     @endif
 </div>
