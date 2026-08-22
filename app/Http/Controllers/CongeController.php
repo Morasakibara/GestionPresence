@@ -75,7 +75,8 @@ class CongeController extends Controller
             $employe->notify(new \App\Notifications\CongeNotification($conge, 'approuve'));
         }
 
-        return redirect()->back()->with('success', "Demande de congé de {$employe->nom ?? 'l\'employé'} approuvée.");
+        $nom = $employe->nom ?? 'l\'employé';
+        return redirect()->back()->with('success', "Demande de congé de {$nom} approuvée.");
     }
 
     /**

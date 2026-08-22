@@ -202,6 +202,14 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::get('/stock', [AdminController::class, 'etatStock'])->name('stock');
     Route::get('/paiements', [AdminController::class, 'paiementStats'])->name('paiements');
     Route::get('/audit-logs', [AdminController::class, 'auditLogs'])->name('auditLogs');
+    Route::get('/conges', [App\Http\Controllers\AdminCongeController::class, 'index'])->name('conges');
+    Route::get('/conges/planning/pdf', function (\Illuminate\Http\Request $request) {
+        $mois = $request->input('mois', now()->format('Y-m'));
+        return \App\Services\CongePdfService::planning($mois)->download('planning_conges_' . $mois . '.pdf');
+    })->name('conges.planning.pdf');
+    Route::get('/conges/resume/pdf', function () {
+        return \App\Services\CongePdfService::resume()->download('resume_conges.pdf');
+    })->name('conges.resume.pdf');
 });
 
 Route::middleware('auth')->group(function () {

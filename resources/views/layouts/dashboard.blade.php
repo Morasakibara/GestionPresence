@@ -33,7 +33,7 @@
                         </div>
                         <div class="hidden md:block">
                             <div class="flex items-center ml-10 space-x-1">
-                                @yield('navigation')
+                                {!! ltrim($__env->yieldContent('navigation')) !!}
                             </div>
                         </div>
                     </div>
@@ -371,7 +371,7 @@
             <!-- Mobile menu, show/hide based on menu state. -->
             <div class="hidden mobile-menu md:hidden" id="mobile-menu">
                 <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                    @yield('mobile-navigation')
+                    {!! ltrim($__env->yieldContent('mobile-navigation')) !!}
                 </div>
                 <div class="pt-4 pb-3 border-t border-white/10">
                     <div class="flex items-center px-5">
@@ -396,7 +396,7 @@
 
         <header class="bg-white/80 shadow-sm backdrop-blur-md">
             <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <h1 class="text-3xl font-bold tracking-tight text-[#080808]">@yield('header')</h1>
+                <h1 class="text-3xl font-bold tracking-tight text-[#080808]">{!! ltrim($__env->yieldContent('header')) !!}</h1>
             </div>
         </header>
 

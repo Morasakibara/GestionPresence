@@ -36,6 +36,9 @@
 <a href="{{ route('admin.workplace-locations.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">
     Lieux de travail
 </a>
+<a href="{{ route('admin.conges') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">
+    🏖️ Congés
+</a>
 <a href="{{ route('admin.auditLogs') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">
     📋 Audit
 </a>
