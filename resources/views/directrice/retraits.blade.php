@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between"><span>Retraits — Directrice</span></div>
+<div class="flex items-center justify-between"><span>Retraits</span></div>
 @endsection
 
 @section('navigation')

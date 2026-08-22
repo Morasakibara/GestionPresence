@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between"><span>Dashboard Gestionnaire de Stock</span></div>
+<div class="flex items-center justify-between"><span>Dashboard Gestion De Stock</span></div>
 @endsection
 
 @section('navigation')

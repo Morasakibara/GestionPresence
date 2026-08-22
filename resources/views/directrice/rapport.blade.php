@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between"><span>Rapport — Directrice</span></div>
+<div class="flex items-center justify-between"><span>Gestion Des Rapports</span></div>
 @endsection
 
 @section('navigation')
