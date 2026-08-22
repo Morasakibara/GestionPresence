@@ -928,8 +928,9 @@ class SuperviseurModulesTest extends TestCase
     public function test_secretaire_retrait_depasse_caisse_refuse(): void
     {
         $sup = $this->loginSuperviseur('secretaire');
+        // Montant énorme qui dépassera forcément la caisse
         $response = $this->post('/secretaire/retraits', [
-            'montant' => 10000,
+            'montant' => 999999999,
             'motif' => 'Test retrait sans fonds.',
         ]);
         $response->assertStatus(302);

@@ -26,7 +26,7 @@
 @if(session('error'))<div class="alert alert-danger"><svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>{{ session('error') }}</span></div>@endif
 
 <div class="mb-6">
-    <h2 class="text-lg font-semibold text-[#080808]">État de la caisse photo — {{ now()->format('d/m/Y') }}</h2>
+    <h2 class="text-lg font-semibold text-[#080808]">État de la caisse — {{ now()->format('d/m/Y') }}</h2>
 </div>
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">

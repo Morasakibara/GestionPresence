@@ -6,6 +6,7 @@ use App\Models\Commande;
 use App\Models\ServiceFourni;
 use App\Models\Retrait;
 use App\Models\Superviseur;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -105,7 +106,7 @@ class SecretaireController extends Controller
             $statut = 'paye';
         }
 
-        Commande::create([
+        $cmd = Commande::create([
             'superviseur_id' => Auth::id(),
             'type' => $request->type,
             'montant' => $montant,
@@ -114,6 +115,8 @@ class SecretaireController extends Controller
             'details' => $request->details,
             'date' => now()->toDateString(),
         ]);
+
+        AuditService::created('secretaire', "Commande {$request->type} de {$montant} FCFA ({$statut})", $cmd->toArray(), $request);
 
         $msg = match($statut) {
             'paye' => 'Commande enregistrée (paiement complet).',
@@ -273,12 +276,14 @@ class SecretaireController extends Controller
                 ->with('error', 'Montant supérieur à la somme disponible (' . number_format($disponible, 2, ',', '') . ' FCFA).');
         }
 
-        Retrait::create([
+        $retrait = Retrait::create([
             'superviseur_id' => Auth::id(),
             'montant' => $request->montant,
             'motif' => $request->motif,
             'date' => now()->toDateString(),
         ]);
+
+        AuditService::created('secretaire', "Retrait de {$request->montant} FCFA — {$request->motif}", $retrait->toArray(), $request);
 
         return redirect()->route('secretaire.retraits')->with('success', 'Retrait enregistré.');
     }

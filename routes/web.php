@@ -187,6 +187,7 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::get('/caisse', [AdminController::class, 'etatCaisse'])->name('caisse');
     Route::get('/stock', [AdminController::class, 'etatStock'])->name('stock');
     Route::get('/paiements', [AdminController::class, 'paiementStats'])->name('paiements');
+    Route::get('/audit-logs', [AdminController::class, 'auditLogs'])->name('auditLogs');
 });
 
 Route::middleware('auth')->group(function () {

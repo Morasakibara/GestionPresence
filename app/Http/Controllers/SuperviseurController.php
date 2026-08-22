@@ -68,14 +68,15 @@ class SuperviseurController extends Controller
         // Récupérer le nombre de notifications non lues
         $unreadNotifications = $superviseur->unreadNotifications->count();
 
-        // Évolution de la note moyenne de l'équipe sur 6 mois
-        $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIds, 6);
+        // Évolution de la note moyenne de l'équipe sur 6 mois (cache 5 min)
+        $cacheKey = 'sup_evolution_' . $superviseur->id . '_' . now()->format('Y-m-d-H');
+        $evolutionEvaluations = \Illuminate\Support\Facades\Cache::remember($cacheKey . '_evo', 300, fn() => \App\Services\EvaluationService::evolutionMensuelle($employerIds, 6));
 
-        // Moyenne globale (périodes avec données) + tendance (dernier mois vs précédent)
-        $statsEvolution = \App\Services\EvaluationService::statsEvolution($evolutionEvaluations);
+        // Moyenne globale + tendance (cache 5 min)
+        $statsEvolution = \Illuminate\Support\Facades\Cache::remember($cacheKey . '_stats', 300, fn() => \App\Services\EvaluationService::statsEvolution($evolutionEvaluations));
 
-        // Tableau comparatif des notes par membre de l'équipe (6 mois)
-        $notesParEmploye = \App\Services\EvaluationService::notesParEmploye($employerIds, 6);
+        // Tableau comparatif des notes par membre de l'équipe (cache 5 min)
+        $notesParEmploye = \Illuminate\Support\Facades\Cache::remember($cacheKey . '_notes', 300, fn() => \App\Services\EvaluationService::notesParEmploye($employerIds, 6));
 
         return view('superviseur.supdashboard', compact(
             'equipe',

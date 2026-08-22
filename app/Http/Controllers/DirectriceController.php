@@ -6,6 +6,7 @@ use App\Models\Commande;
 use App\Models\ServiceFourni;
 use App\Models\Retrait;
 use App\Models\Superviseur;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -118,7 +119,7 @@ class DirectriceController extends Controller
             $montantPaye = 0;
         }
 
-        Commande::create([
+        $cmd = Commande::create([
             'superviseur_id' => Auth::id(),
             'type' => $request->type,
             'montant' => $montant,
@@ -127,6 +128,8 @@ class DirectriceController extends Controller
             'details' => $request->details,
             'date' => now()->toDateString(),
         ]);
+
+        AuditService::created('directrice', "Commande {$request->type} de {$montant} FCFA ({$statut})", $cmd->toArray(), $request);
 
         return redirect()->route('directrice.commandes')->with('success', 'Commande enregistrée.');
     }
@@ -291,12 +294,14 @@ class DirectriceController extends Controller
                 ->with('error', 'Montant supérieur à la somme disponible (' . number_format($disponible, 2, ',', '') . ' FCFA).');
         }
 
-        Retrait::create([
+        $retrait = Retrait::create([
             'superviseur_id' => Auth::id(),
             'montant' => $request->montant,
             'motif' => $request->motif,
             'date' => now()->toDateString(),
         ]);
+
+        AuditService::created('directrice', "Retrait de {$request->montant} FCFA — {$request->motif}", $retrait->toArray(), $request);
 
         return redirect()->route('directrice.retraits')->with('success', 'Retrait enregistré.');
     }

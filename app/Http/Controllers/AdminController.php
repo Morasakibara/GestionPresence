@@ -913,4 +913,18 @@ public function exportReport(Request $request)
             'topCommandes', 'caParPoste'
         ));
     }
+
+    /**
+     * Journal d'audit — toutes les opérations critiques enregistrées.
+     */
+    public function auditLogs(\Illuminate\Http\Request $request)
+    {
+        $module = $request->input('module');
+        $query = \App\Services\AuditService::query($module, null, 200);
+        $logs = $query->paginate(50);
+
+        $modules = \App\Models\AuditLog::distinct()->pluck('module')->filter()->values();
+
+        return view('admin.audit_logs', compact('logs', 'modules', 'module'));
+    }
 }
