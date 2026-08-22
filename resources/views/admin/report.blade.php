@@ -1,193 +1,284 @@
 @extends('layouts.app')
 
+@section('header', 'Rapport de Présence & Rendement')
+
+@section('navigation')
+<a href="{{ route('admin.dashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
+<a href="{{ route('admin.generateReport') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Rapport</a>
+<a href="{{ route('admin.showEmployeeList') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Employés</a>
+@endsection
+
+@section('mobile-navigation')
+<a href="{{ route('admin.dashboard') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
+<a href="{{ route('admin.generateReport') }}" class="block rounded-md bg-pharaoh-gold px-3 py-2 text-base font-medium text-white" aria-current="page">Rapport</a>
+@endsection
+
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-[#080808]">Rapport de présence et de rendement</h1>
-            <p class="text-gray-600">Période: <span class="font-medium">{{ request('start_date') }} - {{ request('end_date') }}</span></p>
-        </div>
+@php
+    $couleurBadge = [
+        'vert' => 'bg-emerald-100 text-emerald-800',
+        'orange' => 'bg-amber-100 text-amber-800',
+        'rouge' => 'bg-red-100 text-red-800',
+    ];
 
-        @php
-            $couleurBadge = [
-                'vert' => 'bg-green-100 text-green-800',
-                'orange' => 'bg-orange-100 text-orange-800',
-                'rouge' => 'bg-red-100 text-red-800',
-            ];
+    $palette = ['#D39B23', '#115293', '#2E8B57', '#D97706', '#D64545', '#0891b2', '#9333ea', '#dc2626', '#4f46e5', '#65a30d'];
+    $chartLabels = isset($reportData[0]) && !empty($reportData[0]->historique)
+        ? array_map(fn ($h) => $h['label'], $reportData[0]->historique)
+        : [];
+    $chartDatasets = [];
+    foreach ($reportData as $idx => $data) {
+        $chartDatasets[] = [
+            'label' => $data->employer_nom,
+            'data' => array_map(fn ($h) => (float) $h['note'], $data->historique),
+            'color' => $palette[$idx % count($palette)],
+        ];
+    }
 
-            // Données pour le graphique de comparaison des évaluations (toute l'entreprise)
-            $palette = ['#115293', '#16a34a', '#ea580c', '#9333ea', '#dc2626', '#0891b2', '#ca8a04', '#db2777', '#4f46e5', '#65a30d'];
-            $chartLabels = isset($reportData[0]) && !empty($reportData[0]->historique)
-                ? array_map(fn ($h) => $h['label'], $reportData[0]->historique)
-                : [];
-            $chartDatasets = [];
-            foreach ($reportData as $idx => $data) {
-                $chartDatasets[] = [
-                    'label' => $data->employer_nom,
-                    'data' => array_map(fn ($h) => (float) $h['note'], $data->historique),
-                    'color' => $palette[$idx % count($palette)],
-                ];
-            }
-        @endphp
+    // Stats globales
+    $totalEmployes = $reportData->count();
+    $noteMoyenne = $reportData->count() > 0 ? round($reportData->avg('evaluation_note'), 1) : 0;
+    $totalPresences = $reportData->sum('total_presence');
+    $verts = $reportData->filter(fn($d) => $d->evaluation_couleur === 'vert')->count();
+    $oranges = $reportData->filter(fn($d) => $d->evaluation_couleur === 'orange')->count();
+    $rouges = $reportData->filter(fn($d) => $d->evaluation_couleur === 'rouge')->count();
+@endphp
 
-        @if(count($reportData) > 0)
-        <div class="mb-8 rounded-lg border border-gray-200 bg-gray-50 p-6">
-            <h2 class="mb-1 text-lg font-semibold text-gray-900">Évolution des évaluations de l'entreprise (6 mois)</h2>
-            <p class="mb-4 text-sm text-gray-600">Comparaison de la note /20 de chaque employé, mois par mois.</p>
-            <canvas id="companyEvaluationChart" height="110"></canvas>
-            <p class="mt-3 text-xs text-gray-500">Échelle de 0 à 20. 🟢 Vert ≥ 14 · 🟠 Orange 10-13 · 🔴 Rouge &lt; 10</p>
-        </div>
-        @endif
+<!-- En-tête période -->
+<div class="flex flex-wrap items-center justify-between mb-6 gap-4">
+    <div>
+        <p class="text-sm text-gray-500">Période</p>
+        <p class="text-lg font-bold text-[#080808]">{{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} → {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}</p>
+    </div>
+    <div class="flex gap-2">
+        <form action="{{ route('admin.evaluations.export') }}" method="GET">
+            <input type="hidden" name="mois" value="{{ substr($startDate, 0, 7) }}">
+            <button type="submit" class="btn-gold btn-press inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Export Évaluations
+            </button>
+        </form>
+        <form action="{{ route('admin.exportReport') }}" method="POST">
+            @csrf
+            <input type="hidden" name="start_date" value="{{ $startDate }}">
+            <input type="hidden" name="end_date" value="{{ $endDate }}">
+            <button type="submit" class="inline-flex items-center gap-2 rounded-xl border-2 border-[#080808] bg-[#080808] px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Export PDF
+            </button>
+        </form>
+    </div>
+</div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full border-collapse mb-6">
-                <thead>
-                    <tr class="bg-3hcig-blue text-white">
-                        <th class="border border-gray-300 px-4 py-3 text-left">Nom de l'employé</th>
-                        <th class="border border-gray-300 px-4 py-3 text-left">Total Présence</th>
-                        <th class="border border-gray-300 px-4 py-3 text-left">Total Heures</th>
-                        <th class="border border-gray-300 px-4 py-3 text-left">Évaluation</th>
-                        <th class="border border-gray-300 px-4 py-3 text-left">Réalisations (fiches de rendement)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($reportData as $data)
-                    <tr class="hover:bg-gray-100 align-top">
-                        <td class="border border-gray-300 px-4 py-3 font-medium">
-                            {{ $data->employer_nom }}
-                            <div class="mt-1">
-                                <a href="{{ route('admin.evaluation.bulletin', ['id' => $data->employerID, 'mois' => substr($startDate, 0, 7)]) }}" class="inline-flex items-center gap-1 text-xs font-medium text-3hcig-blue hover:text-3hcig-blue-light" title="Télécharger le bulletin individuel du mois">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                    Bulletin PDF
-                                </a>
-                            </div>
-                        </td>
-                        <td class="border border-gray-300 px-4 py-3">{{ $data->total_presence }}</td>
-                        <td class="border border-gray-300 px-4 py-3 font-medium">{{ $data->total_heures ?? '-' }}</td>
-                        <td class="border border-gray-300 px-4 py-3">
-                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold {{ $couleurBadge[$data->evaluation_couleur] ?? $couleurBadge['orange'] }}">
+<!-- KPI Cards -->
+<div class="grid grid-cols-2 gap-4 mb-6 sm:grid-cols-5">
+    <div class="stat-card border border-white/20 bg-gradient-to-br from-white/90 to-white/70">
+        <div class="stat-card-value">{{ $totalEmployes }}</div>
+        <div class="stat-card-label">Employés actifs</div>
+    </div>
+    <div class="stat-card border border-white/20 bg-gradient-to-br from-white/90 to-white/70">
+        <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">📊</div>
+        <div class="stat-card-value">{{ $noteMoyenne }}/20</div>
+        <div class="stat-card-label">Note moyenne</div>
+    </div>
+    <div class="stat-card border border-white/20 bg-gradient-to-br from-white/90 to-white/70">
+        <div class="stat-card-value">{{ $totalPresences }}</div>
+        <div class="stat-card-label">Jours de présence</div>
+    </div>
+    <div class="stat-card border border-emerald-200/30 bg-gradient-to-br from-emerald-50/90 to-emerald-50/70">
+        <div class="stat-card-value text-emerald-600">{{ $verts }}</div>
+        <div class="stat-card-label">🟢 Évaluation verte</div>
+    </div>
+    <div class="stat-card border border-red-200/30 bg-gradient-to-br from-red-50/90 to-red-50/70">
+        <div class="stat-card-value text-red-600">{{ $rouges }}</div>
+        <div class="stat-card-label">🔴 Évaluation rouge</div>
+    </div>
+</div>
+
+<!-- Graphiques -->
+@if(count($reportData) > 0)
+<div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-2">
+    <!-- Graphique évolution évaluations -->
+    <div class="card">
+        <h2 class="text-lg font-bold text-[#080808] mb-1">📈 Évolution des évaluations (6 mois)</h2>
+        <p class="text-sm text-gray-500 mb-4">Comparaison de la note /20 par employé</p>
+        <canvas id="companyEvaluationChart" height="120"></canvas>
+        <p class="mt-3 text-xs text-gray-400">Échelle 0-20 · 🟢 Vert ≥ 14 · 🟠 Orange 10-13 · 🔴 Rouge &lt; 10</p>
+    </div>
+
+    <!-- Graphique répartition évaluations -->
+    <div class="card">
+        <h2 class="text-lg font-bold text-[#080808] mb-1">🎯 Répartition des évaluations</h2>
+        <p class="text-sm text-gray-500 mb-4">Répartition verte / orange / rouge</p>
+        <canvas id="evaluationPieChart" height="160"></canvas>
+    </div>
+</div>
+@endif
+
+<!-- Tableau détaillé -->
+<div class="card">
+    <h2 class="text-lg font-bold text-[#080808] mb-4">📋 Détails par employé</h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-[#080808] text-white">
+                    <th class="px-4 py-3 text-left font-semibold">Employé</th>
+                    <th class="px-4 py-3 text-center font-semibold">Présences</th>
+                    <th class="px-4 py-3 text-center font-semibold">Heures</th>
+                    <th class="px-4 py-3 text-center font-semibold">Évaluation</th>
+                    <th class="px-4 py-3 text-left font-semibold">Rendements</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @forelse($reportData as $data)
+                <tr class="hover:bg-pharaoh-gold/5 transition-colors">
+                    <td class="px-4 py-3">
+                        <div class="font-semibold text-gray-900">{{ $data->employer_nom }}</div>
+                        <a href="{{ route('admin.evaluation.bulletin', ['id' => $data->employerID, 'mois' => substr($startDate, 0, 7)]) }}" class="text-xs text-pharaoh-gold hover:underline">
+                            📥 Bulletin PDF
+                        </a>
+                    </td>
+                    <td class="px-4 py-3 text-center font-bold text-[#080808]">{{ $data->total_presence }}</td>
+                    <td class="px-4 py-3 text-center text-gray-600">{{ $data->total_heures ?? '-' }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex flex-col items-center gap-2">
+                            <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-bold {{ $couleurBadge[$data->evaluation_couleur] ?? $couleurBadge['orange'] }}">
                                 {{ $data->evaluation_note }}/20
                             </span>
                             @if($data->evaluation_manuelle)
-                                <span class="ml-1 text-xs text-gray-500">(manuelle)</span>
+                                <span class="text-xs text-gray-400">(manuelle)</span>
                             @endif
-                            <div class="mt-1 text-xs text-gray-600 max-w-xs">{{ $data->evaluation_commentaire }}</div>
-
-                            <!-- Formulaire d'évaluation manuelle (fondateur) -->
-                            <form action="{{ route('admin.storeEvaluation') }}" method="POST" class="mt-2 space-y-1">
+                            <!-- Formulaire évaluation manuelle -->
+                            <form action="{{ route('admin.storeEvaluation') }}" method="POST" class="w-full mt-1">
                                 @csrf
                                 <input type="hidden" name="employerID" value="{{ $data->employerID }}">
                                 <input type="hidden" name="mois" value="{{ substr($startDate, 0, 7) }}">
-                                <div class="flex items-center gap-1">
-                                    <input type="number" name="note" min="0" max="20" step="0.5" value="{{ $data->evaluation_note }}" class="w-16 rounded border border-gray-300 px-2 py-1 text-xs" title="Note sur 20">
-                                    <select name="couleur" class="rounded border border-gray-300 px-1 py-1 text-xs">
-                                        <option value="vert" {{ $data->evaluation_couleur === 'vert' ? 'selected' : '' }}>🟢 Vert</option>
-                                        <option value="orange" {{ $data->evaluation_couleur === 'orange' ? 'selected' : '' }}>🟠 Orange</option>
-                                        <option value="rouge" {{ $data->evaluation_couleur === 'rouge' ? 'selected' : '' }}>🔴 Rouge</option>
+                                <div class="flex items-center gap-1 mb-1">
+                                    <input type="number" name="note" min="0" max="20" step="0.5" value="{{ $data->evaluation_note }}" class="w-16 rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold/20" title="Note /20">
+                                    <select name="couleur" class="rounded-lg border border-gray-300 px-1 py-1 text-xs focus:border-pharaoh-gold">
+                                        <option value="vert" {{ $data->evaluation_couleur === 'vert' ? 'selected' : '' }}>🟢</option>
+                                        <option value="orange" {{ $data->evaluation_couleur === 'orange' ? 'selected' : '' }}>🟠</option>
+                                        <option value="rouge" {{ $data->evaluation_couleur === 'rouge' ? 'selected' : '' }}>🔴</option>
                                     </select>
                                 </div>
-                                <input type="text" name="commentaire" placeholder="Commentaire (optionnel)" class="w-full rounded border border-gray-300 px-2 py-1 text-xs">
-                                <button type="submit" class="rounded bg-3hcig-blue px-2 py-1 text-xs text-white hover:bg-3hcig-blue-light">Enregistrer l'évaluation</button>
+                                <input type="text" name="commentaire" placeholder="Commentaire..." class="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs mb-1 focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold/20">
+                                <button type="submit" class="rounded-lg bg-pharaoh-gold px-3 py-1 text-xs font-semibold text-white hover:bg-pharaoh-gold-light transition-colors">Enregistrer</button>
                             </form>
-                        </td>
-                        <td class="border border-gray-300 px-4 py-3">
-                            @if(count($data->rendements) > 0)
-                                <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
-                                    @foreach($data->rendements as $rendement)
-                                        <li>{{ \Illuminate\Support\Str::limit($rendement, 180) }}</li>
-                                    @endforeach
-                                </ul>
-                            @else
-                                <span class="text-sm text-gray-400">Aucune fiche de rendement remplie.</span>
-                            @endif
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="5" class="border border-gray-300 px-4 py-6 text-center text-gray-500">
-                            Aucune donnée de présence pour la période sélectionnée.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <div class="flex justify-end gap-3 mt-6">
-            <form action="{{ route('admin.evaluations.export') }}" method="GET">
-                <input type="hidden" name="mois" value="{{ substr($startDate, 0, 7) }}">
-                <button type="submit" class="bg-3hcig-blue hover:bg-3hcig-blue-light text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Export Excel évaluations & rendements
-                </button>
-            </form>
-            <form action="{{ route('admin.exportReport') }}" method="POST">
-                @csrf
-                <input type="hidden" name="start_date" value="{{ $startDate }}">
-                <input type="hidden" name="end_date" value="{{ $endDate }}">
-                <button type="submit" class="bg-3hcig-green hover:bg-3hcig-green-light text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Exporter en PDF
-                </button>
-            </form>
-        </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3">
+                        @if(count($data->rendements) > 0)
+                            <ul class="space-y-1">
+                                @foreach($data->rendements as $i => $rendement)
+                                    @if($i < 3)
+                                    <li class="flex items-start gap-1 text-xs text-gray-600">
+                                        <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-pharaoh-gold flex-shrink-0"></span>
+                                        {{ \Illuminate\Support\Str::limit($rendement, 120) }}
+                                    </li>
+                                    @endif
+                                @endforeach
+                                @if(count($data->rendements) > 3)
+                                    <li class="text-xs text-pharaoh-gold font-medium">+{{ count($data->rendements) - 3 }} autres...</li>
+                                @endif
+                            </ul>
+                        @else
+                            <span class="text-xs text-gray-400 italic">Aucune fiche remplie</span>
+                        @endif
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="5" class="px-4 py-12 text-center text-gray-500">
+                        <div class="text-4xl mb-2">📭</div>
+                        Aucune donnée pour cette période.
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('companyEvaluationChart');
-        if (!ctx) {
-            return;
-        }
+document.addEventListener('DOMContentLoaded', function () {
+    // Graphique évolution
+    const ctxLine = document.getElementById('companyEvaluationChart');
+    if (ctxLine) {
         const labels = @json($chartLabels);
         const datasets = @json($chartDatasets).map(d => ({
             label: d.label,
             data: d.data,
             borderColor: d.color,
-            backgroundColor: d.color,
-            borderWidth: 2,
-            tension: 0.35,
+            backgroundColor: d.color + '33',
+            borderWidth: 2.5,
+            tension: 0.4,
             pointRadius: 4,
-            pointHoverRadius: 6,
+            pointHoverRadius: 7,
             pointBackgroundColor: d.color,
             pointBorderColor: '#ffffff',
-            pointBorderWidth: 1.5
+            pointBorderWidth: 2,
+            fill: false,
         }));
 
-        new Chart(ctx, {
+        new Chart(ctxLine, {
             type: 'line',
-            data: { labels: labels, datasets: datasets },
+            data: { labels, datasets },
             options: {
                 responsive: true,
+                interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { position: 'top' },
+                    legend: { position: 'top', labels: { usePointStyle: true, padding: 16, font: { size: 11 } } },
                     tooltip: {
+                        backgroundColor: '#080808',
+                        titleFont: { size: 13 },
+                        bodyFont: { size: 12 },
+                        padding: 12,
+                        cornerRadius: 8,
                         callbacks: {
-                            label: function (context) {
-                                return context.dataset.label + ' : ' + context.parsed.y + '/20';
-                            }
+                            label: ctx => ctx.dataset.label + ' : ' + ctx.parsed.y + '/20'
                         }
                     }
                 },
                 scales: {
-                    y: {
-                        min: 0,
-                        max: 20,
-                        ticks: { stepSize: 4 },
-                        title: { display: true, text: 'Note sur 20' }
-                    },
-                    x: {
-                        ticks: { maxRotation: 45, minRotation: 0 }
+                    y: { min: 0, max: 20, ticks: { stepSize: 4, font: { size: 11 } }, title: { display: true, text: 'Note /20', font: { size: 12 } } },
+                    x: { ticks: { maxRotation: 45, font: { size: 11 } } }
+                }
+            }
+        });
+    }
+
+    // Graphique pie/doughnut
+    const ctxPie = document.getElementById('evaluationPieChart');
+    if (ctxPie) {
+        new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: ['🟢 Vert (≥14)', '🟠 Orange (10-13)', '🔴 Rouge (<10)'],
+                datasets: [{
+                    data: [{{ $verts }}, {{ $oranges }}, {{ $rouges }}],
+                    backgroundColor: ['#2E8B57', '#D97706', '#D64545'],
+                    borderWidth: 3,
+                    borderColor: '#ffffff',
+                    hoverOffset: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '60%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: 12 } } },
+                    tooltip: {
+                        backgroundColor: '#080808',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: ctx => ctx.label + ' : ' + ctx.parsed + ' employé(s)'
+                        }
                     }
                 }
             }
         });
-    });
+    }
+});
 </script>
 @endsection

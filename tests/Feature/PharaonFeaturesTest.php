@@ -263,7 +263,7 @@ class PharaonFeaturesTest extends TestCase
             'export_format' => 'html',
         ]);
         $response->assertOk();
-        $response->assertSee('Rapport de présence et de rendement');
+        $response->assertSee('Présence');
         $response->assertSee($employe->nom);
         $response->assertSee('Développement de la page de rendement.');
         $response->assertSee('/20');

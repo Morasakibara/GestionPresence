@@ -18,6 +18,7 @@ use App\Http\Controllers\WorkplaceLocationController;
 use App\Http\Controllers\DirectriceController;
 use App\Http\Controllers\SecretaireController;
 use App\Http\Controllers\GestionnaireStockController;
+use App\Http\Controllers\CongeController;
 
 //use Illuminate\Support\Facades\Auth;
 
@@ -91,6 +92,12 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/presence-report', [UtilisateurController::class, 'presenceReport'])->name('user.presence.report');
         Route::get('/rendement', [UtilisateurController::class, 'rendementReport'])->name('user.rendement');
         Route::post('/check-location', [GeoLocationController::class, 'checkLocation'])->name('check.location');
+
+        // Congés & Absences
+        Route::get('/conges', function () {
+            return view('user.conges');
+        })->name('user.conges');
+        Route::post('/conges', [CongeController::class, 'store'])->name('user.conges.store');
     });
 
     // Superviseur routes
@@ -115,6 +122,11 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::post('/addMemberToTeam/{id}', [SuperviseurController::class, 'addMemberToTeam'])->name('superviseur.addMemberToTeam');
         Route::get('/add-member', [SuperviseurController::class, 'showAddMemberForm'])->name('superviseur.showAddMemberForm');
         Route::post('remove-member/{id}', [SuperviseurController::class, 'removeMemberFromTeam'])->name('superviseur.removeMemberFromTeam');
+
+        // Congés & Absences
+        Route::get('/conges', [CongeController::class, 'index'])->name('superviseur.conges.index');
+        Route::patch('/conges/{conge}/approuver', [CongeController::class, 'approuver'])->name('superviseur.conges.approuver');
+        Route::patch('/conges/{conge}/refuser', [CongeController::class, 'refuser'])->name('superviseur.conges.refuser');
     });
 
     // ===================== DIRECTRICE (Superviseur1) =====================
