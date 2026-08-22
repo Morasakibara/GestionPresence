@@ -370,31 +370,13 @@ class SecretaireController extends Controller
         $dateFin = $request->input('date_fin', now()->toDateString());
         $superviseur = Auth::user();
 
-        $lignes = ["Type;Montant;Détails;Date"];
-
         $commandes = Commande::where('superviseur_id', $superviseur->id)
             ->whereBetween('date', [$dateDebut, $dateFin])->get();
-        foreach ($commandes as $c) {
-            $lignes[] = 'Commande - ' . (self::TYPES_SECRETAIRE[$c->type] ?? $c->type) . ';' . $c->montant . ';' . ($c->details ?? '') . ';' . $c->date->format('d/m/Y');
-        }
-
         $services = ServiceFourni::where('superviseur_id', $superviseur->id)
             ->whereBetween('date', [$dateDebut, $dateFin])->get();
-        foreach ($services as $s) {
-            $lignes[] = 'Service - ' . (self::TYPES_SECRETAIRE[$s->type] ?? $s->type) . ';' . $s->montant . ';' . ($s->details ?? '') . ';' . $s->date->format('d/m/Y');
-        }
-
         $retraits = Retrait::where('superviseur_id', $superviseur->id)
             ->whereBetween('date', [$dateDebut, $dateFin])->get();
-        foreach ($retraits as $r) {
-            $lignes[] = 'Retrait;' . $r->montant . ';' . $r->motif . ';' . $r->date->format('d/m/Y');
-        }
 
-        $contenu = implode("\n", $lignes) . "\n";
-
-        return response($contenu, 200, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename=rapport_secretaire_' . $dateDebut . '_' . $dateFin . '.csv',
-        ]);
+        return \App\Services\ExportService::rapport($dateDebut, $dateFin, $commandes, $services, $retraits, self::TYPES_SECRETAIRE, 'Photo');
     }
 }
