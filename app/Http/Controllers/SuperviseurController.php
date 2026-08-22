@@ -23,7 +23,8 @@ class SuperviseurController extends Controller
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
 
         // Rediriger les superviseurs spécialisés vers leur dashboard dédié
-        if ($superviseurInfo && $superviseurInfo->type_superviseur) {
+        // superviseur_a = superviseur classique → reste sur le dashboard équipe
+        if ($superviseurInfo && $superviseurInfo->type_superviseur && $superviseurInfo->type_superviseur !== 'superviseur_a') {
             return match($superviseurInfo->type_superviseur) {
                 'directrice' => redirect()->route('directrice.dashboard'),
                 'secretaire' => redirect()->route('secretaire.dashboard'),

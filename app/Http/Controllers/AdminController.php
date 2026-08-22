@@ -170,7 +170,7 @@ class AdminController extends Controller
 
         if (in_array('Superviseur', $data['role'])) {
             $rules['equipe'] = 'required|string|max:255';
-            $rules['type_superviseur'] = 'nullable|string|in:directrice,secretaire,gestionnaire_stock';
+            $rules['type_superviseur'] = 'nullable|string|in:directrice,secretaire,gestionnaire_stock,superviseur_a';
         }
 
         return Validator::make($data, $rules);

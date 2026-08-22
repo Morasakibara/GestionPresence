@@ -38,10 +38,15 @@ class SecretaireController extends Controller
         $retraitsJour = Retrait::where('superviseur_id', $superviseur->id)
             ->whereDate('date', $today)->get();
 
-        $totalCommandes = $commandesJour->sum('montant');
-        $totalServices = $servicesJour->sum('montant');
+        // La caisse ne comptabilise que ce qui est Effectivement payé
+        $totalCommandes = $commandesJour->sum('montant_paye');
+        $totalServices = $servicesJour->sum('montant'); // services = toujours comptés
         $totalRetraits = $retraitsJour->sum('montant');
         $sommeEnCaisse = $totalCommandes + $totalServices - $totalRetraits;
+
+        // Montant restant à encaisser (commandes partielles + à payer)
+        $resteAEncaisser = $commandesJour->filter(fn($c) => $c->statut_paiement !== 'paye')
+            ->sum(fn($c) => (float) $c->montant - (float) $c->montant_paye);
 
         $commandesParType = $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant'));
         $servicesParType = $servicesJour->groupBy('type')->map(fn($s) => $s->sum('montant'));
@@ -52,7 +57,7 @@ class SecretaireController extends Controller
 
         return view('secretaire.dashboard', compact(
             'totalCommandes', 'totalServices', 'totalRetraits',
-            'sommeEnCaisse', 'commandesParType', 'servicesParType',
+            'sommeEnCaisse', 'resteAEncaisser', 'commandesParType', 'servicesParType',
             'derniersCommandes', 'derniersServices', 'derniersRetraits'
         ))->with('typesPhoto', self::TYPES_SECRETAIRE);
     }
@@ -79,18 +84,45 @@ class SecretaireController extends Controller
         $request->validate([
             'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_SECRETAIRE)),
             'montant' => 'required|numeric|min:0.01',
+            'montant_paye' => 'required|numeric|min:0',
+            'statut_paiement' => 'required|string|in:paye,partiel,a_payer',
             'details' => 'nullable|string|max:1000',
         ]);
+
+        $montant = (float) $request->montant;
+        $montantPaye = (float) $request->montant_paye;
+        $statut = $request->statut_paiement;
+
+        // Vérifications cohérence
+        if ($statut === 'paye' && $montantPaye < $montant) {
+            $montantPaye = $montant; // Forcer le paiement complet
+        }
+        if ($statut === 'a_payer') {
+            $montantPaye = 0;
+        }
+        if ($statut === 'partiel' && $montantPaye >= $montant) {
+            $montantPaye = $montant;
+            $statut = 'paye';
+        }
 
         Commande::create([
             'superviseur_id' => Auth::id(),
             'type' => $request->type,
-            'montant' => $request->montant,
+            'montant' => $montant,
+            'montant_paye' => $montantPaye,
+            'statut_paiement' => $statut,
             'details' => $request->details,
             'date' => now()->toDateString(),
         ]);
 
-        return redirect()->route('secretaire.commandes')->with('success', 'Commande enregistrée.');
+        $msg = match($statut) {
+            'paye' => 'Commande enregistrée (paiement complet).',
+            'partiel' => 'Commande enregistrée (paiement partiel : ' . number_format($montantPaye, 0, ',', '') . '/' . number_format($montant, 0, ',', '') . ' FCFA).',
+            'a_payer' => 'Commande enregistrée (paiement à la livraison).',
+            default => 'Commande enregistrée.',
+        };
+
+        return redirect()->route('secretaire.commandes')->with('success', $msg);
     }
 
     public function editCommande($id)
@@ -105,9 +137,30 @@ class SecretaireController extends Controller
         $request->validate([
             'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_SECRETAIRE)),
             'montant' => 'required|numeric|min:0.01',
+            'montant_paye' => 'required|numeric|min:0',
+            'statut_paiement' => 'required|string|in:paye,partiel,a_payer',
             'details' => 'nullable|string|max:1000',
         ]);
-        $commande->update($request->only('type', 'montant', 'details'));
+
+        $montant = (float) $request->montant;
+        $montantPaye = (float) $request->montant_paye;
+        $statut = $request->statut_paiement;
+
+        if ($statut === 'paye') $montantPaye = $montant;
+        if ($statut === 'a_payer') $montantPaye = 0;
+        if ($statut === 'partiel' && $montantPaye >= $montant) {
+            $montantPaye = $montant;
+            $statut = 'paye';
+        }
+
+        $commande->update([
+            'type' => $request->type,
+            'montant' => $montant,
+            'montant_paye' => $montantPaye,
+            'statut_paiement' => $statut,
+            'details' => $request->details,
+        ]);
+
         return redirect()->route('secretaire.commandes')->with('success', 'Commande mise à jour.');
     }
 
@@ -191,7 +244,7 @@ class SecretaireController extends Controller
             ->orderByDesc('created_at')->get();
 
         $totalEntrees = Commande::where('superviseur_id', Auth::id())
-            ->whereDate('date', now()->toDateString())->sum('montant')
+            ->whereDate('date', now()->toDateString())->sum('montant_paye')
             + ServiceFourni::where('superviseur_id', Auth::id())
             ->whereDate('date', now()->toDateString())->sum('montant');
         $totalSorties = Retrait::where('superviseur_id', Auth::id())
@@ -208,7 +261,7 @@ class SecretaireController extends Controller
         ]);
 
         $totalEntrees = Commande::where('superviseur_id', Auth::id())
-            ->whereDate('date', now()->toDateString())->sum('montant')
+            ->whereDate('date', now()->toDateString())->sum('montant_paye')
             + ServiceFourni::where('superviseur_id', Auth::id())
             ->whereDate('date', now()->toDateString())->sum('montant');
         $totalSorties = Retrait::where('superviseur_id', Auth::id())
@@ -244,7 +297,7 @@ class SecretaireController extends Controller
                 ->whereBetween('date', [$debut, $fin]);
         };
 
-        $totalCommandes = $query(Commande::class, $dateDebut, $dateFin)->sum('montant');
+        $totalCommandes = $query(Commande::class, $dateDebut, $dateFin)->sum('montant_paye');
         $totalServices = $query(ServiceFourni::class, $dateDebut, $dateFin)->sum('montant');
         $totalRetraits = $query(Retrait::class, $dateDebut, $dateFin)->sum('montant');
 
@@ -258,7 +311,7 @@ class SecretaireController extends Controller
         $fin = Carbon::parse($dateFin);
         while ($debut->lte($fin)) {
             $jour = $debut->toDateString();
-            $entrees = Commande::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant')
+            $entrees = Commande::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant_paye')
                 + ServiceFourni::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
             $sorties = Retrait::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
             $detailJournalier->push([

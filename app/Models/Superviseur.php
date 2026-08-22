@@ -55,6 +55,7 @@ class Superviseur extends Model
     const TYPE_DIRECTRICE = 'directrice';
     const TYPE_SECRETAIRE = 'secretaire';
     const TYPE_GESTIONNAIRE_STOCK = 'gestionnaire_stock';
+    const TYPE_SUPERVISEUR_A = 'superviseur_a';
     const TYPE_CLASSIQUE = null;
 
     public function estDirectrice(): bool
@@ -70,6 +71,11 @@ class Superviseur extends Model
     public function estGestionnaireStock(): bool
     {
         return $this->type_superviseur === self::TYPE_GESTIONNAIRE_STOCK;
+    }
+
+    public function estSuperviseurA(): bool
+    {
+        return $this->type_superviseur === self::TYPE_SUPERVISEUR_A;
     }
 
     public function estClassique(): bool

@@ -33,6 +33,13 @@ class SuperviseursSpecialisesSeeder extends Seeder
                 'type' => Superviseur::TYPE_GESTIONNAIRE_STOCK,
                 'equipe' => 'Gestion Stock',
             ],
+            [
+                'nom' => 'Superviseur A Le Pharaon',
+                'email' => 'superviseur_a@lepharaon.com',
+                'password' => 'password123',
+                'type' => Superviseur::TYPE_SUPERVISEUR_A,
+                'equipe' => 'Équipe A',
+            ],
         ];
 
         foreach ($superviseurs as $data) {

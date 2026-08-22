@@ -83,6 +83,7 @@
                 <div class="mt-1">
                     <select id="type_superviseur" name="type_superviseur" class="input-field">
                         <option value="">— Sélectionner un type —</option>
+                        <option value="superviseur_a">Superviseur A (Superviseur classique)</option>
                         <option value="directrice">Directrice (Caisse & Finances)</option>
                         <option value="secretaire">Secrétaire (Services Photo)</option>
                         <option value="gestionnaire_stock">Gestionnaire de Stock</option>
