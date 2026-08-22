@@ -73,6 +73,20 @@
         <div class="stat-card-value text-pharaoh-gold">{{ number_format($sommeEnCaisse, 0, ',', '.') }} FCFA</div>
         <div class="stat-card-label font-semibold">Somme en caisse</div>
     </div>
+    <div class="stat-card border-yellow-200 bg-gradient-to-br from-yellow-50 to-white">
+        <div class="stat-card-icon bg-yellow-50 text-yellow-600">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <div class="stat-card-value text-yellow-600">{{ number_format($resteAEncaisser ?? 0, 0, ',', '.') }} FCFA</div>
+        <div class="stat-card-label">Reste à encaisser</div>
+    </div>
+    <div class="stat-card border-green-200 bg-gradient-to-br from-green-50 to-white">
+        <div class="stat-card-icon bg-green-50 text-green-600">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <div class="stat-card-value text-green-600">{{ number_format($montantEncaisse ?? 0, 0, ',', '.') }} FCFA</div>
+        <div class="stat-card-label">Encaissé aujourd'hui</div>
+    </div>
 </div>
 
 <!-- Répartition par type -->

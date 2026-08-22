@@ -29,8 +29,23 @@
                 </select>
             </div>
             <div>
-                <label class="input-label">Montant (FCFA)</label>
-                <input type="number" name="montant" class="input-field mt-1" min="0.01" step="0.01" value="{{ old('montant', $commande->montant) }}" required>
+                <label class="input-label">Montant total (FCFA)</label>
+                <input type="number" name="montant" id="montant" class="input-field mt-1" min="0.01" step="0.01" value="{{ old('montant', $commande->montant) }}" required oninput="updateMontantPaye()">
+            </div>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="input-label">Statut du paiement</label>
+                    <select name="statut_paiement" id="statut_paiement" class="input-field mt-1" required onchange="toggleMontantPaye()">
+                        <option value="paye" {{ old('statut_paiement', $commande->statut_paiement) === 'paye' ? 'selected' : '' }}>✅ Payé</option>
+                        <option value="partiel" {{ old('statut_paiement', $commande->statut_paiement) === 'partiel' ? 'selected' : '' }}>💰 Partiel</option>
+                        <option value="a_payer" {{ old('statut_paiement', $commande->statut_paiement) === 'a_payer' ? 'selected' : '' }}>⏳ À payer</option>
+                    </select>
+                </div>
+                <div id="montantPayeField">
+                    <label class="input-label">Montant payé (FCFA)</label>
+                    <input type="number" name="montant_paye" id="montant_paye" class="input-field mt-1" min="0" step="0.01" value="{{ old('montant_paye', $commande->montant_paye) }}">
+                    <p class="mt-1 text-xs text-gray-400" id="montantPayeHint"></p>
+                </div>
             </div>
             <div>
                 <label class="input-label">Détails (facultatif)</label>
@@ -43,4 +58,40 @@
         </form>
     </div>
 </div>
+
+<script>
+function toggleMontantPaye() {
+    const statut = document.getElementById('statut_paiement').value;
+    const input = document.getElementById('montant_paye');
+    const hint = document.getElementById('montantPayeHint');
+    const montantInput = document.getElementById('montant');
+    if (statut === 'paye') {
+        input.value = montantInput.value || '0';
+        input.readOnly = true;
+        input.classList.add('bg-gray-100');
+        hint.textContent = 'Montant complet automatique.';
+    } else if (statut === 'partiel') {
+        input.readOnly = false;
+        input.classList.remove('bg-gray-100');
+        updateMontantPaye();
+    } else {
+        input.value = '0';
+        input.readOnly = true;
+        input.classList.add('bg-gray-100');
+        hint.textContent = 'Paiement différé.';
+    }
+}
+function updateMontantPaye() {
+    const statut = document.getElementById('statut_paiement').value;
+    const montant = parseFloat(document.getElementById('montant').value) || 0;
+    const input = document.getElementById('montant_paye');
+    const hint = document.getElementById('montantPayeHint');
+    if (statut === 'paye') input.value = montant;
+    else if (statut === 'partiel') {
+        const reste = Math.max(0, montant - (parseFloat(input.value) || 0));
+        hint.textContent = 'Reste à encaisser : ' + reste.toLocaleString('fr') + ' FCFA';
+    }
+}
+document.addEventListener('DOMContentLoaded', toggleMontantPaye);
+</script>
 @endsection

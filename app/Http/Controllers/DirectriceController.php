@@ -58,11 +58,22 @@ class DirectriceController extends Controller
         $derniersServices = $servicesJour->sortByDesc('created_at')->take(5);
         $derniersRetraits = $retraitsJour->sortByDesc('created_at')->take(5);
 
+        // Reste à encaisser (commandes partielles + à payer)
+        $resteAEncaisser = Commande::where('superviseur_id', $superviseur->id)
+            ->where('statut_paiement', '!=', 'paye')
+            ->sum(DB::raw('montant - montant_paye'));
+
+        // Montant encaissé aujourd'hui
+        $montantEncaisse = Commande::where('superviseur_id', $superviseur->id)
+            ->whereDate('date', $today)
+            ->sum('montant_paye');
+
         $typesCaisse = self::TYPES_CAISSIERE;
 
         return view('directrice.dashboard', compact(
             'superviseurInfo', 'totalCommandes', 'totalServices', 'totalRetraits',
-            'sommeEnCaisse', 'commandesParType', 'servicesParType',
+            'sommeEnCaisse', 'resteAEncaisser', 'montantEncaisse',
+            'commandesParType', 'servicesParType',
             'derniersCommandes', 'derniersServices', 'derniersRetraits',
             'typesCaisse'
         ));
@@ -91,13 +102,28 @@ class DirectriceController extends Controller
         $request->validate([
             'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_CAISSIERE)),
             'montant' => 'required|numeric|min:0.01',
+            'montant_paye' => 'required|numeric|min:0',
+            'statut_paiement' => 'required|string|in:paye,partiel,a_payer',
             'details' => 'nullable|string|max:1000',
         ]);
+
+        $montant = (float) $request->montant;
+        $montantPaye = (float) $request->montant_paye;
+        $statut = $request->statut_paiement;
+
+        if ($statut === 'paye' && $montantPaye < $montant) {
+            $montantPaye = $montant;
+        }
+        if ($statut === 'a_payer') {
+            $montantPaye = 0;
+        }
 
         Commande::create([
             'superviseur_id' => Auth::id(),
             'type' => $request->type,
-            'montant' => $request->montant,
+            'montant' => $montant,
+            'montant_paye' => $montantPaye,
+            'statut_paiement' => $statut,
             'details' => $request->details,
             'date' => now()->toDateString(),
         ]);
@@ -120,9 +146,26 @@ class DirectriceController extends Controller
         $request->validate([
             'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_CAISSIERE)),
             'montant' => 'required|numeric|min:0.01',
+            'montant_paye' => 'required|numeric|min:0',
+            'statut_paiement' => 'required|string|in:paye,partiel,a_payer',
             'details' => 'nullable|string|max:1000',
         ]);
-        $commande->update($request->only('type', 'montant', 'details'));
+
+        $montant = (float) $request->montant;
+        $montantPaye = (float) $request->montant_paye;
+        $statut = $request->statut_paiement;
+
+        if ($statut === 'paye' && $montantPaye < $montant) $montantPaye = $montant;
+        if ($statut === 'a_payer') $montantPaye = 0;
+
+        $commande->update([
+            'type' => $request->type,
+            'montant' => $montant,
+            'montant_paye' => $montantPaye,
+            'statut_paiement' => $statut,
+            'details' => $request->details,
+        ]);
+
         return redirect()->route('directrice.commandes')->with('success', 'Commande mise à jour.');
     }
 

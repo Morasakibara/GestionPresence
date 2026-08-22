@@ -1,0 +1,394 @@
+openapi: 3.0.3
+info:
+  title: Le Pharaon — API Mobile
+  description: |
+    API REST pour l'application mobile **Le Pharaon** — Gestion de Présence.
+    Authentification par token Sanctum.
+
+    ## Authentification
+    1. `POST /api/login` avec `email` + `password` → retourne un `token`.
+    2. Ajouter le header `Authorization: Bearer {token}` sur toutes les requêtes protégées.
+
+    ## Rôles
+    - **Employer** : pointage arrivée/départ, historique présences
+    - **Superviseur** : pointage + commandes/services
+    - **Administrateur** : accès complet
+  version: 1.0.0
+  contact:
+    name: Le Pharaon
+
+servers:
+  - url: http://localhost:8000/api
+    description: Serveur local (MAMP)
+
+security:
+  - bearerAuth: []
+
+paths:
+  /login:
+    post:
+      tags: [Authentification]
+      summary: Connexion utilisateur
+      description: Authentifie un utilisateur et retourne un token Sanctum.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: employe@lepharaon.com
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: Connexion réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                    description: Token Sanctum à utiliser dans le header Authorization
+        '422':
+          description: Identifiants incorrects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /logout:
+    post:
+      tags: [Authentification]
+      summary: Déconnexion
+      description: Révoque le token courant.
+      responses:
+        '200':
+          description: Déconnecté
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /user:
+    get:
+      tags: [Authentification]
+      summary: Profil utilisateur
+      responses:
+        '200':
+          description: Profil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /mark-arrival:
+    post:
+      tags: [Présence]
+      summary: Marquer l'arrivée
+      description: |
+        Enregistre l'heure d'arrivée. La géolocalisation est vérifiée
+        contre les lieux de travail actifs configurés par l'admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [latitude, longitude]
+              properties:
+                latitude:
+                  type: number
+                  example: 48.856613
+                longitude:
+                  type: number
+                  example: 2.352222
+      responses:
+        '200':
+          description: Arrivée enregistrée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  presence:
+                    $ref: '#/components/schemas/Presence'
+        '422':
+          description: Hors zone géolocalisation
+
+  /mark-departure:
+    post:
+      tags: [Présence]
+      summary: Marquer le départ
+      description: |
+        Enregistre l'heure de départ avec une fiche de rendement obligatoire.
+        La géolocalisation est vérifiée.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [latitude, longitude, rendement]
+              properties:
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+                rendement:
+                  type: string
+                  maxLength: 5000
+                  description: Description des tâches effectuées
+                  example: J'ai finalisé le rapport mensuel et traité 15 dossiers clients.
+      responses:
+        '200':
+          description: Départ enregistré
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  presence:
+                    $ref: '#/components/schemas/Presence'
+        '404':
+          description: Aucune arrivée correspondante
+
+  /presences:
+    get:
+      tags: [Présence]
+      summary: Historique des présences
+      description: Retourne les 50 dernières présences de l'utilisateur.
+      responses:
+        '200':
+          description: Liste des présences
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  presences:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PresenceDetail'
+
+  /presences/today:
+    get:
+      tags: [Présence]
+      summary: Présence du jour
+      responses:
+        '200':
+          description: Présence du jour (null si aucune)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  presence:
+                    oneOf:
+                      - $ref: '#/components/schemas/PresenceDetail'
+                      - type: 'null'
+
+  /commandes:
+    get:
+      tags: [Commandes]
+      summary: Lister les commandes
+      description: Retourne les commandes du superviseur connecté (100 max).
+      responses:
+        '200':
+          description: Liste des commandes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  commandes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Commande'
+    post:
+      tags: [Commandes]
+      summary: Enregistrer une commande
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, montant, statut_paiement]
+              properties:
+                type:
+                  type: string
+                  description: Type de commande (impression, shooting, etc.)
+                  example: impression
+                montant:
+                  type: number
+                  example: 5000
+                montant_paye:
+                  type: number
+                  description: Montant payé (0 si à payer plus tard)
+                  example: 3000
+                statut_paiement:
+                  type: string
+                  enum: [paye, partiel, a_payer]
+                  example: partiel
+                details:
+                  type: string
+                  example: 100 pages noir et blanc
+      responses:
+        '201':
+          description: Commande créée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  commande:
+                    $ref: '#/components/schemas/Commande'
+
+  /services:
+    get:
+      tags: [Services]
+      summary: Lister les services
+      responses:
+        '200':
+          description: Liste des services
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  services:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Service'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [Administrateur, Superviseur, Employer]
+
+    Presence:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date
+        heure_arrivee:
+          type: string
+          nullable: true
+        status:
+          type: string
+          example: en attente
+
+    PresenceDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date
+        heure_arrivee:
+          type: string
+          nullable: true
+        heure_depart:
+          type: string
+          nullable: true
+        status:
+          type: string
+        rendement:
+          type: string
+          nullable: true
+        duree:
+          type: integer
+          nullable: true
+          description: Durée en minutes
+
+    Commande:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        montant:
+          type: number
+        montant_paye:
+          type: number
+        reste:
+          type: number
+        statut_paiement:
+          type: string
+          enum: [paye, partiel, a_payer]
+        details:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date
+        created_at:
+          type: string
+
+    Service:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        montant:
+          type: number
+        details:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
