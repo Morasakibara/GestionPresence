@@ -186,6 +186,7 @@ Route::get('/role-switch', function() {
 Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/caisse', [AdminController::class, 'etatCaisse'])->name('caisse');
     Route::get('/stock', [AdminController::class, 'etatStock'])->name('stock');
+    Route::get('/paiements', [AdminController::class, 'paiementStats'])->name('paiements');
 });
 
 Route::middleware('auth')->group(function () {
