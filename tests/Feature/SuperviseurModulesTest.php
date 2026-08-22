@@ -916,9 +916,8 @@ class SuperviseurModulesTest extends TestCase
     public function test_directrice_retrait_depasse_caisse_refuse(): void
     {
         $sup = $this->loginSuperviseur('directrice');
-        // Pas d'entrées -> caisse = 0
         $response = $this->post('/directrice/retraits', [
-            'montant' => 5000,
+            'montant' => 999999999,
             'motif' => 'Test retrait sans fonds.',
         ]);
         $response->assertStatus(302);

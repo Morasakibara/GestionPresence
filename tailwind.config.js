@@ -151,6 +151,7 @@ export default {
         },
         fontFamily: {
           sans: ['"Inter"', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+          display: ['"Playfair Display"', 'Georgia', 'serif'],
         },
         // Ajout de styles d'outline négatifs
         outlineOffset: {

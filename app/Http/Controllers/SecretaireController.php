@@ -75,11 +75,20 @@ class SecretaireController extends Controller
             $dataSorties7j[] = (float) $sorties;
         }
 
+        // Historique des encaissements récents (audit logs)
+        $historiqueEncaissements = \App\Models\AuditLog::where('module', 'secretaire')
+            ->where('action', 'secretaire.update')
+            ->where('description', 'like', '%Encaissement%')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
         return view('secretaire.dashboard', compact(
             'totalCommandes', 'totalServices', 'totalRetraits',
             'sommeEnCaisse', 'resteAEncaisser', 'commandesParType', 'servicesParType',
             'derniersCommandes', 'derniersServices', 'derniersRetraits',
-            'commandesImpayees', 'labels7j', 'dataEntrees7j', 'dataSorties7j'
+            'commandesImpayees', 'labels7j', 'dataEntrees7j', 'dataSorties7j',
+            'historiqueEncaissements'
         ))->with('typesPhoto', self::TYPES_SECRETAIRE);
     }
 
@@ -178,6 +187,14 @@ class SecretaireController extends Controller
             'montant_paye' => $newMontantPaye,
             'statut_paiement' => $newStatut,
         ]);
+
+        // Notification si la commande passe de partiel/à payer → payée
+        if ($newStatut === 'paye' && $commande->getOriginal('statut_paiement') !== 'paye') {
+            $admin = \App\Models\Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+            if ($admin) {
+                $admin->notify(new \App\Notifications\PaiementCommandeNotification($commande, $request->montant_verse, $newStatut));
+            }
+        }
 
         $msg = $newStatut === 'paye'
             ? "Commande #{$commande->id} entièrement payée."

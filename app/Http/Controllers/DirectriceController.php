@@ -84,13 +84,22 @@ class DirectriceController extends Controller
 
         $typesCaisse = self::TYPES_CAISSIERE;
 
+        // Historique des encaissements récents (audit logs)
+        $historiqueEncaissements = \App\Models\AuditLog::where('module', 'directrice')
+            ->where('action', 'directrice.update')
+            ->where('description', 'like', '%Encaissement%')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
         return view('directrice.dashboard', compact(
             'superviseurInfo', 'totalCommandes', 'totalServices', 'totalRetraits',
             'sommeEnCaisse', 'resteAEncaisser', 'montantEncaisse',
             'commandesParType', 'servicesParType',
             'derniersCommandes', 'derniersServices', 'derniersRetraits',
             'typesCaisse', 'commandesImpayees',
-            'labels7j', 'dataEntrees7j', 'dataSorties7j'
+            'labels7j', 'dataEntrees7j', 'dataSorties7j',
+            'historiqueEncaissements'
         ));
     }
 
@@ -178,6 +187,14 @@ class DirectriceController extends Controller
             'montant_paye' => $newMontantPaye,
             'statut_paiement' => $newStatut,
         ]);
+
+        // Notification si la commande passe de partiel/à payer → payée
+        if ($newStatut === 'paye' && $commande->getOriginal('statut_paiement') !== 'paye') {
+            $admin = \App\Models\Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+            if ($admin) {
+                $admin->notify(new \App\Notifications\PaiementCommandeNotification($commande, $request->montant_verse, $newStatut));
+            }
+        }
 
         $msg = $newStatut === 'paye'
             ? "Commande #{$commande->id} entièrement payée."

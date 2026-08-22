@@ -105,6 +105,23 @@
             </div>
             @endforeach
         </div>
+
+        {{-- Historique des encaissements récents --}}
+        @if(isset($historiqueEncaissements) && $historiqueEncaissements->count() > 0)
+        <div class="mt-4 border-t pt-4">
+            <h4 class="text-sm font-semibold text-gray-600 mb-3">📋 Derniers encaissements</h4>
+            @foreach($historiqueEncaissements as $log)
+            <div class="flex items-center justify-between py-2 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-400">{{ $log->created_at->format('d/m H:i') }}</span>
+                    <span class="text-sm text-[#080808]">{{ $log->description }}</span>
+                </div>
+                <span class="text-xs text-gray-400">{{ $log->user?->nom }}</span>
+            </div>
+            @endforeach
+        </div>
+        @endif
+
         <div class="border-t px-6 py-3 bg-gray-50 flex justify-between items-center">
             <span class="text-sm font-semibold text-orange-700">Total reste : {{ number_format($resteAEncaisser, 0, ',', '.') }} FCFA</span>
             <button onclick="document.getElementById('modalImpayes').classList.add('hidden')" class="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-300">Fermer</button>
