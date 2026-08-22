@@ -102,3 +102,10 @@
     </div>
 </div>
 @endsection
+
+@section('mobile-navigation')
+<a href="{{ route('user.dashboard') }}" class="block rounded-md px-3 py-2 text-base font-medium bg-pharaoh-gold text-white">Dashboard</a>
+<a href="{{ route('user.profile') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Profil</a>
+<a href="{{ route('presence.index') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Index</a>
+<a href="{{ route('user.rendement') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Rendement</a>
+@endsection\n

@@ -32,66 +32,18 @@ class SecretaireController extends Controller
         $superviseur = Auth::user();
         $today = now()->toDateString();
 
-        // ── CAISSE CUMULATIVE ──
-        $totalCommandes = Commande::where('superviseur_id', $superviseur->id)->sum('montant');
-        $totalCommandesPaye = Commande::where('superviseur_id', $superviseur->id)->sum('montant_paye');
-        $totalServices = ServiceFourni::where('superviseur_id', $superviseur->id)->sum('montant');
-        $totalRetraits = Retrait::where('superviseur_id', $superviseur->id)->sum('montant');
-        $sommeEnCaisse = $totalCommandesPaye + $totalServices - $totalRetraits;
-        $impayeTotal = $totalCommandes - $totalCommandesPaye;
+        $caisse = new \App\Services\CaisseService($superviseur->id, 'secretaire');
+        $data = $caisse->dashboardData();
 
-        // ── Données du jour (pour graphiques) ──
+        // Répartition par type du jour
         $commandesJour = Commande::where('superviseur_id', $superviseur->id)
             ->whereDate('date', $today)->get();
         $servicesJour = ServiceFourni::where('superviseur_id', $superviseur->id)
             ->whereDate('date', $today)->get();
-        $retraitsJour = Retrait::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', $today)->get();
+        $data['commandesParType'] = $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant'));
+        $data['servicesParType'] = $servicesJour->groupBy('type')->map(fn($s) => $s->sum('montant'));
 
-        $commandesParType = $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant'));
-        $servicesParType = $servicesJour->groupBy('type')->map(fn($s) => $s->sum('montant'));
-
-        // Dernières transactions (pas juste aujourd'hui)
-        $derniersCommandes = Commande::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
-        $derniersServices = ServiceFourni::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
-        $derniersRetraits = Retrait::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
-
-        // ── Reste à encaisser (TOUTES les commandes non payées) ──
-        $commandesImpayees = Commande::where('superviseur_id', $superviseur->id)
-            ->where('statut_paiement', '!=', 'paye')
-            ->orderByDesc('created_at')
-            ->get();
-        $resteAEncaisser = $commandesImpayees->sum(fn($c) => (float) $c->montant - (float) $c->montant_paye);
-
-        // ── Données graphique 7 derniers jours ──
-        $labels7j = [];
-        $dataEntrees7j = [];
-        $dataSorties7j = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $jour = now()->subDays($i)->toDateString();
-            $labels7j[] = now()->subDays($i)->format('d/m');
-            $entrees = Commande::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant_paye')
-                + ServiceFourni::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
-            $sorties = Retrait::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
-            $dataEntrees7j[] = (float) $entrees;
-            $dataSorties7j[] = (float) $sorties;
-        }
-
-        // Historique des encaissements récents (audit logs)
-        $historiqueEncaissements = \App\Models\AuditLog::where('module', 'secretaire')
-            ->where('action', 'secretaire.update')
-            ->where('description', 'like', '%Encaissement%')
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
-
-        return view('secretaire.dashboard', compact(
-            'totalCommandes', 'totalServices', 'totalRetraits',
-            'sommeEnCaisse', 'resteAEncaisser', 'impayeTotal', 'commandesParType', 'servicesParType',
-            'derniersCommandes', 'derniersServices', 'derniersRetraits',
-            'commandesImpayees', 'labels7j', 'dataEntrees7j', 'dataSorties7j',
-            'historiqueEncaissements'
-        ))->with('typesPhoto', self::TYPES_SECRETAIRE);
+        return view('secretaire.dashboard', $data)->with('typesPhoto', self::TYPES_SECRETAIRE);
     }
 
     /**

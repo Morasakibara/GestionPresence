@@ -32,80 +32,23 @@ class DirectriceController extends Controller
     {
         $superviseur = Auth::user();
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+
+        $caisse = new \App\Services\CaisseService($superviseur->id, 'directrice');
+        $data = $caisse->dashboardData();
+
+        // Répartition par type du jour pour la vue
         $today = now()->toDateString();
-
-        // ── CAISSE CUMULATIVE ──
-        // Seul le montant PAYÉ entre en caisse. Les impayés = solde négatif.
-        $totalCommandes = Commande::where('superviseur_id', $superviseur->id)->sum('montant');
-        $totalCommandesPaye = Commande::where('superviseur_id', $superviseur->id)->sum('montant_paye');
-        $totalServices = ServiceFourni::where('superviseur_id', $superviseur->id)->sum('montant');
-        $totalRetraits = Retrait::where('superviseur_id', $superviseur->id)->sum('montant');
-        // Ce qui est réellement en caisse = ce qui a été payé + services - retraits
-        $sommeEnCaisse = $totalCommandesPaye + $totalServices - $totalRetraits;
-        // Ce qui est dû = montant total des commandes - ce qui a été payé → en négatif
-        $impayeTotal = $totalCommandes - $totalCommandesPaye;
-
-        // ── Données du jour (pour graphiques) ──
         $commandesJour = Commande::where('superviseur_id', $superviseur->id)
             ->whereDate('date', $today)->get();
         $servicesJour = ServiceFourni::where('superviseur_id', $superviseur->id)
             ->whereDate('date', $today)->get();
-        $retraitsJour = Retrait::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', $today)->get();
+        $data['commandesParType'] = $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant'));
+        $data['servicesParType'] = $servicesJour->groupBy('type')->map(fn($s) => $s->sum('montant'));
 
-        // Répartition par type (jour)
-        $commandesParType = $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant'));
-        $servicesParType = $servicesJour->groupBy('type')->map(fn($s) => $s->sum('montant'));
-
-        // Dernières transactions
-        $derniersCommandes = Commande::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
-        $derniersServices = ServiceFourni::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
-        $derniersRetraits = Retrait::where('superviseur_id', $superviseur->id)->orderByDesc('created_at')->take(10)->get();
-
-        // ── Reste à encaisser (TOUTES les commandes non payées, pas juste aujourd'hui) ──
-        $commandesImpayees = Commande::where('superviseur_id', $superviseur->id)
-            ->where('statut_paiement', '!=', 'paye')
-            ->orderByDesc('created_at')
-            ->get();
-        $resteAEncaisser = $commandesImpayees->sum(fn($c) => (float) $c->montant - (float) $c->montant_paye);
-
-        // Montant encaissé aujourd'hui
-        $montantEncaisse = Commande::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', $today)->sum('montant_paye');
-
-        // ── Données graphique 7 derniers jours ──
-        $labels7j = [];
-        $dataEntrees7j = [];
-        $dataSorties7j = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $jour = now()->subDays($i)->toDateString();
-            $labels7j[] = now()->subDays($i)->format('d/m');
-            $entrees = Commande::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant')
-                + ServiceFourni::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
-            $sorties = Retrait::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
-            $dataEntrees7j[] = (float) $entrees;
-            $dataSorties7j[] = (float) $sorties;
-        }
-
-        $typesCaisse = self::TYPES_CAISSIERE;
-
-        // Historique des encaissements récents (audit logs)
-        $historiqueEncaissements = \App\Models\AuditLog::where('module', 'directrice')
-            ->where('action', 'directrice.update')
-            ->where('description', 'like', '%Encaissement%')
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
-
-        return view('directrice.dashboard', compact(
-            'superviseurInfo', 'totalCommandes', 'totalServices', 'totalRetraits',
-            'sommeEnCaisse', 'resteAEncaisser', 'montantEncaisse', 'impayeTotal',
-            'commandesParType', 'servicesParType',
-            'derniersCommandes', 'derniersServices', 'derniersRetraits',
-            'typesCaisse', 'commandesImpayees',
-            'labels7j', 'dataEntrees7j', 'dataSorties7j',
-            'historiqueEncaissements'
-        ));
+        return view('directrice.dashboard', array_merge($data, [
+            'superviseurInfo' => $superviseurInfo,
+            'typesCaisse' => self::TYPES_CAISSIERE,
+        ]));
     }
 
     /**
