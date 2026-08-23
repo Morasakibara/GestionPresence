@@ -565,6 +565,9 @@
     });
     </script>
 
+    <!-- Notifications temps réel -->
+    <script src="{{ asset('js/notifications.js') }}"></script>
+
     @yield('scripts')
 
     <!-- Dark Mode Toggle -->

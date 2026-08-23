@@ -66,4 +66,21 @@ class NotificationController extends Controller
         
         return redirect()->back();
     }
+
+    /**
+     * API endpoint pour le polling des notifications temps réel.
+     */
+    public function check()
+    {
+        $user = Auth::user();
+        $unread = $user->unreadNotifications();
+        $count = $unread->count();
+        $latest = $unread->latest()->first();
+
+        return response()->json([
+            'unread_count' => $count,
+            'latest_message' => $latest ? ($latest->data['message'] ?? 'Nouvelle notification') : null,
+            'latest_type' => $latest ? ($latest->type ?? 'info') : null,
+        ]);
+    }
 }

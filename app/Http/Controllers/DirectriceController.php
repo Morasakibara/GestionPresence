@@ -28,22 +28,38 @@ class DirectriceController extends Controller
     /**
      * Dashboard de la directrice — vue d'ensemble de la caisse.
      */
+    private function flushDashboardCache(): void
+    {
+        $id = Auth::id();
+        \Illuminate\Support\Facades\Cache::forget("directrice_dash_{$id}");
+        \Illuminate\Support\Facades\Cache::forget("directrice_types_{$id}_" . now()->toDateString());
+    }
+
     public function dashboard()
     {
         $superviseur = Auth::user();
-        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
+        $cacheKey = "directrice_dash_{$superviseur->id}";
+
+        $superviseurInfo = \Illuminate\Support\Facades\Cache::remember("superviseur_info_{$superviseur->id}", 600, fn() => Superviseur::where('id', $superviseur->id)->first());
 
         $caisse = new \App\Services\CaisseService($superviseur->id, 'directrice');
-        $data = $caisse->dashboardData();
+        $data = \Illuminate\Support\Facades\Cache::remember($cacheKey, 60, fn() => $caisse->dashboardData());
 
         // Répartition par type du jour pour la vue
         $today = now()->toDateString();
-        $commandesJour = Commande::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', $today)->get();
-        $servicesJour = ServiceFourni::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', $today)->get();
-        $data['commandesParType'] = $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant'));
-        $data['servicesParType'] = $servicesJour->groupBy('type')->map(fn($s) => $s->sum('montant'));
+        $todayKey = "directrice_types_{$superviseur->id}_{$today}";
+        $types = \Illuminate\Support\Facades\Cache::remember($todayKey, 60, function () use ($superviseur, $today) {
+            $commandesJour = Commande::where('superviseur_id', $superviseur->id)
+                ->whereDate('date', $today)->get();
+            $servicesJour = ServiceFourni::where('superviseur_id', $superviseur->id)
+                ->whereDate('date', $today)->get();
+            return [
+                'commandesParType' => $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant')),
+                'servicesParType' => $servicesJour->groupBy('type')->map(fn($s) => $s->sum('montant')),
+            ];
+        });
+        $data['commandesParType'] = $types['commandesParType'];
+        $data['servicesParType'] = $types['servicesParType'];
 
         return view('directrice.dashboard', array_merge($data, [
             'superviseurInfo' => $superviseurInfo,
@@ -100,6 +116,7 @@ class DirectriceController extends Controller
         ]);
 
         AuditService::created('directrice', "Commande {$request->type} de {$montant} FCFA ({$statut})", $cmd->toArray(), $request);
+        $this->flushDashboardCache();
 
         return redirect()->route('directrice.commandes')->with('success', 'Commande enregistrée.');
     }
@@ -147,6 +164,7 @@ class DirectriceController extends Controller
         $msg = $newStatut === 'paye'
             ? "Commande #{$commande->id} entièrement payée."
             : "Reste de {$request->montant_verse} FCFA encaissé sur commande #{$commande->id}.";
+        $this->flushDashboardCache();
 
         return redirect()->route('directrice.dashboard')->with('success', $msg);
     }
@@ -186,6 +204,7 @@ class DirectriceController extends Controller
             'details' => $request->details,
         ]);
 
+        $this->flushDashboardCache();
         return redirect()->route('directrice.commandes')->with('success', 'Commande mise à jour.');
     }
 
@@ -196,6 +215,7 @@ class DirectriceController extends Controller
             ->firstOrFail();
         $commande->delete();
 
+        $this->flushDashboardCache();
         return redirect()->route('directrice.commandes')->with('success', 'Commande supprimée.');
     }
 
@@ -233,6 +253,7 @@ class DirectriceController extends Controller
             'date' => now()->toDateString(),
         ]);
 
+        $this->flushDashboardCache();
         return redirect()->route('directrice.services')->with('success', 'Service enregistré.');
     }
 
@@ -253,6 +274,7 @@ class DirectriceController extends Controller
             'details' => 'nullable|string|max:1000',
         ]);
         $service->update($request->only('type', 'montant', 'details'));
+        $this->flushDashboardCache();
         return redirect()->route('directrice.services')->with('success', 'Service mis à jour.');
     }
 
@@ -262,6 +284,7 @@ class DirectriceController extends Controller
             ->where('superviseur_id', Auth::id())->firstOrFail();
         $service->delete();
 
+        $this->flushDashboardCache();
         return redirect()->route('directrice.services')->with('success', 'Service supprimé.');
     }
 
@@ -320,6 +343,7 @@ class DirectriceController extends Controller
 
         AuditService::created('directrice', "Retrait de {$request->montant} FCFA — {$request->motif}", $retrait->toArray(), $request);
 
+        $this->flushDashboardCache();
         return redirect()->route('directrice.retraits')->with('success', 'Retrait enregistré.');
     }
 

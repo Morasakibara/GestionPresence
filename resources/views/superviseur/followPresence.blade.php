@@ -1,148 +1,163 @@
-@extends('layouts.app')
+@extends('layouts.dashboard')
 
-@section('title', 'Suivi des Présences')
+@section('header')
+<div class="flex items-center justify-between">
+    <span>Suivi des Présences</span>
+    <a href="{{ route('superviseur.showAddMember') }}" class="btn-gold btn-press">
+        <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        Ajouter membre
+    </a>
+</div>
+@endsection
+
+@section('navigation')
+<a href="{{ route('superviseur.supdashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Dashboard</a>
+<a href="{{ route('superviseur.showAddMember') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Ajout membre</a>
+<a href="{{ route('superviseur.showFollowPresence') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Suivre présences</a>
+<a href="{{ route('superviseur.generateReport2') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Rapports</a>
+<a href="{{ route('notifications.index') }}" class="relative rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
+    Notifications
+    @if(Auth::user()->unreadNotifications->count() > 0)
+        <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">{{ Auth::user()->unreadNotifications->count() }}</span>
+    @endif
+</a>
+@endsection
+
+@section('mobile-navigation')
+<a href="{{ route('superviseur.supdashboard') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Dashboard</a>
+<a href="{{ route('superviseur.showAddMember') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Ajout membre</a>
+<a href="{{ route('superviseur.showFollowPresence') }}" class="block rounded-md bg-pharaoh-gold px-3 py-2 text-base font-medium text-white">Suivre présences</a>
+<a href="{{ route('superviseur.generateReport2') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Rapports</a>
+<a href="{{ route('notifications.index') }}" class="relative block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
+    Notifications
+    @if(Auth::user()->unreadNotifications->count() > 0)
+        <span class="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">{{ Auth::user()->unreadNotifications->count() }}</span>
+    @endif
+</a>
+@endsection
 
 @section('content')
-<div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    <div class="page-heading mb-6">
-        <div>
-            <h1 class="page-heading-title">Suivi des Présences</h1>
-            <p class="page-heading-sub">Consultez et gérez les présences des employés de votre équipe</p>
+
+@if(count($utilisateurs) === 0)
+    <div class="alert alert-warning mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                    Aucun employé dans votre équipe. Ajoutez des membres via « Ajouter membre ».
+                </p>
+            </div>
         </div>
-        <a href="{{ route('superviseur.showAddMember') }}" class="btn-secondary">
-            <svg class="-ml-1 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-            Ajouter membre
-        </a>
     </div>
-
-    @if(count($utilisateurs) === 0)
-        <div class="alert alert-warning mb-6">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-yellow-700">
-                        Aucun employé n'a été trouvé dans votre équipe. Vous pouvez ajouter des membres à votre équipe via la section "Ajouter membre".
-                    </p>
-                </div>
-            </div>
-        </div>
-    @else
-        <div class="table-wrap">
-            <div class="table-scroll">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="table-head">
-                        <tr>
-                            <th scope="col">Photo de profil</th>
-                            <th scope="col">Nom</th>
-                            <th scope="col">Dernière localisation</th>
-                            <th scope="col">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="table-body divide-y divide-gray-200 bg-white">
-                        @foreach($utilisateurs as $utilisateur)
-                        <tr>
-                            <td class="whitespace-nowrap px-6 py-4">
-                                <div class="h-12 w-12 flex-shrink-0">
-                                    @if($utilisateur->avatar)
-                                        <img src="{{ asset('storage/avatars/'.$utilisateur->avatar) }}" alt="{{ $utilisateur->nom }}" class="h-12 w-12 rounded-full object-cover">
-                                    @else
-                                        <img src="{{ asset('storage/avatars/default.png') }}" alt="Default Avatar" class="h-12 w-12 rounded-full object-cover">
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4">
-                                <div class="font-medium text-gray-900">{{ $utilisateur->nom }}</div>
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4">
-                                @php
-                                    $lastPresence = App\Models\Presence::where('employerID', $utilisateur->id)
-                                        ->whereNotNull('latitude_arrivee')
-                                        ->orderBy('date', 'desc')
-                                        ->first();
-                                @endphp
-
-                                @if($lastPresence && ($lastPresence->localisation_validee_arrivee || $lastPresence->localisation_validee_depart))
-                                    <span class="badge badge-success">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                                        Validée
-                                    </span>
-                                @elseif($lastPresence)
-                                    <span class="badge badge-warning">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-yellow-500"></span>
-                                        Non validée
-                                    </span>
+@else
+    <!-- Tableau des présences -->
+    <div class="pharaoh-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Photo</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Nom</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Statut localisation</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 bg-white">
+                    @foreach($utilisateurs as $utilisateur)
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <div class="h-10 w-10 flex-shrink-0">
+                                @if($utilisateur->avatar)
+                                    <img src="{{ asset('storage/avatars/'.$utilisateur->avatar) }}" alt="{{ $utilisateur->nom }}" class="h-10 w-10 rounded-full object-cover ring-2 ring-pharaoh-gold/20">
                                 @else
-                                    <span class="badge badge-info">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
-                                        Non disponible
-                                    </span>
+                                    <div class="h-10 w-10 rounded-full bg-pharaoh-gold/10 flex items-center justify-center text-sm font-bold text-pharaoh-gold">{{ strtoupper(substr($utilisateur->nom, 0, 2)) }}</div>
                                 @endif
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm">
-                                <button type="button" onclick="openPopup('{{ $utilisateur->id }}')" class="inline-flex items-center rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-pharaoh-gold-light focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2">
-                                    <svg class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    Suivre
-                                </button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    @endif
-</div>
-
-<!-- Modal - Version corrigée -->
-<div id="userModal" class="modal hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <!-- Background overlay -->
-    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity modal-overlay"></div>
-
-    <!-- Modal panel -->
-    <div class="flex min-h-full items-center justify-center p-4">
-    <div class="relative bg-white rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 rounded-t-lg">
-            <div class="sm:flex sm:items-start">
-                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                    <h3 class="text-lg font-medium leading-6 text-gray-900" id="modal-title">
-                        Informations de l'utilisateur
-                    </h3>
-                    <div class="mt-4" id="userDetails">
-                        <!-- Dynamic content will be loaded here -->
-                        <div class="animate-pulse">
-                            <div class="flex items-center space-x-4">
-                                <div class="h-12 w-12 rounded-full bg-gray-200"></div>
-                                <div class="space-y-2">
-                                    <div class="h-4 w-36 rounded bg-gray-200"></div>
-                                    <div class="h-3 w-24 rounded bg-gray-200"></div>
-                                </div>
                             </div>
-                            <div class="mt-4 space-y-2">
-                                <div class="h-4 w-full rounded bg-gray-200"></div>
-                                <div class="h-4 w-3/4 rounded bg-gray-200"></div>
-                                <div class="h-4 w-1/2 rounded bg-gray-200"></div>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <div class="text-sm font-semibold text-[#080808]">{{ $utilisateur->nom }}</div>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            @php
+                                $lastPresence = App\Models\Presence::where('employerID', $utilisateur->id)
+                                    ->whereNotNull('latitude_arrivee')
+                                    ->orderBy('date', 'desc')
+                                    ->first();
+                            @endphp
+                            @if($lastPresence && ($lastPresence->localisation_validee_arrivee || $lastPresence->localisation_validee_depart))
+                                <span class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5"></span>
+                                    Validée
+                                </span>
+                            @elseif($lastPresence)
+                                <span class="inline-flex items-center rounded-full bg-yellow-50 px-2.5 py-0.5 text-xs font-medium text-yellow-700 ring-1 ring-inset ring-yellow-600/20">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-yellow-500 mr-1.5"></span>
+                                    Non validée
+                                </span>
+                            @else
+                                <span class="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-gray-400 mr-1.5"></span>
+                                    Non disponible
+                                </span>
+                            @endif
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4 text-sm">
+                            <button type="button" onclick="openPopup('{{ $utilisateur->id }}')" class="btn-gold btn-press inline-flex items-center px-3 py-1.5 text-sm">
+                                <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                Suivre
+                            </button>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+@endif
+
+<!-- Modal -->
+<div id="userModal" class="modal hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity modal-overlay"></div>
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div class="relative bg-white rounded-2xl text-left shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+            <div class="bg-white px-6 pt-6 pb-4 sm:pb-6 rounded-t-2xl">
+                <div class="sm:flex sm:items-start">
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg font-semibold text-[#080808]" id="modal-title">Informations de l'utilisateur</h3>
+                        <div class="mt-4" id="userDetails">
+                            <div class="animate-pulse">
+                                <div class="flex items-center space-x-4">
+                                    <div class="h-12 w-12 rounded-full bg-gray-200"></div>
+                                    <div class="space-y-2">
+                                        <div class="h-4 w-36 rounded bg-gray-200"></div>
+                                        <div class="h-3 w-24 rounded bg-gray-200"></div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 space-y-2">
+                                    <div class="h-4 w-full rounded bg-gray-200"></div>
+                                    <div class="h-4 w-3/4 rounded bg-gray-200"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse sm:px-6 rounded-b-2xl">
+                <a id="viewMoreLink" href="{{ route('viewUser', ['id' => ':id']) }}" class="btn-gold btn-press w-full sm:ml-3 sm:w-auto">
+                    Voir plus
+                </a>
+                <button type="button" class="close-modal btn-press mt-3 inline-flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto">
+                    Fermer
+                </button>
+            </div>
         </div>
-        <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 rounded-b-xl">
-            <a id="viewMoreLink" href="{{ route('viewUser', ['id' => ':id']) }}" class="btn-gold btn-press w-full sm:ml-3 sm:w-auto">
-                Voir plus
-            </a>
-            <button type="button" class="close-modal btn-press mt-3 inline-flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm transition-colors duration-150 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                Fermer
-            </button>
-        </div>
-    </div>
     </div>
 </div>
 @endsection
@@ -151,15 +166,10 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Gestion de la fermeture de la modal
     document.querySelectorAll('.close-modal').forEach(button => {
         button.addEventListener('click', closeModal);
     });
-
-    // Fermer la modal si on clique sur l'overlay
     document.querySelector('.modal-overlay').addEventListener('click', closeModal);
-
-    // Fermer la modal avec la touche Escape
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape' && !document.getElementById('userModal').classList.contains('hidden')) {
             closeModal();
@@ -168,38 +178,23 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function openPopup(userId) {
-    // Afficher la modal avec l'état de chargement
     document.getElementById('userModal').classList.remove('hidden');
-
-    // Configuration de l'en-tête CSRF pour les requêtes AJAX
     $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
     });
-
-    // Requête AJAX pour obtenir les détails de l'utilisateur
     $.ajax({
         url: '/superviseur/getUserDetails/' + userId,
         type: 'GET',
         success: function(data) {
-            // Vérifier si les données sont bien reçues
-            console.log('Données reçues:', data);
-
-            // Afficher les données dans la modal
             if (data.detailsHtml) {
                 $('#userDetails').html(data.detailsHtml);
             } else {
-                $('#userDetails').html('<p class="text-red-500">Le format de données reçu n\'est pas correct.</p>');
-                console.error('Format de données incorrect:', data);
+                $('#userDetails').html('<p class="text-red-500">Format de données incorrect.</p>');
             }
-
-            // Mettre à jour le lien "Voir plus"
             $('#viewMoreLink').attr('href', $('#viewMoreLink').attr('href').replace(':id', userId));
         },
         error: function(err) {
-            $('#userDetails').html('<div class="text-red-500 py-3">Erreur lors de la récupération des données. Veuillez réessayer.</div>');
-            console.error('Erreur AJAX:', err);
+            $('#userDetails').html('<div class="text-red-500 py-3">Erreur lors de la récupération des données.</div>');
         }
     });
 }
