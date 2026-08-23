@@ -2,17 +2,24 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use App\Models\Utilisateur;
+use App\Services\LoginAttemptService;
 use Illuminate\Support\Facades\Log;
 
 class LoginController extends Controller
 {
+    private LoginAttemptService $loginAttempts;
+
+    public function __construct(LoginAttemptService $loginAttempts)
+    {
+        $this->loginAttempts = $loginAttempts;
+    }
+
     public function showLoginForm()
     {
         return view('auth.login');
@@ -20,8 +27,17 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        // Throttle : max 5 tentatives par minute par email/IP
-        $throttleKey = 'login:' . ($request->input('email') ?: $request->ip());
+        $email = strtolower(trim($request->input('email', '')));
+
+        // ─── 1. Vérifier le lockout prolongé (15 min après 10 échecs) ────
+        if ($email && $this->loginAttempts->isLockedOut($email)) {
+            throw ValidationException::withMessages([
+                'email' => [$this->loginAttempts->lockoutMessage($email)],
+            ]);
+        }
+
+        // ─── 2. Throttle classique Laravel (5/min par email+IP) ──────────
+        $throttleKey = 'login:' . ($email ?: $request->ip());
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             throw ValidationException::withMessages([
@@ -30,51 +46,38 @@ class LoginController extends Controller
         }
 
         $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required',
         ], [
-            'email.required' => 'Veuillez saisir votre adresse email.',
-            'email.email' => 'Veuillez saisir une adresse email valide.',
+            'email.required'    => 'Veuillez saisir votre adresse email.',
+            'email.email'       => 'Veuillez saisir une adresse email valide.',
             'password.required' => 'Veuillez saisir votre mot de passe.',
         ]);
 
-        // Journaliser les identifiants pour déboguer
-        Log::info('Tentative de connexion', ['email' => $request->email]);
+        Log::info('Tentative de connexion', ['email' => $email]);
 
-        // Récupérer l'utilisateur par email
-        $user = Utilisateur::where('email', $request->email)->first();
+        // ─── 3. Recherche de l'utilisateur ───────────────────────────────
+        $user = Utilisateur::where('email', $email)->first();
 
-        // Vérifier si l'utilisateur existe
         if (!$user) {
-            Log::warning('Utilisateur non trouvé', ['email' => $request->email]);
+            Log::warning('Utilisateur non trouvé', ['email' => $email]);
+            $this->recordFailure($email, $throttleKey);
             throw ValidationException::withMessages([
                 'email' => ['Email ou mot de passe incorrect.'],
             ]);
         }
 
-        // Journaliser les informations de l'utilisateur pour déboguer
-        Log::info('Utilisateur trouvé', [
-            'id' => $user->id,
-            'nom' => $user->nom,
-            'role' => $user->role,
-            'motDePasseLength' => $user->motDePasse ? strlen($user->motDePasse) : 0,
-            'motDePasseStartsWith' => $user->motDePasse ? substr($user->motDePasse, 0, 10) . '...' : 'null'
-        ]);
-
-        // Vérifier si le mot de passe correspond
+        // ─── 4. Vérification du mot de passe ─────────────────────────────
         $passwordMatches = Hash::check($request->password, $user->motDePasse);
-        Log::info('Vérification du mot de passe', [
-            'passwordMatches' => $passwordMatches,
-            'passwordLength' => strlen($request->password)
-        ]);
 
         if ($passwordMatches) {
+            // ── Succès : tout reset ──
             RateLimiter::clear($throttleKey);
-            // Connecter manuellement l'utilisateur
+            $this->loginAttempts->reset($email);
             Auth::login($user);
-            Log::info('Utilisateur connecté avec succès', ['id' => $user->id]);
 
-            // Redirection en fonction du rôle
+            Log::info('Utilisateur connecté avec succès', ['id' => $user->id, 'role' => $user->role]);
+
             if ($user->role === 'Superviseur') {
                 return $this->showRoleSelectionModal($user);
             } elseif ($user->role === 'Employer') {
@@ -84,16 +87,33 @@ class LoginController extends Controller
                 return redirect()->intended('/admin/dashboard');
             }
 
-            // Redirection par défaut
             return redirect()->intended('dashboard');
         }
 
-        // Authentification échouée
-        RateLimiter::hit($throttleKey, 60);
-        Log::warning('Échec d\'authentification - mot de passe incorrect', ['email' => $request->email]);
+        // ── Échec : incrémenter les deux compteurs ──
+        $this->recordFailure($email, $throttleKey);
+
+        Log::warning('Échec authentification', ['email' => $email]);
+
+        $attempts = $this->loginAttempts->getAttempts($email);
+        $remaining = $this->loginAttempts->maxAttempts() - $attempts;
+
+        $message = $remaining > 3
+            ? 'Email ou mot de passe incorrect.'
+            : "Email ou mot de passe incorrect. Attention, votre compte sera bloqué après {$remaining} autre(s) tentative(s).";
+
         throw ValidationException::withMessages([
-            'email' => ['Email ou mot de passe incorrect.'],
+            'email' => [$message],
         ]);
+    }
+
+    /**
+     * Enregistre un échec dans les deux systèmes (throttle + lockout).
+     */
+    private function recordFailure(string $email, string $throttleKey): void
+    {
+        $this->loginAttempts->recordFailure($email);
+        RateLimiter::hit($throttleKey, 60);
     }
 
     public function showRoleSelectionModal()
@@ -103,9 +123,7 @@ class LoginController extends Controller
             return redirect('/login');
         }
 
-        // Assurez-vous que l'utilisateur est bien un superviseur
         if ($user->role !== 'Superviseur') {
-            // Si ce n'est pas un superviseur, rediriger vers le tableau de bord approprié
             session(['current_role' => $user->role]);
             return redirect()->intended($user->role === 'Employer' ? '/user/dashboard' : '/admin/dashboard');
         }
