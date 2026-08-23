@@ -45,7 +45,7 @@
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ $t->taille }}</td>
                                     <td class="px-6 py-4 text-sm text-right font-semibold">{{ $t->quantite }}</td>
                                     <td class="px-6 py-4 text-sm text-right text-gray-500">{{ $t->seuil_alerte }}</td>
-                                    <td class="px-6 py-4"><span class="badge {{ $t->enAlerte() ? 'badge-danger' : 'badge-success' }}">{{ $t->enAlerte() ? '⚠ Alerte' : '✓ OK' }}</span></td>
+                                    <td class="px-6 py-4"><span class="badge {{ $t->enAlerte() ? 'badge-danger' : 'badge-success' }}">{{ $t->enAlerte() ? 'Alerte' : 'Correct' }}</span></td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -77,7 +77,7 @@
                                     <td class="px-6 py-4 text-sm text-right font-semibold">{{ number_format($p->metres_restants, 1) }}</td>
                                     <td class="px-6 py-4 text-sm text-right text-gray-500">{{ number_format($p->metres_total, 1) }}</td>
                                     <td class="px-6 py-4 text-sm text-right">{{ $p->pourcentageRestant() }}%</td>
-                                    <td class="px-6 py-4"><span class="badge {{ $p->enAlerte() ? 'badge-danger' : 'badge-success' }}">{{ $p->enAlerte() ? '⚠ Alerte' : '✓ OK' }}</span></td>
+                                    <td class="px-6 py-4"><span class="badge {{ $p->enAlerte() ? 'badge-danger' : 'badge-success' }}">{{ $p->enAlerte() ? 'Alerte' : 'Correct' }}</span></td>
                                 </tr>
                             @endforeach
                         </tbody>

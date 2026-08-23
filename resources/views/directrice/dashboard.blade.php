@@ -67,7 +67,7 @@
             <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
         </div>
         <div class="stat-card-value text-pharaoh-gold">{{ number_format($sommeEnCaisse, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label font-semibold">💰 Solde en caisse</div>
+        <div class="stat-card-label font-semibold">Solde en caisse</div>
     </div>
     @if($impayeTotal > 0)
     <div class="stat-card border-red-200 bg-gradient-to-br from-red-50 to-white">
@@ -75,7 +75,7 @@
             <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
         <div class="stat-card-value text-red-600">-{{ number_format($impayeTotal, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label font-semibold">📉 Impayés (non encaissé)</div>
+        <div class="stat-card-label font-semibold">Impayés (non encaissé)</div>
     </div>
     @endif
     @if($resteAEncaisser > 0)
@@ -84,14 +84,19 @@
             <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
         <div class="stat-card-value text-orange-600">{{ number_format($resteAEncaisser, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label font-semibold">⏳ Reste à encaisser (cliquer) — {{ $commandesImpayees->count() }} commande(s)</div>
+        <div class="stat-card-label font-semibold">Reste à encaisser (cliquer) — {{ $commandesImpayees->count() }} commande(s)</div>
     </button>
     @endif
 </div>
 
 <!-- Graphique 7 derniers jours -->
 <div class="pharaoh-card p-6 mb-6">
-    <h3 class="text-lg font-semibold text-[#080808] mb-4">📈 Entrées / Sorties — 7 derniers jours</h3>
+    <h3 class="text-lg font-semibold text-[#080808] mb-4 flex items-center gap-2">
+        <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span>Entrées / Sorties — 7 derniers jours</span>
+    </h3>
     <div style="height:300px;"><canvas id="chart7j"></canvas></div>
 </div>
 
@@ -146,7 +151,13 @@
 <div id="modalImpayes" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
         <div class="flex items-center justify-between border-b px-6 py-4 bg-orange-50">
-            <h3 class="text-lg font-bold text-orange-800">⏳ Commandes en attente — {{ $commandesImpayees->count() }}</h3>
+            <h3 class="text-lg font-bold text-orange-800 flex items-center gap-2">
+                <svg class="h-5 w-5 text-orange-700 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Commandes en attente — {{ $commandesImpayees->count() }}</span>
+            </h3>
             <button onclick="document.getElementById('modalImpayes').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
         </div>
         <div class="overflow-y-auto max-h-[60vh] p-6">
@@ -172,7 +183,12 @@
                     <input type="number" name="montant_verse" min="1" max="{{ $cmd->montant - $cmd->montant_paye }}" placeholder="Montant" required
                            class="w-36 rounded-lg border-gray-300 text-sm focus:border-pharaoh-gold focus:ring-pharaoh-gold">
                     <span class="text-xs text-gray-400">FCFA</span>
-                    <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition">✅ Encaisser</button>
+                    <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition inline-flex items-center gap-1">
+                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Encaisser</span>
+                    </button>
                 </form>
             </div>
             @endforeach
@@ -181,7 +197,12 @@
         {{-- Historique des encaissements récents --}}
         @if(isset($historiqueEncaissements) && $historiqueEncaissements->count() > 0)
         <div class="mt-4 border-t pt-4">
-            <h4 class="text-sm font-semibold text-gray-600 mb-3">📋 Derniers encaissements</h4>
+            <h4 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-1.5">
+                <svg class="h-4 w-4 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span>Derniers encaissements</span>
+            </h4>
             @foreach($historiqueEncaissements as $log)
             <div class="flex items-center justify-between py-2 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
                 <div class="flex items-center gap-2">
@@ -210,7 +231,7 @@
 <a href="{{ route('directrice.services') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Services</a>
 <a href="{{ route('directrice.retraits') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Retraits</a>
 <a href="{{ route('directrice.rapport') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Rapport</a>
-@endsection\n
+@endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>

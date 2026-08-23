@@ -24,7 +24,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>📋 Résumé des Congés & Absences</h1>
+        <h1>Résumé des Congés & Absences</h1>
         <p>Le Pharaon · Généré le {{ now()->format('d/m/Y à H:i') }}</p>
     </div>
 
@@ -35,19 +35,19 @@
         </div>
         <div class="stat-box">
             <div class="stat-value" style="color: #D97706">{{ $stats['en_attente'] }}</div>
-            <div class="stat-label">⏳ En attente</div>
+            <div class="stat-label">En attente</div>
         </div>
         <div class="stat-box">
             <div class="stat-value" style="color: #2E8B57">{{ $stats['approuves'] }}</div>
-            <div class="stat-label">✅ Approuvés</div>
+            <div class="stat-label">Approuvés</div>
         </div>
         <div class="stat-box">
             <div class="stat-value" style="color: #D64545">{{ $stats['refuses'] }}</div>
-            <div class="stat-label">❌ Refusés</div>
+            <div class="stat-label">Refusés</div>
         </div>
     </div>
 
-    <div class="section-title">🏆 Top 10 — Employés avec le plus de congés</div>
+    <div class="section-title">Top 10 — Employés avec le plus de congés</div>
     <table>
         <thead>
             <tr>
@@ -69,7 +69,7 @@
         </tbody>
     </table>
 
-    <div class="section-title">📜 Dernières demandes</div>
+    <div class="section-title">Dernières demandes</div>
     <table>
         <thead>
             <tr>
@@ -87,11 +87,11 @@
                 <td>{{ $c->date_debut->format('d/m') }} → {{ $c->date_fin->format('d/m') }}</td>
                 <td>
                     @if($c->statut === 'approuve')
-                        <span class="badge-green">✅ Approuvé</span>
+                        <span class="badge-green">Approuvé</span>
                     @elseif($c->statut === 'refuse')
-                        <span class="badge-red">❌ Refusé</span>
+                        <span class="badge-red">Refusé</span>
                     @else
-                        <span class="badge-orange">⏳ En attente</span>
+                        <span class="badge-orange">En attente</span>
                     @endif
                 </td>
             </tr>

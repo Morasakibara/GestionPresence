@@ -4,15 +4,20 @@
 
 @section('navigation')
 <a href="{{ route('admin.dashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Tableau de bord</a>
-<a href="{{ route('admin.auditLogs') }}" class="rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white" aria-current="page">📋 Audit</a>
+<a href="{{ route('admin.auditLogs') }}" class="rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white" aria-current="page">Audit</a>
 @endsection
 
 @section('content')
 <div class="min-h-screen bg-[#F8F8F8]">
     <main class="p-8">
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-[#080808] sm:text-3xl">📋 Journal d'audit</h1>
-            <p class="mt-2 text-sm text-gray-600">Historique de toutes les opérations critiques du système</p>
+            <h1 class="text-2xl font-bold text-[#080808] sm:text-3xl flex items-center gap-2">
+                <svg class="h-8 w-8 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                <span>Journal d'audit</span>
+            </h1>
+            <p class="mt-2 text-sm text-gray-600 ml-10">Historique de toutes les opérations critiques du système</p>
         </div>
 
         {{-- Filtre par module --}}
@@ -95,8 +100,12 @@
                     @empty
                         <tr>
                             <td colspan="6" class="px-4 py-12 text-center text-gray-400">
-                                <div class="text-4xl mb-2">📭</div>
-                                Aucun journal d'audit pour le moment.
+                                <div class="flex flex-col items-center justify-center">
+                                    <svg class="h-10 w-10 text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2 2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0L12 17l-8-4" />
+                                    </svg>
+                                    <span class="text-sm">Aucun journal d'audit pour le moment.</span>
+                                </div>
                             </td>
                         </tr>
                     @endforelse

@@ -63,15 +63,24 @@
                     <div class="space-y-2">
                         <label class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:border-pharaoh-gold/50 transition-colors has-[:checked]:border-pharaoh-gold has-[:checked]:bg-[#FBF3E6]">
                             <input type="radio" name="statut_paiement" value="paye" {{ old('statut_paiement', 'paye') === 'paye' ? 'checked' : '' }} class="text-pharaoh-gold focus:ring-pharaoh-gold">
-                            <span class="text-sm font-medium text-[#080808]">✅ Payé — montant complet encaissé</span>
+                            <span class="text-sm font-medium text-[#080808] flex items-center gap-1.5">
+                                <span class="h-2 w-2 rounded-full bg-green-500"></span>
+                                <span>Payé — montant complet encaissé</span>
+                            </span>
                         </label>
                         <label class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:border-orange-400/50 transition-colors has-[:checked]:border-orange-400 has-[:checked]:bg-orange-50">
                             <input type="radio" name="statut_paiement" value="partiel" {{ old('statut_paiement') === 'partiel' ? 'checked' : '' }} class="text-orange-500 focus:ring-orange-400">
-                            <span class="text-sm font-medium text-[#080808]">🟠 Partiel — versement partiel</span>
+                            <span class="text-sm font-medium text-[#080808] flex items-center gap-1.5">
+                                <span class="h-2 w-2 rounded-full bg-yellow-500"></span>
+                                <span>Partiel — versement partiel</span>
+                            </span>
                         </label>
                         <label class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:border-red-400/50 transition-colors has-[:checked]:border-red-400 has-[:checked]:bg-red-50">
                             <input type="radio" name="statut_paiement" value="a_payer" {{ old('statut_paiement') === 'a_payer' ? 'checked' : '' }} class="text-red-500 focus:ring-red-400">
-                            <span class="text-sm font-medium text-[#080808]">🔴 À payer — à la livraison</span>
+                            <span class="text-sm font-medium text-[#080808] flex items-center gap-1.5">
+                                <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                                <span>À payer — à la livraison</span>
+                            </span>
                         </label>
                     </div>
                 </div>
@@ -87,8 +96,12 @@
                     <textarea id="details" name="details" rows="2" class="input-field" placeholder="Ex: 200 pages A4 noir et blanc">{{ old('details') }}</textarea>
                 </div>
 
-                <button type="submit" class="btn-primary mt-2">
-                    💾 Enregistrer la commande
+                <button type="submit" class="btn-primary mt-2 gap-2">
+                    <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h-2v5.586L7.707 10.293z" />
+                        <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H4zm12 12A2 2 0 0114 16H6a2 2 0 01-2-2V6a2 2 0 012-2h7v4h4v6z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Enregistrer la commande</span>
                 </button>
             </form>
         </div>
@@ -98,7 +111,12 @@
     <div class="lg:col-span-2">
         <div class="pharaoh-card overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100">
-                <h3 class="text-lg font-semibold text-[#080808]">📋 Commandes récentes</h3>
+                <h3 class="text-lg font-semibold text-[#080808] flex items-center gap-2">
+                    <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span>Commandes récentes</span>
+                </h3>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -122,17 +140,26 @@
                             <td class="px-4 py-3 text-sm text-right {{ $cmd->montant_paye > 0 ? 'text-green-600 font-medium' : 'text-gray-400' }}">{{ number_format($cmd->montant_paye, 0, ',', '.') }}</td>
                             <td class="px-4 py-3">
                                 <span class="badge {{ $cmd->statut_paiement === 'paye' ? 'badge-success' : ($cmd->statut_paiement === 'partiel' ? 'badge-warning' : 'badge-danger') }}">
-                                    {{ $cmd->statut_paiement === 'paye' ? '✅ Payé' : ($cmd->statut_paiement === 'partiel' ? '🟠 Partiel' : '🔴 À payer') }}
+                                    {{ $cmd->statut_paiement === 'paye' ? 'Payé' : ($cmd->statut_paiement === 'partiel' ? 'Partiel' : 'À payer') }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-500">{{ $cmd->date }}</td>
                             <td class="px-4 py-3 text-center">
-                                <a href="{{ route('directrice.commandes.edit', $cmd->id) }}" class="text-pharaoh-gold hover:text-pharaoh-gold-light text-sm font-medium">✏️</a>
+                                <a href="{{ route('directrice.commandes.edit', $cmd->id) }}" class="text-pharaoh-gold hover:text-pharaoh-gold-light inline-block" title="Modifier">
+                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                </a>
                             </td>
                         </tr>
                         @empty
                         <tr><td colspan="7" class="px-4 py-12 text-center text-gray-400">
-                            <div class="text-4xl mb-2">📭</div>Aucune commande pour le moment.
+                            <div class="flex flex-col items-center justify-center">
+                                <svg class="h-10 w-10 text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0L12 17l-8-4" />
+                                </svg>
+                                <span class="text-sm">Aucune commande pour le moment.</span>
+                            </div>
                         </td></tr>
                         @endforelse
                     </tbody>
@@ -150,7 +177,7 @@
 <a href="{{ route('directrice.services') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Services</a>
 <a href="{{ route('directrice.retraits') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Retraits</a>
 <a href="{{ route('directrice.rapport') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Rapport</a>
-@endsection\n
+@endsection
 
 @push('scripts')
 <script>

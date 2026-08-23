@@ -28,6 +28,7 @@
   --background: #F8F8F8;
   --surface: #FFFFFF;
   --surface-dark: #111111;
+  --bg-surface-hover: #F9FAFB;
 
   /* TEXT */
   --text-primary: #080808;
@@ -44,6 +45,27 @@
   --warning: #D97706;
   --danger: #D64545;
 
+  /* Semantics / Status variables */
+  --success-bg: #edf6f1;
+  --success-text: #2E8B57;
+  --success-border: rgba(46, 139, 87, 0.2);
+  
+  --danger-bg: #fbeeec;
+  --danger-text: #d64545;
+  --danger-border: rgba(214, 69, 69, 0.2);
+  
+  --warning-bg: #fbf3e6;
+  --warning-text: #D97706;
+  --warning-border: rgba(217, 119, 6, 0.2);
+  
+  --info-bg: #eef4f9;
+  --info-text: #3B82C4;
+  --info-border: rgba(59, 130, 196, 0.2);
+  
+  --gold-bg: #FBF3E6;
+  --gold-text: #885910;
+  --gold-border: rgba(211, 155, 35, 0.3);
+
   /* MOTION — courbes personnalisées (design engineering) */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -58,6 +80,7 @@ body {
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--background);
   color: var(--text-primary);
+  transition: background-color 300ms cubic-bezier(0.4, 0, 0.2, 1), color 300ms cubic-bezier(0.4, 0, 0.2, 1), border-color 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ============================================================
@@ -122,19 +145,29 @@ body {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
   }
   .badge-success {
-    @apply bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20;
+    background-color: var(--success-bg) !important;
+    color: var(--success-text) !important;
+    box-shadow: inset 0 0 0 1px var(--success-border) !important;
   }
   .badge-warning {
-    @apply bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-600/20;
+    background-color: var(--warning-bg) !important;
+    color: var(--warning-text) !important;
+    box-shadow: inset 0 0 0 1px var(--warning-border) !important;
   }
   .badge-danger {
-    @apply bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20;
+    background-color: var(--danger-bg) !important;
+    color: var(--danger-text) !important;
+    box-shadow: inset 0 0 0 1px var(--danger-border) !important;
   }
   .badge-info {
-    @apply bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20;
+    background-color: var(--info-bg) !important;
+    color: var(--info-text) !important;
+    box-shadow: inset 0 0 0 1px var(--info-border) !important;
   }
   .badge-gold {
-    @apply bg-[#FBF3E6] text-[#885910] ring-1 ring-inset ring-[#D39B23]/30;
+    background-color: var(--gold-bg) !important;
+    color: var(--gold-text) !important;
+    box-shadow: inset 0 0 0 1px var(--gold-border) !important;
   }
   .filter-btn {
     @apply cursor-pointer transition-all duration-150 opacity-60 hover:opacity-100;
@@ -173,16 +206,24 @@ body {
     @apply mb-6 flex items-start gap-3 rounded-xl border p-4 text-sm;
   }
   .alert-success {
-    @apply border-green-600/20 bg-green-50 text-green-800;
+    background-color: var(--success-bg) !important;
+    color: var(--success-text) !important;
+    border-color: var(--success-border) !important;
   }
   .alert-danger {
-    @apply border-red-600/20 bg-red-50 text-red-800;
+    background-color: var(--danger-bg) !important;
+    color: var(--danger-text) !important;
+    border-color: var(--danger-border) !important;
   }
   .alert-info {
-    @apply border-blue-600/20 bg-blue-50 text-blue-800;
+    background-color: var(--info-bg) !important;
+    color: var(--info-text) !important;
+    border-color: var(--info-border) !important;
   }
   .alert-warning {
-    @apply border-yellow-600/20 bg-yellow-50 text-yellow-800;
+    background-color: var(--warning-bg) !important;
+    color: var(--warning-text) !important;
+    border-color: var(--warning-border) !important;
   }
 
   /* Bouton secondaire (bloc « Buttons ») */
@@ -240,60 +281,216 @@ body {
 }
 
 /* ============================================================
-   Mode Sombre — toggle via data-theme="dark" sur <html>
+   Mode Sombre — Custom Premium design "Le Pharaon"
    ============================================================ */
-html[data-theme="dark"] body,
 html[data-theme="dark"] {
-  background-color: #111111 !important;
-  color: #e5e5e5 !important;
+  /* Colors */
+  --background: #09090b;       /* Premium rich obsidian black */
+  --surface: #121215;          /* Elevated surface card bg */
+  --bg-surface-hover: #19191e;  /* Lighter card hover bg */
+  --border: #222227;           /* Subtle elegant border */
+  
+  --text-primary: #f4f4f5;     /* Warm white */
+  --text-secondary: #a1a1aa;   /* Muted grey */
+  --text-muted: #62626e;       /* Muted gray text */
+
+  /* Semantic status colors for dark mode (subtle glow, vibrant text) */
+  --success-bg: rgba(16, 185, 129, 0.08);
+  --success-text: #34d399;
+  --success-border: rgba(52, 211, 153, 0.25);
+
+  --danger-bg: rgba(239, 68, 68, 0.08);
+  --danger-text: #f87171;
+  --danger-border: rgba(248, 113, 113, 0.25);
+
+  --warning-bg: rgba(245, 158, 11, 0.08);
+  --warning-text: #fbbf24;
+  --warning-border: rgba(251, 191, 36, 0.25);
+
+  --info-bg: rgba(59, 130, 246, 0.08);
+  --info-text: #60a5fa;
+  --info-border: rgba(96, 165, 250, 0.25);
+
+  --gold-bg: rgba(211, 155, 35, 0.1);
+  --gold-text: #face4a;
+  --gold-border: rgba(250, 206, 74, 0.25);
 }
-html[data-theme="dark"] .bg-white,
-html[data-theme="dark"] [class*="bg-white"] {
-  background-color: #1a1a1a !important;
+
+/* Base Body Styles */
+html[data-theme="dark"] body {
+  background-color: var(--background) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Background utilities overrides */
+html[data-theme="dark"] .bg-white {
+  background-color: var(--surface) !important;
 }
 html[data-theme="dark"] .bg-gray-50,
 html[data-theme="dark"] .bg-gray-100,
-html[data-theme="dark"] [class*="bg-gray-50"],
-html[data-theme="dark"] [class*="bg-gray-100"] {
-  background-color: #1a1a1a !important;
+html[data-theme="dark"] [class*="bg-\\[\\#F8F8F8\\]"],
+html[data-theme="dark"] .bg-\[\#F8F8F8\] {
+  background-color: var(--background) !important;
 }
-html[data-theme="dark"] [class*="bg-\\[\\#F8F8F8\\]"] {
-  background-color: #111111 !important;
+html[data-theme="dark"] [class*="bg-\\[\\#FBF3E6\\]"],
+html[data-theme="dark"] .bg-\[\#FBF3E6\] {
+  background-color: var(--gold-bg) !important;
 }
+
+/* Background opacity overrides to preserve blurred elements */
+html[data-theme="dark"] .bg-white\/80 {
+  background-color: rgba(18, 18, 21, 0.75) !important;
+}
+html[data-theme="dark"] .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Nested elements backgrounds */
+html[data-theme="dark"] .bg-white .bg-gray-50,
+html[data-theme="dark"] .bg-white .bg-gray-100,
+html[data-theme="dark"] [class*="bg-white"] .bg-gray-50,
+html[data-theme="dark"] [class*="bg-white"] .bg-gray-100,
+html[data-theme="dark"] .pharaoh-card .bg-gray-50,
+html[data-theme="dark"] .pharaoh-card .bg-gray-100,
+html[data-theme="dark"] .form-card .bg-gray-50,
+html[data-theme="dark"] .form-card .bg-gray-100,
+html[data-theme="dark"] .table-wrap .bg-gray-50,
+html[data-theme="dark"] .table-wrap .bg-gray-100 {
+  background-color: var(--bg-surface-hover) !important;
+}
+
+/* Hover effects */
+html[data-theme="dark"] .hover\:bg-gray-50:hover,
+html[data-theme="dark"] .hover\:bg-gray-100:hover,
+html[data-theme="dark"] .hover\:bg-gray-200:hover {
+  background-color: var(--bg-surface-hover) !important;
+}
+
+/* Text color utilities */
 html[data-theme="dark"] .text-gray-900,
-html[data-theme="dark"] [class*="text-\\[\\#080808\\]"] {
-  color: #f5f5f5 !important;
+html[data-theme="dark"] [class*="text-\\[\\#080808\\]"],
+html[data-theme="dark"] .text-black,
+html[data-theme="dark"] .page-heading-title {
+  color: var(--text-primary) !important;
 }
+html[data-theme="dark"] .text-gray-800,
 html[data-theme="dark"] .text-gray-700,
-html[data-theme="dark"] .text-gray-600,
-html[data-theme="dark"] .text-gray-500 {
-  color: #a0a0a0 !important;
+html[data-theme="dark"] .text-gray-600 {
+  color: var(--text-secondary) !important;
 }
+html[data-theme="dark"] .text-\[\#885910\],
+html[data-theme="dark"] .text-pharaoh-bronze {
+  color: var(--gold-text) !important;
+}
+html[data-theme="dark"] .text-gray-500,
+html[data-theme="dark"] .text-gray-400,
+html[data-theme="dark"] .page-heading-sub {
+  color: var(--text-muted) !important;
+}
+
+/* Borders */
+html[data-theme="dark"] .border-gray-100,
 html[data-theme="dark"] .border-gray-200,
 html[data-theme="dark"] .border-gray-300,
-html[data-theme="dark"] [class*="border-gray"] {
-  border-color: #333 !important;
+html[data-theme="dark"] [class*="border-gray"],
+html[data-theme="dark"] .border-t,
+html[data-theme="dark"] .border-b,
+html[data-theme="dark"] .border-r,
+html[data-theme="dark"] .border-l,
+html[data-theme="dark"] .border {
+  border-color: var(--border) !important;
 }
+
+/* Cards & Components */
+html[data-theme="dark"] .pharaoh-card,
 html[data-theme="dark"] .stat-card,
 html[data-theme="dark"] .card,
-html[data-theme="dark"] .form-card {
-  background-color: #1a1a1a !important;
-  border-color: #333 !important;
+html[data-theme="dark"] .form-card,
+html[data-theme="dark"] .table-wrap {
+  background-color: var(--surface) !important;
+  border-color: var(--border) !important;
 }
+
+/* Forms input fields */
 html[data-theme="dark"] .input-field,
 html[data-theme="dark"] .select-field,
 html[data-theme="dark"] textarea,
 html[data-theme="dark"] input:not([type="radio"]):not([type="hidden"]),
 html[data-theme="dark"] select {
-  background-color: #222 !important;
-  border-color: #444 !important;
-  color: #e5e5e5 !important;
+  background-color: #17171b !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
 }
+html[data-theme="dark"] .input-field::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+html[data-theme="dark"] .input-field:focus,
+html[data-theme="dark"] .select-field:focus,
+html[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] input:not([type="radio"]):not([type="hidden"]):focus,
+html[data-theme="dark"] select:focus {
+  border-color: var(--pharaoh-gold) !important;
+}
+
+/* Buttons secondary */
+html[data-theme="dark"] .btn-secondary {
+  background-color: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+html[data-theme="dark"] .btn-secondary:hover {
+  background-color: var(--bg-surface-hover) !important;
+}
+
+/* Table en-têtes et lignes */
 html[data-theme="dark"] table,
 html[data-theme="dark"] td,
 html[data-theme="dark"] th {
-  border-color: #333 !important;
+  border-color: var(--border) !important;
 }
-html[data-theme="dark"] thead tr:not([class*="bg-\\[\\#080808\\]"]) {
-  background-color: #1a1a1a !important;
+html[data-theme="dark"] .table-head {
+  background-color: #0b0b0e !important;
+}
+html[data-theme="dark"] .table-body tr:hover {
+  background-color: var(--bg-surface-hover) !important;
+}
+
+/* Custom Modal overlay background in dark mode */
+html[data-theme="dark"] .bg-gray-500.bg-opacity-75 {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* FullCalendar support in dark mode */
+html[data-theme="dark"] .fc {
+  --fc-border-color: var(--border) !important;
+  --fc-daygrid-event-dot-width: 8px !important;
+  --fc-page-bg-color: var(--background) !important;
+  --fc-neutral-bg-color: var(--background) !important;
+  --fc-list-event-hover-bg-color: var(--bg-surface-hover) !important;
+}
+html[data-theme="dark"] .fc-theme-standard td,
+html[data-theme="dark"] .fc-theme-standard th,
+html[data-theme="dark"] .fc-theme-standard .fc-scrollgrid {
+  border-color: var(--border) !important;
+}
+html[data-theme="dark"] .fc .fc-col-header-cell-cushion,
+html[data-theme="dark"] .fc .fc-daygrid-day-number {
+  color: var(--text-primary) !important;
+}
+
+/* Scrollbars customized for dark theme */
+html[data-theme="dark"] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+html[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--background);
+}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #25252b;
+  border-radius: 5px;
+}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #32323b;
 }

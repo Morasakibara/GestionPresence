@@ -25,7 +25,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>🏖️ Planning des Congés Approuvés</h1>
+        <h1>Planning des Congés Approuvés</h1>
         <p>{{ $moisLabel }} · Le Pharaon · Généré le {{ now()->format('d/m/Y à H:i') }}</p>
     </div>
 

@@ -113,7 +113,13 @@
             </div>
 
             <div class="flex items-center gap-3 pt-2">
-                <button type="submit" class="btn-primary flex-1">💾 Enregistrer</button>
+                <button type="submit" class="btn-primary flex-1 gap-2">
+                    <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h-2v5.586L7.707 10.293z" />
+                        <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H4zm12 12A2 2 0 0114 16H6a2 2 0 01-2-2V6a2 2 0 012-2h7v4h4v6z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Enregistrer</span>
+                </button>
                 <a href="{{ route('secretaire.commandes') }}" class="btn-secondary flex-1 text-center">Annuler</a>
             </div>
         </form>

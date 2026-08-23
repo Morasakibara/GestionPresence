@@ -14,7 +14,7 @@
             <a href="{{ route('user.dashboard') }}" class="text-pharaoh-gold">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             </a>
-            <h1 class="text-lg font-bold text-white">🏖️ Congés</h1>
+            <h1 class="text-lg font-bold text-white">Congés</h1>
             <div class="w-6"></div>
         </div>
     </div>
@@ -22,13 +22,19 @@
     <div class="px-4 py-4 space-y-4">
         <!-- Success/Error messages -->
         @if(session('success'))
-        <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700">
-            ✅ {{ session('success') }}
+        <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700 flex items-center gap-2">
+            <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ session('success') }}</span>
         </div>
         @endif
         @if(session('error'))
-        <div class="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-            ❌ {{ session('error') }}
+        <div class="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700 flex items-center gap-2">
+            <svg class="h-5 w-5 text-red-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ session('error') }}</span>
         </div>
         @endif
 
@@ -53,7 +59,12 @@
 
         <!-- Formulaire nouvelle demande -->
         <div class="bg-white rounded-2xl border border-gray-200 shadow-card p-5">
-            <h2 class="text-base font-bold text-[#080808] mb-4">📝 Nouvelle demande</h2>
+            <h2 class="text-base font-bold text-[#080808] mb-4 flex items-center gap-2">
+                <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Nouvelle demande</span>
+            </h2>
             <form action="{{ route('user.conges.store') }}" method="POST">
                 @csrf
                 <div class="space-y-3">
@@ -68,9 +79,9 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
                         <select name="type" required class="w-full rounded-xl border-2 border-gray-300 px-4 py-3 text-base focus:border-pharaoh-gold">
-                            <option value="conge">🏖️ Congé</option>
-                            <option value="absence_justifiee">📋 Absence justifiée</option>
-                            <option value="absence_injustifiee">⚠️ Absence injustifiée</option>
+                            <option value="conge">Congé</option>
+                            <option value="absence_justifiee">Absence justifiée</option>
+                            <option value="absence_injustifiee">Absence injustifiée</option>
                         </select>
                     </div>
                     <div>
@@ -86,7 +97,12 @@
 
         <!-- Historique -->
         <div class="bg-white rounded-2xl border border-gray-200 shadow-card p-5">
-            <h2 class="text-base font-bold text-[#080808] mb-4">📜 Historique</h2>
+            <h2 class="text-base font-bold text-[#080808] mb-4 flex items-center gap-2">
+                <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Historique</span>
+            </h2>
             @if($userConges->isEmpty())
                 <p class="text-center text-gray-400 py-6">Aucune demande</p>
             @else
@@ -105,8 +121,11 @@
                         <div>{!! $c->statutBadge() !!}</div>
                     </div>
                     @if($c->commentaire_admin)
-                    <div class="mt-2 text-xs text-gray-500 bg-gray-50 rounded-lg p-2">
-                        💬 {{ $c->commentaire_admin }}
+                    <div class="mt-2 flex items-start gap-1.5 text-xs text-gray-500 bg-gray-50 rounded-lg p-2">
+                        <svg class="h-3.5 w-3.5 text-gray-400 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        <span>{{ $c->commentaire_admin }}</span>
                     </div>
                     @endif
                 </div>

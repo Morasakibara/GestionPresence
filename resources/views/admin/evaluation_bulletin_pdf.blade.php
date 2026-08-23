@@ -165,14 +165,14 @@
                     {{ $evaluation['note'] }}/20
                 </span>
                 <div style="margin-top:6px; font-size:12px; color:#6b7280;">
-                    @if($evaluation['couleur'] === 'vert') 🟢 Excellent — discipline et rendement au rendez-vous
-                    @elseif($evaluation['couleur'] === 'orange') 🟠 Satisfaisant — à surveiller
-                    @else 🔴 Critique — attention discipline et rendement @endif
+                    @if($evaluation['couleur'] === 'vert') Excellent — discipline et rendement au rendez-vous
+                    @elseif($evaluation['couleur'] === 'orange') Satisfaisant — à surveiller
+                    @else Critique — attention discipline et rendement @endif
                     @if($evaluation['manuelle']) (évaluation manuelle de la hiérarchie) @endif
                 </div>
             </div>
             <p style="font-size:12px; color:#374151;">{{ $evaluation['commentaire'] }}</p>
-            <p class="legend">Légende : 🟢 Vert ≥ 14/20 · 🟠 Orange 10-13/20 · 🔴 Rouge &lt; 10/20</p>
+            <p class="legend">Légende : Vert ≥ 14/20 · Orange 10-13/20 · Rouge &lt; 10/20</p>
         </div>
 
         @if(!empty($employe->id))
@@ -235,7 +235,7 @@
                     @endforeach
                 </tr>
             </table>
-            <p class="legend">Évolution mensuelle de la note sur 20 — 🟢 Vert ≥ 14 · 🟠 Orange 10-13 · 🔴 Rouge &lt; 10</p>
+            <p class="legend">Évolution mensuelle de la note sur 20 — Vert ≥ 14 · Orange 10-13 · Rouge &lt; 10</p>
             <div style="margin-top:10px; padding:10px 12px; background-color:#f9fafb; border:1px solid #e5e7eb; border-radius:6px;">
                 <strong style="font-size:12px; color:#374151;">Moyenne globale (6 mois) :</strong>
                 <span style="font-size:13px; font-weight:bold; color:#885910;">{{ $moyenneEvol }}/20</span>

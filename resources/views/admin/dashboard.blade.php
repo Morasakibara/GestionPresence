@@ -37,10 +37,10 @@
     Lieux de travail
 </a>
 <a href="{{ route('admin.conges') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">
-    🏖️ Congés
+    Congés
 </a>
 <a href="{{ route('admin.auditLogs') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">
-    📋 Audit
+    Audit
 </a>
 @endsection
 
@@ -263,7 +263,7 @@
             <div class="pharaoh-card overflow-hidden">
                 <div class="px-5 py-3 bg-[#080808]"><span class="text-xs font-semibold uppercase tracking-wider text-[#FACE4A]">T-Shirts</span></div>
                 <div class="table-scroll"><table class="min-w-full"><thead class="table-head"><tr><th>Couleur</th><th>Taille</th><th class="text-right">Qté</th><th>Statut</th></tr></thead>
-                    <tbody class="table-body">@foreach($stockTshirts->take(5) as $t)<tr><td class="px-5 py-2.5 text-sm">{{ $t->couleur }}</td><td class="px-5 py-2.5 text-sm">{{ $t->taille }}</td><td class="px-5 py-2.5 text-sm text-right font-semibold">{{ $t->quantite }}</td><td class="px-5 py-2.5"><span class="badge {{ $t->quantite <= $t->seuil_alerte ? 'badge-danger' : 'badge-success' }}">{{ $t->quantite <= $t->seuil_alerte ? '⚠' : '✓' }}</span></td></tr>@endforeach</tbody>
+                    <tbody class="table-body">@foreach($stockTshirts->take(5) as $t)<tr><td class="px-5 py-2.5 text-sm">{{ $t->couleur }}</td><td class="px-5 py-2.5 text-sm">{{ $t->taille }}</td><td class="px-5 py-2.5 text-sm text-right font-semibold">{{ $t->quantite }}</td><td class="px-5 py-2.5"><span class="badge {{ $t->quantite <= $t->seuil_alerte ? 'badge-danger' : 'badge-success' }}">{{ $t->quantite <= $t->seuil_alerte ? 'Alerte' : 'Correct' }}</span></td></tr>@endforeach</tbody>
                 </table></div>
             </div>
         @endif
@@ -271,7 +271,7 @@
             <div class="pharaoh-card overflow-hidden">
                 <div class="px-5 py-3 bg-[#080808]"><span class="text-xs font-semibold uppercase tracking-wider text-[#FACE4A]">Papier</span></div>
                 <div class="table-scroll"><table class="min-w-full"><thead class="table-head"><tr><th>Imprimante</th><th class="text-right">Reste (m)</th><th class="text-right">%</th><th>Statut</th></tr></thead>
-                    <tbody class="table-body">@foreach($stockPapiers as $p)<tr><td class="px-5 py-2.5 text-sm">{{ $p->imprimante }}</td><td class="px-5 py-2.5 text-sm text-right font-semibold">{{ number_format($p->metres_restants, 1) }}</td><td class="px-5 py-2.5 text-sm text-right">{{ $p->pourcentageRestant() }}%</td><td class="px-5 py-2.5"><span class="badge {{ $p->metres_restants <= $p->seuil_alerte ? 'badge-danger' : 'badge-success' }}">{{ $p->metres_restants <= $p->seuil_alerte ? '⚠' : '✓' }}</span></td></tr>@endforeach</tbody>
+                    <tbody class="table-body">@foreach($stockPapiers as $p)<tr><td class="px-5 py-2.5 text-sm">{{ $p->imprimante }}</td><td class="px-5 py-2.5 text-sm text-right font-semibold">{{ number_format($p->metres_restants, 1) }}</td><td class="px-5 py-2.5 text-sm text-right">{{ $p->pourcentageRestant() }}%</td><td class="px-5 py-2.5"><span class="badge {{ $p->metres_restants <= $p->seuil_alerte ? 'badge-danger' : 'badge-success' }}">{{ $p->metres_restants <= $p->seuil_alerte ? 'Alerte' : 'Correct' }}</span></td></tr>@endforeach</tbody>
                 </table></div>
             </div>
         @endif

@@ -17,16 +17,28 @@
 <!-- Export PDF -->
 <div class="flex flex-wrap items-center justify-end gap-2 mb-6">
     <a href="{{ route('admin.conges.planning.pdf', ['mois' => now()->format('Y-m')]) }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl border-2 border-[#080808] bg-[#080808] px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 transition-colors">
-        📄 Planning PDF
+        <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>Planning PDF</span>
     </a>
     <a href="{{ route('admin.conges.resume.pdf') }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-pharaoh-gold px-4 py-2 text-sm font-semibold text-white hover:bg-pharaoh-gold-light transition-colors">
-        📊 Résumé PDF
+        <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span>Résumé PDF</span>
     </a>
     <a href="{{ route('admin.conges.export.pivot', ['mois' => now()->format('Y-m')]) }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-emerald-500 bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 transition-colors">
-        📊 Excel Pivot
+        <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+        <span>Excel Pivot</span>
     </a>
     <a href="{{ route('admin.conges.export.liste') }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-blue-500 bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 transition-colors">
-        📋 Excel Liste
+        <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+        <span>Excel Liste</span>
     </a>
 </div>
 
@@ -39,22 +51,38 @@
 <!-- Stats -->
 <div class="grid grid-cols-2 gap-4 mb-6 sm:grid-cols-4">
     <div class="stat-card border border-white/20 bg-gradient-to-br from-white/90 to-white/70">
-        <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">📋</div>
+        <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+        </div>
         <div class="stat-card-value">{{ $stats['total'] }}</div>
         <div class="stat-card-label">Total demandes</div>
     </div>
     <div class="stat-card border border-amber-300/30 bg-gradient-to-br from-amber-50/90 to-amber-50/70">
-        <div class="stat-card-icon bg-amber-500/10 text-amber-600">⏳</div>
+        <div class="stat-card-icon bg-amber-500/10 text-amber-600">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
         <div class="stat-card-value text-amber-600">{{ $stats['en_attente'] }}</div>
         <div class="stat-card-label">En attente</div>
     </div>
     <div class="stat-card border border-emerald-300/30 bg-gradient-to-br from-emerald-50/90 to-emerald-50/70">
-        <div class="stat-card-icon bg-emerald-500/10 text-emerald-600">✅</div>
+        <div class="stat-card-icon bg-emerald-500/10 text-emerald-600">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+        </div>
         <div class="stat-card-value text-emerald-600">{{ $stats['approuves'] }}</div>
         <div class="stat-card-label">Approuvés</div>
     </div>
     <div class="stat-card border border-red-300/30 bg-gradient-to-br from-red-50/90 to-red-50/70">
-        <div class="stat-card-icon bg-red-500/10 text-red-600">❌</div>
+        <div class="stat-card-icon bg-red-500/10 text-red-600">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </div>
         <div class="stat-card-value text-red-600">{{ $stats['refuses'] }}</div>
         <div class="stat-card-label">Refusés</div>
     </div>
@@ -62,8 +90,13 @@
 
 <!-- Graphique -->
 <div class="card mb-6">
-    <h2 class="text-lg font-bold text-[#080808] mb-1">📈 Évolution des demandes (6 mois)</h2>
-    <p class="text-sm text-gray-500 mb-4">Nombre de demandes de congé/absence par mois</p>
+    <h2 class="text-lg font-bold text-[#080808] mb-1 flex items-center gap-2">
+        <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+        <span>Évolution des demandes (6 mois)</span>
+    </h2>
+    <p class="text-sm text-gray-500 mb-4 ml-7">Nombre de demandes de congé/absence par mois</p>
     <canvas id="congesChart" height="100"></canvas>
 </div>
 
@@ -71,8 +104,13 @@
 <div class="card mb-6">
     <div class="flex items-center justify-between mb-4">
         <div>
-            <h2 class="text-lg font-bold text-[#080808]">📅 Calendrier des absences</h2>
-            <p class="text-sm text-gray-500">Vue calendaire des congés approuvés</p>
+            <h2 class="text-lg font-bold text-[#080808] flex items-center gap-2">
+                <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Calendrier des absences</span>
+            </h2>
+            <p class="text-sm text-gray-500 ml-7">Vue calendaire des congés approuvés</p>
         </div>
         <div class="flex items-center gap-3 text-xs">
             <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#D39B23]"></span> Congé</span>
@@ -89,13 +127,13 @@
         Tous
     </a>
     <a href="{{ route('admin.conges', ['statut' => 'en_attente']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'en_attente' ? 'bg-amber-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
-        ⏳ En attente
+        En attente
     </a>
     <a href="{{ route('admin.conges', ['statut' => 'approuve']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'approuve' ? 'bg-emerald-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
-        ✅ Approuvés
+        Approuvés
     </a>
     <a href="{{ route('admin.conges', ['statut' => 'refuse']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'refuse' ? 'bg-red-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
-        ❌ Refusés
+        Refusés
     </a>
 
     <select onchange="window.location.href=this.value" class="rounded-full border border-gray-200 px-4 py-1.5 text-sm bg-white">
@@ -141,8 +179,12 @@
                 @empty
                 <tr>
                     <td colspan="7" class="px-4 py-12 text-center text-gray-500">
-                        <div class="text-4xl mb-2">🏖️</div>
-                        Aucune demande de congé.
+                        <div class="flex flex-col items-center justify-center">
+                            <svg class="h-10 w-10 text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-sm">Aucune demande de congé.</span>
+                        </div>
                     </td>
                 </tr>
                 @endforelse

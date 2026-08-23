@@ -262,8 +262,8 @@
                 </p>
                 <p><strong>Période analysée:</strong> {{ isset($startDate) && isset($endDate) ?
                     ceil((strtotime($endDate) - strtotime($startDate)) / (60 * 60 * 24)) + 1 . ' jours' : 'Période complète' }}</p>
-                <p><strong>Légende évaluation:</strong> <span style="color:#15803d;">🟢 Vert ≥ 14/20</span> ·
-                    <span style="color:#c2410c;">🟠 Orange 10-13/20</span> · <span style="color:#b91c1c;">🔴 Rouge &lt; 10/20</span></p>
+                <p><strong>Légende évaluation:</strong> <span style="color:#15803d;">Vert ≥ 14/20</span> ·
+                    <span style="color:#c2410c;">Orange 10-13/20</span> · <span style="color:#b91c1c;">Rouge &lt; 10/20</span></p>
             </div>
         @else
             <div class="no-data">

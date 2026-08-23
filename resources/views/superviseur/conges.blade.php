@@ -23,22 +23,38 @@
 <!-- Stats -->
 <div class="grid grid-cols-2 gap-4 mb-6 sm:grid-cols-4">
     <div class="stat-card border border-white/20 bg-gradient-to-br from-white/90 to-white/70">
-        <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">📋</div>
+        <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+        </div>
         <div class="stat-card-value">{{ $stats['total'] }}</div>
         <div class="stat-card-label">Total demandes</div>
     </div>
     <div class="stat-card border border-amber-300/30 bg-gradient-to-br from-amber-50/90 to-amber-50/70">
-        <div class="stat-card-icon bg-amber-500/10 text-amber-600">⏳</div>
+        <div class="stat-card-icon bg-amber-500/10 text-amber-600">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
         <div class="stat-card-value text-amber-600">{{ $stats['en_attente'] }}</div>
         <div class="stat-card-label">En attente</div>
     </div>
     <div class="stat-card border border-emerald-300/30 bg-gradient-to-br from-emerald-50/90 to-emerald-50/70">
-        <div class="stat-card-icon bg-emerald-500/10 text-emerald-600">✅</div>
+        <div class="stat-card-icon bg-emerald-500/10 text-emerald-600">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+        </div>
         <div class="stat-card-value text-emerald-600">{{ $stats['approuves'] }}</div>
         <div class="stat-card-label">Approuvés</div>
     </div>
     <div class="stat-card border border-red-300/30 bg-gradient-to-br from-red-50/90 to-red-50/70">
-        <div class="stat-card-icon bg-red-500/10 text-red-600">❌</div>
+        <div class="stat-card-icon bg-red-500/10 text-red-600">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </div>
         <div class="stat-card-value text-red-600">{{ $stats['refuses'] }}</div>
         <div class="stat-card-label">Refusés</div>
     </div>
@@ -50,13 +66,13 @@
         Tous
     </a>
     <a href="{{ route('superviseur.conges.index', ['statut' => 'en_attente']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'en_attente' ? 'bg-amber-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
-        ⏳ En attente
+        En attente
     </a>
     <a href="{{ route('superviseur.conges.index', ['statut' => 'approuve']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'approuve' ? 'bg-emerald-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
-        ✅ Approuvés
+        Approuvés
     </a>
     <a href="{{ route('superviseur.conges.index', ['statut' => 'refuse']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'refuse' ? 'bg-red-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
-        ❌ Refusés
+        Refusés
     </a>
 </div>
 
@@ -103,12 +119,18 @@
                             <form action="{{ route('superviseur.conges.approuver', $conge->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('PATCH')
-                                <button type="submit" class="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition-colors" onclick="return confirm('Approuver cette demande ?')">
-                                    ✅ Approuver
+                                <button type="submit" class="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition-colors inline-flex items-center gap-1" onclick="return confirm('Approuver cette demande ?')">
+                                    <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>Approuver</span>
                                 </button>
                             </form>
-                            <button onclick="openRefusModal({{ $conge->id }})" class="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 transition-colors">
-                                ❌ Refuser
+                            <button onclick="openRefusModal({{ $conge->id }})" class="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 transition-colors inline-flex items-center gap-1">
+                                <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span>Refuser</span>
                             </button>
                         </div>
                         @elseif($conge->statut === 'refuse')
@@ -121,8 +143,12 @@
                 @empty
                 <tr>
                     <td colspan="7" class="px-4 py-12 text-center text-gray-500">
-                        <div class="text-4xl mb-2">🏖️</div>
-                        Aucune demande de congé ou d'absence.
+                        <div class="flex flex-col items-center justify-center">
+                            <svg class="h-10 w-10 text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-sm">Aucune demande de congé ou d'absence.</span>
+                        </div>
                     </td>
                 </tr>
                 @endforelse
@@ -141,7 +167,12 @@
     <div class="flex items-center justify-center min-h-screen px-4">
         <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="closeRefusModal()"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h3 class="text-lg font-bold text-[#080808] mb-4">❌ Refuser la demande</h3>
+            <h3 class="text-lg font-bold text-[#080808] mb-4 flex items-center gap-2">
+                <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Refuser la demande</span>
+            </h3>
             <form id="refusForm" method="POST">
                 @csrf
                 @method('PATCH')

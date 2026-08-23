@@ -224,20 +224,25 @@
 
     @php
         $couleurClasses = [
-            'vert' => ['bg-green-50 text-green-700 ring-green-600/20', '🟢'],
-            'orange' => ['bg-yellow-50 text-yellow-700 ring-yellow-600/20', '🟠'],
-            'rouge' => ['bg-red-50 text-red-700 ring-red-600/20', '🔴'],
+            'vert' => 'bg-green-50 text-green-700 ring-green-600/20',
+            'orange' => 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
+            'rouge' => 'bg-red-50 text-red-700 ring-red-600/20',
         ];
         $c = $couleurClasses[$evaluation['couleur']] ?? $couleurClasses['orange'];
     @endphp
     <div class="pharaoh-card p-6">
         <div class="mb-4 flex items-center justify-between">
             <h2 class="text-xl font-semibold text-[#080808]">Mon évaluation du mois</h2>
-            <span class="badge {{ $c[0] }} ring-1 ring-inset">{{ $evaluation['couleur'] }}</span>
+            <span class="badge {{ $c }} ring-1 ring-inset uppercase tracking-wider text-xs">{{ $evaluation['couleur'] }}</span>
         </div>
         <div class="flex items-center justify-center">
-            <div class="w-full rounded-2xl ring-1 ring-inset p-6 text-center {{ $c[0] }}">
-                <div class="text-4xl">{{ $c[1] }}</div>
+            <div class="w-full rounded-2xl ring-1 ring-inset p-6 text-center {{ $c }}">
+                <div class="flex justify-center mb-3">
+                    <span class="relative flex h-6 w-6">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 {{ $evaluation['couleur'] === 'vert' ? 'bg-green-400' : ($evaluation['couleur'] === 'orange' ? 'bg-yellow-400' : 'bg-red-400') }}"></span>
+                        <span class="relative inline-flex rounded-full h-6 w-6 {{ $evaluation['couleur'] === 'vert' ? 'bg-green-500' : ($evaluation['couleur'] === 'orange' ? 'bg-yellow-500' : 'bg-red-500') }}"></span>
+                    </span>
+                </div>
                 <div class="mt-2 text-4xl font-bold tracking-tight">{{ $evaluation['note'] }}/20</div>
                 <div class="mt-2 text-sm font-medium">
                     {{ $evaluation['couleur'] === 'vert' ? 'Excellent — discipline et rendement au rendez-vous' : ($evaluation['couleur'] === 'orange' ? 'Satisfaisant — à surveiller' : 'Critique — attention discipline et rendement') }}

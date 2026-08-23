@@ -76,7 +76,11 @@
         <div class="stat-card-label">Employés actifs</div>
     </div>
     <div class="stat-card border border-white/20 bg-gradient-to-br from-white/90 to-white/70">
-        <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">📊</div>
+        <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+        </div>
         <div class="stat-card-value">{{ $noteMoyenne }}/20</div>
         <div class="stat-card-label">Note moyenne</div>
     </div>
@@ -86,11 +90,17 @@
     </div>
     <div class="stat-card border border-emerald-200/30 bg-gradient-to-br from-emerald-50/90 to-emerald-50/70">
         <div class="stat-card-value text-emerald-600">{{ $verts }}</div>
-        <div class="stat-card-label">🟢 Évaluation verte</div>
+        <div class="stat-card-label flex items-center gap-1.5">
+            <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+            <span>Évaluations vertes</span>
+        </div>
     </div>
     <div class="stat-card border border-red-200/30 bg-gradient-to-br from-red-50/90 to-red-50/70">
         <div class="stat-card-value text-red-600">{{ $rouges }}</div>
-        <div class="stat-card-label">🔴 Évaluation rouge</div>
+        <div class="stat-card-label flex items-center gap-1.5">
+            <span class="h-2.5 w-2.5 rounded-full bg-red-500"></span>
+            <span>Évaluations rouges</span>
+        </div>
     </div>
 </div>
 
@@ -99,16 +109,31 @@
 <div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-2">
     <!-- Graphique évolution évaluations -->
     <div class="card">
-        <h2 class="text-lg font-bold text-[#080808] mb-1">📈 Évolution des évaluations (6 mois)</h2>
-        <p class="text-sm text-gray-500 mb-4">Comparaison de la note /20 par employé</p>
+        <h2 class="text-lg font-bold text-[#080808] mb-1 flex items-center gap-2">
+            <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            <span>Évolution des évaluations (6 mois)</span>
+        </h2>
+        <p class="text-sm text-gray-500 mb-4 ml-7">Comparaison de la note /20 par employé</p>
         <canvas id="companyEvaluationChart" height="120"></canvas>
-        <p class="mt-3 text-xs text-gray-400">Échelle 0-20 · 🟢 Vert ≥ 14 · 🟠 Orange 10-13 · 🔴 Rouge &lt; 10</p>
+        <p class="mt-3 text-xs text-gray-400 flex items-center flex-wrap gap-3">
+            <span>Échelle 0-20 :</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-green-500"></span> Vert ≥ 14</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-yellow-500"></span> Orange 10-13</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-red-500"></span> Rouge &lt; 10</span>
+        </p>
     </div>
 
     <!-- Graphique répartition évaluations -->
     <div class="card">
-        <h2 class="text-lg font-bold text-[#080808] mb-1">🎯 Répartition des évaluations</h2>
-        <p class="text-sm text-gray-500 mb-4">Répartition verte / orange / rouge</p>
+        <h2 class="text-lg font-bold text-[#080808] mb-1 flex items-center gap-2">
+            <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0 0V12m0 0L8 8" />
+            </svg>
+            <span>Répartition des évaluations</span>
+        </h2>
+        <p class="text-sm text-gray-500 mb-4 ml-7">Répartition verte / orange / rouge</p>
         <canvas id="evaluationPieChart" height="160"></canvas>
     </div>
 </div>
@@ -116,7 +141,12 @@
 
 <!-- Tableau détaillé -->
 <div class="card">
-    <h2 class="text-lg font-bold text-[#080808] mb-4">📋 Détails par employé</h2>
+    <h2 class="text-lg font-bold text-[#080808] mb-4 flex items-center gap-2">
+        <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <span>Détails par employé</span>
+    </h2>
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
@@ -133,8 +163,11 @@
                 <tr class="hover:bg-pharaoh-gold/5 transition-colors">
                     <td class="px-4 py-3">
                         <div class="font-semibold text-gray-900">{{ $data->employer_nom }}</div>
-                        <a href="{{ route('admin.evaluation.bulletin', ['id' => $data->employerID, 'mois' => substr($startDate, 0, 7)]) }}" class="text-xs text-pharaoh-gold hover:underline">
-                            📥 Bulletin PDF
+                        <a href="{{ route('admin.evaluation.bulletin', ['id' => $data->employerID, 'mois' => substr($startDate, 0, 7)]) }}" class="text-xs text-pharaoh-gold hover:underline inline-flex items-center gap-1">
+                            <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span>Bulletin PDF</span>
                         </a>
                     </td>
                     <td class="px-4 py-3 text-center font-bold text-[#080808]">{{ $data->total_presence }}</td>
@@ -155,9 +188,9 @@
                                 <div class="flex items-center gap-1 mb-1">
                                     <input type="number" name="note" min="0" max="20" step="0.5" value="{{ $data->evaluation_note }}" class="w-16 rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold/20" title="Note /20">
                                     <select name="couleur" class="rounded-lg border border-gray-300 px-1 py-1 text-xs focus:border-pharaoh-gold">
-                                        <option value="vert" {{ $data->evaluation_couleur === 'vert' ? 'selected' : '' }}>🟢</option>
-                                        <option value="orange" {{ $data->evaluation_couleur === 'orange' ? 'selected' : '' }}>🟠</option>
-                                        <option value="rouge" {{ $data->evaluation_couleur === 'rouge' ? 'selected' : '' }}>🔴</option>
+                                        <option value="vert" {{ $data->evaluation_couleur === 'vert' ? 'selected' : '' }}>Vert</option>
+                                        <option value="orange" {{ $data->evaluation_couleur === 'orange' ? 'selected' : '' }}>Orange</option>
+                                        <option value="rouge" {{ $data->evaluation_couleur === 'rouge' ? 'selected' : '' }}>Rouge</option>
                                     </select>
                                 </div>
                                 <input type="text" name="commentaire" placeholder="Commentaire..." class="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs mb-1 focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold/20">
@@ -188,8 +221,12 @@
                 @empty
                 <tr>
                     <td colspan="5" class="px-4 py-12 text-center text-gray-500">
-                        <div class="text-4xl mb-2">📭</div>
-                        Aucune donnée pour cette période.
+                        <div class="flex flex-col items-center justify-center">
+                            <svg class="h-10 w-10 text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0L12 17l-8-4" />
+                            </svg>
+                            <span class="text-sm">Aucune donnée pour cette période.</span>
+                        </div>
                     </td>
                 </tr>
                 @endforelse
@@ -253,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function () {
         new Chart(ctxPie, {
             type: 'doughnut',
             data: {
-                labels: ['🟢 Vert (≥14)', '🟠 Orange (10-13)', '🔴 Rouge (<10)'],
+                labels: ['Vert (≥14)', 'Orange (10-13)', 'Rouge (<10)'],
                 datasets: [{
                     data: [{{ $verts }}, {{ $oranges }}, {{ $rouges }}],
                     backgroundColor: ['#2E8B57', '#D97706', '#D64545'],

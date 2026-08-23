@@ -49,7 +49,13 @@
                     <label class="input-label">Détails (facultatif)</label>
                     <textarea name="details" rows="2" class="input-field" placeholder="Description du service">{{ old('details') }}</textarea>
                 </div>
-                <button type="submit" class="btn-primary">💾 Enregistrer le service</button>
+                <button type="submit" class="btn-primary gap-2">
+                    <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h-2v5.586L7.707 10.293z" />
+                        <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H4zm12 12A2 2 0 0114 16H6a2 2 0 01-2-2V6a2 2 0 012-2h7v4h4v6z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Enregistrer le service</span>
+                </button>
             </form>
         </div>
     </div>
@@ -57,7 +63,12 @@
     <div class="lg:col-span-2">
         <div class="pharaoh-card overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100">
-                <h3 class="text-lg font-semibold text-[#080808]">📋 Services enregistrés</h3>
+                <h3 class="text-lg font-semibold text-[#080808] flex items-center gap-2">
+                    <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span>Services enregistrés</span>
+                </h3>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">

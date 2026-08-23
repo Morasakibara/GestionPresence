@@ -61,7 +61,13 @@
                     <input type="file" id="avatar" name="avatar" accept="image/*" class="input-field">
                 </div>
 
-                <button type="submit" class="btn-primary">💾 Enregistrer les modifications</button>
+                <button type="submit" class="btn-primary gap-2">
+                    <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h-2v5.586L7.707 10.293z" />
+                        <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H4zm12 12A2 2 0 0114 16H6a2 2 0 01-2-2V6a2 2 0 012-2h7v4h4v6z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Enregistrer les modifications</span>
+                </button>
             </form>
         </div>
     </div>
@@ -108,4 +114,4 @@
 <a href="{{ route('user.profile') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Profil</a>
 <a href="{{ route('presence.index') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Index</a>
 <a href="{{ route('user.rendement') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Rendement</a>
-@endsection\n
+@endsection
