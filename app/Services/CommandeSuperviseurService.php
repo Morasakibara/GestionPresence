@@ -100,7 +100,7 @@ class CommandeSuperviseurService
             $msg = $newStatut === 'paye'
                 ? "Commande #{$commande->id} entièrement payée."
                 : "Reste de {$request->montant_verse} FCFA encaissé sur commande #{$commande->id}.";
-            $admin->notify(new \App\Notifications\PaiementCommandeNotification($commande, $msg));
+            $admin->notify(new \App\Notifications\PaiementCommandeNotification($commande, (float) $request->montant_verse, $newStatut));
         }
 
         $msg = $newStatut === 'paye'

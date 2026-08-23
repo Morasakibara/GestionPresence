@@ -152,12 +152,13 @@ class PharaonFeaturesTest extends TestCase
     public function test_evaluation_couleur_et_note(): void
     {
         $employe = Utilisateur::where('role', 'Employer')->first();
+        $supId = DB::table('employer')->where('id', $employe->id)->value('Sup_id') ?: 1;
 
         // Un employé avec beaucoup d'absences et de retards -> rouge
         foreach (['2026-08-03', '2026-08-04'] as $date) {
             Presence::create([
                 'employerID' => $employe->id,
-                'Sup_id' => 3,
+                'Sup_id' => $supId,
                 'date' => $date,
                 'heureArrivee' => $date . ' 09:30:00', // retard
                 'heureDepart' => $date . ' 17:00:00',
@@ -166,13 +167,13 @@ class PharaonFeaturesTest extends TestCase
         }
         Presence::create([
             'employerID' => $employe->id,
-            'Sup_id' => 3,
+            'Sup_id' => $supId,
             'date' => '2026-08-05',
             'status' => 'Absent',
         ]);
         Presence::create([
             'employerID' => $employe->id,
-            'Sup_id' => 3,
+            'Sup_id' => $supId,
             'date' => '2026-08-06',
             'status' => 'Absent',
         ]);
@@ -309,10 +310,11 @@ class PharaonFeaturesTest extends TestCase
     public function test_employe_consulte_ses_fiches_de_rendement(): void
     {
         $employe = $this->loginEmploye();
+        $supId = DB::table('employer')->where('id', $employe->id)->value('Sup_id') ?: 1;
 
         Presence::create([
             'employerID' => $employe->id,
-            'Sup_id' => 3,
+            'Sup_id' => $supId,
             'date' => '2026-08-10',
             'heureArrivee' => '2026-08-10 08:00:00',
             'heureDepart' => '2026-08-10 17:00:00',
@@ -331,11 +333,12 @@ class PharaonFeaturesTest extends TestCase
     {
         $admin = $this->loginAdmin();
         $employe = Utilisateur::where('role', 'Employer')->first();
+        $supId = DB::table('employer')->where('id', $employe->id)->value('Sup_id') ?: 1;
 
         // Un rendement sur le mois pour cet employé
         Presence::create([
             'employerID' => $employe->id,
-            'Sup_id' => 3,
+            'Sup_id' => $supId,
             'date' => '2026-08-10',
             'heureArrivee' => '2026-08-10 08:00:00',
             'heureDepart' => '2026-08-10 17:00:00',
@@ -412,21 +415,22 @@ class PharaonFeaturesTest extends TestCase
     {
         Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 0));
         $employe = Utilisateur::where('role', 'Employer')->first();
+        $supId = DB::table('employer')->where('id', $employe->id)->value('Sup_id') ?: 1;
 
         // Beaucoup d'absences + retards sur juillet -> évaluation rouge
         foreach (['2026-07-06', '2026-07-07'] as $date) {
             Presence::create([
                 'employerID' => $employe->id,
-                'Sup_id' => 3,
+                'Sup_id' => $supId,
                 'date' => $date,
                 'heureArrivee' => $date . ' 09:30:00',
                 'heureDepart' => $date . ' 17:00:00',
                 'status' => 'présent',
             ]);
         }
-        Presence::create(['employerID' => $employe->id, 'Sup_id' => 3, 'date' => '2026-07-08', 'status' => 'Absent']);
-        Presence::create(['employerID' => $employe->id, 'Sup_id' => 3, 'date' => '2026-07-09', 'status' => 'Absent']);
-        Presence::create(['employerID' => $employe->id, 'Sup_id' => 3, 'date' => '2026-07-10', 'status' => 'Absent']);
+        Presence::create(['employerID' => $employe->id, 'Sup_id' => $supId, 'date' => '2026-07-08', 'status' => 'Absent']);
+        Presence::create(['employerID' => $employe->id, 'Sup_id' => $supId, 'date' => '2026-07-09', 'status' => 'Absent']);
+        Presence::create(['employerID' => $employe->id, 'Sup_id' => $supId, 'date' => '2026-07-10', 'status' => 'Absent']);
 
         $this->artisan('presence:alertes-evaluations-rouges', ['--mois' => '2026-07'])
             ->expectsOutputToContain('notifié');
