@@ -41,15 +41,11 @@ class LoginAttemptService
      */
     public function secondsRemaining(string $email): int
     {
-        $key = $this->cacheKey($email);
-        $ttl = Cache::store('file')->ttl($key);
-
-        if ($ttl === false || $ttl <= 0) {
+        if (!$this->isLockedOut($email)) {
             return 0;
         }
-
-        // Le TTL restant est approximatif
-        return max(0, $ttl);
+        // Approximation : le lockout dure LOCKOUT_MINUTES minutes
+        return self::LOCKOUT_MINUTES * 60;
     }
 
     /**

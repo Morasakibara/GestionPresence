@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conge;
-use App\Models\Employer;
 use App\Models\Utilisateur;
 use App\Models\Superviseur;
 use Illuminate\Http\Request;

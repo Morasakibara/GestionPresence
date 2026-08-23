@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\StockTshirt;
 use App\Models\StockPapier;
-use App\Models\Superviseur;
 use App\Models\Utilisateur;
 use App\Notifications\StockAlertNotification;
 use App\Services\AuditService;
