@@ -27,11 +27,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// ── Authentification ──
-Route::post('/login', [AuthController::class, 'login']);
+// ── Authentification (rate-limité : 5/minute) ──
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:api-login');
 
-// ── Routes protégées ──
-Route::middleware('auth:sanctum')->group(function () {
+// ── Routes protégées (rate-limité : 60/minute) ──
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Profil
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);

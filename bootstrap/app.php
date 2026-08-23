@@ -33,6 +33,21 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('presence:rappel-fiches-rendement')->weeklyOn(5, '17:00');
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Rediriger les rate-limits vers la page de login avec un message clair
+        $exceptions->renderable(function (\Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Trop de requêtes. Réessayez dans quelques instants.',
+                ], 429);
+            }
+
+            $retryAfter = $e->getHeaders()['Retry-After'] ?? 60;
+            $minutes = ceil($retryAfter / 60);
+
+            return redirect()
+                ->route('login')
+                ->withErrors(['email' => "Trop de tentatives. Réessayez dans {$minutes} minute(s)."])
+                ->withInput($request->only('email'));
+        });
     })
     ->create();

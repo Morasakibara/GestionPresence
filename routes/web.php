@@ -41,13 +41,13 @@ Route::middleware('registration.access')->group(function () {
     Route::get('/register', [TestController::class, 'showRegistrationForm'])->name('register');
 });
 
-//Enregistrement de l'Admin
+//Enregistrement de l'Admin (rate-limité : 3/heure)
 Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('register', [RegisterController::class, 'register']);
+Route::post('register', [RegisterController::class, 'register'])->middleware('throttle:register');
 
-//Authentification de l'admin et du superviseur
+//Authentification de l'admin et du superviseur (rate-limité : 5/minute)
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('login', [LoginController::class, 'login']);
+Route::post('login', [LoginController::class, 'login'])->middleware('throttle:login');
 Route::post('/select-role', [LoginController::class, 'selectRole'])->name('select-role');
 Route::get('/Auth/role_selection',[LoginController::class,'showRoleSelectionModal'])->name('auth.role_selection');
 
