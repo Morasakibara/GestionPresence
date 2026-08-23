@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'isAdmin' => \App\Http\Middleware\IsAdmin::class,
             'check.role.network' => \App\Http\Middleware\CheckUserRoleAndNetwork::class,
             'registration.access' => \App\Http\Middleware\RegistrationAccessMiddleware::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
 
         // Remplacer le CSRF natif par notre version (désactive en testing)

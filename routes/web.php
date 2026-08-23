@@ -57,7 +57,7 @@ Route::get('logout', [LoginController::class, 'logout'])->name('logouts');
 
 
 //ici on a les route permettant de gerer les fonctionalités de l'Admin
-Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['isAdmin', 'role:Administrateur'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('add-employee', [AdminController::class, 'showAddEmployeeForm'])->name('addEmployee');
     Route::post('/store-employee', [AdminController::class, 'storeEmployee'])->name('storeEmployee');

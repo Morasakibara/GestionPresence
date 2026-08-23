@@ -7,32 +7,36 @@ use App\Models\ServiceFourni;
 use App\Models\Retrait;
 use App\Models\Superviseur;
 use App\Services\AuditService;
+use App\Services\CommandeSuperviseurService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class SecretaireController extends Controller
 {
-    /**
-     * Types de commandes/services autorisés pour la secrétaire.
-     */
     private const TYPES_SECRETAIRE = [
-        'shooting' => 'Shooting',
-        'montage_photos' => 'Montage photos',
-        'montage_agrandissement' => 'Montage & agrandissement photos',
-        'agrandissement_photos' => 'Agrandissement photos',
-        'demi_carte_photo' => 'Demi-carte photo',
+        'shooting'                 => 'Shooting',
+        'montage_photos'           => 'Montage photos',
+        'montage_agrandissement'   => 'Montage & agrandissement photos',
+        'agrandissement_photos'    => 'Agrandissement photos',
+        'demi_carte_photo'         => 'Demi-carte photo',
     ];
 
-    /**
-     * Dashboard de la secrétaire — vue d'ensemble de la caisse photo.
-     */
+    /**────────────────── SERVICE ──────────────────*/
+
+    private function service(): CommandeSuperviseurService
+    {
+        return new CommandeSuperviseurService(Auth::id(), 'secretaire', self::TYPES_SECRETAIRE);
+    }
+
     private function flushDashboardCache(): void
     {
         $id = Auth::id();
         \Illuminate\Support\Facades\Cache::forget("secretaire_dash_{$id}");
         \Illuminate\Support\Facades\Cache::forget("secretaire_types_{$id}_" . now()->toDateString());
     }
+
+    /**────────────────── DASHBOARD ──────────────────*/
 
     public function dashboard()
     {
@@ -43,135 +47,33 @@ class SecretaireController extends Controller
         $caisse = new \App\Services\CaisseService($superviseur->id, 'secretaire');
         $data = \Illuminate\Support\Facades\Cache::remember($cacheKey, 60, fn() => $caisse->dashboardData());
 
-        // Répartition par type du jour
         $todayKey = "secretaire_types_{$superviseur->id}_{$today}";
         $types = \Illuminate\Support\Facades\Cache::remember($todayKey, 60, function () use ($superviseur, $today) {
-            $commandesJour = Commande::where('superviseur_id', $superviseur->id)
-                ->whereDate('date', $today)->get();
-            $servicesJour = ServiceFourni::where('superviseur_id', $superviseur->id)
-                ->whereDate('date', $today)->get();
+            $commandesJour = Commande::where('superviseur_id', $superviseur->id)->whereDate('date', $today)->get();
             return [
                 'commandesParType' => $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant')),
-                'servicesParType' => $servicesJour->groupBy('type')->map(fn($s) => $s->sum('montant')),
+                'servicesParType'  => $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant')),
             ];
         });
         $data['commandesParType'] = $types['commandesParType'];
-        $data['servicesParType'] = $types['servicesParType'];
+        $data['servicesParType']  = $types['servicesParType'];
 
         return view('secretaire.dashboard', $data)->with('typesPhoto', self::TYPES_SECRETAIRE);
     }
 
-    /**
-     * Page des commandes photo.
-     */
+    /**────────────────── COMMANDES ──────────────────*/
+
     public function showCommandes()
     {
-        $superviseur = Auth::user();
-        $commandes = Commande::where('superviseur_id', $superviseur->id)
-            ->orderByDesc('created_at')->get();
-
-        return view('secretaire.commandes', compact('commandes'))
-            ->with('typesPhoto', self::TYPES_SECRETAIRE);
+        $commandes = $this->service()->toutesLesCommandes();
+        return view('secretaire.commandes', compact('commandes'))->with('typesPhoto', self::TYPES_SECRETAIRE);
     }
 
-    /**
-     * Enregistrer une commande photo.
-     */
     public function storeCommande(Request $request)
     {
-        $request->validate([
-            'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_SECRETAIRE)),
-            'montant' => 'required|numeric|min:0.01',
-            'montant_paye' => 'required|numeric|min:0',
-            'statut_paiement' => 'required|string|in:paye,partiel,a_payer',
-            'details' => 'nullable|string|max:1000',
-        ]);
-
-        $montant = (float) $request->montant;
-        $montantPaye = (float) $request->montant_paye;
-        $statut = $request->statut_paiement;
-
-        // Vérifications cohérence
-        if ($statut === 'paye' && $montantPaye < $montant) {
-            $montantPaye = $montant; // Forcer le paiement complet
-        }
-        if ($statut === 'a_payer') {
-            $montantPaye = 0;
-        }
-        if ($statut === 'partiel' && $montantPaye >= $montant) {
-            $montantPaye = $montant;
-            $statut = 'paye';
-        }
-
-        $cmd = Commande::create([
-            'superviseur_id' => Auth::id(),
-            'type' => $request->type,
-            'montant' => $montant,
-            'montant_paye' => $montantPaye,
-            'statut_paiement' => $statut,
-            'details' => $request->details,
-            'date' => now()->toDateString(),
-        ]);
-
-        AuditService::created('secretaire', "Commande {$request->type} de {$montant} FCFA ({$statut})", $cmd->toArray(), $request);
-
-        $msg = match($statut) {
-            'paye' => 'Commande enregistrée (paiement complet).',
-            'partiel' => 'Commande enregistrée (paiement partiel : ' . number_format($montantPaye, 0, ',', '') . '/' . number_format($montant, 0, ',', '') . ' FCFA).',
-            'a_payer' => 'Commande enregistrée (paiement à la livraison).',
-            default => 'Commande enregistrée.',
-        };
-
+        $this->service()->enregistrerCommande($request);
         $this->flushDashboardCache();
-        return redirect()->route('secretaire.commandes')->with('success', $msg);
-    }
-
-    /**
-     * Encaisser le reste d'une commande impayée (depuis la modal du dashboard).
-     */
-    public function encaisserReste(Request $request)
-    {
-        $request->validate([
-            'commande_id' => 'required|integer|exists:commandes,id',
-            'montant_verse' => 'required|numeric|min:0.01',
-        ]);
-
-        $commande = Commande::where('id', $request->commande_id)
-            ->where('superviseur_id', Auth::id())
-            ->firstOrFail();
-
-        $reste = (float) $commande->montant - (float) $commande->montant_paye;
-        if ($request->montant_verse > $reste) {
-            return redirect()->route('secretaire.dashboard')
-                ->with('error', 'Montant supérieur au reste à encaisser (' . number_format($reste, 0, ',', '') . ' FCFA).');
-        }
-
-        $newMontantPaye = (float) $commande->montant_paye + (float) $request->montant_verse;
-        $newStatut = $newMontantPaye >= (float) $commande->montant ? 'paye' : 'partiel';
-
-        AuditService::updated('secretaire', "Encaissement de {$request->montant_verse} FCFA sur commande #{$commande->id}",
-            ['montant_paye' => $commande->montant_paye, 'statut_paiement' => $commande->statut_paiement],
-            ['montant_paye' => $newMontantPaye, 'statut_paiement' => $newStatut], $request);
-
-        $commande->update([
-            'montant_paye' => $newMontantPaye,
-            'statut_paiement' => $newStatut,
-        ]);
-
-        // Notification si la commande passe de partiel/à payer → payée
-        if ($newStatut === 'paye' && $commande->getOriginal('statut_paiement') !== 'paye') {
-            $admin = \App\Models\Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
-            if ($admin) {
-                $admin->notify(new \App\Notifications\PaiementCommandeNotification($commande, $request->montant_verse, $newStatut));
-            }
-        }
-
-        $msg = $newStatut === 'paye'
-            ? "Commande #{$commande->id} entièrement payée."
-            : "Reste de {$request->montant_verse} FCFA encaissé sur commande #{$commande->id}.";
-
-        $this->flushDashboardCache();
-        return redirect()->route('secretaire.dashboard')->with('success', $msg);
+        return redirect()->route('secretaire.commandes')->with('success', 'Commande enregistrée.');
     }
 
     public function editCommande($id)
@@ -182,79 +84,58 @@ class SecretaireController extends Controller
 
     public function updateCommande(Request $request, $id)
     {
-        $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
-        $request->validate([
-            'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_SECRETAIRE)),
-            'montant' => 'required|numeric|min:0.01',
-            'montant_paye' => 'required|numeric|min:0',
-            'statut_paiement' => 'required|string|in:paye,partiel,a_payer',
-            'details' => 'nullable|string|max:1000',
-        ]);
-
-        $montant = (float) $request->montant;
-        $montantPaye = (float) $request->montant_paye;
-        $statut = $request->statut_paiement;
-
-        if ($statut === 'paye') $montantPaye = $montant;
-        if ($statut === 'a_payer') $montantPaye = 0;
-        if ($statut === 'partiel' && $montantPaye >= $montant) {
-            $montantPaye = $montant;
-            $statut = 'paye';
-        }
-
-        $commande->update([
-            'type' => $request->type,
-            'montant' => $montant,
-            'montant_paye' => $montantPaye,
-            'statut_paiement' => $statut,
-            'details' => $request->details,
-        ]);
-
+        $this->service()->modifierCommande($request, $id);
         $this->flushDashboardCache();
         return redirect()->route('secretaire.commandes')->with('success', 'Commande mise à jour.');
     }
 
     public function destroyCommande($id)
     {
-        $commande = Commande::where('id', $id)
-            ->where('superviseur_id', Auth::id())->firstOrFail();
-        $commande->delete();
-
+        $this->service()->supprimerCommande($id);
         $this->flushDashboardCache();
         return redirect()->route('secretaire.commandes')->with('success', 'Commande supprimée.');
     }
 
-    /**
-     * Page des services photo.
-     */
+    /**────────────────── ENCAISSEMENT ──────────────────*/
+
+    public function encaisserReste(Request $request)
+    {
+        $result = $this->service()->encaisserReste($request);
+        $this->flushDashboardCache();
+
+        if (!$result['success']) {
+            return redirect()->route('secretaire.dashboard')->with('error', $result['error']);
+        }
+        return redirect()->route('secretaire.dashboard')->with('success', $result['message']);
+    }
+
+    /**────────────────── SERVICES ──────────────────*/
+
     public function showServices()
     {
-        $superviseur = Auth::user();
-        $services = ServiceFourni::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', now()->toDateString())
-            ->orderByDesc('created_at')->get();
-
-        return view('secretaire.services', compact('services'))
-            ->with('typesPhoto', self::TYPES_SECRETAIRE);
+        $services = ServiceFourni::where('superviseur_id', Auth::id())->orderByDesc('created_at')->get();
+        return view('secretaire.services', compact('services'))->with('typesPhoto', self::TYPES_SECRETAIRE);
     }
 
     public function storeService(Request $request)
     {
         $request->validate([
-            'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_SECRETAIRE)),
+            'type'    => 'required|string|in:' . implode(',', array_keys(self::TYPES_SECRETAIRE)),
             'montant' => 'required|numeric|min:0.01',
             'details' => 'nullable|string|max:1000',
         ]);
 
-        ServiceFourni::create([
+        $svc = ServiceFourni::create([
             'superviseur_id' => Auth::id(),
-            'type' => $request->type,
-            'montant' => $request->montant,
-            'details' => $request->details,
-            'date' => now()->toDateString(),
+            'type'           => $request->type,
+            'montant'        => $request->montant,
+            'details'        => $request->details,
+            'date'           => now()->toDateString(),
         ]);
 
+        AuditService::created('secretaire', "Service {$request->type} de {$request->montant} FCFA", $svc->toArray(), $request);
         $this->flushDashboardCache();
+
         return redirect()->route('secretaire.services')->with('success', 'Service enregistré.');
     }
 
@@ -266,140 +147,92 @@ class SecretaireController extends Controller
 
     public function updateService(Request $request, $id)
     {
-        $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
         $request->validate([
-            'type' => 'required|string|in:' . implode(',', array_keys(self::TYPES_SECRETAIRE)),
             'montant' => 'required|numeric|min:0.01',
             'details' => 'nullable|string|max:1000',
         ]);
-        $service->update($request->only('type', 'montant', 'details'));
+
+        $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $service->update($request->only('montant', 'details'));
         $this->flushDashboardCache();
+
         return redirect()->route('secretaire.services')->with('success', 'Service mis à jour.');
     }
 
     public function destroyService($id)
     {
-        $service = ServiceFourni::where('id', $id)
-            ->where('superviseur_id', Auth::id())->firstOrFail();
-        $service->delete();
-
+        ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail()->delete();
         $this->flushDashboardCache();
         return redirect()->route('secretaire.services')->with('success', 'Service supprimé.');
     }
 
-    /**
-     * Page des retraits.
-     */
+    /**────────────────── RETRAITS ──────────────────*/
+
     public function showRetraits()
     {
-        $superviseur = Auth::user();
-        $retraits = Retrait::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', now()->toDateString())
-            ->orderByDesc('created_at')->get();
-
-        $totalEntrees = Commande::where('superviseur_id', Auth::id())
-            ->whereDate('date', now()->toDateString())->sum('montant_paye')
-            + ServiceFourni::where('superviseur_id', Auth::id())
-            ->whereDate('date', now()->toDateString())->sum('montant');
-        $totalSorties = Retrait::where('superviseur_id', Auth::id())
-            ->whereDate('date', now()->toDateString())->sum('montant');
-
-        return view('secretaire.retraits', compact('retraits', 'totalEntrees', 'totalSorties'));
+        $retraits = Retrait::where('superviseur_id', Auth::id())->orderByDesc('created_at')->get();
+        $caisse = new \App\Services\CaisseService(Auth::id(), 'secretaire');
+        $soldeArr = $caisse->solde();
+        $solde = $soldeArr['en_caisse'];
+        $totalEntrees = $soldeArr['total_commandes_paye'] + $soldeArr['total_services'];
+        $totalSorties = $soldeArr['total_retraits'];
+        return view('secretaire.retraits', compact('retraits', 'solde', 'totalEntrees', 'totalSorties'));
     }
 
     public function storeRetrait(Request $request)
     {
         $request->validate([
             'montant' => 'required|numeric|min:0.01',
-            'motif' => 'required|string|max:1000',
+            'motif'   => 'required|string|max:500',
         ]);
 
-        $totalEntrees = Commande::where('superviseur_id', Auth::id())
-            ->whereDate('date', now()->toDateString())->sum('montant_paye')
-            + ServiceFourni::where('superviseur_id', Auth::id())
-            ->whereDate('date', now()->toDateString())->sum('montant');
-        $totalSorties = Retrait::where('superviseur_id', Auth::id())
-            ->whereDate('date', now()->toDateString())->sum('montant');
-        $disponible = $totalEntrees - $totalSorties;
+        $caisse = new \App\Services\CaisseService(Auth::id(), 'secretaire');
+        $solde = $caisse->solde()['en_caisse'];
 
-        if ($request->montant > $disponible) {
+        if ($request->montant > $solde) {
             return redirect()->route('secretaire.retraits')
-                ->with('error', 'Montant supérieur à la somme disponible (' . number_format($disponible, 2, ',', '') . ' FCFA).');
+                ->with('error', 'Le retrait dépasse le solde disponible (' . number_format($solde, 0, ',', '.') . ' FCFA).');
         }
 
-        $retrait = Retrait::create([
+        $rt = Retrait::create([
             'superviseur_id' => Auth::id(),
-            'montant' => $request->montant,
-            'motif' => $request->motif,
-            'date' => now()->toDateString(),
+            'montant'        => $request->montant,
+            'motif'          => $request->motif,
+            'date'           => now()->toDateString(),
         ]);
 
-        AuditService::created('secretaire', "Retrait de {$request->montant} FCFA — {$request->motif}", $retrait->toArray(), $request);
-
+        AuditService::created('secretaire', "Retrait de {$request->montant} FCFA — {$request->motif}", $rt->toArray(), $request);
         $this->flushDashboardCache();
+
         return redirect()->route('secretaire.retraits')->with('success', 'Retrait enregistré.');
     }
 
-    /**
-     * Rapport pour la secrétaire.
-     */
+    /**────────────────── RAPPORT ──────────────────*/
+
     public function rapport(Request $request)
     {
-        $superviseur = Auth::user();
         $dateDebut = $request->input('date_debut', now()->startOfMonth()->toDateString());
-        $dateFin = $request->input('date_fin', now()->toDateString());
+        $dateFin   = $request->input('date_fin', now()->toDateString());
 
-        $query = function ($type, $debut, $fin) use ($superviseur) {
-            return $type::where('superviseur_id', $superviseur->id)
-                ->whereBetween('date', [$debut, $fin]);
-        };
+        $data = $this->service()->rapportData($dateDebut, $dateFin);
+        $data['dateDebut']  = $dateDebut;
+        $data['dateFin']    = $dateFin;
+        $data['typesCaisse'] = self::TYPES_SECRETAIRE;
 
-        $totalCommandes = $query(Commande::class, $dateDebut, $dateFin)->sum('montant_paye');
-        $totalServices = $query(ServiceFourni::class, $dateDebut, $dateFin)->sum('montant');
-        $totalRetraits = $query(Retrait::class, $dateDebut, $dateFin)->sum('montant');
-
-        $commandesParType = $query(Commande::class, $dateDebut, $dateFin)
-            ->get()->groupBy('type')->map(fn($c) => $c->sum('montant'));
-        $servicesParType = $query(ServiceFourni::class, $dateDebut, $dateFin)
-            ->get()->groupBy('type')->map(fn($s) => $s->sum('montant'));
-
-        $detailJournalier = collect();
-        $debut = Carbon::parse($dateDebut);
-        $fin = Carbon::parse($dateFin);
-        while ($debut->lte($fin)) {
-            $jour = $debut->toDateString();
-            $entrees = Commande::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant_paye')
-                + ServiceFourni::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
-            $sorties = Retrait::where('superviseur_id', $superviseur->id)->whereDate('date', $jour)->sum('montant');
-            $detailJournalier->push([
-                'date' => $jour,
-                'label' => $debut->format('d/m'),
-                'entrees' => $entrees,
-                'sorties' => $sorties,
-            ]);
-            $debut->addDay();
-        }
-
-        return view('secretaire.rapport', compact(
-            'dateDebut', 'dateFin',
-            'totalCommandes', 'totalServices', 'totalRetraits',
-            'commandesParType', 'servicesParType', 'detailJournalier'
-        ))->with('typesPhoto', self::TYPES_SECRETAIRE);
+        return view('secretaire.rapport', $data);
     }
 
     public function exportCsv(Request $request)
     {
         $dateDebut = $request->input('date_debut', now()->startOfMonth()->toDateString());
-        $dateFin = $request->input('date_fin', now()->toDateString());
-        $superviseur = Auth::user();
+        $dateFin   = $request->input('date_fin', now()->toDateString());
 
-        $commandes = Commande::where('superviseur_id', $superviseur->id)
-            ->whereBetween('date', [$dateDebut, $dateFin])->get();
-        $services = ServiceFourni::where('superviseur_id', $superviseur->id)
-            ->whereBetween('date', [$dateDebut, $dateFin])->get();
-        $retraits = Retrait::where('superviseur_id', $superviseur->id)
-            ->whereBetween('date', [$dateDebut, $dateFin])->get();
+        $data = $this->service()->rapportCsvData($dateDebut, $dateFin);
 
-        return \App\Services\ExportService::rapport($dateDebut, $dateFin, $commandes, $services, $retraits, self::TYPES_SECRETAIRE, 'Photo');
+        return \App\Services\ExportService::rapport(
+            $dateDebut, $dateFin,
+            $data['commandes'], $data['services'], $data['retraits'],
+            self::TYPES_SECRETAIRE, 'secretaire'
+        );
     }
 }
