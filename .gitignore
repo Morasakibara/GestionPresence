@@ -24,3 +24,7 @@ tools/mailpit/
 
 # Backups
 storage/backups/
+
+# Karpathy skills (source)
+andrej-karpathy-skills-main/
+.agents/skills/
