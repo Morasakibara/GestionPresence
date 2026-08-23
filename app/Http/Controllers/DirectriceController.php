@@ -82,11 +82,14 @@ class DirectriceController extends Controller
     public function editCommande($id)
     {
         $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $this->authorize('update', $commande);
         return view('directrice.commandes_edit', compact('commande'))->with('typesCaisse', self::TYPES_CAISSIERE);
     }
 
     public function updateCommande(Request $request, $id)
     {
+        $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->first();
+        if ($commande) $this->authorize('update', $commande);
         $this->service()->modifierCommande($request, $id);
         $this->flushDashboardCache();
         return redirect()->route('directrice.commandes')->with('success', 'Commande mise à jour.');
@@ -94,6 +97,8 @@ class DirectriceController extends Controller
 
     public function destroyCommande($id)
     {
+        $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->first();
+        if ($commande) $this->authorize('delete', $commande);
         $this->service()->supprimerCommande($id);
         $this->flushDashboardCache();
         return redirect()->route('directrice.commandes')->with('success', 'Commande supprimée.');
@@ -145,6 +150,7 @@ class DirectriceController extends Controller
     public function editService($id)
     {
         $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $this->authorize('update', $service);
         return view('directrice.services_edit', compact('service'))->with('typesCaisse', self::TYPES_CAISSIERE);
     }
 
@@ -156,6 +162,7 @@ class DirectriceController extends Controller
         ]);
 
         $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $this->authorize('update', $service);
         $service->update($request->only('montant', 'details'));
         $this->flushDashboardCache();
 
@@ -164,7 +171,9 @@ class DirectriceController extends Controller
 
     public function destroyService($id)
     {
-        ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail()->delete();
+        $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $this->authorize('delete', $service);
+        $service->delete();
         $this->flushDashboardCache();
         return redirect()->route('directrice.services')->with('success', 'Service supprimé.');
     }

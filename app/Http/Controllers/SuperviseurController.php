@@ -93,6 +93,7 @@ class SuperviseurController extends Controller
 
     public function showFollowPresence()
     {
+        $this->authorize('viewAny', \App\Models\Presence::class);
         // Récupérer le superviseur connecté
         $superviseur = Auth::user();
 

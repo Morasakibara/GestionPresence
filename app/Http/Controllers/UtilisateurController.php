@@ -145,6 +145,7 @@ public function profile(){
     public function update(Request $request)
 {
     $user = Auth::user();
+    $this->authorize('update', $user);
 
     if (!$user) {
         return redirect()->back()->with('error', 'Utilisateur non trouvé.');

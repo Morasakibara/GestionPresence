@@ -140,6 +140,7 @@ class AdminController extends Controller
 
     public function storeEmployee(Request $request)
     {
+        $this->authorize('create', \App\Models\Utilisateur::class);
         $validator = $this->validator($request->all());
         if ($validator->fails()) {
             return redirect()->route('admin.addEmployee')
@@ -228,6 +229,8 @@ class AdminController extends Controller
         $user = Utilisateur::where('email', $request->email)->first();
 
         if ($user) {
+            $this->authorize('delete', $user);
+
             if ($user->role == 'Superviseur') {
                 // Supprimer les employés associés à ce superviseur
                 Employer::where('Sup_id', $user->id)->delete();
@@ -698,6 +701,7 @@ public function exportReport(Request $request)
 
     public function showEmployeeList(Request $request)
     {
+        $this->authorize('viewAny', \App\Models\Utilisateur::class);
         $search = $request->input('search');
         $roles = $request->input('roles',[]);
 

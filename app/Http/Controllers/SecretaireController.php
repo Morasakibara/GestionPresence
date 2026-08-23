@@ -79,11 +79,14 @@ class SecretaireController extends Controller
     public function editCommande($id)
     {
         $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $this->authorize('update', $commande);
         return view('secretaire.commandes_edit', compact('commande'))->with('typesCaisse', self::TYPES_SECRETAIRE);
     }
 
     public function updateCommande(Request $request, $id)
     {
+        $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->first();
+        if ($commande) $this->authorize('update', $commande);
         $this->service()->modifierCommande($request, $id);
         $this->flushDashboardCache();
         return redirect()->route('secretaire.commandes')->with('success', 'Commande mise à jour.');
@@ -91,6 +94,8 @@ class SecretaireController extends Controller
 
     public function destroyCommande($id)
     {
+        $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->first();
+        if ($commande) $this->authorize('delete', $commande);
         $this->service()->supprimerCommande($id);
         $this->flushDashboardCache();
         return redirect()->route('secretaire.commandes')->with('success', 'Commande supprimée.');
@@ -142,6 +147,7 @@ class SecretaireController extends Controller
     public function editService($id)
     {
         $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $this->authorize('update', $service);
         return view('secretaire.services_edit', compact('service'))->with('typesPhoto', self::TYPES_SECRETAIRE);
     }
 
@@ -153,6 +159,7 @@ class SecretaireController extends Controller
         ]);
 
         $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $this->authorize('update', $service);
         $service->update($request->only('montant', 'details'));
         $this->flushDashboardCache();
 
@@ -161,7 +168,9 @@ class SecretaireController extends Controller
 
     public function destroyService($id)
     {
-        ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail()->delete();
+        $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $this->authorize('delete', $service);
+        $service->delete();
         $this->flushDashboardCache();
         return redirect()->route('secretaire.services')->with('success', 'Service supprimé.');
     }

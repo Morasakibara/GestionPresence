@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Utilisateur;
+use App\Models\Employer;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class UtilisateurPolicy
@@ -22,9 +23,12 @@ class UtilisateurPolicy
         // Admin peut tout voir
         if ($user->role === 'Administrateur') return true;
 
-        // Superviseur peut voir les membres de son équipe
+        // Superviseur peut voir les membres de son équipe (via la table employer)
         if ($user->role === 'Superviseur') {
-            return $target->superviseur_id === $user->id;
+            $inTeam = Employer::where('Sup_id', $user->id)
+                ->where('id', $target->id)
+                ->exists();
+            if ($inTeam) return true;
         }
 
         // Chacun peut voir son propre profil
