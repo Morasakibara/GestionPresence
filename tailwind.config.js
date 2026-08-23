@@ -43,7 +43,16 @@ export default {
       'border-pharaoh-gold',
       'hover:bg-pharaoh-gold',
       'hover:bg-pharaoh-gold-light',
-      'hover:text-pharaoh-gold'
+      'hover:text-pharaoh-gold',
+      'bg-pharaoh-green',
+      'bg-pharaoh-green-light',
+      'text-pharaoh-green',
+      'text-pharaoh-green-dark',
+      'border-pharaoh-green',
+      'focus:border-pharaoh-green',
+      'focus:ring-pharaoh-green',
+      'hover:bg-pharaoh-green',
+      'hover:bg-pharaoh-green-light'
     ],
     theme: {
       extend: {
@@ -56,6 +65,9 @@ export default {
             'gold-bright': '#FACE4A',
             bronze: '#B77F1D',
             'bronze-dark': '#885910',
+            green: '#2E8B57',
+            'green-light': '#3aa86e',
+            'green-dark': '#1f6e43',
           },
           background: '#F8F8F8',
           surface: '#FFFFFF',

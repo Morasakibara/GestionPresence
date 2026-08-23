@@ -63,7 +63,7 @@
           <div class="mt-2">
             <input id="name" type="text" name="name" required autofocus 
                   value="{{ old('name') }}"
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-3hcig-blue focus:outline-none focus:ring-1 focus:ring-3hcig-blue sm:text-sm sm:leading-6 transition-colors
+                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors
                   @error('name') border-red-600 bg-red-600/5 @enderror">
           </div>
           @error('name')
@@ -76,7 +76,7 @@
           <div class="mt-2">
             <input id="email" type="email" name="email" required
                   value="{{ old('email') }}"
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-3hcig-blue focus:outline-none focus:ring-1 focus:ring-3hcig-blue sm:text-sm sm:leading-6 transition-colors
+                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors
                   @error('email') border-red-600 bg-red-600/5 @enderror">
           </div>
           @error('email')
@@ -88,7 +88,7 @@
           <label for="password" class="block text-sm font-medium leading-6 text-gray-700">Mot de passe</label>
           <div class="mt-2 relative">
             <input id="password" type="password" name="password" required
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-3hcig-blue focus:outline-none focus:ring-1 focus:ring-3hcig-blue sm:text-sm sm:leading-6 transition-colors
+                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors
                   @error('password') border-red-600 bg-red-600/5 @enderror">
             <button type="button" id="togglePassword" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-transparent border-none cursor-pointer p-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 opacity-50 hover:opacity-100 transition-opacity duration-300"
@@ -107,7 +107,7 @@
           <label for="password_confirmation" class="block text-sm font-medium leading-6 text-gray-700">Confirmez le mot de passe</label>
           <div class="mt-2 relative">
             <input id="password_confirmation" type="password" name="password_confirmation" required
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-3hcig-blue focus:outline-none focus:ring-1 focus:ring-3hcig-blue sm:text-sm sm:leading-6 transition-colors
+                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors
                   @error('password_confirmation') border-red-600 bg-red-600/5 @enderror">
             <button type="button" id="togglePasswordConfirmation" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-transparent border-none cursor-pointer p-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 opacity-50 hover:opacity-100 transition-opacity duration-300"
@@ -123,7 +123,7 @@
           <label for="poste" class="block text-sm font-medium leading-6 text-gray-700">Poste</label>
           <div class="mt-2">
             <select name="poste" id="poste" required
-                    class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-3hcig-green focus:outline-none focus:ring-1 focus:ring-3hcig-green sm:text-sm sm:leading-6 appearance-none bg-no-repeat pr-10 transition-colors
+                    class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-green focus:outline-none focus:ring-1 focus:ring-pharaoh-green sm:text-sm sm:leading-6 appearance-none bg-no-repeat pr-10 transition-colors
                     @error('poste') border-red-600 bg-red-600/5 @enderror"
                     style="background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E'); background-position: right 0.5rem center; background-size: 1.5em 1.5em;">
               <option value="" {{ old('poste') ? '' : 'selected' }}>Sélectionnez votre poste</option>
@@ -137,13 +137,13 @@
 
         <div>
           <button type="submit"
-                  class="btn-press flex w-full justify-center rounded-xl bg-3hcig-green px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-lg transition-colors duration-150 hover:bg-3hcig-green-light">
+                  class="btn-press flex w-full justify-center rounded-xl bg-pharaoh-green px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-lg transition-colors duration-150 hover:bg-pharaoh-green-light">
             S'enregistrer
           </button>
         </div>
 
         <div class="mt-4 text-center">
-          <a href="{{ route('login') }}" class="text-sm font-semibold text-3hcig-blue hover:text-3hcig-blue-light transition-colors duration-150">
+          <a href="{{ route('login') }}" class="text-sm font-semibold text-pharaoh-gold hover:text-pharaoh-gold-light transition-colors duration-150">
             Déjà inscrit ? Connectez-vous
           </a>
         </div>

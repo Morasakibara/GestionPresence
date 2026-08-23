@@ -69,13 +69,13 @@
                                                 <div id="profile-view" class="px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
                                                     <div class="sm:flex sm:items-start">
                                                         <div class="w-full mt-3 text-center sm:mt-0 sm:text-left">
-                                                            <h3 class="text-lg font-medium leading-6 text-3hcig-blue-dark" id="modal-title">
+                                                            <h3 class="text-lg font-medium leading-6 text-pharaoh-bronze-dark" id="modal-title">
                                                                 Votre Profil
                                                             </h3>
 
                                                             <div class="flex flex-col items-center mt-4">
                                                                 <!-- Photo de profil -->
-                                                                <div class="w-24 h-24 mb-4 overflow-hidden border-4 rounded-full border-3hcig-blue-light">
+                                                                <div class="w-24 h-24 mb-4 overflow-hidden border-4 rounded-full border-pharaoh-gold-light">
                                                                     <img id="profile-avatar-display" src="{{ auth()->user()->avatar ? asset('storage/avatars/'.auth()->user()->avatar) : asset('storage/avatars/default.png') }}" alt="Avatar" class="object-cover w-full h-full">
                                                                 </div>
 
@@ -93,7 +93,7 @@
 
                                                                     <div class="flex justify-between p-3 rounded-md bg-gray-50">
                                                                         <span class="text-sm font-medium text-gray-500">Rôle:</span>
-                                                                        <span class="rounded-full bg-3hcig-blue px-2 py-0.5 text-xs font-medium text-white">
+                                                                        <span class="rounded-full bg-pharaoh-gold px-2 py-0.5 text-xs font-medium text-white">
                                                                             Administrateur
                                                                         </span>
                                                                     </div>
@@ -107,7 +107,7 @@
                                                 <div id="profile-edit" class="hidden px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
                                                     <div class="sm:flex sm:items-start">
                                                         <div class="w-full mt-3 text-center sm:mt-0 sm:text-left">
-                                                            <h3 class="text-lg font-medium leading-6 text-3hcig-blue-dark" id="modal-title">
+                                                            <h3 class="text-lg font-medium leading-6 text-pharaoh-bronze-dark" id="modal-title">
                                                                 Modifier votre profil
                                                             </h3>
 
@@ -117,36 +117,36 @@
 
                                                                 <div class="flex flex-col items-center">
                                                                     <!-- Preview de la photo de profil -->
-                                                                    <div class="w-24 h-24 mb-4 overflow-hidden border-4 rounded-full border-3hcig-blue-light">
+                                                                    <div class="w-24 h-24 mb-4 overflow-hidden border-4 rounded-full border-pharaoh-gold-light">
                                                                         <img id="profile-avatar-preview" src="{{ auth()->user()->avatar ? asset('storage/avatars/'.auth()->user()->avatar) : asset('storage/avatars/default.png') }}" alt="Avatar" class="object-cover w-full h-full">
                                                                     </div>
 
                                                                     <!-- Champ pour l'upload d'avatar -->
                                                                     <div class="w-full mb-4">
                                                                         <label for="avatar" class="block text-sm font-medium text-gray-700">Changer la photo</label>
-                                                                        <input type="file" id="avatar" name="avatar" class="block w-full px-3 py-2 mt-1 text-sm border border-gray-300 rounded-md shadow-sm focus:border-3hcig-blue focus:outline-none focus:ring-3hcig-blue">
+                                                                        <input type="file" id="avatar" name="avatar" class="block w-full px-3 py-2 mt-1 text-sm border border-gray-300 rounded-md shadow-sm focus:border-pharaoh-gold focus:outline-none focus:ring-pharaoh-gold">
                                                                     </div>
                                                                 </div>
 
                                                                 <div class="space-y-4">
                                                                     <div>
                                                                         <label for="nom" class="block text-sm font-medium text-gray-700">Nom</label>
-                                                                        <input type="text" id="nom" name="nom" value="{{ auth()->user()->nom }}" class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-3hcig-blue focus:outline-none focus:ring-3hcig-blue sm:text-sm">
+                                                                        <input type="text" id="nom" name="nom" value="{{ auth()->user()->nom }}" class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-pharaoh-gold focus:outline-none focus:ring-pharaoh-gold sm:text-sm">
                                                                     </div>
 
                                                                     <div>
                                                                         <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                                                                        <input type="email" id="email" name="email" value="{{ auth()->user()->email }}" class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-3hcig-blue focus:outline-none focus:ring-3hcig-blue sm:text-sm">
+                                                                        <input type="email" id="email" name="email" value="{{ auth()->user()->email }}" class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-pharaoh-gold focus:outline-none focus:ring-pharaoh-gold sm:text-sm">
                                                                     </div>
 
                                                                     <div>
                                                                         <label for="password" class="block text-sm font-medium text-gray-700">Nouveau mot de passe</label>
-                                                                        <input type="password" id="password" name="password" placeholder="Laisser vide pour ne pas changer" class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-3hcig-blue focus:outline-none focus:ring-3hcig-blue sm:text-sm">
+                                                                        <input type="password" id="password" name="password" placeholder="Laisser vide pour ne pas changer" class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-pharaoh-gold focus:outline-none focus:ring-pharaoh-gold sm:text-sm">
                                                                     </div>
 
                                                                     <div>
                                                                         <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirmation mot de passe</label>
-                                                                        <input type="password" id="password_confirmation" name="password_confirmation" class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-3hcig-blue focus:outline-none focus:ring-3hcig-blue sm:text-sm">
+                                                                        <input type="password" id="password_confirmation" name="password_confirmation" class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-pharaoh-gold focus:outline-none focus:ring-pharaoh-gold sm:text-sm">
                                                                     </div>
                                                                 </div>
                                                             </form>
@@ -155,15 +155,15 @@
                                                 </div>
 
                                                 <!-- Messages de feedback (cachés par défaut) -->
-                                                <div id="profile-feedback" class="hidden p-4 m-4 rounded-md bg-3hcig-green-light/20 text-3hcig-green-dark">
+                                                <div id="profile-feedback" class="hidden p-4 m-4 rounded-md bg-pharaoh-green-light/20 text-pharaoh-green-dark">
                                                     <div class="flex">
                                                         <div class="flex-shrink-0">
-                                                            <svg class="w-5 h-5 text-3hcig-green" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                            <svg class="w-5 h-5 text-pharaoh-green" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                                             </svg>
                                                         </div>
                                                         <div class="ml-3">
-                                                            <p class="text-sm font-medium text-3hcig-green-dark" id="feedback-message"></p>
+                                                            <p class="text-sm font-medium text-pharaoh-green-dark" id="feedback-message"></p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -276,7 +276,7 @@
                                             } else {
                                                 // Afficher les erreurs
                                                 const feedbackDiv = document.getElementById('profile-feedback');
-                                                feedbackDiv.classList.remove('bg-3hcig-green-light/20', 'text-3hcig-green-dark');
+                                                feedbackDiv.classList.remove('bg-pharaoh-green-light/20', 'text-pharaoh-green-dark');
                                                 feedbackDiv.classList.add('bg-red-50', 'text-red-800');
 
                                                 let errorMessage = 'Erreur lors de la mise à jour:';
@@ -299,7 +299,7 @@
 
                                             // Afficher un message d'erreur générique
                                             const feedbackDiv = document.getElementById('profile-feedback');
-                                            feedbackDiv.classList.remove('bg-3hcig-green-light/20', 'text-3hcig-green-dark');
+                                            feedbackDiv.classList.remove('bg-pharaoh-green-light/20', 'text-pharaoh-green-dark');
                                             feedbackDiv.classList.add('bg-red-50', 'text-red-800');
                                             document.getElementById('feedback-message').textContent = "Une erreur est survenue lors de la mise à jour du profil.";
                                             feedbackDiv.classList.remove('hidden');
@@ -384,11 +384,11 @@
                         </div>
                     </div>
                     <div class="px-2 mt-3 space-y-1">
-                        <a href="#" class="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:bg-3hcig-blue hover:text-white">Votre Profil</a>
+                        <a href="#" class="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:bg-pharaoh-gold hover:text-white">Votre Profil</a>
                         @if(Auth::check() && Auth::user()->role === 'Superviseur')
-                            <a href="{{ route('role.switch') }}" class="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:bg-3hcig-blue hover:text-white">Changer de rôle</a>
+                            <a href="{{ route('role.switch') }}" class="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:bg-pharaoh-gold hover:text-white">Changer de rôle</a>
                         @endif
-                        <a href="{{ route('logouts') }}" class="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:bg-3hcig-blue hover:text-white">Déconnexion</a>
+                        <a href="{{ route('logouts') }}" class="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:bg-pharaoh-gold hover:text-white">Déconnexion</a>
                     </div>
                 </div>
             </div>
@@ -408,7 +408,7 @@
         <main>
             <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 @if (session('success'))
-                <div class="p-4 mb-6 rounded-xl bg-3hcig-green-light/20 text-3hcig-green-dark">
+                <div class="p-4 mb-6 rounded-xl bg-pharaoh-green-light/20 text-pharaoh-green-dark">
                     {{ session('success') }}
                 </div>
                 @endif

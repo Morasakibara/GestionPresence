@@ -3,8 +3,8 @@
 @section('title', 'Journal d\'audit — Le Pharaon')
 
 @section('navigation')
-<a href="{{ route('admin.dashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-3hcig-blue hover:text-white">Tableau de bord</a>
-<a href="{{ route('admin.auditLogs') }}" class="rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white" aria-current="page">Audit</a>
+<a href="{{ route('admin.dashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
+<a href="{{ route('admin.auditLogs') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Audit</a>
 @endsection
 
 @section('content')

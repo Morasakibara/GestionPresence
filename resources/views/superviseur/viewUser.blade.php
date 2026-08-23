@@ -11,7 +11,7 @@
 
     <div class="overflow-hidden rounded-lg bg-white shadow-sm">
         <!-- En-tête avec avatar et infos principales -->
-        <div class="bg-3hcig-blue-dark px-6 py-4 text-white">
+        <div class="bg-pharaoh-bronze-dark px-6 py-4 text-white">
             <div class="flex flex-col items-center space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0">
                 <div class="flex-shrink-0">
                     <img src="{{ asset('storage/avatars/'.($utilisateur->avatar ?: 'default.png')) }}"
@@ -20,7 +20,7 @@
                 </div>
                 <div class="text-center sm:text-left">
                     <h2 class="text-2xl font-bold">{{ $utilisateur->nom }}</h2>
-                    <p class="text-3hcig-blue-light">{{ $utilisateur->email }}</p>
+                    <p class="text-pharaoh-gold-light">{{ $utilisateur->email }}</p>
                     <div class="mt-2">
                         @if(strtolower($utilisateur->role) == 'superviseur')
                             <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
@@ -48,7 +48,7 @@
                 <div class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow-sm ring-1 ring-gray-200">
                         <dt class="truncate text-sm font-medium text-gray-500">Total des présences</dt>
-                        <dd class="mt-1 text-3xl font-semibold text-3hcig-blue">{{ $totalPresences }}</dd>
+                        <dd class="mt-1 text-3xl font-semibold text-pharaoh-gold">{{ $totalPresences }}</dd>
                     </div>
                     <!-- Ajoutez d'autres statistiques ici si nécessaire -->
                 </div>
@@ -94,7 +94,7 @@
                                     @if($lastPresence->latitude_arrivee && $lastPresence->longitude_arrivee)
                                         <a href="https://www.google.com/maps?q={{ $lastPresence->latitude_arrivee }},{{ $lastPresence->longitude_arrivee }}"
                                         target="_blank"
-                                        class="inline-flex items-center text-sm text-3hcig-blue hover:underline mt-2">
+                                        class="inline-flex items-center text-sm text-pharaoh-gold hover:underline mt-2">
                                             <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -121,7 +121,7 @@
                                     @if($lastPresence->latitude_depart && $lastPresence->longitude_depart)
                                         <a href="https://www.google.com/maps?q={{ $lastPresence->latitude_depart }},{{ $lastPresence->longitude_depart }}"
                                         target="_blank"
-                                        class="inline-flex items-center text-sm text-3hcig-blue hover:underline mt-2">
+                                        class="inline-flex items-center text-sm text-pharaoh-gold hover:underline mt-2">
                                             <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -177,8 +177,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 datasets: [{
                     label: 'Présences',
                     data: presenceData.data,
-                    borderColor: '#1976D2', // 3hcig-blue
-                    backgroundColor: 'rgba(25, 118, 210, 0.1)', // 3hcig-blue with opacity
+                    borderColor: '#1976D2', // pharaoh-gold
+                    backgroundColor: 'rgba(25, 118, 210, 0.1)', // pharaoh-gold with opacity
                     borderWidth: 2,
                     pointBackgroundColor: '#1976D2',
                     pointRadius: 4,

@@ -10,7 +10,7 @@
     </div>
 
     @if(session('success'))
-    <div class="mb-6 rounded-md bg-3hcig-green-light/20 p-4 text-3hcig-green-dark">
+    <div class="mb-6 rounded-md bg-pharaoh-green-light/20 p-4 text-pharaoh-green-dark">
         {{ session('success') }}
     </div>
     @endif
@@ -28,7 +28,7 @@
                 <label for="email" class="block text-sm font-medium text-gray-700">Email de l'employé ou du superviseur</label>
                 <div class="mt-1">
                     <input type="email" id="email" name="email" required
-                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-3hcig-blue focus:ring-3hcig-blue sm:text-sm">
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-pharaoh-gold focus:ring-pharaoh-gold sm:text-sm">
                 </div>
             </div>
 

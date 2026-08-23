@@ -42,7 +42,7 @@
                 <tfoot class="bg-gray-50">
                     <tr>
                         <td colspan="3" class="px-6 py-3 text-right text-sm font-semibold text-gray-700">Temps de travail total :</td>
-                        <td class="whitespace-nowrap px-6 py-3 text-sm font-bold text-3hcig-blue">{{ $totalDuree }}</td>
+                        <td class="whitespace-nowrap px-6 py-3 text-sm font-bold text-pharaoh-gold">{{ $totalDuree }}</td>
                         <td></td>
                     </tr>
                 </tfoot>
@@ -52,7 +52,7 @@
     </div>
 
     <div class="mt-6">
-        <a href="{{ route('user.dashboard') }}" class="inline-flex items-center text-sm font-medium text-3hcig-blue hover:text-3hcig-blue-light">
+        <a href="{{ route('user.dashboard') }}" class="inline-flex items-center text-sm font-medium text-pharaoh-gold hover:text-pharaoh-gold-light">
             ← Retour au tableau de bord
         </a>
     </div>

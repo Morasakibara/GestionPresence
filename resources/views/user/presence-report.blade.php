@@ -19,7 +19,7 @@
             <!-- Légende du graphique -->
             <div class="mb-6 flex justify-center space-x-6">
                 <div class="flex items-center">
-                    <span class="mr-2 inline-block h-4 w-4 rounded-full bg-3hcig-blue"></span>
+                    <span class="mr-2 inline-block h-4 w-4 rounded-full bg-pharaoh-gold"></span>
                     <span class="text-sm text-gray-700">Présences</span>
                 </div>
                 <div class="flex items-center">
@@ -30,9 +30,9 @@
 
             <!-- Informations de présence -->
             <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div class="rounded-lg bg-3hcig-blue-light/10 p-4 text-center">
+                <div class="rounded-lg bg-pharaoh-gold-light/10 p-4 text-center">
                     <p class="text-sm text-gray-600">Total de présences</p>
-                    <p class="mt-1 text-3xl font-bold text-3hcig-blue">{{ $totalPresences }}</p>
+                    <p class="mt-1 text-3xl font-bold text-pharaoh-gold">{{ $totalPresences }}</p>
                     <p class="mt-1 text-xs text-gray-500">jours ce mois-ci</p>
                 </div>
                 <div class="rounded-lg bg-red-100 p-4 text-center">
@@ -51,10 +51,10 @@
             <div class="mt-8">
                 <div class="mb-2 flex items-center justify-between">
                     <span class="text-sm font-medium text-gray-700">Taux de présence</span>
-                    <span class="text-sm font-medium text-3hcig-blue">{{ $presenceRate }}%</span>
+                    <span class="text-sm font-medium text-pharaoh-gold">{{ $presenceRate }}%</span>
                 </div>
                 <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                    <div class="h-2 rounded-full bg-3hcig-blue" style="width: {{ $presenceRate }}%"></div>
+                    <div class="h-2 rounded-full bg-pharaoh-gold" style="width: {{ $presenceRate }}%"></div>
                 </div>
             </div>
             <td class="whitespace-nowrap px-6 py-4">

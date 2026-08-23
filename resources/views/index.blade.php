@@ -97,7 +97,7 @@
                 </button>
 
                 <div class="mb-6 text-center">
-                    <h3 class="text-2xl font-bold text-3hcig-blue-dark">Accès restreint</h3>
+                    <h3 class="text-2xl font-bold text-pharaoh-bronze-dark">Accès restreint</h3>
                     <p class="mt-2 text-gray-600">Veuillez saisir le code d'accès pour continuer</p>
                 </div>
 
@@ -109,7 +109,7 @@
                             id="access_code"
                             type="password"
                             name="access_code"
-                            class="block w-full rounded-md border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors focus:border-3hcig-green focus:outline-none focus:ring-1 focus:ring-3hcig-green"
+                            class="block w-full rounded-md border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors focus:border-pharaoh-green focus:outline-none focus:ring-1 focus:ring-pharaoh-green"
                             placeholder="Entrez votre code d'accès"
                             required
                         >
@@ -123,7 +123,7 @@
                         </button>
                         <button
                             type="submit"
-                            class="rounded-lg bg-3hcig-green px-6 py-3 font-bold text-white transition-colors duration-300 hover:bg-3hcig-green-light">
+                            class="rounded-lg bg-pharaoh-green px-6 py-3 font-bold text-white transition-colors duration-300 hover:bg-pharaoh-green-light">
                             Valider
                         </button>
                     </div>

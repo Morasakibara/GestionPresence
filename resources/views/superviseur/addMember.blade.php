@@ -10,7 +10,7 @@
     </div>
 
     @if(session('success'))
-    <div class="mb-6 rounded-md bg-3hcig-green-light/20 p-4 text-3hcig-green-dark">
+    <div class="mb-6 rounded-md bg-pharaoh-green-light/20 p-4 text-pharaoh-green-dark">
         {{ session('success') }}
     </div>
     @endif
@@ -32,12 +32,12 @@
                             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <input type="text" name="search" id="search" class="block w-full rounded-md border-gray-300 pl-10 py-3 shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20 sm:text-sm" placeholder="Rechercher par nom" value="{{ $search ?? '' }}">
+                    <input type="text" name="search" id="search" class="block w-full rounded-md border-gray-300 pl-10 py-3 shadow-sm focus:border-pharaoh-gold focus:ring focus:ring-pharaoh-gold focus:ring-opacity-20 sm:text-sm" placeholder="Rechercher par nom" value="{{ $search ?? '' }}">
                 </div>
             </div>
 
             <div class="flex justify-end">
-                <button type="submit" class="inline-flex items-center rounded-md bg-3hcig-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                <button type="submit" class="inline-flex items-center rounded-md bg-pharaoh-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-pharaoh-gold-light focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2">
                     Rechercher
                 </button>
             </div>
@@ -93,7 +93,7 @@
                             @else
                                 <form action="{{ route('superviseur.addMemberToTeam', $employer->id) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="inline-flex items-center rounded-md bg-3hcig-blue px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                                    <button type="submit" class="inline-flex items-center rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-pharaoh-gold-light focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2">
                                         <svg class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                         </svg>

@@ -64,7 +64,7 @@
           <label for="email" class="block text-sm font-medium leading-6 text-gray-700">Adresse email</label>
           <div class="mt-2">
             <input id="email" type="email" name="email" autocomplete="email" required
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-3hcig-blue focus:outline-none focus:ring-1 focus:ring-3hcig-blue sm:text-sm sm:leading-6 transition-colors 
+                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors 
                   @error('email') border-red-600 bg-red-600/5 @enderror"
                   value="{{ old('email') }}">
           </div>
@@ -79,7 +79,7 @@
           </div>
           <div class="mt-2 relative">
             <input id="password" type="password" name="password" autocomplete="current-password" required
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-3hcig-blue focus:outline-none focus:ring-1 focus:ring-3hcig-blue sm:text-sm sm:leading-6 transition-colors
+                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors
                   @error('password') border-red-600 bg-red-600/5 @enderror">
             <button type="button" id="togglePassword" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-transparent border-none cursor-pointer p-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 opacity-50 hover:opacity-100 transition-opacity duration-300"

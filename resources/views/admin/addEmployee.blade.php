@@ -59,12 +59,12 @@
                 <div class="flex mt-2 space-x-6">
                     <div class="flex items-center">
                         <input type="checkbox" id="role_employer" name="role[]" value="Employer" onclick="toggleEquipeField()"
-                               class="w-4 h-4 border-gray-300 rounded text-3hcig-blue focus:ring-3hcig-blue">
+                               class="w-4 h-4 border-gray-300 rounded text-pharaoh-gold focus:ring-pharaoh-gold">
                         <label for="role_employer" class="ml-2 text-sm text-gray-700">Employé</label>
                     </div>
                     <div class="flex items-center">
                         <input type="checkbox" id="role_superviseur" name="role[]" value="Superviseur" onclick="toggleEquipeField()"
-                               class="w-4 h-4 border-gray-300 rounded text-3hcig-blue focus:ring-3hcig-blue">
+                               class="w-4 h-4 border-gray-300 rounded text-pharaoh-gold focus:ring-pharaoh-gold">
                         <label for="role_superviseur" class="ml-2 text-sm text-gray-700">Superviseur</label>
                     </div>
                 </div>

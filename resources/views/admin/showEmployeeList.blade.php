@@ -40,20 +40,20 @@
                             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <input type="text" name="search" id="search" class="block w-full rounded-md border-gray-300 pl-10 py-3 shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20 sm:text-sm" placeholder="Rechercher par nom, email, poste..." value="{{ old('search', $search) }}">
+                    <input type="text" name="search" id="search" class="block w-full rounded-md border-gray-300 pl-10 py-3 shadow-sm focus:border-pharaoh-gold focus:ring focus:ring-pharaoh-gold focus:ring-opacity-20 sm:text-sm" placeholder="Rechercher par nom, email, poste..." value="{{ old('search', $search) }}">
                 </div>
             </div>
 
             <div class="flex flex-wrap gap-4">
                 <label class="inline-flex items-center">
-                    <input type="checkbox" class="rounded border-gray-300 text-3hcig-blue shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20" name="roles[]" value="Employer" {{ in_array('Employer', $roles) ? 'checked' : '' }}>
+                    <input type="checkbox" class="rounded border-gray-300 text-pharaoh-gold shadow-sm focus:border-pharaoh-gold focus:ring focus:ring-pharaoh-gold focus:ring-opacity-20" name="roles[]" value="Employer" {{ in_array('Employer', $roles) ? 'checked' : '' }}>
                     <span class="ml-2 text-sm text-gray-700">Employés</span>
                 </label>
                 <label class="inline-flex items-center">
-                    <input type="checkbox" class="rounded border-gray-300 text-3hcig-blue shadow-sm focus:border-3hcig-blue focus:ring focus:ring-3hcig-blue focus:ring-opacity-20" name="roles[]" value="Superviseur" {{ in_array('Superviseur', $roles) ? 'checked' : '' }}>
+                    <input type="checkbox" class="rounded border-gray-300 text-pharaoh-gold shadow-sm focus:border-pharaoh-gold focus:ring focus:ring-pharaoh-gold focus:ring-opacity-20" name="roles[]" value="Superviseur" {{ in_array('Superviseur', $roles) ? 'checked' : '' }}>
                     <span class="ml-2 text-sm text-gray-700">Superviseurs</span>
                 </label>
-                <button type="submit" class="ml-auto rounded-md bg-3hcig-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-3hcig-blue-light focus:outline-none focus:ring-2 focus:ring-3hcig-blue focus:ring-offset-2">
+                <button type="submit" class="ml-auto rounded-md bg-pharaoh-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-pharaoh-gold-light focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2">
                     Filtrer
                 </button>
             </div>
