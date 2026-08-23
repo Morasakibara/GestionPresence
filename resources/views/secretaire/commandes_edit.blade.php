@@ -64,7 +64,7 @@
             <div class="form-group">
                 <label for="type" class="input-label">Type de commande</label>
                 <select id="type" name="type" required class="select-field">
-                    @foreach($typesCaisse as $key => $label)
+                    @foreach($typesPhoto as $key => $label)
                         <option value="{{ $key }}" {{ old('type', $commande->type) === $key ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
