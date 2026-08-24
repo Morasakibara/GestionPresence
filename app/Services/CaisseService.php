@@ -41,7 +41,7 @@ class CaisseService
     }
 
     /**
-     * Commandes impayées (partielles + à payer) avec détail.
+     * Commandes impayées (partielles + à payer) — SANS les retraits.
      */
     public function commandesImpayees(): Collection
     {
@@ -52,13 +52,44 @@ class CaisseService
     }
 
     /**
-     * Total restant à encaisser.
+     * Total restant à encaisser (uniquement commandes, pas les retraits).
      */
     public function resteAEncaisser(): float
     {
         return Commande::where('superviseur_id', $this->superviseurId)
             ->where('statut_paiement', '!=', 'paye')
             ->sum(\Illuminate\Support\Facades\DB::raw('montant - montant_paye'));
+    }
+
+    /**
+     * Détail par catégorie des commandes (toutes périodes).
+     */
+    public function commandesParCategorie(): array
+    {
+        return Commande::where('superviseur_id', $this->superviseurId)
+            ->get()
+            ->groupBy('type')
+            ->map(fn($c) => [
+                'total' => $c->sum('montant'),
+                'paye' => $c->sum('montant_paye'),
+                'count' => $c->count(),
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Détail par catégorie des services (toutes périodes).
+     */
+    public function servicesParCategorie(): array
+    {
+        return ServiceFourni::where('superviseur_id', $this->superviseurId)
+            ->get()
+            ->groupBy('type')
+            ->map(fn($s) => [
+                'total' => $s->sum('montant'),
+                'count' => $s->count(),
+            ])
+            ->toArray();
     }
 
     /**
@@ -75,7 +106,7 @@ class CaisseService
             $labels[] = now()->subDays($i)->format('d/m');
 
             $entreeCmd = Commande::where('superviseur_id', $this->superviseurId)
-                ->whereDate('date', $jour)->sum($this->typeModule === 'directrice' ? 'montant' : 'montant_paye');
+                ->whereDate('date', $jour)->sum('montant_paye');
             $entreeSvc = ServiceFourni::where('superviseur_id', $this->superviseurId)
                 ->whereDate('date', $jour)->sum('montant');
             $sortie = Retrait::where('superviseur_id', $this->superviseurId)
@@ -142,6 +173,8 @@ class CaisseService
         $impayees = $this->commandesImpayees();
         $reste = $this->resteAEncaisser();
         $historique = $this->historiqueEncaissements();
+        $cmdCateg = $this->commandesParCategorie();
+        $svcCateg = $this->servicesParCategorie();
 
         return array_merge($solde, $graphique, $repartition, $transactions, [
             'commandesImpayees' => $impayees,
@@ -155,6 +188,8 @@ class CaisseService
             'labels7j' => $graphique['labels'],
             'dataEntrees7j' => $graphique['entrees'],
             'dataSorties7j' => $graphique['sorties'],
+            'commandesParCategorie' => $cmdCateg,
+            'servicesParCategorie' => $svcCateg,
         ]);
     }
 }

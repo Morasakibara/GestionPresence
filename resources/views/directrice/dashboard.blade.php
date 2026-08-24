@@ -35,32 +35,7 @@
     <p class="text-sm text-gray-500">Vue globale cumulative (toutes périodes confondues)</p>
 </div>
 
-<!-- Cartes résumé cumulatif -->
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
-    <div class="stat-card">
-        <div class="stat-card-icon bg-green-50 text-green-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        </div>
-        <div class="stat-card-value text-green-600">{{ number_format($totalCommandes, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label">Total Commandes</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-icon bg-blue-50 text-blue-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-        </div>
-        <div class="stat-card-value text-blue-600">{{ number_format($totalServices, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label">Total Services</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-icon bg-red-50 text-red-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-        </div>
-        <div class="stat-card-value text-red-600">{{ number_format($totalRetraits, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label">Total Retraits</div>
-    </div>
-</div>
-
-<!-- Caisse + Impayés -->
+<!-- ═══ LIGNE 1 : Solde + Impayés + Reste à encaisser ═══ -->
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
     <div class="stat-card border-pharaoh-gold/30 bg-gradient-to-br from-[#FBF3E6] to-white">
         <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">
@@ -87,6 +62,82 @@
         <div class="stat-card-label font-semibold">Reste à encaisser (cliquer) — {{ $commandesImpayees->count() }} commande(s)</div>
     </button>
     @endif
+</div>
+
+<!-- ═══ LIGNE 2 : Total Commandes + Services + Retraits ═══ -->
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
+    {{-- Total Commandes avec détail par catégorie --}}
+    <div class="pharaoh-card p-5">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="stat-card-icon bg-green-50 text-green-600">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <div>
+                <div class="text-lg font-bold text-green-600">{{ number_format($totalCommandes, 0, ',', '.') }} FCFA</div>
+                <div class="text-xs text-gray-500">Total Commandes</div>
+            </div>
+        </div>
+        @if(!empty($commandesParCategorie))
+        <div class="border-t pt-3 space-y-1.5">
+            @foreach($commandesParCategorie as $type => $data)
+            <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">{{ $typesCaisse[$type] ?? $type }}</span>
+                <span class="font-medium text-gray-800">{{ number_format($data['total'], 0, ',', '.') }} FCFA <span class="text-gray-400">({{ $data['count'] }})</span></span>
+            </div>
+            @endforeach
+        </div>
+        @endif
+    </div>
+
+    {{-- Total Services avec détail par catégorie --}}
+    <div class="pharaoh-card p-5">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="stat-card-icon bg-blue-50 text-blue-600">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            </div>
+            <div>
+                <div class="text-lg font-bold text-blue-600">{{ number_format($totalServices, 0, ',', '.') }} FCFA</div>
+                <div class="text-xs text-gray-500">Total Services</div>
+            </div>
+        </div>
+        @if(!empty($servicesParCategorie))
+        <div class="border-t pt-3 space-y-1.5">
+            @foreach($servicesParCategorie as $type => $data)
+            <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">{{ $typesCaisse[$type] ?? $type }}</span>
+                <span class="font-medium text-gray-800">{{ number_format($data['total'], 0, ',', '.') }} FCFA <span class="text-gray-400">({{ $data['count'] }})</span></span>
+            </div>
+            @endforeach
+        </div>
+        @endif
+    </div>
+
+    {{-- Retraits — séparé --}}
+    <div class="pharaoh-card p-5">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="stat-card-icon bg-red-50 text-red-600">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            </div>
+            <div>
+                <div class="text-lg font-bold text-red-600">{{ number_format($totalRetraits, 0, ',', '.') }} FCFA</div>
+                <div class="text-xs text-gray-500">Total Retraits</div>
+            </div>
+        </div>
+        @if(isset($derniersRetraits) && count($derniersRetraits) > 0)
+        <div class="border-t pt-3 space-y-1.5">
+            @foreach($derniersRetraits->take(5) as $rt)
+            <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600 truncate max-w-[140px]" title="{{ $rt->motif }}">{{ $rt->motif }}</span>
+                <span class="font-medium text-red-600">-{{ number_format($rt->montant, 0, ',', '.') }}</span>
+            </div>
+            @endforeach
+        </div>
+        @else
+        <div class="border-t pt-3">
+            <p class="text-xs text-gray-400">Aucun retrait enregistré</p>
+        </div>
+        @endif
+    </div>
 </div>
 
 <!-- Graphique 7 derniers jours -->
@@ -152,9 +203,8 @@
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
         <div class="flex items-center justify-between border-b px-6 py-4 bg-orange-50">
             <h3 class="text-lg font-bold text-orange-800 flex items-center gap-2">
-                <svg class="h-5 w-5 text-orange-700 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg class="h-5 w-5 text-orange-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>Commandes en attente — {{ $commandesImpayees->count() }}</span>
             </h3>
@@ -180,7 +230,7 @@
                 <form action="{{ route('directrice.encaisserReste') }}" method="POST" class="flex items-center gap-2" onsubmit="return confirm('Confirmer l\\'encaissement ?')">
                     @csrf
                     <input type="hidden" name="commande_id" value="{{ $cmd->id }}">
-                    <input type="number" name="montant_verse" min="1" max="{{ $cmd->montant - $cmd->montant_paye }}" placeholder="Montant" required
+                    <input type="number" name="montant_verse" min="0.01" step="any" max="{{ $cmd->montant - $cmd->montant_paye }}" value="{{ $cmd->montant - $cmd->montant_paye }}" required
                            class="w-36 rounded-lg border-gray-300 text-sm focus:border-pharaoh-gold focus:ring-pharaoh-gold">
                     <span class="text-xs text-gray-400">FCFA</span>
                     <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition inline-flex items-center gap-1">

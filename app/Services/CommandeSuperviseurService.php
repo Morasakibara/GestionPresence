@@ -94,18 +94,19 @@ class CommandeSuperviseurService
             'statut_paiement' => $newStatut,
         ]);
 
-        // Notifier l'admin
-        $admin = \App\Models\Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
-        if ($admin) {
-            $msg = $newStatut === 'paye'
-                ? "Commande #{$commande->id} entièrement payée."
-                : "Reste de {$request->montant_verse} FCFA encaissé sur commande #{$commande->id}.";
-            $admin->notify(new \App\Notifications\PaiementCommandeNotification($commande, (float) $request->montant_verse, $newStatut));
+        // Notifier l'admin (try-catch pour ne pas bloquer si l'envoi-mail échoue)
+        try {
+            $admin = \App\Models\Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+            if ($admin) {
+                $admin->notify(new \App\Notifications\PaiementCommandeNotification($commande, (float) $request->montant_verse, $newStatut));
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification paiement échouée: ' . $e->getMessage());
         }
 
         $msg = $newStatut === 'paye'
             ? "Commande #{$commande->id} entièrement payée."
-            : "Reste de {$request->montant_verse} FCFA encaissé sur commande #{$commande->id}.";
+            : "Reste de " . number_format($request->montant_verse, 0, ',', '.') . " FCFA encaissé sur commande #{$commande->id}.";
 
         return ['success' => true, 'message' => $msg];
     }
