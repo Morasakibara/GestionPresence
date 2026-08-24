@@ -70,7 +70,7 @@ class SuperviseurController extends Controller
 
     public function showFollowPresence()
     {
-        $this->authorize('viewAny', \App\Models\Presence::class);
+        $this->authorize('viewAny', Presence::class);
         $superviseur = Auth::user();
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
 

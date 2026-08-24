@@ -68,7 +68,11 @@ Route::middleware(['isAdmin', 'role:Administrateur'])->prefix('admin')->name('ad
     Route::get('/delete-employee', [AdminEmployeeController::class, 'showDeleteEmployeeForm'])->name('deleteEmployee');
     Route::get('/generate-report', [AdminReportController::class, 'showGenerateReportForm'])->name('generateReport');
     Route::post('/generate-report', [AdminReportController::class, 'generateReport']);
-    Route::post('/report', [AdminReportController::class, 'exportReport'])->name('exportReport');
+    // Rediriger l'ancien exportReport vers generateReport avec format PDF
+    Route::post('/report', function (\Illuminate\Http\Request $request) {
+        $request->merge(['export_format' => 'pdf']);
+        return app(AdminReportController::class)->generateReport($request);
+    })->name('exportReport');
     Route::post('/evaluations', [AdminReportController::class, 'storeEvaluation'])->name('storeEvaluation');
     Route::get('/evaluations/export', [AdminReportController::class, 'exportEvaluationsCsv'])->name('evaluations.export');
     Route::get('/evaluations/evolution/export', [AdminReportController::class, 'exportEvolutionEvaluationsCsv'])->name('evaluations.evolution.export');

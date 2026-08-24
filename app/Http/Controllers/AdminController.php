@@ -2,6 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
+use App\Models\Commande;
+use App\Models\Employer;
+use App\Models\Presence;
+use App\Models\Retrait;
+use App\Models\ServiceFourni;
+use App\Models\StockPapier;
+use App\Models\StockTshirt;
 use App\Models\Superviseur;
 use App\Models\Utilisateur;
 use Illuminate\Http\Request;
@@ -22,28 +30,28 @@ class AdminController extends Controller
         $totalSupervisors = Utilisateur::where('role', 'Superviseur')->count();
 
         $today = now()->toDateString();
-        $presentToday = \App\Models\Presence::whereDate('date', $today)
+        $presentToday = Presence::whereDate('date', $today)
             ->where('status', 'présent')
             ->count();
 
-        $absentToday = \App\Models\Presence::whereDate('date', $today)
+        $absentToday = Presence::whereDate('date', $today)
             ->where('status', 'Absent')
             ->count();
 
         $currentMonth = now()->month;
         $currentYear = now()->year;
 
-        $monthlyPresences = \App\Models\Presence::whereMonth('date', $currentMonth)
+        $monthlyPresences = Presence::whereMonth('date', $currentMonth)
             ->whereYear('date', $currentYear)
             ->where('status', 'présent')
             ->count();
 
-        $monthlyAbsences = \App\Models\Presence::whereMonth('date', $currentMonth)
+        $monthlyAbsences = Presence::whereMonth('date', $currentMonth)
             ->whereYear('date', $currentYear)
             ->where('status', 'Absent')
             ->count();
 
-        $monthlyLates = \App\Models\Presence::whereMonth('date', $currentMonth)
+        $monthlyLates = Presence::whereMonth('date', $currentMonth)
             ->whereYear('date', $currentYear)
             ->whereRaw('(HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0))')
             ->count();
@@ -53,7 +61,7 @@ class AdminController extends Controller
 
         $employerIdsFiltre = null;
         if ($equipeSelectionnee) {
-            $employerIdsFiltre = \App\Models\Employer::where('equipe', $equipeSelectionnee)->pluck('id')->toArray();
+            $employerIdsFiltre = Employer::where('equipe', $equipeSelectionnee)->pluck('id')->toArray();
         }
         $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIdsFiltre, 6);
         $statsEvolution = \App\Services\EvaluationService::statsEvolution($evolutionEvaluations);
@@ -70,9 +78,9 @@ class AdminController extends Controller
                 foreach (['directrice', 'secretaire'] as $type) {
                     $sup = Superviseur::where('type_superviseur', $type)->first();
                     if (!$sup) continue;
-                    $e += (float) \App\Models\Commande::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant')
-                        + (float) \App\Models\ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
-                    $s += (float) \App\Models\Retrait::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
+                    $e += (float) Commande::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant')
+                        + (float) ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
+                    $s += (float) Retrait::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
                 }
                 $entrees[] = $e;
                 $sorties[] = $s;
@@ -80,14 +88,13 @@ class AdminController extends Controller
             return ['labels' => $labels, 'entrees' => $entrees, 'sorties' => $sorties];
         });
 
-        $today = now()->toDateString();
         $caisses = [];
         foreach (['directrice' => 'directrice', 'secretaire' => 'secretaire'] as $label => $type) {
             $sup = Superviseur::where('type_superviseur', $type)->first();
             if (!$sup) continue;
-            $entrees = \App\Models\Commande::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant')
-                + \App\Models\ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
-            $sorties = \App\Models\Retrait::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
+            $entrees = Commande::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant')
+                + ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
+            $sorties = Retrait::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
             $caisses[$label] = [
                 'nom' => Utilisateur::find($sup->id)->nom ?? $label,
                 'entrees' => $entrees,
@@ -101,8 +108,8 @@ class AdminController extends Controller
         $totalStockTshirts = 0;
         $alertesStock = 0;
         if ($gestionnaireStock) {
-            $stockTshirts = \App\Models\StockTshirt::where('superviseur_id', $gestionnaireStock->id)->get();
-            $stockPapiers = \App\Models\StockPapier::where('superviseur_id', $gestionnaireStock->id)->get();
+            $stockTshirts = StockTshirt::where('superviseur_id', $gestionnaireStock->id)->get();
+            $stockPapiers = StockPapier::where('superviseur_id', $gestionnaireStock->id)->get();
             $totalStockTshirts = $stockTshirts->sum('quantite');
             $alertesStock = $stockTshirts->filter(fn($t) => $t->quantite <= $t->seuil_alerte)->count()
                 + $stockPapiers->filter(fn($p) => $p->metres_restants <= $p->seuil_alerte)->count();
@@ -152,8 +159,8 @@ class AdminController extends Controller
 
         // ── Requêtes totales aujourd'hui (table audit_logs) ──
         try {
-            $totalRequetes = \App\Models\AuditLog::whereDate('created_at', $today)->count();
-            $requeteParModule = \App\Models\AuditLog::whereDate('created_at', $today)
+            $totalRequetes = AuditLog::whereDate('created_at', $today)->count();
+            $requeteParModule = AuditLog::whereDate('created_at', $today)
                 ->select('module', DB::raw('count(*) as total'))
                 ->groupBy('module')
                 ->orderByDesc('total')
@@ -174,7 +181,7 @@ class AdminController extends Controller
 
         // ── Sessions actives (utilisateurs connectés aujourd'hui) ──
         try {
-            $usersToday = \App\Models\AuditLog::whereDate('created_at', $today)
+            $usersToday = AuditLog::whereDate('created_at', $today)
                 ->where('action', 'like', '%login%')
                 ->distinct('utilisateur_id')
                 ->count('utilisateur_id');

@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employer;
 use App\Models\Evaluation;
 use App\Models\Presence;
+use App\Models\Rapport;
 use App\Models\Utilisateur;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -130,7 +132,7 @@ class AdminReportController extends Controller
         $pdfPath = 'rapports/' . $filename;
         Storage::disk('public')->put($pdfPath, $pdf->output());
 
-        $rapport = new \App\Models\Rapport();
+        $rapport = new Rapport();
         $rapport->Adm_id = $admin->id;
         $rapport->periode = now()->format('Y-m-d H:i:s');
         $rapport->contenu = $pdfPath;
@@ -149,62 +151,6 @@ class AdminReportController extends Controller
         $rapport->save();
 
         return $pdf->download($filename);
-    }
-
-    public function exportReport(Request $request)
-    {
-        $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
-
-        $startDate = $request->start_date;
-        $endDate = $request->end_date;
-
-        $presences = DB::table('presence')
-            ->join('employer', 'presence.employerID', '=', 'employer.id')
-            ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
-            ->whereBetween('presence.date', [$startDate, $endDate])
-            ->where('presence.status', 'présent')
-            ->select('utilisateur.nom as employer_nom', 'presence.employerID')
-            ->get();
-
-        $reportData = [];
-        foreach ($presences->groupBy('employer_nom') as $nom => $group) {
-            $employerID = (int) $group->first()->employerID;
-            $rendements = Presence::where('employerID', $employerID)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->whereNotNull('rendement')
-                ->where('rendement', '!=', '')
-                ->orderBy('date')
-                ->pluck('rendement')
-                ->toArray();
-
-            $presencesPeriode = Presence::where('employerID', $employerID)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->get(['heureArrivee', 'heureDepart']);
-            $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
-            $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
-
-            $evaluation = \App\Services\EvaluationService::evaluer($employerID, $startDate, $endDate);
-
-            $reportData[] = (object) [
-                'employer_nom' => $nom,
-                'employerID' => $employerID,
-                'total_presence' => $group->count(),
-                'total_heures' => $totalHeures,
-                'rendements' => $rendements,
-                'evaluation_note' => $evaluation['note'],
-                'evaluation_couleur' => $evaluation['couleur'],
-                'evaluation_commentaire' => $evaluation['commentaire'],
-                'evaluation_manuelle' => $evaluation['manuelle'],
-            ];
-        }
-
-        usort($reportData, fn ($a, $b) => $b->total_presence <=> $a->total_presence);
-        $reportData = collect($reportData);
-
-        return $this->exportToPDF($reportData, $startDate, $endDate);
     }
 
     /**
@@ -291,7 +237,7 @@ class AdminReportController extends Controller
         $employerIds = null;
 
         if ($equipe) {
-            $employerIds = \App\Models\Employer::where('equipe', $equipe)->pluck('id')->toArray();
+            $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
         }
 
         $evolution = \App\Services\EvaluationService::evolutionMensuelle($employerIds, 6);
@@ -399,8 +345,8 @@ class AdminReportController extends Controller
     /**
      * Retourne l'administrateur principal (le plus ancien) pour les notifications.
      */
-    private function primaryAdmin(): ?\App\Models\Utilisateur
+    private function primaryAdmin(): ?Utilisateur
     {
-        return \App\Models\Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+        return Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
     }
 }
