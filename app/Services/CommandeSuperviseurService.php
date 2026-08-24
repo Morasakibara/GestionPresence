@@ -169,14 +169,49 @@ class CommandeSuperviseurService
 
     /**─────────────────── RAPPORT FINANCIER ───────────────────────*/
 
-    public function rapportData(string $dateDebut, string $dateFin): array
+    public function rapportData(string $dateDebut, string $dateFin, array $filters = []): array
     {
-        $commandes = Commande::where('superviseur_id', $this->superviseurId)
-            ->whereBetween('date', [$dateDebut, $dateFin])->get();
-        $services = \App\Models\ServiceFourni::where('superviseur_id', $this->superviseurId)
-            ->whereBetween('date', [$dateDebut, $dateFin])->get();
-        $retraits = Retrait::where('superviseur_id', $this->superviseurId)
-            ->whereBetween('date', [$dateDebut, $dateFin])->get();
+        // ── Commandes avec filtres ──
+        $cmdQuery = Commande::where('superviseur_id', $this->superviseurId)
+            ->whereBetween('date', [$dateDebut, $dateFin]);
+        if (!empty($filters['type'])) {
+            $cmdQuery->where('type', $filters['type']);
+        }
+        if (!empty($filters['statut'])) {
+            $cmdQuery->where('statut_paiement', $filters['statut']);
+        }
+        if (!empty($filters['montant_min'])) {
+            $cmdQuery->where('montant', '>=', $filters['montant_min']);
+        }
+        if (!empty($filters['montant_max'])) {
+            $cmdQuery->where('montant', '<=', $filters['montant_max']);
+        }
+        $commandes = $cmdQuery->get();
+
+        // ── Services avec filtres ──
+        $svcQuery = \App\Models\ServiceFourni::where('superviseur_id', $this->superviseurId)
+            ->whereBetween('date', [$dateDebut, $dateFin]);
+        if (!empty($filters['type'])) {
+            $svcQuery->where('type', $filters['type']);
+        }
+        if (!empty($filters['montant_min'])) {
+            $svcQuery->where('montant', '>=', $filters['montant_min']);
+        }
+        if (!empty($filters['montant_max'])) {
+            $svcQuery->where('montant', '<=', $filters['montant_max']);
+        }
+        $services = $svcQuery->get();
+
+        // ── Retraits (pas de filtre type, juste montant) ──
+        $rtQuery = Retrait::where('superviseur_id', $this->superviseurId)
+            ->whereBetween('date', [$dateDebut, $dateFin]);
+        if (!empty($filters['montant_min'])) {
+            $rtQuery->where('montant', '>=', $filters['montant_min']);
+        }
+        if (!empty($filters['montant_max'])) {
+            $rtQuery->where('montant', '<=', $filters['montant_max']);
+        }
+        $retraits = $rtQuery->get();
 
         $totalCommandes = $commandes->sum('montant');
         $totalServices  = $services->sum('montant');

@@ -16,27 +16,68 @@
 
 @if(session('success'))<div class="alert alert-success"><svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>{{ session('success') }}</span></div>@endif
 
-<!-- Filtres -->
+<!-- Filtres avancés -->
 <div class="form-card mb-6">
     <div class="form-card-header mb-0">
-        <h2 class="form-card-title">Période d'analyse</h2>
+        <h2 class="form-card-title">Filtres d'analyse</h2>
     </div>
-    <form method="GET" action="{{ route('directrice.rapport') }}" class="flex flex-wrap items-end gap-4 mt-4">
-        <div class="form-group flex-1 min-w-[150px]">
-            <label class="input-label">Date début</label>
-            <input type="date" name="date_debut" class="input-field" value="{{ $dateDebut }}">
+    <form method="GET" action="{{ route('directrice.rapport') }}" class="space-y-4 mt-4">
+        <div class="flex flex-wrap items-end gap-4">
+            <div class="form-group flex-1 min-w-[140px]">
+                <label class="input-label">Date début</label>
+                <input type="date" name="date_debut" class="input-field" value="{{ $dateDebut }}">
+            </div>
+            <div class="form-group flex-1 min-w-[140px]">
+                <label class="input-label">Date fin</label>
+                <input type="date" name="date_fin" class="input-field" value="{{ $dateFin }}">
+            </div>
+            <div class="form-group flex-1 min-w-[140px]">
+                <label class="input-label">Catégorie</label>
+                <select name="type" class="select-field">
+                    <option value="">Toutes</option>
+                    @foreach($typesCaisse as $key => $label)
+                        <option value="{{ $key }}" {{ ($filters['type'] ?? '') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="form-group flex-1 min-w-[140px]">
+                <label class="input-label">Statut paiement</label>
+                <select name="statut" class="select-field">
+                    <option value="">Tous</option>
+                    <option value="paye" {{ ($filters['statut'] ?? '') === 'paye' ? 'selected' : '' }}>Payé</option>
+                    <option value="partiel" {{ ($filters['statut'] ?? '') === 'partiel' ? 'selected' : '' }}>Partiel</option>
+                    <option value="a_payer" {{ ($filters['statut'] ?? '') === 'a_payer' ? 'selected' : '' }}>À payer</option>
+                </select>
+            </div>
         </div>
-        <div class="form-group flex-1 min-w-[150px]">
-            <label class="input-label">Date fin</label>
-            <input type="date" name="date_fin" class="input-field" value="{{ $dateFin }}">
+        <div class="flex flex-wrap items-end gap-4">
+            <div class="form-group flex-1 min-w-[140px]">
+                <label class="input-label">Montant min (FCFA)</label>
+                <input type="number" name="montant_min" class="input-field" placeholder="0" value="{{ $filters['montant_min'] ?? '' }}" min="0">
+            </div>
+            <div class="form-group flex-1 min-w-[140px]">
+                <label class="input-label">Montant max (FCFA)</label>
+                <input type="number" name="montant_max" class="input-field" placeholder="∞" value="{{ $filters['montant_max'] ?? '' }}" min="0">
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="btn-primary gap-1">
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                    Filtrer
+                </button>
+                <a href="{{ route('directrice.rapport') }}" class="btn-secondary">Réinitialiser</a>
+            </div>
         </div>
-        <button type="submit" class="btn-primary">🔍 Filtrer</button>
-        <a href="{{ route('directrice.rapport.export', ['date_debut' => $dateDebut, 'date_fin' => $dateFin]) }}" class="btn-secondary">
-            📥 Export CSV
-        </a>
-        <a href="{{ route('directrice.rapport.exportHtml', ['date_debut' => $dateDebut, 'date_fin' => $dateFin]) }}" target="_blank" class="btn-primary">
-            📊 Rapport Complet
-        </a>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('directrice.rapport.export', array_merge(['date_debut' => $dateDebut, 'date_fin' => $dateFin], $filters)) }}" class="btn-secondary text-xs gap-1">
+                📥 CSV
+            </a>
+            <a href="{{ route('directrice.rapport.exportHtml', array_merge(['date_debut' => $dateDebut, 'date_fin' => $dateFin], $filters)) }}" target="_blank" class="btn-primary text-xs gap-1">
+                📊 HTML
+            </a>
+            <a href="{{ route('directrice.rapport.exportPdf', array_merge(['date_debut' => $dateDebut, 'date_fin' => $dateFin], $filters)) }}" class="btn-secondary text-xs gap-1" style="background:#D64545;color:white;border-color:#D64545;">
+                📄 PDF
+            </a>
+        </div>
     </form>
 </div>
 

@@ -267,9 +267,17 @@ abstract class AbstractCaisseController extends Controller
         $dateDebut = $request->input('date_debut', now()->startOfMonth()->toDateString());
         $dateFin   = $request->input('date_fin', now()->toDateString());
 
-        $data = $this->service()->rapportData($dateDebut, $dateFin);
+        $filters = [
+            'type'        => $request->input('type', ''),
+            'statut'      => $request->input('statut', ''),
+            'montant_min' => $request->input('montant_min', ''),
+            'montant_max' => $request->input('montant_max', ''),
+        ];
+
+        $data = $this->service()->rapportData($dateDebut, $dateFin, $filters);
         $data['dateDebut'] = $dateDebut;
         $data['dateFin'] = $dateFin;
+        $data['filters'] = $filters;
         $data[$this->typesViewKey()] = $this->types();
 
         return view("{$this->viewPrefix()}.rapport", $data);
@@ -304,5 +312,25 @@ abstract class AbstractCaisseController extends Controller
             $data['commandes'], $data['services'], $data['retraits'],
             $this->types(), $this->module()
         );
+    }
+
+    /**
+     * Export PDF avec logo Le Pharaon — téléchargeable.
+     */
+    public function exportPdf(Request $request)
+    {
+        $dateDebut = $request->input('date_debut', now()->startOfMonth()->toDateString());
+        $dateFin   = $request->input('date_fin', now()->toDateString());
+
+        $data = $this->service()->rapportCsvData($dateDebut, $dateFin);
+
+        $pdf = \App\Services\RapportCaissePdfService::generate(
+            $dateDebut, $dateFin,
+            $data['commandes'], $data['services'], $data['retraits'],
+            $this->types(), $this->module()
+        );
+
+        $filename = 'rapport_' . $this->module() . '_' . $dateDebut . '_' . $dateFin . '.pdf';
+        return $pdf->download($filename);
     }
 }
