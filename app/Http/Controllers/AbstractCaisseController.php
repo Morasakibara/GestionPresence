@@ -227,7 +227,9 @@ abstract class AbstractCaisseController extends Controller
         $solde = $soldeArr['en_caisse'];
         $totalEntrees = $soldeArr['total_commandes_paye'] + $soldeArr['total_services'];
         $totalSorties = $soldeArr['total_retraits'];
-        return view("{$this->viewPrefix()}.retraits", compact('retraits', 'solde', 'totalEntrees', 'totalSorties'));
+        $retraitStats = $caisse->retraitStats();
+
+        return view("{$this->viewPrefix()}.retraits", array_merge(compact('retraits', 'solde', 'totalEntrees', 'totalSorties'), $retraitStats));
     }
 
     public function storeRetrait(Request $request)

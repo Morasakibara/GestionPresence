@@ -162,6 +162,50 @@ class CaisseService
     }
 
     /**
+     * Statistiques retraits pour la page retraits.
+     */
+    public function retraitStats(): array
+    {
+        $retraits = Retrait::where('superviseur_id', $this->superviseurId)->get();
+
+        // Total retraits
+        $totalRetraits = $retraits->sum('montant');
+        $countRetraits = $retraits->count();
+
+        // Retraits des 30 derniers jours (pour le graphique)
+        $labels30j = [];
+        $data30j = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $jour = now()->subDays($i)->toDateString();
+            $labels30j[] = now()->subDays($i)->format('d/m');
+            $data30j[] = (float) $retraits->where('date', $jour)->sum('montant');
+        }
+
+        // Top motifs (regroupés par motif)
+        $topMotifs = $retraits
+            ->groupBy(fn($r) => mb_strtolower(trim($r->motif)))
+            ->map(fn($group) => [
+                'motif' => $group->first()->motif,
+                'total' => $group->sum('montant'),
+                'count' => $group->count(),
+            ])
+            ->sortByDesc('total')
+            ->take(5)
+            ->values();
+
+        // Moyenne par retrait
+        $moyenne = $countRetraits > 0 ? $totalRetraits / $countRetraits : 0;
+
+        // Plus gros retrait
+        $maxRetrait = $retraits->max('montant') ?? 0;
+
+        return compact(
+            'totalRetraits', 'countRetraits', 'moyenne', 'maxRetrait',
+            'labels30j', 'data30j', 'topMotifs'
+        );
+    }
+
+    /**
      * Données pour le dashboard complet.
      */
     public function dashboardData(): array
