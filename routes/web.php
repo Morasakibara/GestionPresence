@@ -153,6 +153,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::post('/retraits', [DirectriceController::class, 'storeRetrait'])->name('retraits.store');
         Route::get('/rapport', [DirectriceController::class, 'rapport'])->name('rapport');
         Route::get('/rapport/export', [DirectriceController::class, 'exportCsv'])->name('rapport.export');
+        Route::get('/rapport/export/html', [DirectriceController::class, 'exportHtml'])->name('rapport.exportHtml');
         Route::post('/encaisser-reste', [DirectriceController::class, 'encaisserReste'])->name('encaisserReste');
     });
 
@@ -173,6 +174,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::post('/retraits', [SecretaireController::class, 'storeRetrait'])->name('retraits.store');
         Route::get('/rapport', [SecretaireController::class, 'rapport'])->name('rapport');
         Route::get('/rapport/export', [SecretaireController::class, 'exportCsv'])->name('rapport.export');
+        Route::get('/rapport/export/html', [SecretaireController::class, 'exportHtml'])->name('rapport.exportHtml');
         Route::post('/encaisser-reste', [SecretaireController::class, 'encaisserReste'])->name('encaisserReste');
     });
 

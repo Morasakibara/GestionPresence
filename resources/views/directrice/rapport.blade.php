@@ -34,6 +34,9 @@
         <a href="{{ route('directrice.rapport.export', ['date_debut' => $dateDebut, 'date_fin' => $dateFin]) }}" class="btn-secondary">
             📥 Export CSV
         </a>
+        <a href="{{ route('directrice.rapport.exportHtml', ['date_debut' => $dateDebut, 'date_fin' => $dateFin]) }}" target="_blank" class="btn-primary">
+            📊 Rapport Complet
+        </a>
     </form>
 </div>
 

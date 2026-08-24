@@ -288,4 +288,21 @@ abstract class AbstractCaisseController extends Controller
             $this->types(), $this->module()
         );
     }
+
+    /**
+     * Export HTML avec logo Le Pharaon — ouvrable dans le navigateur.
+     */
+    public function exportHtml(Request $request)
+    {
+        $dateDebut = $request->input('date_debut', now()->startOfMonth()->toDateString());
+        $dateFin   = $request->input('date_fin', now()->toDateString());
+
+        $data = $this->service()->rapportCsvData($dateDebut, $dateFin);
+
+        return \App\Services\ExportService::rapportHtml(
+            $dateDebut, $dateFin,
+            $data['commandes'], $data['services'], $data['retraits'],
+            $this->types(), $this->module()
+        );
+    }
 }
