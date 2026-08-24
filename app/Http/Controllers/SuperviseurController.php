@@ -8,7 +8,6 @@ use App\Models\Superviseur;
 use App\Models\Presence;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class SuperviseurController extends Controller
 {
@@ -30,8 +29,6 @@ class SuperviseurController extends Controller
         $equipe = $superviseurInfo ? $superviseurInfo->equipe : 'Non définie';
         $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
 
-        $currentMonth = now()->month;
-        $currentYear = now()->year;
         $today = now()->toDateString();
 
         $teamMemberCount = count($employerIds);
@@ -86,11 +83,6 @@ class SuperviseurController extends Controller
         $utilisateurs = Utilisateur::whereIn('id', $employerIds)->get();
 
         return view('superviseur.followPresence', compact('utilisateurs'));
-    }
-
-    public function followPresence()
-    {
-        return $this->showFollowPresence();
     }
 
     public function getUserDetails($id)
@@ -153,11 +145,6 @@ class SuperviseurController extends Controller
     }
 
     // ─── TEAM MANAGEMENT ─────────────────────────────────────
-
-    public function addMember()
-    {
-        return view('superviseur.addMember');
-    }
 
     public function showAddMember()
     {
