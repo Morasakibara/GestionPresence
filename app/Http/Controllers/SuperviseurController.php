@@ -7,23 +7,17 @@ use App\Models\Utilisateur;
 use App\Models\Superviseur;
 use App\Models\Presence;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class SuperviseurController extends Controller
 {
-    public function Supdashboard(){
-        // Récupérer le superviseur connecté
+    public function Supdashboard()
+    {
         $superviseur = Auth::user();
-
-        // Récupérer les informations d'équipe du superviseur
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
 
         // Rediriger les superviseurs spécialisés vers leur dashboard dédié
-        // superviseur_a = superviseur classique → reste sur le dashboard équipe
         if ($superviseurInfo && $superviseurInfo->type_superviseur && $superviseurInfo->type_superviseur !== 'superviseur_a') {
             return match($superviseurInfo->type_superviseur) {
                 'directrice' => redirect()->route('directrice.dashboard'),
@@ -33,49 +27,35 @@ class SuperviseurController extends Controller
             };
         }
 
-        // Obtenir le nom de l'équipe
         $equipe = $superviseurInfo ? $superviseurInfo->equipe : 'Non définie';
-
-        // Récupérer les IDs des employés de cette équipe
         $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
 
-        // Statistiques de l'équipe
         $currentMonth = now()->month;
         $currentYear = now()->year;
         $today = now()->toDateString();
 
-        // Nombre total des membres de l'équipe
         $teamMemberCount = count($employerIds);
 
-        // Compter les présences du jour pour l'équipe
         $presentToday = Presence::whereIn('employerID', $employerIds)
                                ->whereDate('date', $today)
                                ->where('status', 'présent')
                                ->count();
 
-        // Compter les absences du jour
         $absentToday = Presence::whereIn('employerID', $employerIds)
                               ->whereDate('date', $today)
                               ->where('status', 'Absent')
                               ->count();
 
-        // Récupérer les retards du jour
         $lateToday = Presence::whereIn('employerID', $employerIds)
                             ->whereDate('date', $today)
                             ->whereRaw('(HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0))')
                             ->count();
 
-        // Récupérer le nombre de notifications non lues
         $unreadNotifications = $superviseur->unreadNotifications->count();
 
-        // Évolution de la note moyenne de l'équipe sur 6 mois (cache 5 min)
         $cacheKey = 'sup_evolution_' . $superviseur->id . '_' . now()->format('Y-m-d-H');
         $evolutionEvaluations = \Illuminate\Support\Facades\Cache::remember($cacheKey . '_evo', 300, fn() => \App\Services\EvaluationService::evolutionMensuelle($employerIds, 6));
-
-        // Moyenne globale + tendance (cache 5 min)
         $statsEvolution = \Illuminate\Support\Facades\Cache::remember($cacheKey . '_stats', 300, fn() => \App\Services\EvaluationService::statsEvolution($evolutionEvaluations));
-
-        // Tableau comparatif des notes par membre de l'équipe (cache 5 min)
         $notesParEmploye = \Illuminate\Support\Facades\Cache::remember($cacheKey . '_notes', 300, fn() => \App\Services\EvaluationService::notesParEmploye($employerIds, 6));
 
         return view('superviseur.supdashboard', compact(
@@ -94,24 +74,15 @@ class SuperviseurController extends Controller
     public function showFollowPresence()
     {
         $this->authorize('viewAny', \App\Models\Presence::class);
-        // Récupérer le superviseur connecté
         $superviseur = Auth::user();
-
-        // Récupérer les informations d'équipe du superviseur
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
 
         if (!$superviseurInfo) {
-            // Si le superviseur n'a pas d'infos d'équipe, retourner une liste vide
             return view('superviseur.followPresence', ['utilisateurs' => collect([])]);
         }
 
-        // Récupérer le nom de l'équipe
         $equipe = $superviseurInfo->equipe;
-
-        // Récupérer les IDs des employés appartenant à cette équipe
         $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
-
-        // Récupérer les utilisateurs correspondant à ces IDs
         $utilisateurs = Utilisateur::whereIn('id', $employerIds)->get();
 
         return view('superviseur.followPresence', compact('utilisateurs'));
@@ -119,8 +90,6 @@ class SuperviseurController extends Controller
 
     public function followPresence()
     {
-        // Cette méthode semble être un doublon de showFollowPresence
-        // On va la rediriger vers la méthode showFollowPresence pour maintenir la cohérence
         return $this->showFollowPresence();
     }
 
@@ -142,7 +111,7 @@ class SuperviseurController extends Controller
 
         return response()->json([
             'detailsHtml' => $detailsHtml,
-            'viewMoreUrl' => $viewMoreUrl
+            'viewMoreUrl' => $viewMoreUrl,
         ]);
     }
 
@@ -154,19 +123,16 @@ class SuperviseurController extends Controller
             abort(404);
         }
 
-        // Calculer le total des présences où le statut est "présent"
         $totalPresences = Presence::where('employerID', $utilisateur->id)
                                 ->where('status', 'présent')
                                 ->count();
 
-        // Récupérer les présences de l'utilisateur pour le mois en cours avec le statut "présent"
         $currentMonth = now()->month;
         $presenceStats = Presence::where('employerID', $utilisateur->id)
                                 ->where('status', 'présent')
                                 ->whereMonth('date', $currentMonth)
                                 ->get();
 
-        // Préparer les données pour le graphique
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $currentMonth, now()->year);
         $labels = [];
         $data = [];
@@ -176,7 +142,6 @@ class SuperviseurController extends Controller
             $data[] = $presenceStats->where('date', now()->year . '-' . $currentMonth . '-' . str_pad($day, 2, '0', STR_PAD_LEFT))->count();
         }
 
-        // Passer les données à la vue
         return view('superviseur.viewUser', [
             'utilisateur' => $utilisateur,
             'totalPresences' => $totalPresences,
@@ -187,284 +152,58 @@ class SuperviseurController extends Controller
         ]);
     }
 
-    public function showGenerateReport()
-    {
-        return view('superviseur.generateReport2');
-    }
-
-    public function generateReport()
-    {
-        $superviseur = auth()->user();
-
-        // Récupérer les informations d'équipe du superviseur
-        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-
-        if (!$superviseurInfo) {
-            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
-        }
-
-        $equipe = $superviseurInfo->equipe;
-
-        // Récupérer les IDs des employés de la même équipe
-        $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
-
-        // Récupérer les utilisateurs correspondant à ces IDs
-        $users = Utilisateur::whereIn('id', $employerIds)->get();
-
-        // Période : mois en cours
-        $debut = now()->startOfMonth()->toDateString();
-        $fin = now()->endOfMonth()->toDateString();
-        $reports = [];
-
-        foreach ($users as $user) {
-            $totalPresences = Presence::where('employerID', $user->id)
-                ->whereBetween('date', [$debut, $fin])
-                ->where('status', 'présent')
-                ->count();
-
-            $rendements = Presence::where('employerID', $user->id)
-                ->whereBetween('date', [$debut, $fin])
-                ->whereNotNull('rendement')
-                ->where('rendement', '!=', '')
-                ->orderBy('date')
-                ->pluck('rendement')
-                ->toArray();
-
-            // Temps de travail total du mois (minutes)
-            $presencesPeriode = Presence::where('employerID', $user->id)
-                ->whereBetween('date', [$debut, $fin])
-                ->get(['heureArrivee', 'heureDepart']);
-            $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
-            $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
-
-            $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
-
-            $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
-
-            // Historique d'évaluation des 6 derniers mois (pour le graphique de comparaison)
-            $historique = [];
-            for ($i = 5; $i >= 0; $i--) {
-                $mois = now()->subMonths($i);
-                $eval = \App\Services\EvaluationService::evaluer(
-                    $user->id,
-                    $mois->copy()->startOfMonth()->toDateString(),
-                    $mois->copy()->endOfMonth()->toDateString()
-                );
-                $historique[] = [
-                    'mois' => $mois->format('Y-m'),
-                    'label' => ucfirst($mois->locale('fr')->isoFormat('MMMM')),
-                    'note' => $eval['note'],
-                    'couleur' => $eval['couleur'],
-                ];
-            }
-
-            $reports[] = [
-                'name' => $user->nom,
-                'employerID' => $user->id,
-                'totalPresences' => $totalPresences,
-                'totalHeures' => $totalHeures,
-                'rendements' => $rendements,
-                'evaluation_note' => $evaluation['note'],
-                'evaluation_couleur' => $evaluation['couleur'],
-                'evaluation_commentaire' => $evaluation['commentaire'],
-                'evaluation_manuelle' => $evaluation['manuelle'],
-                'historique' => $historique,
-            ];
-        }
-
-        usort($reports, fn ($a, $b) => $b['totalPresences'] <=> $a['totalPresences']);
-
-        return view('superviseur.generateReport2', compact('reports'));
-    }
-
-    public function exportPDF()
-    {
-        // Récupérer le superviseur connecté
-        $superviseur = auth()->user();
-
-        // Vérifier si le superviseur existe
-        if (!$superviseur || $superviseur->role !== 'Superviseur') {
-            return redirect()->back()->with('error', 'Vous devez être un superviseur pour générer un rapport.');
-        }
-
-        // Récupérer les informations d'équipe du superviseur
-        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-
-        if (!$superviseurInfo) {
-            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
-        }
-
-        $equipe = $superviseurInfo->equipe;
-
-        // Récupérer les employés de la même équipe
-        $employers = Employer::where('equipe', $equipe)->pluck('id')->toArray();
-
-        // Période : mois en cours
-        $debut = now()->startOfMonth()->toDateString();
-        $fin = now()->endOfMonth()->toDateString();
-        $reports = [];
-
-        // Récupérer les utilisateurs correspondant à ces IDs d'employé
-        $users = Utilisateur::whereIn('id', $employers)->get();
-
-        foreach ($users as $user) {
-            $totalPresences = Presence::where('employerID', $user->id)
-                ->whereBetween('date', [$debut, $fin])
-                ->where('status', 'présent')
-                ->count();
-
-            $rendements = Presence::where('employerID', $user->id)
-                ->whereBetween('date', [$debut, $fin])
-                ->whereNotNull('rendement')
-                ->where('rendement', '!=', '')
-                ->orderBy('date')
-                ->pluck('rendement')
-                ->toArray();
-
-            // Temps de travail total du mois (minutes)
-            $presencesPeriode = Presence::where('employerID', $user->id)
-                ->whereBetween('date', [$debut, $fin])
-                ->get(['heureArrivee', 'heureDepart']);
-            $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
-            $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
-
-            $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
-
-            $reports[] = [
-                'name' => $user->nom,
-                'employerID' => $user->id,
-                'totalPresences' => $totalPresences,
-                'totalHeures' => $totalHeures,
-                'rendements' => $rendements,
-                'evaluation_note' => $evaluation['note'],
-                'evaluation_couleur' => $evaluation['couleur'],
-                'evaluation_commentaire' => $evaluation['commentaire'],
-                'evaluation_manuelle' => $evaluation['manuelle'],
-            ];
-        }
-
-        usort($reports, fn ($a, $b) => $b['totalPresences'] <=> $a['totalPresences']);
-
-        // Générer le PDF
-        $pdf = PDF::loadView('superviseur.generateReportPDF', [
-            'reports' => $reports,
-            'equipe' => $equipe,
-            'date' => now()->format('d/m/Y'),
-            'superviseur' => $superviseur->nom
-        ]);
-
-        // Définir la période (mois et année en cours)
-        $periode = now()->format('Y-m-d H:i:s');
-
-        // Enregistrer le PDF dans le stockage
-        $filename = 'rapport_equipe_' . $equipe . '_' . now()->format('Y_m_d_His') . '.pdf';
-        $pdfPath = 'rapports/' . $filename;
-        Storage::disk('public')->put($pdfPath, $pdf->output());
-
-        try {
-            $existingReport = \App\Models\Rapport::where([
-                'Sup_id' => $superviseur->id,
-                'contenu' => $pdfPath
-            ])->first();
-
-            if (!$existingReport) {
-                // Créer un nouvel enregistrement dans la table rapport
-                $rapport = new \App\Models\Rapport();
-                $rapport->Sup_id = $superviseur->id;
-                $rapport->periode = $periode;
-                $rapport->contenu = $pdfPath;
-                $rapport->created_at = now();
-                $rapport->updated_at = now();
-
-                // Récupérer un administrateur existant
-                $admin = DB::table('administrateur')->first();
-                if ($admin) {
-                    $rapport->Adm_id = $admin->id;
-
-                    // Sauvegarder le rapport
-                    $rapport->save();
-                } else {
-                    \Log::error('Aucun administrateur trouvé. Impossible d\'enregistrer le rapport.');
-                }
-            } else {
-                \Log::info('Rapport similaire déjà existant. Aucun nouveau rapport créé.');
-            }
-        } catch (\Exception $e) {
-            \Log::error('Erreur lors de la sauvegarde du rapport: ' . $e->getMessage());
-        }
-
-        // Télécharger le PDF même si l'enregistrement échoue
-        return $pdf->download($filename);
-    }
+    // ─── TEAM MANAGEMENT ─────────────────────────────────────
 
     public function addMember()
     {
         return view('superviseur.addMember');
     }
 
-    // Afficher les employés avec le rôle 'employer' pour les ajouter à l'équipe
     public function showAddMember()
     {
-        // Récupérer le superviseur connecté
-        $superviseur = auth()->user();
-
-        // Récupérer les informations d'équipe du superviseur
+        $superviseur = Auth::user();
         $superviseurData = Superviseur::where('id', $superviseur->id)->first();
 
         if (!$superviseurData) {
             return redirect()->back()->with('error', 'Erreur : informations du superviseur non trouvées.');
         }
 
-        // Récupérer l'équipe du superviseur
         $equipe = $superviseurData->equipe;
-
-        // Récupérer les utilisateurs ayant le rôle 'employer'
         $employers = Utilisateur::where('role', 'Employer')->get();
-
-        // Récupérer les IDs des employés appartenant déjà à l'équipe du superviseur
         $teamMemberIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
 
         return view('superviseur.addMember', compact('employers', 'teamMemberIds'));
     }
 
-    // Ajouter un employé à l'équipe du superviseur
     public function addMemberToTeam(Request $request, $employerId)
     {
-        // Récupérer le superviseur connecté
-        $superviseur = auth()->user();
+        $superviseur = Auth::user();
 
-        // Vérifier si le superviseur est bien connecté
         if (!$superviseur || $superviseur->role !== 'Superviseur') {
             return redirect()->back()->with('error', 'Vous devez être un superviseur pour ajouter des membres à une équipe.');
         }
 
-        // Récupérer l'équipe du superviseur depuis la table 'superviseur'
         $superviseurData = Superviseur::where('id', $superviseur->id)->first();
 
-        // Vérifier si l'équipe du superviseur est renseignée
         if (empty($superviseurData->equipe)) {
             return redirect()->back()->with('error', 'Erreur : votre équipe n\'est pas renseignée.');
         }
 
-        // D'abord, vérifiez si l'utilisateur existe
         $utilisateur = Utilisateur::where('id', $employerId)->where('role', 'Employer')->first();
 
         if (!$utilisateur) {
             return redirect()->back()->with('error', 'Utilisateur non trouvé ou n\'est pas un employé.');
         }
 
-        // Ensuite, vérifiez si une entrée correspondante existe dans la table employer
         $employer = Employer::where('id', $employerId)->first();
 
         if (!$employer) {
-            // Si l'entrée n'existe pas dans la table employer, créez-la
             $employer = new Employer();
             $employer->id = $employerId;
-            $employer->Sup_id = $superviseur->id;  // Définir le superviseur ID
+            $employer->Sup_id = $superviseur->id;
             $employer->poste = 'Employer';
         }
 
-        // Mettre à jour l'équipe ET le superviseur de l'employé pour rester cohérent
         $employer->equipe = $superviseurData->equipe;
         $employer->Sup_id = $superviseur->id;
         $employer->save();
@@ -472,326 +211,56 @@ class SuperviseurController extends Controller
         return redirect()->back()->with('success', 'Employé ajouté avec succès à votre équipe.');
     }
 
-    // Retirer un employé de l'équipe du superviseur
     public function removeMemberFromTeam(Request $request, $employerId)
     {
-        // Récupérer le superviseur connecté
-        $superviseur = auth()->user();
+        $superviseur = Auth::user();
 
-        // Vérifier si le superviseur est bien connecté
         if (!$superviseur || $superviseur->role !== 'Superviseur') {
             return redirect()->back()->with('error', 'Vous devez être un superviseur pour retirer des membres de votre équipe.');
         }
 
-        // Récupérer l'équipe du superviseur
         $superviseurData = Superviseur::where('id', $superviseur->id)->first();
 
         if (!$superviseurData) {
             return redirect()->back()->with('error', 'Erreur : informations du superviseur non trouvées.');
         }
 
-        // Récupérer l'employé
         $employer = Employer::where('id', $employerId)->first();
 
         if (!$employer) {
             return redirect()->back()->with('error', 'Employé non trouvé.');
         }
 
-        // Vérifier que l'employé fait bien partie de l'équipe du superviseur
         if ($employer->equipe !== $superviseurData->equipe) {
             return redirect()->back()->with('error', 'Cet employé ne fait pas partie de votre équipe.');
         }
 
-        // Vider le champ équipe (plutôt que de supprimer l'enregistrement).
-        // Le Sup_id reste inchangé (colonne obligatoire pour l'intégrité de la clé étrangère).
         $employer->equipe = null;
         $employer->save();
 
         return redirect()->back()->with('success', 'Employé retiré avec succès de votre équipe.');
     }
 
-    /**
-     * Enregistre (ou met à jour) une évaluation manuelle pour un membre de l'équipe et un mois.
-     */
-    public function storeEvaluation(Request $request)
-    {
-        $request->validate([
-            'employerID' => 'required|integer|exists:employer,id',
-            'mois' => 'required|date_format:Y-m',
-            'note' => 'required|numeric|min:0|max:20',
-            'couleur' => 'required|in:vert,orange,rouge',
-            'commentaire' => 'nullable|string|max:2000',
-        ]);
-
-        \App\Models\Evaluation::updateOrCreate(
-            ['employerID' => $request->employerID, 'mois' => $request->mois],
-            [
-                'note' => (float) $request->note,
-                'couleur' => $request->couleur,
-                'commentaire' => $request->commentaire,
-                'evaluateur_id' => Auth::id(),
-            ]
-        );
-
-        // Alerte automatique à l'admin principal si l'évaluation passe en rouge
-        if ($request->couleur === 'rouge') {
-            $employe = \App\Models\Utilisateur::find($request->employerID);
-            $adminPrincipal = \App\Models\Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
-            if ($employe && $adminPrincipal && (int) $adminPrincipal->id !== (int) Auth::id()) {
-                $adminPrincipal->notify(new \App\Notifications\EvaluationRougeNotification(
-                    $employe->nom,
-                    $request->mois,
-                    (float) $request->note
-                ));
-            }
-        }
-
-        return redirect()->back()->with('success', 'Évaluation enregistrée.');
-    }
-
-    /**
-     * Suivi quotidien des fiches de rendement des membres de l'équipe.
-     */
-    public function teamRendements(Request $request)
-    {
-        $superviseur = Auth::user();
-        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-
-        if (!$superviseurInfo) {
-            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
-        }
-
-        $employerIds = Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
-
-        $date = $request->input('date', now()->toDateString());
-
-        // Fiches de rendement du jour sélectionné, avec le nom de l'employé
-        $rendements = DB::table('presence')
-            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
-            ->whereIn('presence.employerID', $employerIds)
-            ->whereDate('presence.date', $date)
-            ->whereNotNull('presence.rendement')
-            ->where('presence.rendement', '!=', '')
-            ->select('presence.id', 'presence.date', 'presence.heureArrivee', 'presence.heureDepart', 'presence.rendement', 'utilisateur.nom')
-            ->orderBy('presence.heureArrivee')
-            ->get();
-
-        // Durée travaillée par fiche + total du jour
-        $totalMinutes = 0;
-        foreach ($rendements as $r) {
-            $r->duree = \App\Services\EvaluationService::dureeTravail($r->heureArrivee, $r->heureDepart);
-            $totalMinutes += \App\Services\EvaluationService::minutesTravail($r->heureArrivee, $r->heureDepart);
-        }
-        $totalDuree = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
-
-        // Membres n'ayant pas encore rempli leur fiche ce jour-là
-        $membresSansFiche = Utilisateur::whereIn('id', $employerIds)
-            ->whereNotIn('id', DB::table('presence')
-                ->whereDate('date', $date)
-                ->whereNotNull('rendement')
-                ->pluck('employerID'))
-            ->get(['id', 'nom']);
-
-        return view('superviseur.rendements', compact('rendements', 'membresSansFiche', 'date', 'employerIds', 'totalDuree'));
-    }
-
-    /**
-     * Export CSV des fiches de rendement de l'équipe pour une date (ou période).
-     */
-    public function exportTeamRendementsCsv(Request $request)
-    {
-        $superviseur = Auth::user();
-        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-
-        if (!$superviseurInfo) {
-            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
-        }
-
-        $employerIds = Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
-
-        $debut = $request->input('debut', now()->toDateString());
-        $fin = $request->input('fin', $debut);
-
-        $lignes = [];
-        $lignes[] = ['Équipe', 'Employé', 'Date', 'Arrivée', 'Départ', 'Durée', 'Rendement'];
-
-        $rows = DB::table('presence')
-            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
-            ->whereIn('presence.employerID', $employerIds)
-            ->whereDate('presence.date', '>=', $debut)
-            ->whereDate('presence.date', '<=', $fin)
-            ->whereNotNull('presence.rendement')
-            ->where('presence.rendement', '!=', '')
-            ->select('presence.date', 'presence.heureArrivee', 'presence.heureDepart', 'presence.rendement', 'utilisateur.nom')
-            ->orderBy('utilisateur.nom')
-            ->orderBy('presence.date')
-            ->get();
-
-        foreach ($rows as $r) {
-            $lignes[] = [
-                $superviseurInfo->equipe,
-                $r->nom,
-                date('d/m/Y', strtotime($r->date)),
-                $r->heureArrivee ? date('H:i', strtotime($r->heureArrivee)) : '',
-                $r->heureDepart ? date('H:i', strtotime($r->heureDepart)) : '',
-                \App\Services\EvaluationService::dureeTravail($r->heureArrivee, $r->heureDepart) ?? '',
-                $r->rendement,
-            ];
-        }
-
-        $contenu = \App\Services\ExcelExportService::creer(
-            'Rendement de l\'équipe ' . $superviseurInfo->equipe,
-            'Période du ' . date('d/m/Y', strtotime($debut)) . ' au ' . date('d/m/Y', strtotime($fin)) . ' — Le Pharaon',
-            ['Équipe', 'Employé', 'Date', 'Arrivée', 'Départ', 'Durée', 'Rendement'],
-            $lignes
-        )->contenu();
-
-        return response($contenu, 200, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename=rendements_equipe_' . $debut . '_' . $fin . '.xlsx',
-        ]);
-    }
-
-    /**
-     * Export CSV de l'évolution mensuelle des évaluations de l'équipe (6 mois).
-     */
-    public function exportEvolutionEvaluationsCsv(Request $request)
-    {
-        $superviseur = Auth::user();
-        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-
-        if (!$superviseurInfo) {
-            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
-        }
-
-        $employerIds = Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
-        $evolution = \App\Services\EvaluationService::evolutionMensuelle($employerIds, 6);
-
-        $lignes = ["Équipe;Mois;Note moyenne /20;Couleur"];
-        $couleurLibelle = [
-            '#2E8B57' => 'Vert (>=14)',
-            '#D97706' => 'Orange (10-13)',
-            '#D64545' => 'Rouge (<10)',
-            '#888888' => 'Aucune donnée',
-        ];
-        foreach ($evolution['labels'] as $i => $label) {
-            $lignes[] = $superviseurInfo->equipe . ';' . $label . ';' . str_replace('.', ',', (string) $evolution['notes'][$i]) . ';' . ($couleurLibelle[$evolution['couleurs'][$i]] ?? $evolution['couleurs'][$i]);
-        }
-
-        $contenu = implode("\n", $lignes) . "\n";
-        $nomFichier = 'evolution_evaluations_equipe_' . str_replace(' ', '_', $superviseurInfo->equipe) . '.csv';
-
-        return response($contenu, 200, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename=' . $nomFichier,
-        ]);
-    }
-
-    /**
-     * Bulletin individuel d'évaluation PDF pour un membre de l'équipe et un mois.
-     */
-    public function evaluationBulletin(Request $request, $id)
-    {
-        $superviseur = auth()->user();
-        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-
-        if (!$superviseurInfo) {
-            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
-        }
-
-        $employerIds = Employer::where('equipe', $superviseurInfo->equipe)->pluck('id')->toArray();
-
-        // Le membre doit appartenir à l'équipe du superviseur
-        if (!in_array((int) $id, array_map('intval', $employerIds))) {
-            return redirect()->back()->with('error', 'Ce membre ne fait pas partie de votre équipe.');
-        }
-
-        $mois = $request->input('mois', now()->format('Y-m'));
-        $debut = $mois . '-01';
-        $fin = now()->parse($debut)->endOfMonth()->toDateString();
-
-        $employe = DB::table('employer')
-            ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
-            ->where('employer.id', $id)
-            ->select('employer.id', 'utilisateur.nom')
-            ->first();
-
-        if (!$employe) {
-            return redirect()->back()->with('error', 'Membre non trouvé.');
-        }
-
-        $evaluation = \App\Services\EvaluationService::evaluer($id, $debut, $fin);
-        $stats = \App\Services\EvaluationService::statsPeriode($id, $debut, $fin);
-        $rendements = Presence::where('employerID', $id)
-            ->whereBetween('date', [$debut, $fin])
-            ->whereNotNull('rendement')
-            ->where('rendement', '!=', '')
-            ->orderBy('date')
-            ->get(['date', 'heureArrivee', 'heureDepart', 'rendement']);
-
-        // Historique 6 mois pour le graphique d'évolution du bulletin
-        $historique = \App\Services\EvaluationService::historiqueMensuel((int) $id, 6);
-
-        $pdf = Pdf::loadView('superviseur.evaluation_bulletin_pdf', compact('employe', 'evaluation', 'stats', 'rendements', 'mois', 'debut', 'fin', 'historique'));
-        $filename = 'bulletin_evaluation_' . $mois . '_' . $id . '.pdf';
-
-        return $pdf->download($filename);
-    }
-
-    /**
-     * Export PDF du tableau comparatif des notes par membre de l'équipe (6 mois).
-     */
-    public function exportComparatifPdf()
-    {
-        $superviseur = auth()->user();
-        $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
-
-        if (!$superviseurInfo) {
-            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
-        }
-
-        $equipe = $superviseurInfo->equipe;
-        $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
-        $notesParEmploye = \App\Services\EvaluationService::notesParEmploye($employerIds, 6);
-
-        $pdf = Pdf::loadView('superviseur.comparatif_notes_pdf', [
-            'notesParEmploye' => $notesParEmploye,
-            'equipe' => $equipe,
-            'date' => now()->format('d/m/Y'),
-        ]);
-
-        $filename = 'comparatif_notes_' . str_replace(' ', '_', $equipe) . '_' . now()->format('Y_m_d') . '.pdf';
-        return $pdf->download($filename);
-    }
-
     public function showAddMemberForm(Request $request)
     {
-        $search = $request->input('search'); // Récupérer le terme de recherche
-
-        // Récupérer le superviseur connecté
-        $superviseur = auth()->user();
-
-        // Récupérer les informations d'équipe du superviseur
+        $search = $request->input('search');
+        $superviseur = Auth::user();
         $superviseurData = Superviseur::where('id', $superviseur->id)->first();
 
         if (!$superviseurData) {
             return redirect()->back()->with('error', 'Erreur : informations du superviseur non trouvées.');
         }
 
-        // Récupérer l'équipe du superviseur
         $equipe = $superviseurData->equipe;
-
-        // Récupérer les IDs des employés appartenant déjà à l'équipe du superviseur
         $teamMemberIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
 
-        // Récupérer les utilisateurs ayant le rôle 'employer' et qui correspondent à la recherche
         $query = Utilisateur::where('role', 'Employer');
 
         if ($search) {
-            $query->where('nom', 'LIKE', '%' . $search . '%'); // Filtrer par nom si la recherche est présente
+            $query->where('nom', 'LIKE', '%' . $search . '%');
         }
 
-        $employers = $query->get(); // Exécuter la requête
+        $employers = $query->get();
 
         return view('superviseur.addMember', compact('employers', 'search', 'teamMemberIds'));
     }

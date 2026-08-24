@@ -10,6 +10,7 @@ use App\Http\Controllers\AdminEmployeeController;
 use App\Http\Controllers\AdminReportController;
 use App\Http\Controllers\AdminFinanceController;
 use App\Http\Controllers\SuperviseurController;
+use App\Http\Controllers\SuperviseurEvaluationController;
 use App\Http\Controllers\UtilisateurController;
 use App\Models\Administrateur;
 use App\Models\Superviseur;
@@ -106,20 +107,20 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
     Route::prefix('superviseur')->group(function () {
         Route::get('/supdashboard', [SuperviseurController::class, 'Supdashboard'])->name('superviseur.supdashboard');
         Route::get('/followPresence', [SuperviseurController::class, 'showFollowPresence'])->name('superviseur.showFollowPresence');
-        Route::get('/generateReport2', [SuperviseurController::class, 'generateReport'])->name('superviseur.generateReport2');
-        Route::post('/evaluations', [SuperviseurController::class, 'storeEvaluation'])->name('superviseur.storeEvaluation');
-        Route::get('/evaluations/evolution/export', [SuperviseurController::class, 'exportEvolutionEvaluationsCsv'])->name('superviseur.evaluations.evolution.export');
-        Route::get('/comparatif/export', [SuperviseurController::class, 'exportComparatifPdf'])->name('superviseur.comparatif.export');
+        Route::get('/generateReport2', [SuperviseurEvaluationController::class, 'generateReport'])->name('superviseur.generateReport2');
+        Route::post('/evaluations', [SuperviseurEvaluationController::class, 'storeEvaluation'])->name('superviseur.storeEvaluation');
+        Route::get('/evaluations/evolution/export', [SuperviseurEvaluationController::class, 'exportEvolutionEvaluationsCsv'])->name('superviseur.evaluations.evolution.export');
+        Route::get('/comparatif/export', [SuperviseurEvaluationController::class, 'exportComparatifPdf'])->name('superviseur.comparatif.export');
         // Redirection propre si un GET arrive sur /superviseur/evaluations (ex. lien direct)
         Route::get('/evaluations', function () {
             return redirect()->route('superviseur.generateReport2');
         })->name('superviseur.evaluations.get');
-        Route::get('/rendements', [SuperviseurController::class, 'teamRendements'])->name('superviseur.rendements');
-        Route::get('/rendements/export', [SuperviseurController::class, 'exportTeamRendementsCsv'])->name('superviseur.rendements.export');
-        Route::get('/employe/{id}/bulletin', [SuperviseurController::class, 'evaluationBulletin'])->name('superviseur.evaluation.bulletin');
+        Route::get('/rendements', [SuperviseurEvaluationController::class, 'teamRendements'])->name('superviseur.rendements');
+        Route::get('/rendements/export', [SuperviseurEvaluationController::class, 'exportTeamRendementsCsv'])->name('superviseur.rendements.export');
+        Route::get('/employe/{id}/bulletin', [SuperviseurEvaluationController::class, 'evaluationBulletin'])->name('superviseur.evaluation.bulletin');
         Route::get('/getUserDetails/{id}', [SuperviseurController::class, 'getUserDetails'])->name('superviseur.getUserDetails');
         Route::get('/viewUser/{id}', [SuperviseurController::class, 'viewUser'])->name('viewUser');
-        Route::get('/exportPDF', [SuperviseurController::class, 'exportPDF'])->name('export.pdf');
+        Route::get('/exportPDF', [SuperviseurEvaluationController::class, 'exportPDF'])->name('export.pdf');
         Route::get('/showAddMember', [SuperviseurController::class, 'showAddMember'])->name('superviseur.showAddMember');
         Route::post('/addMemberToTeam/{id}', [SuperviseurController::class, 'addMemberToTeam'])->name('superviseur.addMemberToTeam');
         Route::get('/add-member', [SuperviseurController::class, 'showAddMemberForm'])->name('superviseur.showAddMemberForm');
