@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Presence;
 use App\Models\Superviseur;
 use App\Models\Utilisateur;
 use Illuminate\Http\Request;
@@ -118,6 +117,88 @@ class AdminController extends Controller
             'caisses', 'caisseChart',
             'stockTshirts', 'stockPapiers',
             'totalStockTshirts', 'alertesStock'
+        ));
+    }
+
+    /**
+     * Dashboard métriques système — temps réponse, erreurs, logs.
+     */
+    public function metrics()
+    {
+        $today = now()->toDateString();
+
+        // ── Logs Laravel : erreurs et warns d'aujourd'hui ──
+        $logPath = storage_path('logs/laravel.log');
+        $erreurs = 0;
+        $warnings = 0;
+        $recentErrors = [];
+
+        if (file_exists($logPath)) {
+            $lines = file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $recentLines = array_reverse($lines);
+            foreach ($recentLines as $line) {
+                if (!str_contains($line, $today)) continue;
+                if (str_contains($line, 'local.ERROR')) {
+                    $erreurs++;
+                    if (count($recentErrors) < 10) {
+                        $recentErrors[] = substr($line, 0, 200);
+                    }
+                }
+                if (str_contains($line, 'local.WARNING')) {
+                    $warnings++;
+                }
+            }
+        }
+
+        // ── Requêtes totales aujourd'hui (table audit_logs) ──
+        try {
+            $totalRequetes = \App\Models\AuditLog::whereDate('created_at', $today)->count();
+            $requeteParModule = \App\Models\AuditLog::whereDate('created_at', $today)
+                ->select('module', DB::raw('count(*) as total'))
+                ->groupBy('module')
+                ->orderByDesc('total')
+                ->get();
+        } catch (\Exception $e) {
+            $totalRequetes = 0;
+            $requeteParModule = collect();
+        }
+
+        // ── Rate limiting : nombre de tentatives de login ──
+        $rateLimitCount = 0;
+        try {
+            $rateLimits = Cache::get('login_attempts_' . now()->format('Y-m-d'), []);
+            $rateLimitCount = is_array($rateLimits) ? count($rateLimits) : 0;
+        } catch (\Exception $e) {
+            // Ignorer
+        }
+
+        // ── Sessions actives (utilisateurs connectés aujourd'hui) ──
+        try {
+            $usersToday = \App\Models\AuditLog::whereDate('created_at', $today)
+                ->where('action', 'like', '%login%')
+                ->distinct('utilisateur_id')
+                ->count('utilisateur_id');
+        } catch (\Exception $e) {
+            $usersToday = 0;
+        }
+
+        // ── uptime du serveur ──
+        $uptime = null;
+        if (PHP_OS_FAMILY !== 'Windows') {
+            $uptimeRaw = @file_get_contents('/proc/uptime');
+            if ($uptimeRaw) {
+                $uptimeSeconds = (float) explode(' ', $uptimeRaw)[0];
+                $days = floor($uptimeSeconds / 86400);
+                $hours = floor(($uptimeSeconds % 86400) / 3600);
+                $minutes = floor(($uptimeSeconds % 3600) / 60);
+                $uptime = "{$days}j {$hours}h {$minutes}m";
+            }
+        }
+
+        return view('admin.metrics', compact(
+            'erreurs', 'warnings', 'recentErrors',
+            'totalRequetes', 'requeteParModule',
+            'rateLimitCount', 'usersToday', 'uptime'
         ));
     }
 

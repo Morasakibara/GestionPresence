@@ -42,6 +42,9 @@
 <a href="{{ route('admin.auditLogs') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
     Audit
 </a>
+<a href="{{ route('admin.metrics') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
+    Métriques
+</a>
 @endsection
 
 @section('mobile-navigation')
@@ -60,6 +63,7 @@
 <a href="{{ route('admin.workplace-locations.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
     Lieux de travail
 </a>
+<a href="{{ route('admin.metrics') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Métriques</a>
 @endsection
 
 @section('content')

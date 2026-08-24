@@ -204,6 +204,7 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
     Route::get('/stock', [AdminFinanceController::class, 'etatStock'])->name('stock');
     Route::get('/paiements', [AdminFinanceController::class, 'paiementStats'])->name('paiements');
     Route::get('/audit-logs', [AdminFinanceController::class, 'auditLogs'])->name('auditLogs');
+    Route::get('/metrics', [AdminController::class, 'metrics'])->name('metrics');
     Route::get('/conges', [App\Http\Controllers\AdminCongeController::class, 'index'])->name('conges');
     Route::get('/conges/planning/pdf', function (\Illuminate\Http\Request $request) {
         $mois = $request->input('mois', now()->format('Y-m'));
