@@ -27,11 +27,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by(
                 $request->input('email') . '|' . $request->ip()
-            )->responseCallback(function (Request $request, array $headers) {
-                return response()->view('auth.login', [
-                    'error' => 'Trop de tentatives de connexion. Réessayez dans ' . ceil(($headers['X-RateLimit-Reset'] - time()) / 60) . ' minute(s).',
-                ], 429, $headers);
-            });
+            );
         });
 
         // ─── Rate Limiter : Register ─────────────────────────────────────

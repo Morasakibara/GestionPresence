@@ -6,6 +6,9 @@ use App\Models\User;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminEmployeeController;
+use App\Http\Controllers\AdminReportController;
+use App\Http\Controllers\AdminFinanceController;
 use App\Http\Controllers\SuperviseurController;
 use App\Http\Controllers\UtilisateurController;
 use App\Models\Administrateur;
@@ -59,25 +62,24 @@ Route::get('logout', [LoginController::class, 'logout'])->name('logouts');
 //ici on a les route permettant de gerer les fonctionalités de l'Admin
 Route::middleware(['isAdmin', 'role:Administrateur'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    Route::get('add-employee', [AdminController::class, 'showAddEmployeeForm'])->name('addEmployee');
-    Route::post('/store-employee', [AdminController::class, 'storeEmployee'])->name('storeEmployee');
-    Route::get('/delete-employee', [AdminController::class, 'showDeleteEmployeeForm'])->name('deleteEmployee');
-    Route::get('/generate-report', [AdminController::class, 'showGenerateReportForm'])->name('generateReport');
-    Route::post('/generate-report', [AdminController::class, 'generateReport']);
-    Route::post('/report',[AdminController::class, 'exportReport'])->name('exportReport');
-    Route::post('/evaluations', [AdminController::class, 'storeEvaluation'])->name('storeEvaluation');
-    Route::get('/evaluations/export', [AdminController::class, 'exportEvaluationsCsv'])->name('evaluations.export');
-    Route::get('/evaluations/evolution/export', [AdminController::class, 'exportEvolutionEvaluationsCsv'])->name('evaluations.evolution.export');
-    // Redirection propre si un GET arrive sur /admin/evaluations (ex. lien direct)
+    Route::get('add-employee', [AdminEmployeeController::class, 'showAddEmployeeForm'])->name('addEmployee');
+    Route::post('/store-employee', [AdminEmployeeController::class, 'storeEmployee'])->name('storeEmployee');
+    Route::get('/delete-employee', [AdminEmployeeController::class, 'showDeleteEmployeeForm'])->name('deleteEmployee');
+    Route::get('/generate-report', [AdminReportController::class, 'showGenerateReportForm'])->name('generateReport');
+    Route::post('/generate-report', [AdminReportController::class, 'generateReport']);
+    Route::post('/report', [AdminReportController::class, 'exportReport'])->name('exportReport');
+    Route::post('/evaluations', [AdminReportController::class, 'storeEvaluation'])->name('storeEvaluation');
+    Route::get('/evaluations/export', [AdminReportController::class, 'exportEvaluationsCsv'])->name('evaluations.export');
+    Route::get('/evaluations/evolution/export', [AdminReportController::class, 'exportEvolutionEvaluationsCsv'])->name('evaluations.evolution.export');
     Route::get('/evaluations', function () {
         return redirect()->route('admin.generateReport');
     })->name('admin.evaluations.get');
-    Route::get('/employe/{id}/bulletin', [AdminController::class, 'evaluationBulletin'])->name('evaluation.bulletin');
-    Route::get('/calculate-presence', [AdminController::class, 'showEmployeeList'])->name('showEmployeeList');
-    Route::post('/delete-employee', [App\Http\Controllers\AdminController::class, 'deleteEmployee']);
-    Route::post('/update-profile', [App\Http\Controllers\AdminController::class, 'updateProfile'])->name('updateProfile');
-    Route::get('/update-profile', [App\Http\Controllers\AdminController::class, 'showProfileForm'])->name('showProfile');
-    Route::post('delete-employee-from-list', [AdminController::class, 'deleteEmployeeFromList'])->name('deleteEmployee.fromList');
+    Route::get('/employe/{id}/bulletin', [AdminReportController::class, 'evaluationBulletin'])->name('evaluation.bulletin');
+    Route::get('/calculate-presence', [AdminEmployeeController::class, 'showEmployeeList'])->name('showEmployeeList');
+    Route::post('/delete-employee', [AdminEmployeeController::class, 'deleteEmployee']);
+    Route::post('/update-profile', [AdminController::class, 'updateProfile'])->name('updateProfile');
+    Route::get('/update-profile', [AdminController::class, 'showProfileForm'])->name('showProfile');
+    Route::post('delete-employee-from-list', [AdminEmployeeController::class, 'deleteEmployeeFromList'])->name('deleteEmployee.fromList');
     Route::resource('workplace-locations', WorkplaceLocationController::class);
   });
 
@@ -198,10 +200,10 @@ Route::get('/role-switch', function() {
 // Routes de notification
 // ===================== ADMIN DASHBOARD EXTENSIONS =====================
 Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/caisse', [AdminController::class, 'etatCaisse'])->name('caisse');
-    Route::get('/stock', [AdminController::class, 'etatStock'])->name('stock');
-    Route::get('/paiements', [AdminController::class, 'paiementStats'])->name('paiements');
-    Route::get('/audit-logs', [AdminController::class, 'auditLogs'])->name('auditLogs');
+    Route::get('/caisse', [AdminFinanceController::class, 'etatCaisse'])->name('caisse');
+    Route::get('/stock', [AdminFinanceController::class, 'etatStock'])->name('stock');
+    Route::get('/paiements', [AdminFinanceController::class, 'paiementStats'])->name('paiements');
+    Route::get('/audit-logs', [AdminFinanceController::class, 'auditLogs'])->name('auditLogs');
     Route::get('/conges', [App\Http\Controllers\AdminCongeController::class, 'index'])->name('conges');
     Route::get('/conges/planning/pdf', function (\Illuminate\Http\Request $request) {
         $mois = $request->input('mois', now()->format('Y-m'));
