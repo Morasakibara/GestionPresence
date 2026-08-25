@@ -493,6 +493,7 @@
     })();
     </script>
     <!-- Alertes de présence temps réel -->
+    <link rel="stylesheet" href="{{ asset('css/presence-toasts.css') }}">
     <script src="{{ asset('js/presence-alerts.js') }}"></script>
 </body>
 </html>

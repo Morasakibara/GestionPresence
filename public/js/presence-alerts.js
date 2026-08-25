@@ -5,7 +5,7 @@
  * Mode fallback : polling HTTP toutes les 10s si le WebSocket n'est pas disponible.
  *
  * Lancement Soketi (développement) :
- *   npx soketi start --port=6001 --appKey=pharaon-local-key --appSecret=pharaon-local-secret
+ *   npx soketi start --config=soketi.config.json
  */
 (function () {
     'use strict';
@@ -40,13 +40,20 @@
         } catch (e) { /* ignore */ }
     }
 
-    // ── Toasts ──
+    // ── Icônes SVG ──
     const icons = {
-        arrival: '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7l4 4z"/></svg>',
-        departure: '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4l4 4z"/></svg>',
-        retard: '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        arrival: '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7l4 4z"/></svg>',
+        departure: '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4l4 4z"/></svg>',
+        retard: '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
     };
 
+    const iconClassMap = {
+        arrival: 'toast-icon--arrival',
+        departure: 'toast-icon--departure',
+        retard: 'toast-icon--retard',
+    };
+
+    // ── Container ──
     function getOrCreateContainer() {
         let c = document.getElementById('presence-alerts-container');
         if (!c) {
@@ -58,49 +65,50 @@
         return c;
     }
 
+    // ── Toast avec animations CSS ──
     function showToast(message, type) {
         const container = getOrCreateContainer();
         const toast = document.createElement('div');
-        const colorMap = {
-            arrival: 'border-l-4 border-green-500',
-            departure: 'border-l-4 border-purple-500',
-            retard: 'border-l-4 border-yellow-500',
-        };
-        const iconBgMap = {
-            arrival: 'bg-green-100 text-green-600',
-            departure: 'bg-purple-100 text-purple-600',
-            retard: 'bg-yellow-100 text-yellow-600',
-        };
 
-        toast.className = `flex items-center gap-3 bg-white rounded-lg shadow-lg p-3 mb-2 transform translate-x-full opacity-0 transition-all duration-300 ${colorMap[type] || 'border-l-4 border-pharaoh-gold'}`;
+        toast.className = `pharaoh-toast pharaoh-toast--${type}`;
         toast.innerHTML = `
-            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${iconBgMap[type] || 'bg-pharaoh-gold/10 text-pharaoh-gold'}">
-                ${icons[type] || icons.arrival}
+            <div class="flex items-center gap-3 p-3">
+                <div class="toast-icon ${iconClassMap[type] || iconClassMap.arrival}">
+                    ${icons[type] || icons.arrival}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="toast-message">${message}</p>
+                </div>
+                <button class="toast-close" aria-label="Fermer">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-[#080808]">${message}</p>
-            </div>
-            <button onclick="this.closest('.presence-toast').remove()" class="flex-shrink-0 text-gray-400 hover:text-gray-600">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
         `;
-        toast.classList.add('presence-toast');
+
+        // Fermeture manuelle
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', () => dismissToast(toast));
+
+        // Hover pause la progress bar (géré en CSS)
         container.appendChild(toast);
 
-        requestAnimationFrame(() => {
-            toast.classList.remove('translate-x-full', 'opacity-0');
-            toast.classList.add('translate-x-0', 'opacity-100');
-        });
+        // Auto-dismiss après 5s
+        setTimeout(() => dismissToast(toast), 5000);
 
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.classList.add('translate-x-full', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }
-        }, 5000);
+        // Limiter à 4 toasts visibles
+        const allToasts = container.querySelectorAll('.pharaoh-toast');
+        if (allToasts.length > 4) {
+            dismissToast(allToasts[0]);
+        }
     }
 
-    // ── Traitement d'un événement d'arrivée ──
+    function dismissToast(toast) {
+        if (!toast || !toast.parentNode) return;
+        toast.classList.add('toast-exit');
+        setTimeout(() => toast.remove(), 350);
+    }
+
+    // ── Événements ──
     function handleArrival(data) {
         const type = data.retard ? 'retard' : 'arrival';
         const msg = data.retard
@@ -110,25 +118,51 @@
         sendBrowserNotification(data.retard ? 'Retard détecté' : 'Nouvelle arrivée', msg, 'arrival-' + data.user_id);
     }
 
-    // ── Traitement d'un événement de départ ──
     function handleDeparture(data) {
         const msg = `🚪 ${data.nom} est parti(e) à ${data.heure}`;
         showToast(msg, 'departure');
         sendBrowserNotification('Départ enregistré', msg, 'departure-' + data.user_id);
     }
 
-    // ── Mise à jour des compteurs ──
     function updateCounts(data) {
         if (data.present !== undefined) {
             document.querySelectorAll('[data-count="present"]').forEach(el => {
-                el.textContent = data.present;
+                animateCounter(el, data.present);
             });
         }
         if (data.absent !== undefined) {
             document.querySelectorAll('[data-count="absent"]').forEach(el => {
-                el.textContent = data.absent;
+                animateCounter(el, data.absent);
             });
         }
+    }
+
+    // ── Animation de compteur ──
+    function animateCounter(el, target) {
+        const current = parseInt(el.textContent) || 0;
+        if (current === target) return;
+
+        const diff = target - current;
+        const steps = Math.min(Math.abs(diff), 10);
+        const duration = 400;
+        const stepTime = duration / steps;
+        let step = 0;
+
+        const interval = setInterval(() => {
+            step++;
+            const progress = step / steps;
+            const value = Math.round(current + diff * progress);
+            el.textContent = value;
+
+            if (step >= steps) {
+                el.textContent = target;
+                clearInterval(interval);
+                // Petit pulse sur le compteur
+                el.style.transition = 'transform 0.3s ease';
+                el.style.transform = 'scale(1.15)';
+                setTimeout(() => { el.style.transform = 'scale(1)'; }, 300);
+            }
+        }, stepTime);
     }
 
     // ═══════════════════════════════════════════════
@@ -161,11 +195,7 @@
                 if (pusher && pusher.connection?.state === 'connected') {
                     wsConnected = true;
                     console.log('[Pharaon] ✅ WebSocket connecté (Soketi)');
-                    // Arrêter le polling si WebSocket actif
-                    if (timer) {
-                        clearInterval(timer);
-                        timer = null;
-                    }
+                    if (timer) { clearInterval(timer); timer = null; }
                 } else {
                     console.log('[Pharaon] WebSocket non connecté → fallback polling');
                 }
@@ -234,7 +264,7 @@
         checkPresenceAlerts();
     }
 
-    // ── Pause quand l'onglet est caché ──
+    // ── Pause ──
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
             isPaused = true;
@@ -251,7 +281,6 @@
     // ── Init ──
     function init() {
         requestNotifPermission();
-        // Tenter le WebSocket d'abord, puis fallback polling
         const wsOk = initWebSocket();
         if (!wsOk) {
             startPolling();
