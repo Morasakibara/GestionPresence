@@ -154,6 +154,91 @@ class AdminReportController extends Controller
     }
 
     /**
+     * Export PDF des évaluations de toute l'entreprise (design Le Pharaon).
+     */
+    public function exportEvaluationsPdf(Request $request)
+    {
+        $mois = $request->input('mois', now()->format('Y-m'));
+        $debut = $mois . '-01';
+        $fin = now()->parse($debut)->endOfMonth()->toDateString();
+        $titre = 'Toute l\'entreprise — ' . ucfirst(now()->parse($debut)->locale('fr')->isoFormat('MMMM YYYY'));
+
+        $employes = DB::table('employer')
+            ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
+            ->select('employer.id', 'utilisateur.nom')
+            ->orderBy('utilisateur.nom')
+            ->get();
+
+        $reports = collect();
+        $historique = [];
+
+        foreach ($employes as $employe) {
+            $evaluation = \App\Services\EvaluationService::evaluer($employe->id, $debut, $fin);
+
+            $presencesPeriode = Presence::where('employerID', $employe->id)
+                ->whereBetween('date', [$debut, $fin])
+                ->get(['heureArrivee', 'heureDepart']);
+            $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
+            $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+
+            $rendements = Presence::where('employerID', $employe->id)
+                ->whereBetween('date', [$debut, $fin])
+                ->whereNotNull('rendement')
+                ->where('rendement', '!=', '')
+                ->orderBy('date')
+                ->get(['date', 'rendement']);
+
+            $reports->push((object) [
+                'name' => $employe->nom,
+                'employerID' => $employe->id,
+                'totalPresences' => $presencesPeriode->filter(fn($p) => $p->status === 'présent')->count(),
+                'totalHeures' => $totalHeures,
+                'rendements' => $rendements,
+                'evaluation_note' => $evaluation['note'],
+                'evaluation_couleur' => $evaluation['couleur'],
+                'evaluation_commentaire' => $evaluation['commentaire'],
+                'evaluation_manuelle' => $evaluation['manuelle'],
+            ]);
+
+            // Historique 6 mois pour le tableau comparatif
+            $histEmp = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $m = now()->subMonths($i);
+                $eval = \App\Services\EvaluationService::evaluer(
+                    $employe->id,
+                    $m->copy()->startOfMonth()->toDateString(),
+                    $m->copy()->endOfMonth()->toDateString()
+                );
+                $histEmp[$m->format('Y-m')] = [
+                    'label' => ucfirst($m->locale('fr')->isoFormat('MMMM')),
+                    'note' => $eval['note'],
+                    'couleur' => $eval['couleur'],
+                ];
+            }
+            $historique[$employe->id] = $histEmp;
+        }
+
+        $reports = $reports->sortByDesc('evaluation_note');
+
+        // Logo base64
+        $logoPath = public_path('storage/avatars/logo-pharaon.png');
+        $logoBase64 = file_exists($logoPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            : null;
+
+        $pdf = Pdf::loadView('pdf.evaluations-equipe', compact(
+            'reports', 'historique', 'titre', 'logoBase64'
+        ))->setOption([
+            'dateDebut' => $debut,
+            'dateFin' => $fin,
+            'auteur' => Auth::user()->nom ?? 'Administration',
+        ]);
+
+        $filename = 'evaluations_' . str_replace('-', '_', $mois) . '.pdf';
+        return $pdf->download($filename);
+    }
+
+    /**
      * Export CSV des évaluations et des rendements par employé.
      */
     public function exportEvaluationsCsv(Request $request)

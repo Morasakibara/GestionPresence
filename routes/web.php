@@ -75,6 +75,7 @@ Route::middleware(['isAdmin', 'role:Administrateur'])->prefix('admin')->name('ad
     })->name('exportReport');
     Route::post('/evaluations', [AdminReportController::class, 'storeEvaluation'])->name('storeEvaluation');
     Route::get('/evaluations/export', [AdminReportController::class, 'exportEvaluationsCsv'])->name('evaluations.export');
+    Route::get('/evaluations/export/pdf', [AdminReportController::class, 'exportEvaluationsPdf'])->name('evaluations.export.pdf');
     Route::get('/evaluations/evolution/export', [AdminReportController::class, 'exportEvolutionEvaluationsCsv'])->name('evaluations.evolution.export');
     Route::get('/evaluations', function () {
         return redirect()->route('admin.generateReport');
@@ -114,6 +115,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/generateReport2', [SuperviseurEvaluationController::class, 'generateReport'])->name('superviseur.generateReport2');
         Route::post('/evaluations', [SuperviseurEvaluationController::class, 'storeEvaluation'])->name('superviseur.storeEvaluation');
         Route::get('/evaluations/evolution/export', [SuperviseurEvaluationController::class, 'exportEvolutionEvaluationsCsv'])->name('superviseur.evaluations.evolution.export');
+        Route::get('/evaluations/export/pdf', [SuperviseurEvaluationController::class, 'exportEvaluationsPdf'])->name('superviseur.evaluations.export.pdf');
         Route::get('/comparatif/export', [SuperviseurEvaluationController::class, 'exportComparatifPdf'])->name('superviseur.comparatif.export');
         // Redirection propre si un GET arrive sur /superviseur/evaluations (ex. lien direct)
         Route::get('/evaluations', function () {

@@ -212,6 +212,91 @@ class SuperviseurEvaluationController extends Controller
         return $pdf->download($filename);
     }
 
+    /**
+     * Export PDF des évaluations de l'équipe (design Le Pharaon).
+     */
+    public function exportEvaluationsPdf(Request $request)
+    {
+        $info = $this->equipeInfo();
+        if (!$info['equipe']) {
+            return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
+        }
+
+        extract($info);
+
+        $mois = $request->input('mois', now()->format('Y-m'));
+        $debut = $mois . '-01';
+        $fin = now()->parse($debut)->endOfMonth()->toDateString();
+        $titre = 'Équipe ' . $equipe . ' — ' . ucfirst(now()->parse($debut)->locale('fr')->isoFormat('MMMM YYYY'));
+
+        $users = Utilisateur::whereIn('id', $employerIds)->get();
+        $reports = collect();
+        $historique = [];
+
+        foreach ($users as $user) {
+            $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
+
+            $presencesPeriode = Presence::where('employerID', $user->id)
+                ->whereBetween('date', [$debut, $fin])
+                ->get(['heureArrivee', 'heureDepart']);
+            $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
+            $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+
+            $rendements = Presence::where('employerID', $user->id)
+                ->whereBetween('date', [$debut, $fin])
+                ->whereNotNull('rendement')
+                ->where('rendement', '!=', '')
+                ->orderBy('date')
+                ->get(['date', 'rendement']);
+
+            $reports->push((object) [
+                'name' => $user->nom,
+                'employerID' => $user->id,
+                'totalPresences' => $presencesPeriode->filter(fn($p) => $p->status === 'présent')->count(),
+                'totalHeures' => $totalHeures,
+                'rendements' => $rendements,
+                'evaluation_note' => $evaluation['note'],
+                'evaluation_couleur' => $evaluation['couleur'],
+                'evaluation_commentaire' => $evaluation['commentaire'],
+                'evaluation_manuelle' => $evaluation['manuelle'],
+            ]);
+
+            $histEmp = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $m = now()->subMonths($i);
+                $eval = \App\Services\EvaluationService::evaluer(
+                    $user->id,
+                    $m->copy()->startOfMonth()->toDateString(),
+                    $m->copy()->endOfMonth()->toDateString()
+                );
+                $histEmp[$m->format('Y-m')] = [
+                    'label' => ucfirst($m->locale('fr')->isoFormat('MMMM')),
+                    'note' => $eval['note'],
+                    'couleur' => $eval['couleur'],
+                ];
+            }
+            $historique[$user->id] = $histEmp;
+        }
+
+        $reports = $reports->sortByDesc('evaluation_note');
+
+        $logoPath = public_path('storage/avatars/logo-pharaon.png');
+        $logoBase64 = file_exists($logoPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            : null;
+
+        $pdf = Pdf::loadView('pdf.evaluations-equipe', compact(
+            'reports', 'historique', 'titre', 'logoBase64'
+        ))->setOption([
+            'dateDebut' => $debut,
+            'dateFin' => $fin,
+            'auteur' => $superviseur->nom ?? 'Superviseur',
+        ]);
+
+        $filename = 'evaluations_equipe_' . str_replace(' ', '_', $equipe) . '_' . str_replace('-', '_', $mois) . '.pdf';
+        return $pdf->download($filename);
+    }
+
     // ─── ÉVALUATIONS ─────────────────────────────────────────
 
     /**

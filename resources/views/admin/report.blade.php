@@ -57,6 +57,10 @@
                 Export Évaluations
             </button>
         </form>
+        <a href="{{ route('admin.evaluations.export.pdf', ['mois' => substr($startDate, 0, 7)]) }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-[#D39B23] bg-white px-4 py-2 text-sm font-semibold text-[#D39B23] hover:bg-[#FBF3E6] transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            PDF Évaluations
+        </a>
         <form action="{{ route('admin.exportReport') }}" method="POST">
             @csrf
             <input type="hidden" name="start_date" value="{{ $startDate }}">
