@@ -492,5 +492,7 @@
         }
     })();
     </script>
+    <!-- Alertes de présence temps réel -->
+    <script src="{{ asset('js/presence-alerts.js') }}"></script>
 </body>
 </html>

@@ -38,6 +38,34 @@ class AdminController extends Controller
             ->where('status', 'Absent')
             ->count();
 
+        // Listes détaillées pour les modals au survol
+        $presentsAujourdhui = Presence::whereDate('date', $today)
+            ->where('status', 'present')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->select('utilisateur.nom', 'presence.heureArrivee', 'presence.heureDepart')
+            ->orderBy('presence.heureArrivee')
+            ->get();
+
+        $absentsAujourdhui = Utilisateur::where('role', 'Employer')
+            ->whereNotIn('id', Presence::whereDate('date', $today)->pluck('employerID'))
+            ->select('nom')
+            ->orderBy('nom')
+            ->get();
+
+        $arrivesAujourdhui = Presence::whereDate('date', $today)
+            ->whereNotNull('heureArrivee')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->select('utilisateur.nom', 'presence.heureArrivee')
+            ->orderBy('presence.heureArrivee')
+            ->get();
+
+        $partisAujourdhui = Presence::whereDate('date', $today)
+            ->whereNotNull('heureDepart')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->select('utilisateur.nom', 'presence.heureDepart')
+            ->orderBy('presence.heureDepart')
+            ->get();
+
         $currentMonth = now()->month;
         $currentYear = now()->year;
 
@@ -123,7 +151,9 @@ class AdminController extends Controller
             'equipes', 'equipeSelectionnee',
             'caisses', 'caisseChart',
             'stockTshirts', 'stockPapiers',
-            'totalStockTshirts', 'alertesStock'
+            'totalStockTshirts', 'alertesStock',
+            'presentsAujourdhui', 'absentsAujourdhui',
+            'arrivesAujourdhui', 'partisAujourdhui'
         ));
     }
 

@@ -77,7 +77,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
-            <div class="stat-card-value">{{ $presentToday ?? 0 }}</div>
+            <div class="stat-card-value" data-count="present">{{ $presentToday ?? 0 }}</div>
             <div class="stat-card-label">Présents aujourd'hui</div>
             <!-- Modal au survol -->
             <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
@@ -103,7 +103,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
-            <div class="stat-card-value">{{ $absentToday ?? 0 }}</div>
+            <div class="stat-card-value" data-count="absent">{{ $absentToday ?? 0 }}</div>
             <div class="stat-card-label">Absents aujourd'hui</div>
             <!-- Modal au survol -->
             <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">

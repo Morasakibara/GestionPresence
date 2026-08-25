@@ -234,6 +234,7 @@ Route::middleware(['isAdmin'])->prefix('admin')->name('admin.')->group(function 
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/api/presence-alerts', [App\Http\Controllers\PresenceAlertController::class, 'check'])->name('api.presence.alerts');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
