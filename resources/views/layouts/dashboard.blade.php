@@ -39,6 +39,10 @@
                     </div>
                     <div class="hidden md:block">
                         <div class="flex items-center ml-4 md:ml-6">
+                            <!-- Sound toggle -->
+                            <button id="soundToggle" onclick="AlertSound.toggle()" class="relative p-2 mr-3 text-gray-400 rounded-lg hover:text-pharaoh-gold hover:bg-white/10 transition-colors" title="Désactiver le son">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                            </button>
                             <!-- Profile dropdown -->
                             <div class="relative ml-3">
                                 <div>
@@ -494,6 +498,7 @@
     </script>
     <!-- Alertes de présence temps réel -->
     <link rel="stylesheet" href="{{ asset('css/presence-toasts.css') }}">
+    <script src="{{ asset('js/alert-sound.js') }}"></script>
     <script src="{{ asset('js/presence-alerts.js') }}"></script>
 </body>
 </html>

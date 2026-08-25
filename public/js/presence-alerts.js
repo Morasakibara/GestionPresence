@@ -116,12 +116,26 @@
             : `✅ ${data.nom} est arrivé(e) à ${data.heure}`;
         showToast(msg, type);
         sendBrowserNotification(data.retard ? 'Retard détecté' : 'Nouvelle arrivée', msg, 'arrival-' + data.user_id);
+
+        // 🔊 Son custom
+        if (typeof window.AlertSound !== 'undefined') {
+            if (data.retard) {
+                AlertSound.retard();
+            } else {
+                AlertSound.arrival();
+            }
+        }
     }
 
     function handleDeparture(data) {
         const msg = `🚪 ${data.nom} est parti(e) à ${data.heure}`;
         showToast(msg, 'departure');
         sendBrowserNotification('Départ enregistré', msg, 'departure-' + data.user_id);
+
+        // 🔊 Son custom
+        if (typeof window.AlertSound !== 'undefined') {
+            AlertSound.departure();
+        }
     }
 
     function updateCounts(data) {
@@ -285,6 +299,14 @@
         if (!wsOk) {
             startPolling();
         }
+
+        // Préchauffer l'AudioContext au 1er clic (browser policy)
+        document.addEventListener('click', function warmupAudio() {
+            if (typeof window.AlertSound !== 'undefined') {
+                window.AlertSound.warmup();
+            }
+            document.removeEventListener('click', warmupAudio);
+        });
     }
 
     if (document.readyState === 'loading') {
