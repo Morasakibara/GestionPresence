@@ -225,9 +225,13 @@ class SuperviseurEvaluationController extends Controller
         extract($info);
 
         $mois = $request->input('mois', now()->format('Y-m'));
+        $couleur = $request->input('couleur'); // vert, orange, rouge ou null
         $debut = $mois . '-01';
         $fin = now()->parse($debut)->endOfMonth()->toDateString();
         $titre = 'Équipe ' . $equipe . ' — ' . ucfirst(now()->parse($debut)->locale('fr')->isoFormat('MMMM YYYY'));
+        if ($couleur && in_array($couleur, ['vert', 'orange', 'rouge'])) {
+            $titre .= ' (Filtre : ' . strtoupper($couleur) . ')';
+        }
 
         $users = Utilisateur::whereIn('id', $employerIds)->get();
         $reports = collect();
@@ -278,6 +282,11 @@ class SuperviseurEvaluationController extends Controller
             $historique[$user->id] = $histEmp;
         }
 
+        // Filtre par couleur
+        if ($couleur && in_array($couleur, ['vert', 'orange', 'rouge'])) {
+            $reports = $reports->filter(fn($r) => ($r->evaluation_couleur ?? '') === $couleur);
+        }
+
         $reports = $reports->sortByDesc('evaluation_note');
 
         $logoPath = public_path('storage/avatars/logo-pharaon.png');
@@ -285,8 +294,10 @@ class SuperviseurEvaluationController extends Controller
             ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
             : null;
 
+        $filtreCouleur = $couleur;
+
         $pdf = Pdf::loadView('pdf.evaluations-equipe', compact(
-            'reports', 'historique', 'titre', 'logoBase64'
+            'reports', 'historique', 'titre', 'logoBase64', 'filtreCouleur'
         ))->setOption([
             'dateDebut' => $debut,
             'dateFin' => $fin,

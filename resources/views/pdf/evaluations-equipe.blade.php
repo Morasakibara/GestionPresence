@@ -99,6 +99,12 @@
     <span><span class="dot dot-rouge"></span> Rouge &lt; 10/20</span>
 </div>
 
+@if(!empty($filtreCouleur))
+<div style="background:#FBF3E6;border:1px solid #D39B23;border-radius:8px;padding:10px 16px;margin-bottom:16px;text-align:center;font-size:11px;color:#885910">
+    <strong>Filtre actif :</strong> {{ strtoupper($filtreCouleur) }} uniquement
+</div>
+@endif
+
 <!-- ═══════════════ RÉSUMÉ GLOBAL ═══════════════ -->
 <div class="summary">
     <div class="summary-card">

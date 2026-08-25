@@ -1,103 +1,180 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Comparatif des notes — {{ $equipe }}</title>
-    <style>
-        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #1f2937; margin: 0; padding: 0; }
-        .container { width: 100%; padding: 20px; }
-        .brand-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #D39B23; padding-bottom: 12px; }
-        .brand-header .brand-left { display: flex; align-items: center; }
-        .logo { width: 55px; height: auto; margin-right: 12px; }
-        .company-name { font-size: 22px; font-weight: bold; color: #D39B23; }
-        .brand-header .right { font-size: 11px; color: #6b7280; text-align: right; }
-        .header { background-color: #080808; color: white; padding: 18px 20px; margin-bottom: 24px; border-radius: 6px; border-left: 4px solid #D39B23; }
-        .header h1 { font-size: 20px; font-weight: bold; margin: 0 0 6px 0; }
-        .header p { margin: 3px 0; font-size: 13px; color: rgba(255,255,255,0.9); }
-        .card { border: 1px solid #e5e7eb; border-radius: 6px; padding: 14px 16px; margin-bottom: 16px; }
-        .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #374151; margin: 0 0 10px 0; border-bottom: 1px solid #f3f4f6; padding-bottom: 6px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        thead { background-color: #080808; color: white; }
-        th { text-align: left; padding: 8px 10px; }
-        td { padding: 7px 10px; border-bottom: 1px solid #f3f4f6; }
-        .badge { display: inline-block; border-radius: 999px; padding: 3px 10px; font-size: 10px; font-weight: bold; }
-        .vert { background-color: rgba(22,163,74,0.12); color: #15803d; }
-        .orange { background-color: rgba(249,115,22,0.12); color: #c2410c; }
-        .rouge { background-color: rgba(220,38,38,0.12); color: #b91c1c; }
-        .footer { margin-top: 24px; font-size: 10px; color: #9ca3af; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 10px; }
-    </style>
+<meta charset="UTF-8">
+<title>Comparatif des notes — {{ $equipe }}</title>
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif; color:#080808; font-size:11px; line-height:1.5; }
+
+    .header { background:#080808; color:white; padding:24px 30px; text-align:center; margin-bottom:20px; }
+    .header img { height:55px; margin-bottom:8px; }
+    .header h1 { color:#D39B23; font-size:22px; margin-bottom:2px; letter-spacing:1px; }
+    .header h2 { color:#FACE4A; font-size:14px; font-weight:400; }
+    .header .meta { color:#888; font-size:11px; margin-top:8px; }
+
+    .legend { display:flex; gap:16px; justify-content:center; margin-bottom:18px; font-size:10px; }
+    .legend span { display:inline-flex; align-items:center; gap:4px; }
+    .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+    .dot-vert { background:#2E8B57; }
+    .dot-orange { background:#D97706; }
+    .dot-rouge { background:#D64545; }
+
+    .summary { display:flex; gap:12px; margin-bottom:20px; }
+    .summary-card { flex:1; border:1px solid #E7E7E7; border-radius:8px; padding:12px; text-align:center; background:#FAFAFA; }
+    .summary-card .value { font-size:22px; font-weight:700; color:#D39B23; }
+    .summary-card .label { font-size:9px; color:#888; text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
+    .summary-card.green .value { color:#2E8B57; }
+    .summary-card.orange .value { color:#D97706; }
+    .summary-card.red .value { color:#D64545; }
+
+    table { width:100%; border-collapse:collapse; margin-bottom:18px; }
+    th { background:#080808; color:white; padding:8px 10px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+    td { padding:7px 10px; border-bottom:1px solid #E7E7E7; font-size:10px; }
+    tr:nth-child(even) td { background:#FAFAFA; }
+    .text-center { text-align:center; }
+
+    .badge { display:inline-block; padding:3px 10px; border-radius:10px; font-size:9px; font-weight:700; }
+    .badge-vert { background:#D4EDDA; color:#155724; }
+    .badge-orange { background:#FFF3CD; color:#856404; }
+    .badge-rouge { background:#F8D7DA; color:#721C24; }
+
+    .note { font-size:14px; font-weight:700; }
+    .note-vert { color:#2E8B57; }
+    .note-orange { color:#D97706; }
+    .note-rouge { color:#D64545; }
+
+    .section-title { background:#D39B23; color:white; padding:8px 14px; border-radius:6px; font-weight:700; font-size:12px; margin:16px 0 8px 0; }
+
+    .footer { text-align:center; color:#888; font-size:9px; margin-top:24px; padding-top:12px; border-top:1px solid #E7E7E7; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="brand-header">
-            <div class="brand-left">
-                <img class="logo" src="{{ public_path('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
-                <div class="company-name">Le Pharaon</div>
-            </div>
-            <div class="right">
-                Comparatif des notes — Équipe {{ $equipe }}<br>
-                Généré le {{ $date }}
-            </div>
-        </div>
 
-        <div class="header">
-            <h1>Notes par membre — {{ $equipe }}</h1>
-            <p>Comparaison des notes d'évaluation sur les 6 derniers mois</p>
-        </div>
+<!-- ═══════════════ EN-TÊTE ═══════════════ -->
+<div class="header">
+    @php
+        $logoPath = public_path('storage/avatars/logo-pharaon.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : null;
+    @endphp
+    @if($logoBase64)
+        <img src="{{ $logoBase64 }}" alt="Le Pharaon">
+    @endif
+    <h1>COMPARATIF DES NOTES</h1>
+    <h2>ÉQUIPE {{ strtoupper($equipe) }}</h2>
+    <div class="meta">Comparaison des notes d'évaluation sur 6 mois — Généré le {{ $date }}</div>
+</div>
 
-        @if(!empty($notesParEmploye))
-        <div class="card">
-            <h2>Tableau comparatif</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Employé</th>
-                        @foreach(($notesParEmploye[0]['moisListe'] ?? []) as $m)
-                            <th style="text-align:center;">{{ $m['label'] }}</th>
-                        @endforeach
-                        <th style="text-align:center;">Moyenne</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($notesParEmploye as $emp)
-                    <tr>
-                        <td style="font-weight:bold;">{{ $emp['nom'] }}</td>
-                        @foreach($emp['moisListe'] as $m)
-                            @php $cell = $emp['notes'][$m['mois']] ?? null; @endphp
-                            <td style="text-align:center;">
-                                @if($cell && $cell['note'] > 0)
-                                    <span class="badge {{ $cell['couleur'] }}">{{ $cell['note'] }}/20</span>
-                                @else
-                                    <span style="color:#9ca3af;">—</span>
-                                @endif
-                            </td>
-                        @endforeach
-                        <td style="text-align:center;">
-                            <span class="badge {{ $emp['couleur'] }}">{{ $emp['moyenne'] }}/20</span>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+<!-- ═══════════════ LÉGENDE ═══════════════ -->
+<div class="legend">
+    <span><span class="dot dot-vert"></span> Vert ≥ 14/20</span>
+    <span><span class="dot dot-orange"></span> Orange 10–13/20</span>
+    <span><span class="dot dot-rouge"></span> Rouge &lt; 10/20</span>
+</div>
 
-        <div class="card">
-            <h2>Légende</h2>
-            <p style="font-size:11px; color:#6b7280; margin:0;">
-                🟢 Vert ≥ 14/20 — Excellent &nbsp;&nbsp;|&nbsp;&nbsp;
-                🟠 Orange 10-13/20 — Satisfaisant &nbsp;&nbsp;|&nbsp;&nbsp;
-                🔴 Rouge &lt; 10/20 — Critique
-            </p>
-        </div>
-        @else
-        <div class="card">
-            <p style="text-align:center; color:#9ca3af;">Aucune donnée disponible pour cette équipe.</p>
-        </div>
-        @endif
-
-        <div class="footer">
-            Document généré automatiquement par l'application de gestion de présence Le Pharaon.
-        </div>
+@if(!empty($notesParEmploye))
+<!-- ═══════════════ RÉSUMÉ ═══════════════ -->
+@php
+    $total = count($notesParEmploye);
+    $moyennes = array_map(fn($e) => $e['moyenne'], $notesParEmploye);
+    $moyGlobale = $total > 0 ? round(array_sum($moyennes) / $total, 1) : 0;
+    $verts = count(array_filter($notesParEmploye, fn($e) => $e['couleur'] === 'vert'));
+    $oranges = count(array_filter($notesParEmploye, fn($e) => $e['couleur'] === 'orange'));
+    $rouges = count(array_filter($notesParEmploye, fn($e) => $e['couleur'] === 'rouge'));
+@endphp
+<div class="summary">
+    <div class="summary-card">
+        <div class="value">{{ $total }}</div>
+        <div class="label">Membres</div>
     </div>
+    <div class="summary-card">
+        <div class="value">{{ number_format($moyGlobale, 1, ',', '') }}</div>
+        <div class="label">Note moyenne</div>
+    </div>
+    <div class="summary-card green">
+        <div class="value">{{ $verts }}</div>
+        <div class="label">Verts</div>
+    </div>
+    <div class="summary-card orange">
+        <div class="value">{{ $oranges }}</div>
+        <div class="label">Oranges</div>
+    </div>
+    <div class="summary-card red">
+        <div class="value">{{ $rouges }}</div>
+        <div class="label">Rouges</div>
+    </div>
+</div>
+
+<!-- ═══════════════ TABLEAU ═══════════════ -->
+<div class="section-title">📊 Tableau comparatif des notes</div>
+<table>
+    <thead>
+        <tr>
+            <th style="width:20%">Employé</th>
+            @foreach(($notesParEmploye[0]['moisListe'] ?? []) as $m)
+                <th class="text-center" style="width:12%">{{ $m['label'] }}</th>
+            @endforeach
+            <th class="text-center" style="width:10%;background:#D39B23">Moyenne</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($notesParEmploye as $emp)
+        <tr>
+            <td style="font-weight:600">{{ $emp['nom'] }}</td>
+            @foreach($emp['moisListe'] as $m)
+                @php $cell = $emp['notes'][$m['mois']] ?? null; @endphp
+                <td class="text-center">
+                    @if($cell && $cell['note'] > 0)
+                        <span class="note note-{{ $cell['couleur'] }}">{{ number_format($cell['note'], 1, ',', '') }}</span>
+                    @else
+                        <span style="color:#ccc">—</span>
+                    @endif
+                </td>
+            @endforeach
+            <td class="text-center">
+                <span class="badge badge-{{ $emp['couleur'] }}">{{ number_format($emp['moyenne'], 1, ',', '') }}</span>
+            </td>
+        </tr>
+        @endforeach
+    </tbody>
+</table>
+
+<!-- ═══════════════ CLASSEMENT ═══════════════ -->
+<div class="section-title" style="background:#2E8B57">🏆 Classement par moyenne</div>
+<table>
+    <thead>
+        <tr>
+            <th style="width:8%">#</th>
+            <th>Employé</th>
+            <th class="text-center" style="width:15%">Moyenne /20</th>
+            <th class="text-center" style="width:15%">Statut</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($notesParEmploye as $i => $emp)
+        <tr>
+            <td style="font-weight:700;color:#D39B23">{{ $i + 1 }}</td>
+            <td style="font-weight:600">{{ $emp['nom'] }}</td>
+            <td class="text-center">
+                <span class="note note-{{ $emp['couleur'] }}">{{ number_format($emp['moyenne'], 1, ',', '') }}</span>
+            </td>
+            <td class="text-center">
+                <span class="badge badge-{{ $emp['couleur'] }}">
+                    {{ $emp['couleur'] === 'vert' ? 'EXCELLENT' : ($emp['couleur'] === 'orange' ? 'SATISFAISANT' : 'CRITIQUE') }}
+                </span>
+            </td>
+        </tr>
+        @endforeach
+    </tbody>
+</table>
+
+@else
+<div style="text-align:center;padding:40px;color:#888">Aucune donnée disponible pour cette équipe.</div>
+@endif
+
+<div class="footer">
+    Le Pharaon — Système de Gestion de Présence &bull; Document généré le {{ $date }}
+</div>
+
 </body>
 </html>

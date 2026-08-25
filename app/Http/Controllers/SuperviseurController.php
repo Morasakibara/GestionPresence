@@ -8,6 +8,7 @@ use App\Models\Superviseur;
 use App\Models\Presence;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class SuperviseurController extends Controller
 {
@@ -48,6 +49,38 @@ class SuperviseurController extends Controller
                             ->whereRaw('(HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0))')
                             ->count();
 
+        // Listes détaillées pour les modals au survol
+        $presentsAujourdhui = Presence::whereIn('employerID', $employerIds)
+            ->whereDate('date', $today)
+            ->where('status', 'present')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->select('utilisateur.nom', 'presence.heureArrivee', 'presence.heureDepart')
+            ->orderBy('presence.heureArrivee')
+            ->get();
+
+        $absentsAujourdhui = DB::table('utilisateur')
+            ->whereIn('id', $employerIds)
+            ->whereNotIn('id', Presence::whereDate('date', $today)->pluck('employerID'))
+            ->select('nom')
+            ->orderBy('nom')
+            ->get();
+
+        $arrivesAujourdhui = Presence::whereIn('employerID', $employerIds)
+            ->whereDate('date', $today)
+            ->whereNotNull('heureArrivee')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->select('utilisateur.nom', 'presence.heureArrivee')
+            ->orderBy('presence.heureArrivee')
+            ->get();
+
+        $partisAujourdhui = Presence::whereIn('employerID', $employerIds)
+            ->whereDate('date', $today)
+            ->whereNotNull('heureDepart')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->select('utilisateur.nom', 'presence.heureDepart')
+            ->orderBy('presence.heureDepart')
+            ->get();
+
         $unreadNotifications = $superviseur->unreadNotifications->count();
 
         $cacheKey = 'sup_evolution_' . $superviseur->id . '_' . now()->format('Y-m-d-H');
@@ -64,7 +97,11 @@ class SuperviseurController extends Controller
             'unreadNotifications',
             'evolutionEvaluations',
             'statsEvolution',
-            'notesParEmploye'
+            'notesParEmploye',
+            'presentsAujourdhui',
+            'absentsAujourdhui',
+            'arrivesAujourdhui',
+            'partisAujourdhui'
         ));
     }
 

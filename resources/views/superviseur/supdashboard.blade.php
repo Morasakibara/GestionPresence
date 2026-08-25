@@ -58,7 +58,7 @@
             <p class="text-sm text-gray-500">Présence et discipline des membres de votre équipe</p>
         </div>
     </div>
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <!-- Nombre de membres -->
         <div class="stat-card">
             <div class="stat-card-icon bg-blue-50 text-blue-600">
@@ -70,8 +70,8 @@
             <div class="stat-card-label">Membres d'équipe</div>
         </div>
 
-        <!-- Présents aujourd'hui -->
-        <div class="stat-card">
+        <!-- Présents aujourd'hui (hover modal) -->
+        <div class="stat-card relative group cursor-pointer">
             <div class="stat-card-icon bg-green-50 text-green-600">
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -79,10 +79,25 @@
             </div>
             <div class="stat-card-value">{{ $presentToday ?? 0 }}</div>
             <div class="stat-card-label">Présents aujourd'hui</div>
+            <!-- Modal au survol -->
+            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
+                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Personnes présentes</div>
+                @forelse($presentsAujourdhui as $p)
+                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
+                        <span class="text-sm font-medium text-gray-800">{{ $p->nom }}</span>
+                        <span class="text-xs text-green-600 font-semibold">
+                            {{ $p->heureArrivee ? \Carbon\Carbon::parse($p->heureArrivee)->format('H:i') : '—' }}
+                            @if($p->heureDepart) → {{ \Carbon\Carbon::parse($p->heureDepart)->format('H:i') }}@endif
+                        </span>
+                    </div>
+                @empty
+                    <p class="text-xs text-gray-400 py-2">Aucun employé présent</p>
+                @endforelse
+            </div>
         </div>
 
-        <!-- Absents aujourd'hui -->
-        <div class="stat-card">
+        <!-- Absents aujourd'hui (hover modal) -->
+        <div class="stat-card relative group cursor-pointer">
             <div class="stat-card-icon bg-red-50 text-red-600">
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -90,6 +105,18 @@
             </div>
             <div class="stat-card-value">{{ $absentToday ?? 0 }}</div>
             <div class="stat-card-label">Absents aujourd'hui</div>
+            <!-- Modal au survol -->
+            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
+                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Personnes absentes</div>
+                @forelse($absentsAujourdhui as $a)
+                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
+                        <span class="text-sm font-medium text-gray-800">{{ $a->nom }}</span>
+                        <span class="text-xs text-red-500 font-semibold">Absent</span>
+                    </div>
+                @empty
+                    <p class="text-xs text-gray-400 py-2">Tout le monde est présent 🎉</p>
+                @endforelse
+            </div>
         </div>
 
         <!-- Retards aujourd'hui -->
@@ -101,6 +128,56 @@
             </div>
             <div class="stat-card-value">{{ $lateToday ?? 0 }}</div>
             <div class="stat-card-label">Retards aujourd'hui</div>
+        </div>
+
+        <!-- Arrivés aujourd'hui (hover modal) -->
+        <div class="stat-card relative group cursor-pointer">
+            <div class="stat-card-icon bg-emerald-50 text-emerald-600">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7l4 4z" />
+                </svg>
+            </div>
+            <div class="stat-card-value">{{ $arrivesAujourdhui->count() }}</div>
+            <div class="stat-card-label">Arrivés aujourd'hui</div>
+            <!-- Modal au survol -->
+            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
+                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Heures d'arrivée</div>
+                @forelse($arrivesAujourdhui as $arr)
+                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
+                        <span class="text-sm font-medium text-gray-800">{{ $arr->nom }}</span>
+                        <span class="text-xs text-emerald-600 font-semibold">
+                            {{ $arr->heureArrivee ? \Carbon\Carbon::parse($arr->heureArrivee)->format('H:i') : '—' }}
+                        </span>
+                    </div>
+                @empty
+                    <p class="text-xs text-gray-400 py-2">Aucune arrivée enregistrée</p>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- Partis aujourd'hui (hover modal) -->
+        <div class="stat-card relative group cursor-pointer">
+            <div class="stat-card-icon bg-purple-50 text-purple-600">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4l4 4z" />
+                </svg>
+            </div>
+            <div class="stat-card-value">{{ $partisAujourdhui->count() }}</div>
+            <div class="stat-card-label">Partis aujourd'hui</div>
+            <!-- Modal au survol -->
+            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
+                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Heures de départ</div>
+                @forelse($partisAujourdhui as $par)
+                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
+                        <span class="text-sm font-medium text-gray-800">{{ $par->nom }}</span>
+                        <span class="text-xs text-purple-600 font-semibold">
+                            {{ $par->heureDepart ? \Carbon\Carbon::parse($par->heureDepart)->format('H:i') : '—' }}
+                        </span>
+                    </div>
+                @empty
+                    <p class="text-xs text-gray-400 py-2">Aucun départ enregistré</p>
+                @endforelse
+            </div>
         </div>
     </div>
 </div>

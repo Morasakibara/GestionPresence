@@ -159,9 +159,13 @@ class AdminReportController extends Controller
     public function exportEvaluationsPdf(Request $request)
     {
         $mois = $request->input('mois', now()->format('Y-m'));
+        $couleur = $request->input('couleur'); // vert, orange, rouge ou null (tous)
         $debut = $mois . '-01';
         $fin = now()->parse($debut)->endOfMonth()->toDateString();
         $titre = 'Toute l\'entreprise — ' . ucfirst(now()->parse($debut)->locale('fr')->isoFormat('MMMM YYYY'));
+        if ($couleur && in_array($couleur, ['vert', 'orange', 'rouge'])) {
+            $titre .= ' (Filtre : ' . strtoupper($couleur) . ')';
+        }
 
         $employes = DB::table('employer')
             ->join('utilisateur', 'employer.id', '=', 'utilisateur.id')
@@ -218,6 +222,11 @@ class AdminReportController extends Controller
             $historique[$employe->id] = $histEmp;
         }
 
+        // Filtre par couleur
+        if ($couleur && in_array($couleur, ['vert', 'orange', 'rouge'])) {
+            $reports = $reports->filter(fn($r) => ($r->evaluation_couleur ?? '') === $couleur);
+        }
+
         $reports = $reports->sortByDesc('evaluation_note');
 
         // Logo base64
@@ -226,8 +235,10 @@ class AdminReportController extends Controller
             ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
             : null;
 
+        $filtreCouleur = $couleur;
+
         $pdf = Pdf::loadView('pdf.evaluations-equipe', compact(
-            'reports', 'historique', 'titre', 'logoBase64'
+            'reports', 'historique', 'titre', 'logoBase64', 'filtreCouleur'
         ))->setOption([
             'dateDebut' => $debut,
             'dateFin' => $fin,
