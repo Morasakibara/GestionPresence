@@ -13,6 +13,12 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
+// Canal privé par utilisateur (notifications personnelles)
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
+});
+
+// Canal public pour les alertes de présence (admin + superviseurs)
+Broadcast::channel('presence-alerts', function ($user) {
+    return in_array($user->role, ['Administrateur', 'Superviseur']);
 });

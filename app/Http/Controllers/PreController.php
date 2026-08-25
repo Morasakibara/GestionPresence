@@ -95,6 +95,20 @@ class PreController extends Controller
         }
     }
 
+    // Diffuser l'arrivée en temps réel (WebSocket / polling)
+    \App\Events\PresenceArrived::dispatch(
+        $user->id,
+        $user->nom,
+        $now->format('H:i'),
+        $isRetard,
+        'present'
+    );
+    // Mettre à jour les compteurs en temps réel
+    $today = now()->toDateString();
+    $presentCount = Presence::whereDate('date', $today)->where('status', 'présent')->count();
+    $absentCount = \App\Models\Employer::count() - Presence::whereDate('date', $today)->count();
+    \App\Events\PresenceCountsUpdated::dispatch($presentCount, max(0, $absentCount));
+
     return redirect()->back()->with('success', 'Heure d\'arrivée marquée avec succès.');
 }    public function markDeparture(Request $request)
 {
@@ -149,6 +163,18 @@ class PreController extends Controller
         'localisation_validee_depart' => true,
         'rendement' => $request->input('rendement')
     ]);
+
+    // Diffuser le départ en temps réel
+    \App\Events\PresenceDeparted::dispatch(
+        $user->id,
+        $user->nom,
+        $now->format('H:i')
+    );
+    // Mettre à jour les compteurs
+    $today = now()->toDateString();
+    $presentCount = Presence::whereDate('date', $today)->where('status', 'présent')->count();
+    $absentCount = \App\Models\Employer::count() - Presence::whereDate('date', $today)->count();
+    \App\Events\PresenceCountsUpdated::dispatch($presentCount, max(0, $absentCount));
 
     return redirect()->back()->with('success', 'Heure de départ marquée avec succès.');
 }
