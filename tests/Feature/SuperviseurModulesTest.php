@@ -917,7 +917,7 @@ class SuperviseurModulesTest extends TestCase
     {
         $sup = $this->loginSuperviseur('directrice');
         $response = $this->post('/directrice/retraits', [
-            'montant' => 999999999,
+            'montant' => 50000000,
             'motif' => 'Test retrait sans fonds.',
         ]);
         $response->assertStatus(302);
@@ -929,7 +929,7 @@ class SuperviseurModulesTest extends TestCase
         $sup = $this->loginSuperviseur('secretaire');
         // Montant énorme qui dépassera forcément la caisse
         $response = $this->post('/secretaire/retraits', [
-            'montant' => 999999999,
+            'montant' => 50000000,
             'motif' => 'Test retrait sans fonds.',
         ]);
         $response->assertStatus(302);

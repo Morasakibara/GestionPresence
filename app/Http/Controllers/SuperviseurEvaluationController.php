@@ -47,7 +47,7 @@ class SuperviseurEvaluationController extends Controller
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
 
-        extract($info); // $equipe, $employerIds, $superviseur
+        $equipe = $info["equipe"]; $employerIds = $info["employerIds"]; $superviseur = $info["superviseur"];
 
         $users = Utilisateur::whereIn('id', $employerIds)->get();
         $debut = now()->startOfMonth()->toDateString();
@@ -127,7 +127,8 @@ class SuperviseurEvaluationController extends Controller
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
 
-        extract($info);
+        $equipe = $info["equipe"]; $employerIds = $info["employerIds"]; $superviseur = $info["superviseur"];
+        $superviseurInfo = $info["superviseurInfo"];
 
         $debut = now()->startOfMonth()->toDateString();
         $fin = now()->endOfMonth()->toDateString();
@@ -222,7 +223,8 @@ class SuperviseurEvaluationController extends Controller
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
 
-        extract($info);
+        $equipe = $info["equipe"]; $employerIds = $info["employerIds"]; $superviseur = $info["superviseur"];
+        $superviseurInfo = $info["superviseurInfo"];
 
         $mois = $request->input('mois', now()->format('Y-m'));
         $couleur = $request->input('couleur'); // vert, orange, rouge ou null

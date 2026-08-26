@@ -167,7 +167,7 @@ abstract class AbstractCaisseController extends Controller
     {
         $request->validate([
             'type'    => 'required|string|in:' . implode(',', array_keys($this->types())),
-            'montant' => 'required|numeric|min:0.01',
+            'montant' => 'required|numeric|min:0.01|max:100000000',
             'details' => 'nullable|string|max:1000',
         ]);
 
@@ -196,7 +196,7 @@ abstract class AbstractCaisseController extends Controller
     public function updateService(Request $request, $id)
     {
         $request->validate([
-            'montant' => 'required|numeric|min:0.01',
+            'montant' => 'required|numeric|min:0.01|max:100000000',
             'details' => 'nullable|string|max:1000',
         ]);
 
@@ -235,7 +235,7 @@ abstract class AbstractCaisseController extends Controller
     public function storeRetrait(Request $request)
     {
         $request->validate([
-            'montant' => 'required|numeric|min:0.01',
+            'montant' => 'required|numeric|min:0.01|max:100000000',
             'motif'   => 'required|string|max:500',
         ]);
 

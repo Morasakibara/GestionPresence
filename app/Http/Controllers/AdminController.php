@@ -94,7 +94,7 @@ class AdminController extends Controller
         $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIdsFiltre, 6);
         $statsEvolution = \App\Services\EvaluationService::statsEvolution($evolutionEvaluations);
 
-        $caisseChart = Cache::remember('admin_caisse_chart_' . now()->format('Y-m-d'), 300, function () {
+        $caisseChart = Cache::remember('admin_caisse_chart_' . now()->format('Y-m-d-H'), 120, function () {
             $labels = [];
             $entrees = [];
             $sorties = [];

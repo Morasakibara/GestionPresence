@@ -132,10 +132,14 @@ class SuperviseurController extends Controller
 
         $viewMoreUrl = route('viewUser', ['id' => $utilisateur->id]);
 
+        $safeNom = e($utilisateur->nom);
+        $safeEmail = e($utilisateur->email);
+        $avatarUrl = asset('storage/avatars/'.($utilisateur->avatar ?: 'default.png'));
+
         $detailsHtml = "
-            <p><strong>Nom:</strong> {$utilisateur->nom}</p>
-            <p><strong>Email:</strong> {$utilisateur->email}</p>
-            <img src='".asset('storage/avatars/'.($utilisateur->avatar ?: 'default.png'))."' alt='{$utilisateur->nom}' width='100'>
+            <p><strong>Nom:</strong> {$safeNom}</p>
+            <p><strong>Email:</strong> {$safeEmail}</p>
+            <img src='".e($avatarUrl)."' alt='{$safeNom}' width='100'>
         ";
 
         return response()->json([
