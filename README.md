@@ -1,6 +1,6 @@
 # 🏛️ Le Pharaon — Système de Gestion de Présence
 
-Application web de gestion de présence pour entreprise, développée avec **Laravel 11** et **Tailwind CSS**. Géolocalisation, évaluations, caisse, rapports PDF/CSV, alertes temps réel.
+Application web de gestion de présence pour entreprise, développée avec **Laravel 11** et **Tailwind CSS**. Géolocalisation, évaluations, caisse, rapports PDF/CSV, alertes temps réel, WebSocket, système PIN.
 
 ---
 
@@ -27,6 +27,7 @@ Application web de gestion de présence pour entreprise, développée avec **Lar
 - 4 types de superviseur : Classique (A), Directrice, Secrétaire, Gestionnaire de stock
 - Gestion des profils avec avatar upload
 - **Soft Deletes** pour la rétention des données
+- **Récupération de session par PIN** : lorsqu'une session expire, un code PIN 4 chiffres (enregistré dans les paramètres) permet de récupérer la session sans se reconnecter. Modal de récupération design login-like avec lien vers la page de connexion
 
 ### 📍 Présence & Géolocalisation
 - Pointage arrivée/départ avec **géolocalisation obligatoire**
@@ -34,20 +35,28 @@ Application web de gestion de présence pour entreprise, développée avec **Lar
 - Fiche de rendement obligatoire au départ
 - **Détection automatique des retards** (après 8h)
 - Alerte automatique des absences (scheduler)
-- **WebSocket temps réel** (Soketi/Pusher) avec fallback polling
+- **Alertes temps réel** via WebSocket (Soketi) avec fallback polling HTTP 10s
+- Toasts animés (slide-in, pulse, glow) avec barre de progression
+- **Sons custom** : triple beep retard, double bip arrivée, bip moyen départ (Web Audio API)
+- Notifications navigateur (nouveaux arrivés/départs)
+- Bouton on/off son dans la navbar (persisté localStorage)
 
 ### 🏆 Évaluations
 - Notation 0-20 par mois (automatique + manuelle)
 - Système couleur : 🟢 Vert (≥14) / 🟠 Orange (10-13) / 🔴 Rouge (<10)
 - Graphiques d'évolution sur 6 mois (Chart.js)
-- Export PDF des bulletins d'évaluation
+- Export PDF des bulletins d'évaluation (filtrable par couleur)
+- PDF comparatif des notes par membre d'équipe
 
 ### 💰 Caisse (Directrice & Secrétaire)
-- Enregistrement de commandes (avec statuts : payé/partiel/à payer)
-- Enregistrement de services fournis
-- Gestion des retraits avec motif
-- Suivi des impayés et encaissements partiels
-- Tableau de bord avec graphiques 7 jours
+- Enregistrement de commandes (avec statuts : payé / partiel / à payer à la livraison)
+- Gestion des impayés : montant restant enregistré négativement dans la caisse
+- Enregistrement de services fournis (par catégorie avec totaux détaillés)
+- Gestion des retraits avec motif (affichés séparément des commandes)
+- Suivi des encaissements partiels avec modal d'encaissement du solde restant
+- Tableau de bord avec graphiques Chart.js (7 jours)
+- **Persistance des données** : les données de la journée sont maintenues après déconnexion/reconnexion
+- Modales au clic pour voir les détails des présences/absences
 
 ### 📦 Gestion de stock (Gestionnaire)
 - T-shirts (couleur, taille, quantité, seuil d'alerte)
@@ -56,23 +65,33 @@ Application web de gestion de présence pour entreprise, développée avec **Lar
 
 ### 📊 Rapports & Exports
 - PDF avec charte graphique Le Pharaon
-- CSV avec en-tête professionnel
+- CSV avec en-tête professionnel et logo
 - HTML pour impression directe
 - Graphiques d'évolution (Chart.js)
 - Filtres par date, type, statut, couleur
+- Rapports comparatifs employés (admin + superviseur)
 
 ### 🔔 Notifications & Alertes
 - Notifications push (Retard, Absence, Évaluation rouge, Congé)
-- **Alertes temps réel** via WebSocket avec animations CSS premium
-- Bouton on/off son personnalisé (Web Audio API)
-- Notifications navigateur (nouveaux arrivés/départs)
+- **WebSocket temps réel** (Soketi/Pusher-compatible) avec fallback polling
+- **Modales au clic** sur les blocs de stats (admin + superviseur)
+  - Présents : nom + heure arrivée → heure départ
+  - Absents : nom + statut
+  - Arrivés : nom + heure d'arrivée
+  - Partis : nom + heure de départ
+- **API temps réel** : `/api/presence-alerts?since=...`
+- Son custom pour alertes retard (Web Audio API, zéro dépendance externe)
 
 ### 🔒 Sécurité
 - CSRF protection (Laravel middleware)
 - Policies Laravel pour l'autorisation (6 policies)
 - Audit trail complet (table `audit_logs`)
-- Géolocalisation anti-triche (signature serveur)
+- Géolocalisation anti-triche (signature serveur, heure serveur, vérifications croisées)
 - Rate limiting sur authentification
+- **PIN de récupération de session** : code 4 chiffres (hashé bcrypt) pour reprendre une session expirée
+- Validation `max:100000000` sur tous les montants
+- XSS protégé (`e()`) sur les données utilisateur dynamiques
+- Index de performance sur les colonnes fréquemment requêtées
 
 ---
 
@@ -89,6 +108,7 @@ Application web de gestion de présence pour entreprise, développée avec **Lar
 | **Auth** | Laravel Sanctum (API) |
 | **Build** | Vite |
 | **Tests** | PHPUnit 10 |
+| **Sons** | Web Audio API (synthèse native) |
 
 ---
 
@@ -101,13 +121,16 @@ app/
 │   │   ├── AbstractCaisseController.php    ← Template Method (CRUD caisse)
 │   │   ├── DirectriceController.php        ← extends Abstract (18 lignes)
 │   │   ├── SecretaireController.php        ← extends Abstract (20 lignes)
-│   │   ├── AdminController.php             ← Dashboard + métriques
+│   │   ├── AdminController.php             ← Dashboard + métriques + modales
 │   │   ├── AdminEmployeeController.php     ← CRUD employés
 │   │   ├── AdminReportController.php       ← Rapports + évaluations
 │   │   ├── AdminFinanceController.php      ← Finance + stock
-│   │   ├── SuperviseurController.php       ← Dashboard + team mgmt
+│   │   ├── SuperviseurController.php       ← Dashboard + team mgmt + modales
 │   │   ├── SuperviseurEvaluationController.php ← Évaluations + rapports
-│   │   ├── PreController.php               ← Pointage présence
+│   │   ├── PreController.php               ← Pointage présence + Events WebSocket
+│   │   ├── PinController.php               ← Vérification/setup PIN
+│   │   ├── PinSettingsController.php       ← Page settings PIN
+│   │   ├── PresenceAlertController.php     ← API temps réel (polling)
 │   │   └── ...
 │   ├── Middleware/
 │   │   ├── IsAdmin.php
@@ -116,7 +139,7 @@ app/
 │   └── Policies/                           ← 6 policies
 ├── Models/                                 ← 17 modèles
 ├── Services/                               ← 10 services métier
-├── Events/                                 ← 3 events broadcast
+├── Events/                                 ← 3 events broadcast (WebSocket)
 ├── Notifications/                          ← 7 notifications
 └── Console/
     └── Commands/                           ← 3 commands artisan
@@ -126,8 +149,9 @@ app/
 - **Template Method** : `AbstractCaisseController` mutualise Directrice/Secrétaire
 - **Service Layer** : `CaisseService`, `EvaluationService`, `ExportService`
 - **Policy** : Autorisation centralisée par modèle
-- **Event/Listener** : WebSocket temps réel via Broadcast
+- **Event/Listener** : WebSocket temps réel via Broadcast (PresenceArrived, PresenceDeparted, PresenceCountsUpdated)
 - **Command** : Tâches artisan (alertes, auto-absences)
+- **Web Audio API** : Synthèse de sons sans fichier externe
 
 ---
 
@@ -196,6 +220,9 @@ L'app est accessible sur `http://localhost:8000`
 
 > **Note** : Pour accéder au formulaire d'ajout d'admin, il faut un token secret saisi manuellement.
 
+### Système PIN
+Chaque utilisateur peut configurer un PIN 4 chiffres dans **Paramètres → PIN**. Lorsqu'une session expire, la modal de récupération PIN s'affiche automatiquement, permettant de reprendre la session sans se reconnecter.
+
 ---
 
 ## 🛤️ Routes principales
@@ -207,10 +234,19 @@ L'app est accessible sur `http://localhost:8000`
 | POST | `/login` | Traitement connexion |
 | GET | `/auth/role_selection` | Sélection de rôle (superviseur) |
 
+### PIN (Récupération de session)
+| Méthode | URI | Description |
+|---|---|---|
+| POST | `/pin/verify` | Vérifier le PIN |
+| POST | `/pin/setup` | Enregistrer/modifier le PIN |
+| POST | `/pin/disable` | Désactiver le PIN |
+| GET | `/pin/status` | Statut PIN de l'utilisateur connecté |
+| GET | `/settings/pin` | Page de configuration PIN |
+
 ### Admin
 | Méthode | URI | Description |
 |---|---|---|
-| GET | `/admin/dashboard` | Tableau de bord admin |
+| GET | `/admin/dashboard` | Tableau de bord admin (6 blocs + modales) |
 | GET | `/admin/add-employee` | Formulaire ajout employé |
 | GET | `/admin/list-employees` | Liste des employés |
 | GET | `/admin/generate-report` | Génération de rapports |
@@ -222,12 +258,13 @@ L'app est accessible sur `http://localhost:8000`
 ### Directrice
 | Méthode | URI | Description |
 |---|---|---|
-| GET | `/directrice/dashboard` | Dashboard caisse |
-| GET/POST | `/directrice/commandes` | CRUD commandes |
-| GET/POST | `/directrice/services` | CRUD services |
-| GET/POST | `/directrice/retraits` | CRUD retraits |
+| GET | `/directrice/dashboard` | Dashboard caisse + graphiques |
+| GET/POST | `/directrice/commandes` | CRUD commandes (payé/partiel/à payer) |
+| GET/POST | `/directrice/services` | CRUD services (par catégorie) |
+| GET/POST | `/directrice/retraits` | CRUD retraits avec motif |
+| POST | `/directrice/commandes/{id}/encaisser` | Encaisser le solde restant |
 | GET | `/directrice/rapport` | Rapport hebdo |
-| GET | `/directrice/rapport/export` | Export CSV |
+| GET | `/directrice/rapport/export` | Export CSV (entrées/sorties) |
 | GET | `/directrice/rapport/export/pdf` | Export PDF |
 
 ### Secrétaire
@@ -236,7 +273,7 @@ Même structure que la directrice avec `/secretaire/` et types photo (shooting, 
 ### Superviseur
 | Méthode | URI | Description |
 |---|---|---|
-| GET | `/superviseur/supdashboard` | Dashboard équipe |
+| GET | `/superviseur/supdashboard` | Dashboard équipe (6 blocs + modales) |
 | GET | `/superviseur/follow-presence` | Suivi présences |
 | GET | `/superviseur/add-member` | Ajout membre équipe |
 | GET | `/superviseur/generate-report2` | Rapport équipe |
@@ -251,6 +288,11 @@ Même structure que la directrice avec `/secretaire/` et types photo (shooting, 
 | POST | `/mark-departure` | Marquer départ + rendement |
 | GET | `/user/conges` | Mes congés |
 | GET | `/user/evaluations` | Mes évaluations |
+
+### API Temps réel
+| Méthode | URI | Description |
+|---|---|---|
+| GET | `/api/presence-alerts?since=` | Derniers événements présence (polling) |
 
 ---
 
@@ -272,6 +314,11 @@ Même structure que la directrice avec `/secretaire/` et types photo (shooting, 
 - **workplace_locations** — Lieux de travail géolocalisés
 - **audit_logs** — Trail d'audit complet
 - **notifications** — Notifications push Laravel
+
+### Champs PIN
+La table `utilisateur` contient :
+- `pin_code` — Hash bcrypt du PIN (VARCHAR(255))
+- `pin_required` — Booléen activant le mode PIN
 
 ### Index de performance
 - `presence`: `[date, status]`, `[date, employerID]`, `[employerID, date]`
@@ -308,6 +355,26 @@ APP_URL=http://localhost:8000
 Les lieux de travail sont configurables via l'admin :
 - `admin/workplace-locations` — CRUD des lieux
 - Chaque lieu a : nom, latitude, longitude, rayon (mètres), statut actif/inactif
+
+### WebSocket (Soketi)
+```bash
+# Installer
+npm install -g @soketi/soketi
+
+# Lancer
+soketi start --config=soketi.config.json
+
+# Fallback
+Si Soketi n'est pas lancé, le système bascule automatiquement
+sur le polling HTTP toutes les 10 secondes.
+```
+
+### Système de sons
+Les alertes sonores sont gérées via la Web Audio API (aucun fichier externe) :
+- **Retard** : Triple beep grave (380Hz → 520Hz)
+- **Arrivée** : Double bip aigu bref (880Hz → 1100Hz)
+- **Départ** : Bip moyen doux (660Hz → 550Hz)
+- Le bouton 🔊 dans la navbar permet d'activer/désactiver les sons
 
 ---
 
@@ -369,15 +436,21 @@ soketi start --config=soketi.config.json &
 | Fichier | Rôle |
 |---|---|
 | `app/Http/Controllers/AbstractCaisseController.php` | Template CRUD caisse |
+| `app/Http/Controllers/PinController.php` | Vérification/setup PIN |
+| `app/Http/Controllers/PresenceAlertController.php` | API temps réel (polling) |
 | `app/Services/CaisseService.php` | Logique métier caisse |
 | `app/Services/EvaluationService.php` | Calculs évaluations |
 | `app/Services/ExportService.php` | Exports CSV/HTML |
 | `app/Services/RapportCaissePdfService.php` | Génération PDF |
 | `app/Services/LoginAttemptService.php` | Anti brute-force |
 | `app/Http/Middleware/CheckUserRoleAndNetwork.php` | Routing par rôle |
-| `public/js/presence-alerts.js` | WebSocket + polling |
+| `app/Events/PresenceArrived.php` | Event broadcast arrivée |
+| `app/Events/PresenceDeparted.php` | Event broadcast départ |
+| `app/Events/PresenceCountsUpdated.php` | Event broadcast compteurs |
+| `public/js/presence-alerts.js` | WebSocket + polling + toasts |
 | `public/js/alert-sound.js` | Son Web Audio API |
-| `public/css/presence-toasts.css` | Animations toasts |
+| `public/css/presence-toasts.css` | Animations toasts premium |
+| `soketi.config.json` | Config serveur WebSocket |
 
 ---
 
