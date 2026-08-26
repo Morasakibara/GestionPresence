@@ -8,7 +8,6 @@
 <a href="{{ route('gestionnaire.dashboard') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Dashboard</a>
 <a href="{{ route('gestionnaire.tshirts') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">T-Shirts</a>
 <a href="{{ route('gestionnaire.papier') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Papier</a>
-<a href="{{ route('superviseur.supdashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Équipe</a>
 @endsection
 
 @section('mobile-navigation')

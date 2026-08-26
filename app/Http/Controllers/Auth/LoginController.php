@@ -147,6 +147,7 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        \App\Http\Controllers\PinController::clearPinSession();
         Auth::logout();
         return redirect('/login');
     }

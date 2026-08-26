@@ -18,10 +18,11 @@ class Utilisateur extends Authenticatable
 
     protected $fillable = [
         'nom', 'email', 'motDePasse', 'role', 'avatar',
+        'pin_code', 'pin_required',
     ];
 
     protected $hidden = [
-        'motDePasse', 'remember_token',
+        'motDePasse', 'remember_token', 'pin_code',
     ];
 
     /**

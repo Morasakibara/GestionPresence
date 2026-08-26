@@ -239,4 +239,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
     Route::get('/api/notifications/check', [NotificationController::class, 'check'])->name('notifications.check');
+
+    // PIN session recovery
+    Route::post('/pin/verify', [App\Http\Controllers\PinController::class, 'verify'])->name('pin.verify');
+    Route::post('/pin/set', [App\Http\Controllers\PinController::class, 'setPin'])->name('pin.set');
+    Route::post('/pin/remove', [App\Http\Controllers\PinController::class, 'removePin'])->name('pin.remove');
+    Route::get('/pin/status', [App\Http\Controllers\PinController::class, 'checkStatus'])->name('pin.status');
+    Route::get('/pin/settings', [App\Http\Controllers\PinSettingsController::class, 'index'])->name('pin.settings');
 });

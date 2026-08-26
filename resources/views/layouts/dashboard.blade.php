@@ -39,10 +39,18 @@
                     </div>
                     <div class="hidden md:block">
                         <div class="flex items-center ml-4 md:ml-6">
-                            <!-- Sound toggle -->
+                            <!-- Sound toggle (caché pour directrice / secrétaire) -->
+                            @php
+                                $hideSound = in_array(
+                                    request()->route()->getPrefix() ?? '',
+                                    ['directrice', 'secretaire']
+                                );
+                            @endphp
+                            @if(!$hideSound)
                             <button id="soundToggle" onclick="AlertSound.toggle()" class="relative p-2 mr-3 text-gray-400 rounded-lg hover:text-pharaoh-gold hover:bg-white/10 transition-colors" title="Désactiver le son">
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
                             </button>
+                            @endif
                             <!-- Profile dropdown -->
                             <div class="relative ml-3">
                                 <div>
@@ -346,6 +354,12 @@
                                     });
                                     </script>
                                     @endif
+                                    <a href="{{ route('pin.settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">
+                                        <span class="flex items-center gap-2">
+                                            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                            Code PIN
+                                        </span>
+                                    </a>
                                     @if(Auth::check() && Auth::user()->role === 'Superviseur')
                                         <a href="{{ route('role.switch') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Changer de rôle</a>
                                     @endif
@@ -389,6 +403,7 @@
                     </div>
                     <div class="px-2 mt-3 space-y-1">
                         <a href="#" class="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:bg-pharaoh-gold hover:text-white">Votre Profil</a>
+                        <a href="{{ route('pin.settings') }}" class="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:bg-pharaoh-gold hover:text-white">Code PIN</a>
                         @if(Auth::check() && Auth::user()->role === 'Superviseur')
                             <a href="{{ route('role.switch') }}" class="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:bg-pharaoh-gold hover:text-white">Changer de rôle</a>
                         @endif
@@ -500,5 +515,174 @@
     <link rel="stylesheet" href="{{ asset('css/presence-toasts.css') }}">
     <script src="{{ asset('js/alert-sound.js') }}"></script>
     <script src="{{ asset('js/presence-alerts.js') }}"></script>
+
+    <!-- ══════════════ MODAL RÉCUPÉRATION PIN ══════════════ -->
+    <div id="pinModal" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div class="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+            <!-- En-tête avec logo -->
+            <div class="bg-[#080808] px-6 py-8 text-center">
+                <img class="mx-auto h-16 w-auto mb-4 drop-shadow-[0_2px_8px_rgba(211,155,35,0.35)]" src="{{ asset('/storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
+                <h2 class="text-xl font-bold text-white">Session expirée</h2>
+                <p class="mt-1 text-sm text-gray-400">Entrez votre code PIN pour récupérer votre session</p>
+            </div>
+
+            <!-- Formulaire PIN -->
+            <div class="px-6 py-6">
+                <div id="pinError" class="hidden mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm"></div>
+                <div id="pinSuccess" class="hidden mb-4 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm"></div>
+
+                <form id="pinForm" class="space-y-5">
+                    <div>
+                        <label for="pinInput" class="block text-sm font-medium text-gray-700 mb-2">Code PIN (4 chiffres)</label>
+                        <div class="flex justify-center gap-3">
+                            <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off"
+                                   class="pin-digit w-14 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:border-pharaoh-gold focus:ring-2 focus:ring-pharaoh-gold/30 focus:outline-none transition-colors"
+                                   data-index="0">
+                            <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off"
+                                   class="pin-digit w-14 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:border-pharaoh-gold focus:ring-2 focus:ring-pharaoh-gold/30 focus:outline-none transition-colors"
+                                   data-index="1">
+                            <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off"
+                                   class="pin-digit w-14 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:border-pharaoh-gold focus:ring-2 focus:ring-pharaoh-gold/30 focus:outline-none transition-colors"
+                                   data-index="2">
+                            <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off"
+                                   class="pin-digit w-14 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:border-pharaoh-gold focus:ring-2 focus:ring-pharaoh-gold/30 focus:outline-none transition-colors"
+                                   data-index="3">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="pinSubmit"
+                            class="w-full flex justify-center items-center gap-2 rounded-xl bg-pharaoh-gold px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-pharaoh-gold-light hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2 transition-all duration-200">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        Déverrouiller
+                    </button>
+                </form>
+
+                <!-- Séparateur -->
+                <div class="relative mt-5">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                    <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-400">ou</span></div>
+                </div>
+
+                <!-- Lien vers connexion complète -->
+                <div class="mt-5 text-center">
+                    <a href="{{ route('logouts') }}" id="pinLogoutLink"
+                       class="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-pharaoh-gold transition-colors">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                        </svg>
+                        Se connecter avec email & mot de passe
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        const pinModal = document.getElementById('pinModal');
+        if (!pinModal) return;
+
+        // ── Vérifier le statut PIN au chargement ──
+        fetch('{{ route('pin.status') }}', { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.pin_required) {
+                    pinModal.classList.remove('hidden');
+                    pinModal.classList.add('flex');
+                    document.body.classList.add('overflow-hidden');
+                    // Focus le premier champ
+                    document.querySelector('.pin-digit[data-index="0"]')?.focus();
+                }
+            })
+            .catch(() => {});
+
+        // ── Gestion des champs PIN ──
+        const digits = document.querySelectorAll('.pin-digit');
+        digits.forEach((input, idx) => {
+            input.addEventListener('input', function(e) {
+                const val = this.value.replace(/[^0-9]/g, '');
+                this.value = val;
+                if (val && idx < digits.length - 1) {
+                    digits[idx + 1].focus();
+                }
+                checkAllFilled();
+            });
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !this.value && idx > 0) {
+                    digits[idx - 1].focus();
+                    digits[idx - 1].value = '';
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('pinForm').dispatchEvent(new Event('submit'));
+                }
+            });
+            // Auto-sélection au clic
+            input.addEventListener('click', function() { this.select(); });
+        });
+
+        function checkAllFilled() {
+            let code = '';
+            digits.forEach(d => code += d.value);
+            if (code.length === 4) {
+                submitPin(code);
+            }
+        }
+
+        function submitPin(code) {
+            const errDiv = document.getElementById('pinError');
+            const succDiv = document.getElementById('pinSuccess');
+            const btn = document.getElementById('pinSubmit');
+            errDiv.classList.add('hidden');
+            succDiv.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Vérification...';
+
+            fetch('{{ route('pin.verify') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ pin: code })
+            })
+            .then(r => r.json().then(j => ({ ok: r.ok, data: j })))
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
+                    succDiv.textContent = '✅ Session restaurée ! Redirection...';
+                    succDiv.classList.remove('hidden');
+                    setTimeout(() => {
+                        window.location.href = data.redirect || window.location.href;
+                    }, 800);
+                } else {
+                    errDiv.textContent = data.error || 'Code PIN incorrect.';
+                    errDiv.classList.remove('hidden');
+                    digits.forEach(d => { d.value = ''; });
+                    digits[0].focus();
+                    btn.disabled = false;
+                    btn.innerHTML = '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> Déverrouiller';
+                }
+            })
+            .catch(() => {
+                errDiv.textContent = 'Erreur réseau. Vérifiez votre connexion.';
+                errDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerHTML = '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> Déverrouiller';
+            });
+        }
+
+        // Soumission du formulaire
+        document.getElementById('pinForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let code = '';
+            digits.forEach(d => code += d.value);
+            if (code.length === 4) submitPin(code);
+        });
+    })();
+    </script>
 </body>
 </html>
