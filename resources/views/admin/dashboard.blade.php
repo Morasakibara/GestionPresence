@@ -97,8 +97,8 @@
             <div class="stat-card-label">Total des superviseurs</div>
         </div>
 
-        <!-- Présents aujourd'hui (hover modal) -->
-        <div class="stat-card relative group cursor-pointer">
+        <!-- Présents aujourd'hui (clic modal) -->
+        <div class="stat-card cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all" onclick="toggleStatModal('admin-modal-presents')">
             <div class="stat-card-icon bg-blue-50 text-blue-600">
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -106,24 +106,11 @@
             </div>
             <div class="stat-card-value" data-count="present">{{ $presentToday ?? 0 }}</div>
             <div class="stat-card-label">Présents aujourd'hui</div>
-            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Personnes présentes</div>
-                @forelse($presentsAujourdhui as $p)
-                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
-                        <span class="text-sm font-medium text-gray-800">{{ $p->nom }}</span>
-                        <span class="text-xs text-blue-600 font-semibold">
-                            {{ $p->heureArrivee ? \Carbon\Carbon::parse($p->heureArrivee)->format('H:i') : '—' }}
-                            @if($p->heureDepart) → {{ \Carbon\Carbon::parse($p->heureDepart)->format('H:i') }}@endif
-                        </span>
-                    </div>
-                @empty
-                    <p class="text-xs text-gray-400 py-2">Aucun employé présent</p>
-                @endforelse
-            </div>
+            <div class="text-xs text-blue-600 mt-1 font-medium">Cliquez pour voir les détails ↓</div>
         </div>
 
-        <!-- Absents aujourd'hui (hover modal) -->
-        <div class="stat-card relative group cursor-pointer">
+        <!-- Absents aujourd'hui (clic modal) -->
+        <div class="stat-card cursor-pointer hover:ring-2 hover:ring-red-400 transition-all" onclick="toggleStatModal('admin-modal-absents')">
             <div class="stat-card-icon bg-red-50 text-red-600">
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -131,21 +118,11 @@
             </div>
             <div class="stat-card-value" data-count="absent">{{ $absentToday ?? 0 }}</div>
             <div class="stat-card-label">Absents aujourd'hui</div>
-            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Personnes absentes</div>
-                @forelse($absentsAujourdhui as $a)
-                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
-                        <span class="text-sm font-medium text-gray-800">{{ $a->nom }}</span>
-                        <span class="text-xs text-red-500 font-semibold">Absent</span>
-                    </div>
-                @empty
-                    <p class="text-xs text-gray-400 py-2">Tout le monde est présent 🎉</p>
-                @endforelse
-            </div>
+            <div class="text-xs text-red-500 mt-1 font-medium">Cliquez pour voir les détails ↓</div>
         </div>
 
-        <!-- Arrivés aujourd'hui (hover modal) -->
-        <div class="stat-card relative group cursor-pointer">
+        <!-- Arrivés aujourd'hui (clic modal) -->
+        <div class="stat-card cursor-pointer hover:ring-2 hover:ring-emerald-400 transition-all" onclick="toggleStatModal('admin-modal-arrives')">
             <div class="stat-card-icon bg-emerald-50 text-emerald-600">
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7l4 4z" />
@@ -153,21 +130,11 @@
             </div>
             <div class="stat-card-value">{{ $arrivesAujourdhui->count() }}</div>
             <div class="stat-card-label">Arrivés aujourd'hui</div>
-            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Heures d'arrivée</div>
-                @forelse($arrivesAujourdhui as $arr)
-                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
-                        <span class="text-sm font-medium text-gray-800">{{ $arr->nom }}</span>
-                        <span class="text-xs text-emerald-600 font-semibold">{{ \Carbon\Carbon::parse($arr->heureArrivee)->format('H:i') }}</span>
-                    </div>
-                @empty
-                    <p class="text-xs text-gray-400 py-2">Aucune arrivée enregistrée</p>
-                @endforelse
-            </div>
+            <div class="text-xs text-emerald-600 mt-1 font-medium">Cliquez pour voir les détails ↓</div>
         </div>
 
-        <!-- Partis aujourd'hui (hover modal) -->
-        <div class="stat-card relative group cursor-pointer">
+        <!-- Partis aujourd'hui (clic modal) -->
+        <div class="stat-card cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all" onclick="toggleStatModal('admin-modal-partis')">
             <div class="stat-card-icon bg-purple-50 text-purple-600">
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4l4 4z" />
@@ -175,17 +142,95 @@
             </div>
             <div class="stat-card-value">{{ $partisAujourdhui->count() }}</div>
             <div class="stat-card-label">Partis aujourd'hui</div>
-            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Heures de départ</div>
-                @forelse($partisAujourdhui as $par)
-                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
-                        <span class="text-sm font-medium text-gray-800">{{ $par->nom }}</span>
-                        <span class="text-xs text-purple-600 font-semibold">{{ \Carbon\Carbon::parse($par->heureDepart)->format('H:i') }}</span>
-                    </div>
-                @empty
-                    <p class="text-xs text-gray-400 py-2">Aucun départ enregistré</p>
-                @endforelse
-            </div>
+            <div class="text-xs text-purple-600 mt-1 font-medium">Cliquez pour voir les détails ↓</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ MODALS CLIQUABLES ADMIN ═══════════ -->
+<div id="admin-modal-presents" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'admin-modal-presents')">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm mx-4 p-5" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-gray-900">🟢 Personnes présentes</h3>
+            <button onclick="toggleStatModal('admin-modal-presents')" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="max-h-64 overflow-y-auto space-y-1">
+            @forelse($presentsAujourdhui as $p)
+                <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-blue-50 {{ !$loop->last ? 'border-b border-blue-100' : '' }}">
+                    <span class="text-sm font-semibold text-gray-800">{{ $p->nom }}</span>
+                    <span class="text-xs text-blue-700 font-bold">
+                        {{ $p->heureArrivee ? \Carbon\Carbon::parse($p->heureArrivee)->format('H:i') : '—' }}
+                        @if($p->heureDepart) → {{ \Carbon\Carbon::parse($p->heureDepart)->format('H:i') }}@endif
+                    </span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400 py-4 text-center">Aucun employé présent</p>
+            @endforelse
+        </div>
+    </div>
+</div>
+
+<div id="admin-modal-absents" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'admin-modal-absents')">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm mx-4 p-5" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-gray-900">🔴 Personnes absentes</h3>
+            <button onclick="toggleStatModal('admin-modal-absents')" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="max-h-64 overflow-y-auto space-y-1">
+            @forelse($absentsAujourdhui as $a)
+                <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-red-50 {{ !$loop->last ? 'border-b border-red-100' : '' }}">
+                    <span class="text-sm font-semibold text-gray-800">{{ $a->nom }}</span>
+                    <span class="text-xs text-red-600 font-bold">Absent</span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400 py-4 text-center">Tout le monde est présent 🎉</p>
+            @endforelse
+        </div>
+    </div>
+</div>
+
+<div id="admin-modal-arrives" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'admin-modal-arrives')">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm mx-4 p-5" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-gray-900">📥 Heures d'arrivée</h3>
+            <button onclick="toggleStatModal('admin-modal-arrives')" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="max-h-64 overflow-y-auto space-y-1">
+            @forelse($arrivesAujourdhui as $arr)
+                <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-emerald-50 {{ !$loop->last ? 'border-b border-emerald-100' : '' }}">
+                    <span class="text-sm font-semibold text-gray-800">{{ $arr->nom }}</span>
+                    <span class="text-xs text-emerald-700 font-bold">{{ \Carbon\Carbon::parse($arr->heureArrivee)->format('H:i') }}</span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400 py-4 text-center">Aucune arrivée enregistrée</p>
+            @endforelse
+        </div>
+    </div>
+</div>
+
+<div id="admin-modal-partis" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'admin-modal-partis')">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm mx-4 p-5" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-gray-900">📤 Heures de départ</h3>
+            <button onclick="toggleStatModal('admin-modal-partis')" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="max-h-64 overflow-y-auto space-y-1">
+            @forelse($partisAujourdhui as $par)
+                <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-purple-50 {{ !$loop->last ? 'border-b border-purple-100' : '' }}">
+                    <span class="text-sm font-semibold text-gray-800">{{ $par->nom }}</span>
+                    <span class="text-xs text-purple-700 font-bold">{{ \Carbon\Carbon::parse($par->heureDepart)->format('H:i') }}</span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400 py-4 text-center">Aucun départ enregistré</p>
+            @endforelse
         </div>
     </div>
 </div>
@@ -511,6 +556,37 @@
             document.body.removeChild(a);
         };
     });
+
+        // ═══════════ MODALS CLIQUABLES ═══════════
+        window.toggleStatModal = function(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            if (!modal.classList.contains('hidden')) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = '';
+            } else {
+                document.querySelectorAll('[id^="admin-modal-"]').forEach(m => {
+                    m.classList.add('hidden'); m.classList.remove('flex');
+                });
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+        };
+        window.closeStatModal = function(event, id) {
+            if (event.target === event.currentTarget) toggleStatModal(id);
+        };
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('[id^="admin-modal-"]').forEach(m => {
+                    if (!m.classList.contains('hidden')) {
+                        m.classList.add('hidden'); m.classList.remove('flex');
+                        document.body.style.overflow = '';
+                    }
+                });
+            }
+        });
 
         // Graphique CA consolidé 7 jours
         const ctxCaisse = document.getElementById('caisseConsolideChart');

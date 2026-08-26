@@ -96,18 +96,26 @@ class PreController extends Controller
     }
 
     // Diffuser l'arrivée en temps réel (WebSocket / polling)
-    \App\Events\PresenceArrived::dispatch(
-        $user->id,
-        $user->nom,
-        $now->format('H:i'),
-        $isRetard,
-        'present'
-    );
+    try {
+        \App\Events\PresenceArrived::dispatch(
+            $user->id,
+            $user->nom,
+            $now->format('H:i'),
+            $isRetard,
+            'present'
+        );
+    } catch (\Throwable $e) {
+        \Log::warning('Broadcast arrival failed: ' . $e->getMessage());
+    }
     // Mettre à jour les compteurs en temps réel
     $today = now()->toDateString();
     $presentCount = Presence::whereDate('date', $today)->where('status', 'présent')->count();
     $absentCount = \App\Models\Employer::count() - Presence::whereDate('date', $today)->count();
-    \App\Events\PresenceCountsUpdated::dispatch($presentCount, max(0, $absentCount));
+    try {
+        \App\Events\PresenceCountsUpdated::dispatch($presentCount, max(0, $absentCount));
+    } catch (\Throwable $e) {
+        \Log::warning('Broadcast counts failed: ' . $e->getMessage());
+    }
 
     return redirect()->back()->with('success', 'Heure d\'arrivée marquée avec succès.');
 }    public function markDeparture(Request $request)
@@ -165,16 +173,24 @@ class PreController extends Controller
     ]);
 
     // Diffuser le départ en temps réel
-    \App\Events\PresenceDeparted::dispatch(
-        $user->id,
-        $user->nom,
-        $now->format('H:i')
-    );
+    try {
+        \App\Events\PresenceDeparted::dispatch(
+            $user->id,
+            $user->nom,
+            $now->format('H:i')
+        );
+    } catch (\Throwable $e) {
+        \Log::warning('Broadcast departure failed: ' . $e->getMessage());
+    }
     // Mettre à jour les compteurs
     $today = now()->toDateString();
     $presentCount = Presence::whereDate('date', $today)->where('status', 'présent')->count();
     $absentCount = \App\Models\Employer::count() - Presence::whereDate('date', $today)->count();
-    \App\Events\PresenceCountsUpdated::dispatch($presentCount, max(0, $absentCount));
+    try {
+        \App\Events\PresenceCountsUpdated::dispatch($presentCount, max(0, $absentCount));
+    } catch (\Throwable $e) {
+        \Log::warning('Broadcast counts failed: ' . $e->getMessage());
+    }
 
     return redirect()->back()->with('success', 'Heure de départ marquée avec succès.');
 }

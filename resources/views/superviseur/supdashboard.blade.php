@@ -19,7 +19,6 @@
 @endsection
 
 @section('navigation')
-<!-- Current: "bg-pharaoh-gold text-white", Default: "text-gray-300 hover:bg-pharaoh-gold hover:text-white" -->
 <a href="{{ route('superviseur.supdashboard') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Tableau de bord</a>
 <a href="{{ route('superviseur.showAddMember') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Ajout de membre</a>
 <a href="{{ route('superviseur.showFollowPresence') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Suivre les présences</a>
@@ -70,8 +69,8 @@
             <div class="stat-card-label">Membres d'équipe</div>
         </div>
 
-        <!-- Présents aujourd'hui (hover modal) -->
-        <div class="stat-card relative group cursor-pointer">
+        <!-- Présents aujourd'hui (clic modal) -->
+        <div class="stat-card cursor-pointer hover:ring-2 hover:ring-green-400 transition-all" onclick="toggleStatModal('modal-presents')">
             <div class="stat-card-icon bg-green-50 text-green-600">
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -79,25 +78,11 @@
             </div>
             <div class="stat-card-value" data-count="present">{{ $presentToday ?? 0 }}</div>
             <div class="stat-card-label">Présents aujourd'hui</div>
-            <!-- Modal au survol -->
-            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Personnes présentes</div>
-                @forelse($presentsAujourdhui as $p)
-                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
-                        <span class="text-sm font-medium text-gray-800">{{ $p->nom }}</span>
-                        <span class="text-xs text-green-600 font-semibold">
-                            {{ $p->heureArrivee ? \Carbon\Carbon::parse($p->heureArrivee)->format('H:i') : '—' }}
-                            @if($p->heureDepart) → {{ \Carbon\Carbon::parse($p->heureDepart)->format('H:i') }}@endif
-                        </span>
-                    </div>
-                @empty
-                    <p class="text-xs text-gray-400 py-2">Aucun employé présent</p>
-                @endforelse
-            </div>
+            <div class="text-xs text-green-600 mt-1 font-medium">Cliquez pour voir les détails ↓</div>
         </div>
 
-        <!-- Absents aujourd'hui (hover modal) -->
-        <div class="stat-card relative group cursor-pointer">
+        <!-- Absents aujourd'hui (clic modal) -->
+        <div class="stat-card cursor-pointer hover:ring-2 hover:ring-red-400 transition-all" onclick="toggleStatModal('modal-absents')">
             <div class="stat-card-icon bg-red-50 text-red-600">
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -105,18 +90,7 @@
             </div>
             <div class="stat-card-value" data-count="absent">{{ $absentToday ?? 0 }}</div>
             <div class="stat-card-label">Absents aujourd'hui</div>
-            <!-- Modal au survol -->
-            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Personnes absentes</div>
-                @forelse($absentsAujourdhui as $a)
-                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
-                        <span class="text-sm font-medium text-gray-800">{{ $a->nom }}</span>
-                        <span class="text-xs text-red-500 font-semibold">Absent</span>
-                    </div>
-                @empty
-                    <p class="text-xs text-gray-400 py-2">Tout le monde est présent 🎉</p>
-                @endforelse
-            </div>
+            <div class="text-xs text-red-500 mt-1 font-medium">Cliquez pour voir les détails ↓</div>
         </div>
 
         <!-- Retards aujourd'hui -->
@@ -130,8 +104,8 @@
             <div class="stat-card-label">Retards aujourd'hui</div>
         </div>
 
-        <!-- Arrivés aujourd'hui (hover modal) -->
-        <div class="stat-card relative group cursor-pointer">
+        <!-- Arrivés aujourd'hui (clic modal) -->
+        <div class="stat-card cursor-pointer hover:ring-2 hover:ring-emerald-400 transition-all" onclick="toggleStatModal('modal-arrives')">
             <div class="stat-card-icon bg-emerald-50 text-emerald-600">
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7l4 4z" />
@@ -139,24 +113,11 @@
             </div>
             <div class="stat-card-value">{{ $arrivesAujourdhui->count() }}</div>
             <div class="stat-card-label">Arrivés aujourd'hui</div>
-            <!-- Modal au survol -->
-            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Heures d'arrivée</div>
-                @forelse($arrivesAujourdhui as $arr)
-                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
-                        <span class="text-sm font-medium text-gray-800">{{ $arr->nom }}</span>
-                        <span class="text-xs text-emerald-600 font-semibold">
-                            {{ $arr->heureArrivee ? \Carbon\Carbon::parse($arr->heureArrivee)->format('H:i') : '—' }}
-                        </span>
-                    </div>
-                @empty
-                    <p class="text-xs text-gray-400 py-2">Aucune arrivée enregistrée</p>
-                @endforelse
-            </div>
+            <div class="text-xs text-emerald-600 mt-1 font-medium">Cliquez pour voir les détails ↓</div>
         </div>
 
-        <!-- Partis aujourd'hui (hover modal) -->
-        <div class="stat-card relative group cursor-pointer">
+        <!-- Partis aujourd'hui (clic modal) -->
+        <div class="stat-card cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all" onclick="toggleStatModal('modal-partis')">
             <div class="stat-card-icon bg-purple-50 text-purple-600">
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4l4 4z" />
@@ -164,20 +125,106 @@
             </div>
             <div class="stat-card-value">{{ $partisAujourdhui->count() }}</div>
             <div class="stat-card-label">Partis aujourd'hui</div>
-            <!-- Modal au survol -->
-            <div class="hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-                <div class="mb-2 text-xs font-bold uppercase text-gray-500">Heures de départ</div>
-                @forelse($partisAujourdhui as $par)
-                    <div class="flex items-center justify-between py-1.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
-                        <span class="text-sm font-medium text-gray-800">{{ $par->nom }}</span>
-                        <span class="text-xs text-purple-600 font-semibold">
-                            {{ $par->heureDepart ? \Carbon\Carbon::parse($par->heureDepart)->format('H:i') : '—' }}
-                        </span>
-                    </div>
-                @empty
-                    <p class="text-xs text-gray-400 py-2">Aucun départ enregistré</p>
-                @endforelse
-            </div>
+            <div class="text-xs text-purple-600 mt-1 font-medium">Cliquez pour voir les détails ↓</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- MODALS CLIQUABLES (overlay + close on click outside) -->
+<!-- ═══════════════════════════════════════════════════ -->
+
+<!-- Modal Présents -->
+<div id="modal-presents" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'modal-presents')">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm mx-4 p-5 transform transition-all" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-gray-900">🟢 Personnes présentes</h3>
+            <button onclick="toggleStatModal('modal-presents')" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="max-h-64 overflow-y-auto space-y-1">
+            @forelse($presentsAujourdhui as $p)
+                <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-green-50 {{ !$loop->last ? 'border-b border-green-100' : '' }}">
+                    <span class="text-sm font-semibold text-gray-800">{{ $p->nom }}</span>
+                    <span class="text-xs text-green-700 font-bold">
+                        {{ $p->heureArrivee ? \Carbon\Carbon::parse($p->heureArrivee)->format('H:i') : '—' }}
+                        @if($p->heureDepart) → {{ \Carbon\Carbon::parse($p->heureDepart)->format('H:i') }}@endif
+                    </span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400 py-4 text-center">Aucun employé présent</p>
+            @endforelse
+        </div>
+    </div>
+</div>
+
+<!-- Modal Absents -->
+<div id="modal-absents" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'modal-absents')">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm mx-4 p-5 transform transition-all" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-gray-900">🔴 Personnes absentes</h3>
+            <button onclick="toggleStatModal('modal-absents')" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="max-h-64 overflow-y-auto space-y-1">
+            @forelse($absentsAujourdhui as $a)
+                <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-red-50 {{ !$loop->last ? 'border-b border-red-100' : '' }}">
+                    <span class="text-sm font-semibold text-gray-800">{{ $a->nom }}</span>
+                    <span class="text-xs text-red-600 font-bold">Absent</span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400 py-4 text-center">Tout le monde est présent 🎉</p>
+            @endforelse
+        </div>
+    </div>
+</div>
+
+<!-- Modal Arrivés -->
+<div id="modal-arrives" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'modal-arrives')">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm mx-4 p-5 transform transition-all" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-gray-900">📥 Heures d'arrivée</h3>
+            <button onclick="toggleStatModal('modal-arrives')" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="max-h-64 overflow-y-auto space-y-1">
+            @forelse($arrivesAujourdhui as $arr)
+                <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-emerald-50 {{ !$loop->last ? 'border-b border-emerald-100' : '' }}">
+                    <span class="text-sm font-semibold text-gray-800">{{ $arr->nom }}</span>
+                    <span class="text-xs text-emerald-700 font-bold">
+                        {{ $arr->heureArrivee ? \Carbon\Carbon::parse($arr->heureArrivee)->format('H:i') : '—' }}
+                    </span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400 py-4 text-center">Aucune arrivée enregistrée</p>
+            @endforelse
+        </div>
+    </div>
+</div>
+
+<!-- Modal Partis -->
+<div id="modal-partis" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'modal-partis')">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm mx-4 p-5 transform transition-all" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-gray-900">📤 Heures de départ</h3>
+            <button onclick="toggleStatModal('modal-partis')" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="max-h-64 overflow-y-auto space-y-1">
+            @forelse($partisAujourdhui as $par)
+                <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-purple-50 {{ !$loop->last ? 'border-b border-purple-100' : '' }}">
+                    <span class="text-sm font-semibold text-gray-800">{{ $par->nom }}</span>
+                    <span class="text-xs text-purple-700 font-bold">
+                        {{ $par->heureDepart ? \Carbon\Carbon::parse($par->heureDepart)->format('H:i') : '—' }}
+                    </span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400 py-4 text-center">Aucun départ enregistré</p>
+            @endforelse
         </div>
     </div>
 </div>
@@ -284,7 +331,6 @@
             <canvas id="evaluationEvolChart"></canvas>
         </div>
 
-        <!-- Moyenne globale + tendance -->
         @php
             $moyenneEvol = $statsEvolution['moyenne'] ?? 0;
             $tendanceEvol = $statsEvolution['tendance'] ?? 'stable';
@@ -322,7 +368,6 @@
                     Exporter PDF
                 </a>
             </div>
-            <!-- Filtres et tri -->
             <div class="mb-3 flex flex-wrap items-center gap-2">
                 <span class="text-xs font-medium text-gray-500">Filtrer :</span>
                 <button onclick="filtrerTableau('all')" class="badge badge-gold filter-btn active" data-filter="all">Tous</button>
@@ -376,11 +421,55 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // ═══════════════════════════════════════════════
+    // MODALS CLIQUABLES
+    // ═══════════════════════════════════════════════
+    function toggleStatModal(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        const isOpen = !modal.classList.contains('hidden');
+        if (isOpen) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+        } else {
+            // Fermer les autres modals ouverts
+            document.querySelectorAll('[id^="modal-presents"], [id^="modal-absents"], [id^="modal-arrives"], [id^="modal-partis"]').forEach(m => {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            });
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeStatModal(event, id) {
+        if (event.target === event.currentTarget) {
+            toggleStatModal(id);
+        }
+    }
+
+    // Fermer avec Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('[id^="modal-presents"], [id^="modal-absents"], [id^="modal-arrives"], [id^="modal-partis"]').forEach(m => {
+                if (!m.classList.contains('hidden')) {
+                    m.classList.add('hidden');
+                    m.classList.remove('flex');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+    });
+
+    // ═══════════════════════════════════════════════
+    // GRAPHIQUE ÉVOLUTION
+    // ═══════════════════════════════════════════════
     document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('evaluationEvolChart');
-        if (!ctx) {
-            return;
-        }
+        if (!ctx) return;
+
         const evolution = @json($evolutionEvaluations ?? ['labels' => [], 'notes' => [], 'couleurs' => []]);
         new Chart(ctx, {
             type: 'line',
@@ -415,14 +504,8 @@
                     }
                 },
                 scales: {
-                    y: {
-                        min: 0,
-                        max: 20,
-                        ticks: { stepSize: 4 }
-                    },
-                    x: {
-                        ticks: { maxRotation: 45, minRotation: 0 }
-                    }
+                    y: { min: 0, max: 20, ticks: { stepSize: 4 } },
+                    x: { ticks: { maxRotation: 45, minRotation: 0 } }
                 }
             }
         });
@@ -431,11 +514,7 @@
         window.filtrerTableau = function (couleur) {
             const rows = document.querySelectorAll('#tableauComparatif tbody tr[data-couleur]');
             rows.forEach(row => {
-                if (couleur === 'all' || row.dataset.couleur === couleur) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                row.style.display = (couleur === 'all' || row.dataset.couleur === couleur) ? '' : 'none';
             });
             document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.filter === couleur);
@@ -446,13 +525,9 @@
             const tbody = document.querySelector('#tableauComparatif tbody');
             const rows = Array.from(tbody.querySelectorAll('tr[data-couleur]'));
             rows.sort((a, b) => {
-                if (cle === 'nom') {
-                    return a.dataset.nom.localeCompare(b.dataset.nom);
-                } else if (cle === 'moyenne-desc') {
-                    return parseFloat(b.dataset.moyenne) - parseFloat(a.dataset.moyenne);
-                } else if (cle === 'moyenne-asc') {
-                    return parseFloat(a.dataset.moyenne) - parseFloat(b.dataset.moyenne);
-                }
+                if (cle === 'nom') return a.dataset.nom.localeCompare(b.dataset.nom);
+                if (cle === 'moyenne-desc') return parseFloat(b.dataset.moyenne) - parseFloat(a.dataset.moyenne);
+                if (cle === 'moyenne-asc') return parseFloat(a.dataset.moyenne) - parseFloat(b.dataset.moyenne);
                 return 0;
             });
             rows.forEach(row => tbody.appendChild(row));
@@ -464,9 +539,7 @@
         // Export PNG du graphique
         window.exporterGraphiquePNG = function () {
             const canvas = document.getElementById('evaluationEvolChart');
-            if (!canvas) {
-                return;
-            }
+            if (!canvas) return;
             const url = canvas.toDataURL('image/png');
             const a = document.createElement('a');
             a.href = url;
@@ -478,4 +551,3 @@
     });
 </script>
 @endpush
-
