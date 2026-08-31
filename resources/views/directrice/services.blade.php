@@ -52,10 +52,7 @@
                     <textarea name="details" rows="2" class="input-field" placeholder="Description du service">{{ old('details') }}</textarea>
                 </div>
                 <button type="submit" class="btn-primary gap-2">
-                    <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h-2v5.586L7.707 10.293z" />
-                        <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H4zm12 12A2 2 0 0114 16H6a2 2 0 01-2-2V6a2 2 0 012-2h7v4h4v6z" clip-rule="evenodd" />
-                    </svg>
+                    <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h-2v5.586L7.707 10.293z" /><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H4zm12 12A2 2 0 0114 16H6a2 2 0 01-2-2V6a2 2 0 012-2h7v4h4v6z" clip-rule="evenodd" /></svg>
                     <span>Enregistrer le service</span>
                 </button>
             </form>
@@ -67,9 +64,7 @@
         <div class="pharaoh-card overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100">
                 <h3 class="text-lg font-semibold text-[#080808] flex items-center gap-2">
-                    <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
+                    <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                     <span>Services enregistrés</span>
                 </h3>
             </div>
@@ -93,10 +88,7 @@
                             <td class="px-4 py-3 text-sm font-semibold text-right text-blue-600">{{ number_format($svc->montant, 0, ',', '.') }} FCFA</td>
                             <td class="px-4 py-3 text-center space-x-2">
                                 <a href="{{ route('directrice.services.edit', $svc->id) }}" class="text-pharaoh-gold hover:text-pharaoh-gold-light text-sm font-medium">✏️</a>
-                                <form action="{{ route('directrice.services.destroy', $svc->id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer ?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="text-red-500 hover:text-red-700 text-sm">🗑️</button>
-                                </form>
+                                <button type="button" onclick="showDeleteServiceModal({{ $svc->id }}, '{{ $typesCaisse[$svc->type] ?? $svc->type }}', '{{ number_format($svc->montant, 0, ',', '.') }}', 'directrice')" class="text-red-500 hover:text-red-700 text-sm cursor-pointer">🗑️</button>
                             </td>
                         </tr>
                         @empty
@@ -110,12 +102,61 @@
         </div>
     </div>
 </div>
+
+<!-- ═══════════ MODAL SUPPRESSION SERVICE ═══════════ -->
+<div id="deleteServiceModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden" onclick="event.stopPropagation()">
+        <div class="bg-[#080808] px-6 py-5 text-center">
+            <div class="mx-auto w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
+                <svg class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white">Supprimer le service</h3>
+            <p class="text-sm text-gray-400 mt-1">Cette action est irréversible</p>
+        </div>
+        <div class="px-6 py-5">
+            <div class="bg-gray-50 rounded-xl p-4 mb-4 space-y-2">
+                <div class="flex justify-between text-sm"><span class="text-gray-500">Type</span><span class="font-semibold text-[#080808]" id="deleteSvcType"></span></div>
+                <div class="flex justify-between text-sm"><span class="text-gray-500">Montant</span><span class="font-semibold text-blue-600" id="deleteSvcMontant"></span></div>
+            </div>
+            <p class="text-sm text-gray-500 mb-4">Êtes-vous sûr de vouloir supprimer ce service ?</p>
+            <form id="deleteServiceForm" method="POST">
+                @csrf
+                @method('DELETE')
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeDeleteServiceModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Non, garder</button>
+                    <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-sm font-semibold text-white hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20">Oui, supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
+
 @section('mobile-navigation')
 <a href="{{ route('directrice.dashboard') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Dashboard</a>
 <a href="{{ route('directrice.commandes') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Commandes</a>
-<a href="{{ route('directrice.services') }}" class="block rounded-md bg-pharaoh-gold px-3 py-2 text-base font-medium text-white">Services</a>
+<a href="{{ route('directrice.services') }}" class="block rounded-md px-3 py-2 text-base font-medium bg-pharaoh-gold text-white">Services</a>
 <a href="{{ route('directrice.retraits') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Retraits</a>
 <a href="{{ route('directrice.rapport') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Rapport</a>
 @endsection
 
+@push('scripts')
+<script>
+function showDeleteServiceModal(id, type, montant, module) {
+    document.getElementById('deleteSvcType').textContent = type;
+    document.getElementById('deleteSvcMontant').textContent = montant + ' FCFA';
+    document.getElementById('deleteServiceForm').action = '/' + module + '/services/' + id;
+    const modal = document.getElementById('deleteServiceModal');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+function closeDeleteServiceModal() {
+    const modal = document.getElementById('deleteServiceModal');
+    modal.classList.add('hidden'); modal.classList.remove('flex');
+    document.body.style.overflow = '';
+}
+document.addEventListener('click', function(e) { if (e.target.id === 'deleteServiceModal') closeDeleteServiceModal(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDeleteServiceModal(); });
+</script>
+@endpush
