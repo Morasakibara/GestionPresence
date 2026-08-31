@@ -254,7 +254,14 @@ class CommandeSuperviseurService
         $commandesParType = $commandes->groupBy('type')->map(fn($c) => $c->sum('montant'));
         $servicesParType  = $services->groupBy('type')->map(fn($s) => $s->sum('montant'));
 
-        // Données journalières pour graphique
+        // Données journalières pour graphique — regroupement par string (évite Carbon vs string)
+        $cmdByDate = $commandes->groupBy(fn($c) => $c->date instanceof \Carbon\Carbon ? $c->date->toDateString() : (string) $c->date)
+            ->map(fn($g) => (float) $g->sum('montant'));
+        $svcByDate = $services->groupBy(fn($s) => $s->date instanceof \Carbon\Carbon ? $s->date->toDateString() : (string) $s->date)
+            ->map(fn($g) => (float) $g->sum('montant'));
+        $retByDate = $retraits->groupBy(fn($r) => $r->date instanceof \Carbon\Carbon ? $r->date->toDateString() : (string) $r->date)
+            ->map(fn($g) => (float) $g->sum('montant'));
+
         $detailJournalier = [];
         $start = \Carbon\Carbon::parse($dateDebut);
         $end   = \Carbon\Carbon::parse($dateFin);
@@ -262,9 +269,8 @@ class CommandeSuperviseurService
             $d = $start->toDateString();
             $detailJournalier[] = [
                 'label'   => $start->format('d/m'),
-                'entrees' => $commandes->where('date', $d)->sum('montant')
-                           + $services->where('date', $d)->sum('montant'),
-                'sorties' => $retraits->where('date', $d)->sum('montant'),
+                'entrees' => ($cmdByDate[$d] ?? 0.0) + ($svcByDate[$d] ?? 0.0),
+                'sorties' => $retByDate[$d] ?? 0.0,
             ];
             $start->addDay();
         }

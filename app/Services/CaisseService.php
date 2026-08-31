@@ -178,16 +178,24 @@ class CaisseService
         $retraits = Retrait::where('superviseur_id', $this->superviseurId)->get();
 
         // Total retraits
-        $totalRetraits = $retraits->sum('montant');
+        $totalRetraits = (float) $retraits->sum('montant');
         $countRetraits = $retraits->count();
 
-        // Retraits des 30 derniers jours (pour le graphique)
+        // Retraits des 30 derniers jours — requête DB groupée (rapide)
+        $retraits30j = Retrait::where('superviseur_id', $this->superviseurId)
+            ->where('date', '>=', now()->subDays(29)->toDateString())
+            ->selectRaw('date, SUM(montant) as total')
+            ->groupBy('date')
+            ->pluck('total', 'date')
+            ->map(fn($v) => (float) $v)
+            ->toArray();
+
         $labels30j = [];
         $data30j = [];
         for ($i = 29; $i >= 0; $i--) {
             $jour = now()->subDays($i)->toDateString();
             $labels30j[] = now()->subDays($i)->format('d/m');
-            $data30j[] = (float) $retraits->where('date', $jour)->sum('montant');
+            $data30j[] = $retraits30j[$jour] ?? 0.0;
         }
 
         // Top motifs (regroupés par motif)
@@ -206,7 +214,7 @@ class CaisseService
         $moyenne = $countRetraits > 0 ? $totalRetraits / $countRetraits : 0;
 
         // Plus gros retrait
-        $maxRetrait = $retraits->max('montant') ?? 0;
+        $maxRetrait = (float) $retraits->max('montant');
 
         return compact(
             'totalRetraits', 'countRetraits', 'moyenne', 'maxRetrait',
