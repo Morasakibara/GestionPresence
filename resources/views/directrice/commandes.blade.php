@@ -110,13 +110,18 @@
     <!-- ═══ LISTE DES COMMANDES ═══ -->
     <div class="lg:col-span-2">
         <div class="pharaoh-card overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-[#080808] flex items-center gap-2">
                     <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                     <span>Commandes récentes</span>
                 </h3>
+                <div class="flex gap-2">
+                    <button onclick="filterCommandes('all')" class="filter-btn active" data-filter="all">Toutes</button>
+                    <button onclick="filterCommandes('active')" class="filter-btn" data-filter="active">Actives</button>
+                    <button onclick="filterCommandes('annule')" class="filter-btn" data-filter="annule">Annulées</button>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -133,7 +138,7 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($commandes as $cmd)
-                        <tr class="hover:bg-gray-50 transition-colors {{ $cmd->statut_paiement === 'annule' ? 'bg-red-50/50 opacity-60' : ($cmd->statut_paiement !== 'paye' ? 'bg-orange-50/30' : '') }}">
+                        <tr class="hover:bg-gray-50 transition-colors {{ $cmd->statut_paiement === 'annule' ? 'bg-red-50/50 opacity-60' : ($cmd->statut_paiement !== 'paye' ? 'bg-orange-50/30' : '') }}" data-status="{{ $cmd->statut_paiement }}">
                             <td class="px-4 py-3 text-sm font-medium text-[#080808]">#{{ $cmd->id }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700">{{ $typesCaisse[$cmd->type] ?? $cmd->type }}</td>
                             <td class="px-4 py-3 text-sm text-right font-medium text-[#080808]">{{ number_format($cmd->montant, 0, ',', '.') }}</td>
@@ -193,8 +198,30 @@
 <a href="{{ route('directrice.rapport') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Rapport</a>
 @endsection
 
+@push('styles')
+<style>
+.filter-btn {
+    padding: 0.35rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600;
+    border: 1px solid #E7E7E7; background: white; color: #555; cursor: pointer; transition: all 0.15s;
+}
+.filter-btn:hover { border-color: #D39B23; color: #D39B23; }
+.filter-btn.active { background: #D39B23; color: white; border-color: #D39B23; }
+</style>
+@endpush
+
 @push('scripts')
 <script>
+function filterCommandes(status) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-filter="' + status + '"]').classList.add('active');
+    document.querySelectorAll('table tbody tr[data-status]').forEach(row => {
+        const s = row.getAttribute('data-status');
+        if (status === 'all') { row.style.display = ''; }
+        else if (status === 'active') { row.style.display = (s === 'annule') ? 'none' : ''; }
+        else if (status === 'annule') { row.style.display = (s === 'annule') ? '' : 'none'; }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const radios = document.querySelectorAll('input[name="statut_paiement"]');
     const montantInput = document.getElementById('montant');

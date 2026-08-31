@@ -6,8 +6,12 @@ use Illuminate\Http\Response;
 
 class ExportService
 {
+    /** Séparateur CSV (; pour Excel FR) */
+    private const SEP = ';';
+
     /**
      * Génère un CSV professionnel avec en-tête Le Pharaon.
+     * Design aligné sur le PDF : en-tête société, sections structurées, sous-totaux.
      */
     public static function csv(
         string $titre,
@@ -15,37 +19,43 @@ class ExportService
         array $lignes,
         string $module = 'Le Pharaon'
     ): Response {
-        $bom = "\xEF\xBB\xBF"; // UTF-8 BOM pour Excel
+        $bom = "\xEF\xBB\xBF";
+        $nbCols = max(count($colonnes), 1);
         $contenu = $bom;
 
-        // En-tête du rapport
-        $contenu .= "\"{$module}\";\n";
+        // ═══ EN-TÊTE SOCIÉTÉ ═══
+        $contenu .= "\"LE PHARAON\";\n";
+        $contenu .= "\"Système de Gestion de Présence\";\n";
+        $contenu .= "\"\";\n";
+
+        // ═══ TITRE RAPPORT ═══
         $contenu .= "\"{$titre}\";\n";
+        $contenu .= "\"Module : {$module}\";\n";
         $contenu .= "\"Date d'export : " . now()->format('d/m/Y à H:i') . "\";\n";
-        $contenu .= "\n";
+        $contenu .= "\"\";\n";
 
-        // Ligne vide de séparation
-        $contenu .= str_repeat(';', count($colonnes)) . "\n";
+        // ═══ LIGNE SÉPARATRICE ═══
+        $contenu .= str_repeat('═', 90) . "\n";
 
-        // En-têtes de colonnes
-        $contenu .= implode(';', array_map(fn($c) => "\"{$c}\"", $colonnes)) . "\n";
+        // ═══ EN-TÊTES DE COLONNES ═══
+        $contenu .= implode(self::SEP, array_map(fn($c) => "\"{$c}\"", $colonnes)) . "\n";
 
-        // Ligne de séparation décorative
-        $contenu .= str_repeat('—', 80) . "\n";
+        // ═══ LIGNE SÉPARATRICE ═══
+        $contenu .= str_repeat('─', 90) . "\n";
 
-        // Données
+        // ═══ DONNÉES ═══
         foreach ($lignes as $ligne) {
-            $contenu .= implode(';', array_map(function ($cell) {
-                if (is_null($cell)) return '""';
-                $cell = str_replace('"', '""', (string) $cell);
-                return "\"{$cell}\"";
-            }, $ligne)) . "\n";
+            // Compléter les lignes manquantes
+            while (count($ligne) < $nbCols) {
+                $ligne[] = '';
+            }
+            $contenu .= self::escapeRow(array_slice($ligne, 0, $nbCols)) . "\n";
         }
 
-        // Pied de page
-        $contenu .= "\n";
-        $contenu .= str_repeat('—', 80) . "\n";
-        $contenu .= "\"{$module} — Export généré le " . now()->format('d/m/Y à H:i') . "\";\n";
+        // ═══ PIED DE PAGE ═══
+        $contenu .= str_repeat('═', 90) . "\n";
+        $contenu .= "\"LE PHARAON — {$module} — Export confidentiel\";\n";
+        $contenu .= "\"Généré le " . now()->format('d/m/Y à H:i') . "\";\n";
 
         return response($contenu, 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -57,63 +67,146 @@ class ExportService
     }
 
     /**
-     * Export des commandes individuellement.
+     * Export commandes — style structuré avec sous-totaux par catégorie.
      */
     public static function commandes($commandes, array $typesLabels, string $module): Response
     {
-        $colonnes = ['#', 'Date', 'Type', 'Montant Total', 'Montant Payé', 'Reste', 'Statut', 'Détails'];
-        $lignes = $commandes->map(function ($cmd) use ($typesLabels) {
+        $colonnes = ['N°', 'Date', 'Type', 'Montant Total', 'Montant Payé', 'Reste à payer', 'Statut', 'Détails'];
+        $lignes = [];
+        $n = 0;
+        $totalMontant = 0;
+        $totalPaye = 0;
+        $totalReste = 0;
+        $byType = [];
+
+        foreach ($commandes as $cmd) {
+            $n++;
+            $cat = $typesLabels[$cmd->type] ?? $cmd->type;
+            $reste = (float) $cmd->montant - (float) $cmd->montant_paye;
+            $totalMontant += (float) $cmd->montant;
+            $totalPaye += (float) $cmd->montant_paye;
+            $totalReste += $reste;
+            $byType[$cat] = ($byType[$cat] ?? 0) + (float) $cmd->montant;
+
             $statutLabel = match($cmd->statut_paiement) {
-                'paye' => '✅ Payé',
-                'partiel' => '🟠 Partiel',
-                'a_payer' => '🔴 À payer',
+                'paye' => 'Payé',
+                'partiel' => 'Partiel',
+                'a_payer' => 'À payer',
+                'annule' => 'Annulé',
                 default => $cmd->statut_paiement,
             };
-            return [
-                $cmd->id, $cmd->date->format('d/m/Y'),
-                $typesLabels[$cmd->type] ?? $cmd->type,
-                number_format($cmd->montant, 0, ',', ' ') . ' FCFA',
-                number_format($cmd->montant_paye, 0, ',', ' ') . ' FCFA',
-                number_format($cmd->montant - $cmd->montant_paye, 0, ',', ' ') . ' FCFA',
-                $statutLabel, $cmd->details ?? '',
+
+            $lignes[] = [
+                $n, $cmd->date->format('d/m/Y'), $cat,
+                number_format($cmd->montant, 0, ',', ' '), number_format($cmd->montant_paye, 0, ',', ' '),
+                number_format($reste, 0, ',', ' '), $statutLabel, $cmd->details ?? '',
             ];
-        })->toArray();
-        return self::csv("Commandes — {$module}", $colonnes, $lignes);
+        }
+
+        // ═══ SOUS-TOTAUX PAR CATÉGORIE ═══
+        if (!empty($byType)) {
+            $lignes[] = array_fill(0, 8, '');
+            $lignes[] = ['', '', '═══ RÉPARTITION PAR TYPE ═══', '', '', '', '', ''];
+            foreach ($byType as $cat => $total) {
+                $lignes[] = ['', '', "  ↳ {$cat}", number_format($total, 0, ',', ' ') . ' FCFA', '', '', '', ''];
+            }
+        }
+
+        // ═══ SOUS-TOTAL ═══
+        $lignes[] = array_fill(0, 8, '');
+        $lignes[] = [
+            '', '', '═══ SOUS-TOTAL ═══', number_format($totalMontant, 0, ',', ' ') . ' FCFA',
+            number_format($totalPaye, 0, ',', ' ') . ' FCFA', number_format($totalReste, 0, ',', ' ') . ' FCFA',
+            $n . ' commande(s)', '',
+        ];
+
+        // ═══ SYNTHÈSE ═══
+        $lignes[] = array_fill(0, 8, '');
+        $lignes[] = ['', '', '═══ SYNTHÈSE ═══', '', '', '', '', ''];
+        $lignes[] = ['', '', '  Total commandes', number_format($totalMontant, 0, ',', ' ') . ' FCFA', '', '', '', ''];
+        $lignes[] = ['', '', '  Montant encaissé', '', number_format($totalPaye, 0, ',', ' ') . ' FCFA', '', '', ''];
+        $lignes[] = ['', '', '  Reste à encaisser', '', '', number_format($totalReste, 0, ',', ' ') . ' FCFA', '', ''];
+
+        $titre = "Commandes — {$module} — " . now()->format('d/m/Y');
+        return self::csv($titre, $colonnes, $lignes);
     }
 
     /**
-     * Export des services individuellement.
+     * Export services — structuré avec sous-totaux par catégorie.
      */
     public static function services($services, array $typesLabels, string $module): Response
     {
-        $colonnes = ['#', 'Date', 'Heure', 'Type', 'Montant', 'Détails'];
-        $lignes = $services->map(function ($svc) use ($typesLabels) {
-            return [
-                $svc->id, $svc->date->format('d/m/Y'), $svc->created_at->format('H:i'),
-                $typesLabels[$svc->type] ?? $svc->type,
-                number_format($svc->montant, 0, ',', ' ') . ' FCFA',
+        $colonnes = ['N°', 'Date', 'Heure', 'Type', 'Montant', 'Détails'];
+        $lignes = [];
+        $n = 0;
+        $totalMontant = 0;
+        $byType = [];
+
+        foreach ($services as $svc) {
+            $n++;
+            $cat = $typesLabels[$svc->type] ?? $svc->type;
+            $totalMontant += (float) $svc->montant;
+            $byType[$cat] = ($byType[$cat] ?? 0) + (float) $svc->montant;
+
+            $lignes[] = [
+                $n, $svc->date->format('d/m/Y'), $svc->created_at->format('H:i'),
+                $cat, number_format($svc->montant, 0, ',', ' ') . ' FCFA',
                 $svc->details ?? '',
             ];
-        })->toArray();
-        return self::csv("Services — {$module}", $colonnes, $lignes);
+        }
+
+        // ═══ SOUS-TOTAUX PAR CATÉGORIE ═══
+        if (!empty($byType)) {
+            $lignes[] = array_fill(0, 6, '');
+            $lignes[] = ['', '', '═══ RÉPARTITION PAR TYPE ═══', '', '', ''];
+            foreach ($byType as $cat => $total) {
+                $lignes[] = ['', '', "  ↳ {$cat}", number_format($total, 0, ',', ' ') . ' FCFA', '', ''];
+            }
+        }
+
+        // ═══ SOUS-TOTAL ═══
+        $lignes[] = array_fill(0, 6, '');
+        $lignes[] = [
+            '', '', '═══ SOUS-TOTAL ═══', number_format($totalMontant, 0, ',', ' ') . ' FCFA',
+            $n . ' service(s)', '',
+        ];
+
+        $titre = "Services — {$module} — " . now()->format('d/m/Y');
+        return self::csv($titre, $colonnes, $lignes);
     }
 
     /**
-     * Export des retraits individuellement.
+     * Export retraits — structuré avec sous-total.
      */
     public static function retraits($retraits, string $module): Response
     {
-        $colonnes = ['#', 'Date', 'Heure', 'Motif', 'Montant'];
-        $lignes = $retraits->map(fn($r) => [
-            $r->id, $r->date->format('d/m/Y'), $r->created_at->format('H:i'),
-            $r->motif, '-' . number_format($r->montant, 0, ',', ' ') . ' FCFA',
-        ])->toArray();
-        return self::csv("Retraits — {$module}", $colonnes, $lignes);
+        $colonnes = ['N°', 'Date', 'Heure', 'Motif', 'Montant'];
+        $lignes = [];
+        $n = 0;
+        $totalMontant = 0;
+
+        foreach ($retraits as $r) {
+            $n++;
+            $totalMontant += (float) $r->montant;
+            $lignes[] = [
+                $r->id, $r->date->format('d/m/Y'), $r->created_at->format('H:i'),
+                $r->motif, '-' . number_format($r->montant, 0, ',', ' ') . ' FCFA',
+            ];
+        }
+
+        $lignes[] = array_fill(0, 5, '');
+        $lignes[] = [
+            '', '', '═══ SOUS-TOTAL ═══',
+            $n . ' retrait(s)', '-' . number_format($totalMontant, 0, ',', ' ') . ' FCFA',
+        ];
+
+        $titre = "Retraits — {$module} — " . now()->format('d/m/Y');
+        return self::csv($titre, $colonnes, $lignes);
     }
 
     /**
      * ══════════════════════════════════════════════════════════════
-     * RAPPORT FINANCIER CONSOLIDÉ — TOUTES LES DONNÉES
+     * RAPPORT FINANCIER CONSOLIDÉ — MÊME STRUCTURE QUE LE PDF
      * Commandes + Services + Retraits + Sous-totaux + Bilan
      * ══════════════════════════════════════════════════════════════
      */
@@ -127,6 +220,7 @@ class ExportService
         string $module
     ): Response {
         $colonnes = ['N°', 'Type Opération', 'Date', 'Heure', 'Catégorie', 'Détails', 'Montant Total', 'Montant Payé', 'Reste', 'Statut'];
+        $nbCols = count($colonnes);
         $lignes = [];
         $n = 0;
 
@@ -135,7 +229,7 @@ class ExportService
         $lignes[] = ['RAPPORT FINANCIER — ' . strtoupper($module), '', '', '', '', '', '', '', '', ''];
         $lignes[] = ['Période : ' . $dateDebut . ' au ' . $dateFin, '', '', '', '', '', '', '', '', ''];
         $lignes[] = ['Généré le : ' . now()->format('d/m/Y à H:i'), '', '', '', '', '', '', '', '', ''];
-        $lignes[] = array_fill(0, 10, '');
+        $lignes[] = array_fill(0, $nbCols, '');
 
         // ═══════════════════════ COMMANDES ═══════════════════════
         $lignes[] = ['═══ ENTRÉES — COMMANDES ═══', '', '', '', '', '', '', '', '', ''];
@@ -145,12 +239,13 @@ class ExportService
 
         foreach ($commandes as $cmd) {
             $n++;
-            $totalCmdMontant += $cmd->montant;
-            $totalCmdPaye += $cmd->montant_paye;
+            $totalCmdMontant += (float) $cmd->montant;
+            $totalCmdPaye += (float) $cmd->montant_paye;
             $catLabel = $typesLabels[$cmd->type] ?? $cmd->type;
-            $cmdByType[$catLabel] = ($cmdByType[$catLabel] ?? 0) + $cmd->montant;
+            $cmdByType[$catLabel] = ($cmdByType[$catLabel] ?? 0) + (float) $cmd->montant;
             $statutLabel = match($cmd->statut_paiement) {
-                'paye' => 'Payé', 'partiel' => 'Partiel', 'a_payer' => 'À payer', default => $cmd->statut_paiement,
+                'paye' => 'Payé', 'partiel' => 'Partiel', 'a_payer' => 'À payer', 'annule' => 'Annulé',
+                default => $cmd->statut_paiement,
             };
             $lignes[] = [
                 $n, 'Commande', $cmd->date->format('d/m/Y'), $cmd->created_at->format('H:i'),
@@ -162,22 +257,23 @@ class ExportService
 
         // Répartition par catégorie commande
         if (!empty($cmdByType)) {
-            $lignes[] = array_fill(0, 10, '');
+            $lignes[] = array_fill(0, $nbCols, '');
+            $lignes[] = ['', '', '── RÉPARTITION COMMANDES ──', '', '', '', '', '', '', ''];
             foreach ($cmdByType as $cat => $total) {
                 $lignes[] = ['', '', '', '', "  ↳ {$cat}", '', number_format($total, 0, ',', ' ') . ' FCFA', '', '', ''];
             }
         }
 
         // Sous-total commandes
-        $lignes[] = array_fill(0, 10, '');
+        $lignes[] = array_fill(0, $nbCols, '');
         $lignes[] = [
-            '', '📋 SOUS-TOTAL COMMANDES', '', '', '',
+            '', 'SOUS-TOTAL COMMANDES', '', '', '',
             count($commandes) . ' commande(s)',
             number_format($totalCmdMontant, 0, ',', ' ') . ' FCFA',
             number_format($totalCmdPaye, 0, ',', ' ') . ' FCFA',
             number_format($totalCmdMontant - $totalCmdPaye, 0, ',', ' ') . ' FCFA', '',
         ];
-        $lignes[] = array_fill(0, 10, '');
+        $lignes[] = array_fill(0, $nbCols, '');
 
         // ═══════════════════════ SERVICES ═══════════════════════
         $lignes[] = ['═══ ENTRÉES — SERVICES FOURNIS ═══', '', '', '', '', '', '', '', '', ''];
@@ -186,9 +282,9 @@ class ExportService
 
         foreach ($services as $svc) {
             $n++;
-            $totalSvcMontant += $svc->montant;
+            $totalSvcMontant += (float) $svc->montant;
             $catLabel = $typesLabels[$svc->type] ?? $svc->type;
-            $svcByType[$catLabel] = ($svcByType[$catLabel] ?? 0) + $svc->montant;
+            $svcByType[$catLabel] = ($svcByType[$catLabel] ?? 0) + (float) $svc->montant;
             $lignes[] = [
                 $n, 'Service', $svc->date->format('d/m/Y'), $svc->created_at->format('H:i'),
                 $catLabel, $svc->details ?? '',
@@ -199,21 +295,22 @@ class ExportService
 
         // Répartition par catégorie service
         if (!empty($svcByType)) {
-            $lignes[] = array_fill(0, 10, '');
+            $lignes[] = array_fill(0, $nbCols, '');
+            $lignes[] = ['', '', '── RÉPARTITION SERVICES ──', '', '', '', '', '', '', ''];
             foreach ($svcByType as $cat => $total) {
                 $lignes[] = ['', '', '', '', "  ↳ {$cat}", '', number_format($total, 0, ',', ' ') . ' FCFA', '', '', ''];
             }
         }
 
         // Sous-total services
-        $lignes[] = array_fill(0, 10, '');
+        $lignes[] = array_fill(0, $nbCols, '');
         $lignes[] = [
-            '', '📋 SOUS-TOTAL SERVICES', '', '', '',
+            '', 'SOUS-TOTAL SERVICES', '', '', '',
             count($services) . ' service(s)',
             number_format($totalSvcMontant, 0, ',', ' ') . ' FCFA',
-            number_format($totalSvcMontant, 0, ',', ' ') . ' FCFA', '', '',
+            number_format($totalSvcMontant, 0, ',', ' ') . ' FCFA', '—', '',
         ];
-        $lignes[] = array_fill(0, 10, '');
+        $lignes[] = array_fill(0, $nbCols, '');
 
         // ═══════════════════════ RETRAITS ═══════════════════════
         $totalRetraitMontant = 0;
@@ -223,7 +320,7 @@ class ExportService
 
             foreach ($retraits as $r) {
                 $n++;
-                $totalRetraitMontant += $r->montant;
+                $totalRetraitMontant += (float) $r->montant;
                 $lignes[] = [
                     $n, 'Retrait', $r->date->format('d/m/Y'), $r->created_at->format('H:i'),
                     '—', $r->motif,
@@ -232,46 +329,44 @@ class ExportService
             }
 
             // Sous-total retraits
-            $lignes[] = array_fill(0, 10, '');
+            $lignes[] = array_fill(0, $nbCols, '');
             $lignes[] = [
-                '', '📋 SOUS-TOTAL RETRAITS', '', '', '',
+                '', 'SOUS-TOTAL RETRAITS', '', '', '',
                 count($retraits) . ' retrait(s)',
                 '-' . number_format($totalRetraitMontant, 0, ',', ' ') . ' FCFA',
                 '—', '—', '',
             ];
-            $lignes[] = array_fill(0, 10, '');
+            $lignes[] = array_fill(0, $nbCols, '');
         }
 
         // ═══════════════════════ SYNTHÈSE ═══════════════════════
-        $lignes[] = ['═══ SYNTHÈSE ═══', '', '', '', '', '', '', '', '', ''];
+        $lignes[] = ['═══ SYNTHÈSE FINANCIÈRE ═══', '', '', '', '', '', '', '', '', ''];
         $lignes[] = [
-            '', '💰 Total Entrées (Cmd)', '', '', '',
-            '', number_format($totalCmdPaye, 0, ',', ' ') . ' FCFA',
-            '', '', '',
+            '', 'Total Entrées (Commandes)', '', '', '',
+            '', number_format($totalCmdPaye, 0, ',', ' ') . ' FCFA', '', '', '',
         ];
         $lignes[] = [
-            '', '💰 Total Entrées (Svc)', '', '', '',
-            '', number_format($totalSvcMontant, 0, ',', ' ') . ' FCFA',
-            '', '', '',
+            '', 'Total Entrées (Services)', '', '', '',
+            '', number_format($totalSvcMontant, 0, ',', ' ') . ' FCFA', '', '', '',
         ];
         $lignes[] = [
-            '', '📤 Total Sorties (Retraits)', '', '', '',
-            '', '-' . number_format($totalRetraitMontant, 0, ',', ' ') . ' FCFA',
-            '', '', '',
+            '', 'Total Sorties (Retraits)', '', '', '',
+            '', '-' . number_format($totalRetraitMontant, 0, ',', ' ') . ' FCFA', '', '', '',
         ];
-        $lignes[] = array_fill(0, 10, '');
+        $lignes[] = array_fill(0, $nbCols, '');
 
-        $bilan = $totalCmdPaye + $totalSvcMontant - $totalRetraitMontant;
+        $totalEntrees = $totalCmdPaye + $totalSvcMontant;
+        $bilan = $totalEntrees - $totalRetraitMontant;
         $lignes[] = [
-            '', '🏆 BILAN NET', '', '', '',
-            'Entrées : ' . number_format($totalCmdPaye + $totalSvcMontant, 0, ',', ' '),
+            '', 'BILAN NET', '', '', '',
+            'Entrées : ' . number_format($totalEntrees, 0, ',', ' ') . ' | Sorties : ' . number_format($totalRetraitMontant, 0, ',', ' '),
             number_format($bilan, 0, ',', ' ') . ' FCFA',
             'Sorties : ' . number_format($totalRetraitMontant, 0, ',', ' '),
-            $bilan >= 0 ? '✅ Positif' : '⚠️ Déficitaire', '',
+            $bilan >= 0 ? 'Positif' : 'Déficitaire', '',
         ];
 
         // ═══════════════════════ PIED DE PAGE ═══════════════════════
-        $lignes[] = array_fill(0, 10, '');
+        $lignes[] = array_fill(0, $nbCols, '');
         $lignes[] = ['LE PHARAON — Rapport généré le ' . now()->format('d/m/Y à H:i'), '', '', '', '', '', '', '', '', ''];
 
         $titre = "Rapport {$dateDebut} au {$dateFin} — {$module}";
@@ -281,7 +376,7 @@ class ExportService
     /**
      * ══════════════════════════════════════════════════════════════
      * EXPORT HTML AVEC LOGO ET COULEURS LE PHARAON
-     *══════════════════════════════════════════════════════════════
+     * ══════════════════════════════════════════════════════════════
      */
     public static function rapportHtml(
         string $dateDebut,
@@ -417,6 +512,18 @@ class ExportService
         return response($html, 200, [
             'Content-Type' => 'text/html; charset=UTF-8',
         ]);
+    }
+
+    /**
+     * Échappe une ligne CSV.
+     */
+    private static function escapeRow(array $cells): string
+    {
+        return implode(self::SEP, array_map(function ($cell) {
+            if (is_null($cell)) return '""';
+            $cell = str_replace('"', '""', (string) $cell);
+            return "\"{$cell}\"";
+        }, $cells));
     }
 
     /**

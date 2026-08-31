@@ -396,6 +396,75 @@
 </div>
 @endif
 
+<!-- ═══════════ HISTORIQUE ANNULATIONS (30j) ═══════════ -->
+@if($annulations->isNotEmpty())
+<div class="mb-6">
+    <div class="mb-4 flex items-center justify-between">
+        <div>
+            <h2 class="text-lg font-semibold text-[#080808]">Historique des annulations</h2>
+            <p class="text-sm text-gray-500">30 derniers jours — {{ $annulations->count() }} commande(s) annulée(s)</p>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-4">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-red-50 text-red-600">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+            </div>
+            <div class="stat-card-value">{{ $annulations->count() }}</div>
+            <div class="stat-card-label">Commandes annulées</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon bg-orange-50 text-orange-600">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            </div>
+            <div class="stat-card-value">{{ number_format($totalRemboursements, 0, ',', '.') }}</div>
+            <div class="stat-card-label">Remboursements (FCFA)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon bg-gray-50 text-gray-600">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+            </div>
+            <div class="stat-card-value">{{ number_format($totalAnnulationsMontant, 0, ',', '.') }}</div>
+            <div class="stat-card-label">Total annulé (FCFA)</div>
+        </div>
+    </div>
+    <div class="pharaoh-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-[#080808] text-white">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase">#</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Date</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Type</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Superviseur</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase">Montant</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase">Payé (remboursé)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($annulations as $ann)
+                    <tr class="bg-red-50/30 hover:bg-red-50/50">
+                        <td class="px-4 py-3 text-sm font-medium text-gray-600">#{{ $ann->id }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">{{ $ann->date }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ $ann->type }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ $ann->superviseur_nom ?? '—' }}</td>
+                        <td class="px-4 py-3 text-sm text-right text-gray-500 line-through">{{ number_format($ann->montant, 0, ',', '.') }} FCFA</td>
+                        <td class="px-4 py-3 text-sm text-right font-medium {{ $ann->montant_paye > 0 ? 'text-orange-600' : 'text-gray-400' }}">
+                            @if($ann->montant_paye > 0)
+                                -{{ number_format($ann->montant_paye, 0, ',', '.') }} FCFA
+                            @else
+                                —
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Dernières notifications -->
 @if(Auth::user()->notifications->count() > 0)
 <div class="mb-6">

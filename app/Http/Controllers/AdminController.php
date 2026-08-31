@@ -143,6 +143,21 @@ class AdminController extends Controller
                 + $stockPapiers->filter(fn($p) => $p->metres_restants <= $p->seuil_alerte)->count();
         }
 
+        // Historique des annulations (30 derniers jours)
+        $annulations = Commande::where('statut_paiement', 'annule')
+            ->where('date', '>=', now()->subDays(30)->toDateString())
+            ->join('utilisateur', 'commandes.superviseur_id', '=', 'utilisateur.id')
+            ->select('commandes.*', 'utilisateur.nom as superviseur_nom')
+            ->orderByDesc('commandes.date')
+            ->limit(15)
+            ->get();
+        $totalAnnulationsMontant = Commande::where('statut_paiement', 'annule')
+            ->where('date', '>=', now()->subDays(30)->toDateString())
+            ->sum('montant');
+        $totalRemboursements = Commande::where('statut_paiement', 'annule')
+            ->where('date', '>=', now()->subDays(30)->toDateString())
+            ->sum('montant_paye');
+
         return view('admin.dashboard', compact(
             'totalEmployees', 'totalSupervisors',
             'presentToday', 'absentToday',
@@ -153,7 +168,8 @@ class AdminController extends Controller
             'stockTshirts', 'stockPapiers',
             'totalStockTshirts', 'alertesStock',
             'presentsAujourdhui', 'absentsAujourdhui',
-            'arrivesAujourdhui', 'partisAujourdhui'
+            'arrivesAujourdhui', 'partisAujourdhui',
+            'annulations', 'totalAnnulationsMontant', 'totalRemboursements'
         ));
     }
 

@@ -160,13 +160,26 @@ class CommandeSuperviseurService
             ->where('superviseur_id', $this->superviseurId)
             ->firstOrFail();
 
+        $montantPaye = (float) $commande->montant_paye;
         $commande->update(['statut_paiement' => 'annule']);
 
         AuditService::updated(
             $this->typePoste,
-            "Commande #{$id} annulée" . ($commande->montant_paye > 0 ? " (remboursement: {$commande->montant_paye} FCFA)" : ''),
+            "Commande #{$id} annulée" . ($montantPaye > 0 ? " (remboursement: {$montantPaye} FCFA)" : ''),
             $commande->toArray()
         );
+
+        // Notifier l'administrateur principal
+        try {
+            $admin = \App\Models\Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+            if ($admin) {
+                $admin->notify(new \App\Notifications\CommandeAnnuleeNotification(
+                    $commande, $this->typePoste, $montantPaye
+                ));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Notif annulation échouée: ' . $e->getMessage());
+        }
     }
 
     /**─────────────────── DONNÉES DASHBOARD ───────────────────────*/
