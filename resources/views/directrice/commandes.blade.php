@@ -133,23 +133,37 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($commandes as $cmd)
-                        <tr class="hover:bg-gray-50 transition-colors {{ $cmd->statut_paiement !== 'paye' ? 'bg-orange-50/30' : '' }}">
+                        <tr class="hover:bg-gray-50 transition-colors {{ $cmd->statut_paiement === 'annule' ? 'bg-red-50/50 opacity-60' : ($cmd->statut_paiement !== 'paye' ? 'bg-orange-50/30' : '') }}">
                             <td class="px-4 py-3 text-sm font-medium text-[#080808]">#{{ $cmd->id }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700">{{ $typesCaisse[$cmd->type] ?? $cmd->type }}</td>
                             <td class="px-4 py-3 text-sm text-right font-medium text-[#080808]">{{ number_format($cmd->montant, 0, ',', '.') }}</td>
                             <td class="px-4 py-3 text-sm text-right {{ $cmd->montant_paye > 0 ? 'text-green-600 font-medium' : 'text-gray-400' }}">{{ number_format($cmd->montant_paye, 0, ',', '.') }}</td>
                             <td class="px-4 py-3">
-                                <span class="badge {{ $cmd->statut_paiement === 'paye' ? 'badge-success' : ($cmd->statut_paiement === 'partiel' ? 'badge-warning' : 'badge-danger') }}">
-                                    {{ $cmd->statut_paiement === 'paye' ? 'Payé' : ($cmd->statut_paiement === 'partiel' ? 'Partiel' : 'À payer') }}
+                                <span class="badge {{ $cmd->statut_paiement === 'paye' ? 'badge-success' : ($cmd->statut_paiement === 'annule' ? 'bg-red-100 text-red-700' : ($cmd->statut_paiement === 'partiel' ? 'badge-warning' : 'badge-danger')) }}">
+                                    {{ $cmd->statut_paiement === 'paye' ? 'Payé' : ($cmd->statut_paiement === 'annule' ? 'Annulé' : ($cmd->statut_paiement === 'partiel' ? 'Partiel' : 'À payer')) }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-500">{{ $cmd->date }}</td>
                             <td class="px-4 py-3 text-center">
-                                <a href="{{ route('directrice.commandes.edit', $cmd->id) }}" class="text-pharaoh-gold hover:text-pharaoh-gold-light inline-block" title="Modifier">
-                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                    </svg>
-                                </a>
+                                @if($cmd->statut_paiement !== 'annule')
+                                <div class="flex items-center justify-center gap-2">
+                                    <a href="{{ route('directrice.commandes.edit', $cmd->id) }}" class="text-pharaoh-gold hover:text-pharaoh-gold-light inline-block" title="Modifier">
+                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                    </a>
+                                    <form method="POST" action="{{ route('directrice.commandes.annuler', $cmd->id) }}" onsubmit="return confirm('Annuler cette commande ? Le montant payé sera comptabilisé en négatif dans la caisse.')">
+                                        @csrf
+                                        <button type="submit" class="text-red-500 hover:text-red-700 inline-block" title="Annuler">
+                                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                                @else
+                                <span class="text-xs text-gray-400 italic">Annulé</span>
+                                @endif
                             </td>
                         </tr>
                         @empty

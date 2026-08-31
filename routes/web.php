@@ -146,6 +146,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/commandes/{id}/edit', [DirectriceController::class, 'editCommande'])->name('commandes.edit');
         Route::put('/commandes/{id}', [DirectriceController::class, 'updateCommande'])->name('commandes.update');
         Route::delete('/commandes/{id}', [DirectriceController::class, 'destroyCommande'])->name('commandes.destroy');
+        Route::post('/commandes/{id}/annuler', [DirectriceController::class, 'annulerCommande'])->name('commandes.annuler');
         Route::get('/services', [DirectriceController::class, 'showServices'])->name('services');
         Route::post('/services', [DirectriceController::class, 'storeService'])->name('services.store');
         Route::get('/services/{id}/edit', [DirectriceController::class, 'editService'])->name('services.edit');
@@ -168,6 +169,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/commandes/{id}/edit', [SecretaireController::class, 'editCommande'])->name('commandes.edit');
         Route::put('/commandes/{id}', [SecretaireController::class, 'updateCommande'])->name('commandes.update');
         Route::delete('/commandes/{id}', [SecretaireController::class, 'destroyCommande'])->name('commandes.destroy');
+        Route::post('/commandes/{id}/annuler', [SecretaireController::class, 'annulerCommande'])->name('commandes.annuler');
         Route::get('/services', [SecretaireController::class, 'showServices'])->name('services');
         Route::post('/services', [SecretaireController::class, 'storeService'])->name('services.store');
         Route::get('/services/{id}/edit', [SecretaireController::class, 'editService'])->name('services.edit');

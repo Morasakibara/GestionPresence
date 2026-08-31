@@ -141,6 +141,15 @@ abstract class AbstractCaisseController extends Controller
         return redirect()->route("{$this->module()}.commandes")->with('success', 'Commande supprimée.');
     }
 
+    public function annulerCommande($id)
+    {
+        $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
+        $this->authorize('update', $commande);
+        $this->service()->annulerCommande($id);
+        $this->flushDashboardCache();
+        return redirect()->route("{$this->module()}.commandes")->with('success', 'Commande annulée.');
+    }
+
     // ─── ENCAISSEMENT ──────────────────────────────────────────────
 
     public function encaisserReste(Request $request)

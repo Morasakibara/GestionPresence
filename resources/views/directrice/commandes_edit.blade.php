@@ -92,6 +92,10 @@
                         <input type="radio" name="statut_paiement" value="a_payer" {{ old('statut_paiement', $commande->statut_paiement) === 'a_payer' ? 'checked' : '' }} class="text-red-500 focus:ring-red-400">
                         <span class="text-sm font-medium text-[#080808]">🔴 À payer — à la livraison</span>
                     </label>
+                    <label class="flex items-center gap-3 rounded-lg border-2 border-gray-200 p-3 cursor-pointer hover:border-red-600/50 transition-colors has-[:checked]:border-red-600 has-[:checked]:bg-red-100">
+                        <input type="radio" name="statut_paiement" value="annule" {{ old('statut_paiement', $commande->statut_paiement) === 'annule' ? 'checked' : '' }} class="text-red-700 focus:ring-red-600">
+                        <span class="text-sm font-medium text-[#080808]">❌ Annulé — commande annulée</span>
+                    </label>
                 </div>
             </div>
 

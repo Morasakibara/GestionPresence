@@ -19,13 +19,21 @@ class CaisseService
      */
     public function solde(): array
     {
-        $totalCommandes = Commande::where('superviseur_id', $this->superviseurId)->sum('montant');
-        $totalCommandesPaye = Commande::where('superviseur_id', $this->superviseurId)->sum('montant_paye');
+        // Commandes actives (exclure annulées)
+        $totalCommandes = Commande::where('superviseur_id', $this->superviseurId)
+            ->where('statut_paiement', '!=', 'annule')->sum('montant');
+        $totalCommandesPaye = Commande::where('superviseur_id', $this->superviseurId)
+            ->where('statut_paiement', '!=', 'annule')->sum('montant_paye');
         $totalServices = ServiceFourni::where('superviseur_id', $this->superviseurId)->sum('montant');
         $totalRetraits = Retrait::where('superviseur_id', $this->superviseurId)->sum('montant');
 
-        // Seul le montant PAYÉ entre en caisse
-        $enCaisse = (float) $totalCommandesPaye + (float) $totalServices - (float) $totalRetraits;
+        // Remboursements des commandes annulées (montant payé retourné en négatif)
+        $remboursements = Commande::where('superviseur_id', $this->superviseurId)
+            ->where('statut_paiement', 'annule')
+            ->sum('montant_paye');
+
+        // Seul le montant PAYÉ entre en caisse, moins les remboursements
+        $enCaisse = (float) $totalCommandesPaye + (float) $totalServices - (float) $totalRetraits - (float) $remboursements;
 
         // Les impayés = ce qui est dû (affiché en négatif)
         $impayeTotal = (float) $totalCommandes - (float) $totalCommandesPaye;
@@ -35,6 +43,7 @@ class CaisseService
             'total_commandes_paye' => (float) $totalCommandesPaye,
             'total_services' => (float) $totalServices,
             'total_retraits' => (float) $totalRetraits,
+            'remboursements' => (float) $remboursements,
             'en_caisse' => $enCaisse,
             'impaye_total' => $impayeTotal,
         ];
@@ -46,7 +55,7 @@ class CaisseService
     public function commandesImpayees(): Collection
     {
         return Commande::where('superviseur_id', $this->superviseurId)
-            ->where('statut_paiement', '!=', 'paye')
+            ->whereNotIn('statut_paiement', ['paye', 'annule'])
             ->orderByDesc('created_at')
             ->get();
     }
@@ -57,7 +66,7 @@ class CaisseService
     public function resteAEncaisser(): float
     {
         return Commande::where('superviseur_id', $this->superviseurId)
-            ->where('statut_paiement', '!=', 'paye')
+            ->whereNotIn('statut_paiement', ['paye', 'annule'])
             ->sum(\Illuminate\Support\Facades\DB::raw('montant - montant_paye'));
     }
 

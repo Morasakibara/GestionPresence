@@ -58,6 +58,11 @@ class Commande extends Model
         return $this->statut_paiement === 'a_payer';
     }
 
+    public function estAnnulee(): bool
+    {
+        return $this->statut_paiement === 'annule';
+    }
+
     public function superviseur()
     {
         return $this->belongsTo(Superviseur::class, 'superviseur_id');

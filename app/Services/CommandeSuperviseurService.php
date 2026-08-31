@@ -38,7 +38,7 @@ class CommandeSuperviseurService
             'type'             => 'required|string|in:' . implode(',', array_keys($this->typesAutorises)),
             'montant'          => 'required|numeric|min:0.01',
             'montant_paye'     => 'required|numeric|min:0',
-            'statut_paiement'  => 'required|string|in:paye,partiel,a_payer',
+            'statut_paiement'  => 'required|string|in:paye,partiel,a_payer,annule',
             'details'          => 'nullable|string|max:1000',
         ]);
 
@@ -117,7 +117,7 @@ class CommandeSuperviseurService
     {
         $request->validate([
             'montant_paye'    => 'required|numeric|min:0',
-            'statut_paiement' => 'required|string|in:paye,partiel,a_payer',
+            'statut_paiement' => 'required|string|in:paye,partiel,a_payer,annule',
             'details'         => 'nullable|string|max:1000',
         ]);
 
@@ -148,6 +148,25 @@ class CommandeSuperviseurService
             ->where('superviseur_id', $this->superviseurId)
             ->firstOrFail()
             ->delete();
+    }
+
+    /**
+     * Annuler une commande (statut_paiement → 'annule').
+     * Si un montant avait été payé, il est comptabilisé en négatif dans la caisse.
+     */
+    public function annulerCommande(int $id): void
+    {
+        $commande = Commande::where('id', $id)
+            ->where('superviseur_id', $this->superviseurId)
+            ->firstOrFail();
+
+        $commande->update(['statut_paiement' => 'annule']);
+
+        AuditService::updated(
+            $this->typePoste,
+            "Commande #{$id} annulée" . ($commande->montant_paye > 0 ? " (remboursement: {$commande->montant_paye} FCFA)" : ''),
+            $commande->toArray()
+        );
     }
 
     /**─────────────────── DONNÉES DASHBOARD ───────────────────────*/

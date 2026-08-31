@@ -684,5 +684,18 @@
         });
     })();
     </script>
+<script>
+    // Désactiver molette et touches direction sur les inputs de prix/montant
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[name*="montant"], input[name*="prix"], input[type="number"].no-spin').forEach(function(input) {
+            input.addEventListener('wheel', function(e) { e.preventDefault(); }, { passive: false });
+            input.addEventListener('keydown', function(e) {
+                if (['ArrowUp', 'ArrowDown'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>
