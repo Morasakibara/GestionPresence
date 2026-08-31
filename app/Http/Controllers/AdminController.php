@@ -26,67 +26,47 @@ class AdminController extends Controller
     {
         $admin = Auth::user();
 
-        $totalEmployees = Utilisateur::where('role', 'Employer')->count();
-        $totalSupervisors = Utilisateur::where('role', 'Superviseur')->count();
-
         $today = now()->toDateString();
-        $presentToday = Presence::whereDate('date', $today)
-            ->where('status', 'présent')
-            ->count();
-
-        $absentToday = Presence::whereDate('date', $today)
-            ->where('status', 'Absent')
-            ->count();
-
-        // Listes détaillées pour les modals au survol
-        $presentsAujourdhui = Presence::whereDate('date', $today)
-            ->where('status', 'present')
-            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
-            ->select('utilisateur.nom', 'presence.heureArrivee', 'presence.heureDepart')
-            ->orderBy('presence.heureArrivee')
-            ->get();
-
-        $absentsAujourdhui = Utilisateur::where('role', 'Employer')
-            ->whereNotIn('id', Presence::whereDate('date', $today)->pluck('employerID'))
-            ->select('nom')
-            ->orderBy('nom')
-            ->get();
-
-        $arrivesAujourdhui = Presence::whereDate('date', $today)
-            ->whereNotNull('heureArrivee')
-            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
-            ->select('utilisateur.nom', 'presence.heureArrivee')
-            ->orderBy('presence.heureArrivee')
-            ->get();
-
-        $partisAujourdhui = Presence::whereDate('date', $today)
-            ->whereNotNull('heureDepart')
-            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
-            ->select('utilisateur.nom', 'presence.heureDepart')
-            ->orderBy('presence.heureDepart')
-            ->get();
-
+        $today6 = now()->subDays(6)->toDateString();
         $currentMonth = now()->month;
         $currentYear = now()->year;
 
-        $monthlyPresences = Presence::whereMonth('date', $currentMonth)
-            ->whereYear('date', $currentYear)
-            ->where('status', 'présent')
-            ->count();
+        // ═══ 1 seule requête pour tous les compteurs présence du jour ═══
+        $presenceStats = Presence::whereDate('date', $today)
+            ->selectRaw('SUM(status = ?) as presents, SUM(status = ?) as absents', ['présent', 'Absent'])
+            ->first();
+        $totalEmployees = Utilisateur::where('role', 'Employer')->count();
+        $totalSupervisors = Utilisateur::where('role', 'Superviseur')->count();
+        $presentToday = (int) ($presenceStats->presents ?? 0);
+        $absentToday = (int) ($presenceStats->absents ?? 0);
 
-        $monthlyAbsences = Presence::whereMonth('date', $currentMonth)
-            ->whereYear('date', $currentYear)
-            ->where('status', 'Absent')
-            ->count();
+        // ═══ Listes modals en 2 requêtes max ═══
+        $presenceJour = Presence::whereDate('date', $today)
+            ->whereNotNull('heureArrivee')
+            ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
+            ->select('utilisateur.nom', 'presence.heureArrivee', 'presence.heureDepart', 'presence.status')
+            ->orderBy('presence.heureArrivee')
+            ->get();
+        $presentsAujourdhui = $presenceJour->filter(fn($p) => in_array($p->status, ['présent', 'present']))->values();
+        $arrivesAujourdhui = $presenceJour->filter(fn($p) => $p->heureArrivee !== null)->values();
+        $partisAujourdhui = $presenceJour->filter(fn($p) => $p->heureDepart !== null)->values();
 
-        $monthlyLates = Presence::whereMonth('date', $currentMonth)
-            ->whereYear('date', $currentYear)
-            ->whereRaw('(HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0))')
-            ->count();
+        $absentsAujourdhui = Utilisateur::where('role', 'Employer')
+            ->whereNotIn('id', Presence::whereDate('date', $today)->pluck('employerID'))
+            ->select('nom')->orderBy('nom')->get();
 
+        // ═══ Stats mensuelles en 2 requêtes max ═══
+        $monthlyPresenceStats = Presence::whereMonth('date', $currentMonth)
+            ->whereYear('date', $currentYear)
+            ->selectRaw('SUM(status = ?) as presences, SUM(status = ?) as absences, SUM(HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0)) as lates', ['présent', 'Absent'])
+            ->first();
+        $monthlyPresences = (int) ($monthlyPresenceStats->presences ?? 0);
+        $monthlyAbsences = (int) ($monthlyPresenceStats->absences ?? 0);
+        $monthlyLates = (int) ($monthlyPresenceStats->lates ?? 0);
+
+        // ═══ Équipes ═══
         $equipes = Superviseur::whereNotNull('equipe')->where('equipe', '!=', '')->distinct()->pluck('equipe')->sort()->values();
         $equipeSelectionnee = request()->query('equipe');
-
         $employerIdsFiltre = null;
         if ($equipeSelectionnee) {
             $employerIdsFiltre = Employer::where('equipe', $equipeSelectionnee)->pluck('id')->toArray();
@@ -94,43 +74,81 @@ class AdminController extends Controller
         $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIdsFiltre, 6);
         $statsEvolution = \App\Services\EvaluationService::statsEvolution($evolutionEvaluations);
 
-        $caisseChart = Cache::remember('admin_caisse_chart_' . now()->format('Y-m-d-H'), 120, function () {
+        // ═══ IDs des superviseurs caisse ═══
+        $supCaisseIds = Superviseur::whereIn('type_superviseur', ['directrice', 'secretaire'])
+            ->pluck('id', 'type_superviseur');
+
+        // ═══ Graphique CA 7 jours en 2 requêtes (au lieu de 56) ═══
+        $caisseChart = Cache::remember('admin_caisse_chart_' . now()->format('Y-m-d-H'), 120, function () use ($supCaisseIds) {
             $labels = [];
             $entrees = [];
             $sorties = [];
+            $supIds = $supCaisseIds->values()->toArray();
+
+            if (empty($supIds)) {
+                for ($i = 6; $i >= 0; $i--) {
+                    $labels[] = now()->subDays($i)->format('d/m');
+                    $entrees[] = 0;
+                    $sorties[] = 0;
+                }
+                return ['labels' => $labels, 'entrees' => $entrees, 'sorties' => $sorties];
+            }
+
+            // 1 requête pour les entrées (commandes + services par jour)
+            $entreesParJour = DB::table('commandes')
+                ->selectRaw('date, SUM(montant) as total')
+                ->whereIn('superviseur_id', $supIds)
+                ->whereBetween('date', [now()->subDays(6)->toDateString(), now()->toDateString()])
+                ->groupBy('date')
+                ->pluck('total', 'date')
+                ->toArray();
+            $entreesSvc = DB::table('services_fournis')
+                ->selectRaw('date, SUM(montant) as total')
+                ->whereIn('superviseur_id', $supIds)
+                ->whereBetween('date', [now()->subDays(6)->toDateString(), now()->toDateString()])
+                ->groupBy('date')
+                ->pluck('total', 'date')
+                ->toArray();
+            // 1 requête pour les sorties (retraits par jour)
+            $sortiesParJour = DB::table('retraits')
+                ->selectRaw('date, SUM(montant) as total')
+                ->whereIn('superviseur_id', $supIds)
+                ->whereBetween('date', [now()->subDays(6)->toDateString(), now()->toDateString()])
+                ->groupBy('date')
+                ->pluck('total', 'date')
+                ->toArray();
+
             for ($i = 6; $i >= 0; $i--) {
                 $jour = now()->subDays($i)->toDateString();
                 $labels[] = now()->subDays($i)->format('d/m');
-                $e = 0;
-                $s = 0;
-                foreach (['directrice', 'secretaire'] as $type) {
-                    $sup = Superviseur::where('type_superviseur', $type)->first();
-                    if (!$sup) continue;
-                    $e += (float) Commande::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant')
-                        + (float) ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
-                    $s += (float) Retrait::where('superviseur_id', $sup->id)->whereDate('date', $jour)->sum('montant');
-                }
+                $e = (float) ($entreesParJour[$jour] ?? 0) + (float) ($entreesSvc[$jour] ?? 0);
+                $s = (float) ($sortiesParJour[$jour] ?? 0);
                 $entrees[] = $e;
                 $sorties[] = $s;
             }
             return ['labels' => $labels, 'entrees' => $entrees, 'sorties' => $sorties];
         });
 
+        // ═══ Caisses du jour en 1 seule requête groupée ═══
         $caisses = [];
-        foreach (['directrice' => 'directrice', 'secretaire' => 'secretaire'] as $label => $type) {
-            $sup = Superviseur::where('type_superviseur', $type)->first();
-            if (!$sup) continue;
-            $entrees = Commande::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant')
-                + ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
-            $sorties = Retrait::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
-            $caisses[$label] = [
-                'nom' => Utilisateur::find($sup->id)->nom ?? $label,
-                'entrees' => $entrees,
-                'sorties' => $sorties,
-                'net' => $entrees - $sorties,
+        $supLabels = Superviseur::whereIn('type_superviseur', ['directrice', 'secretaire'])
+            ->join('utilisateur', 'superviseur.id', '=', 'utilisateur.id')
+            ->select('superviseur.id', 'superviseur.type_superviseur', 'utilisateur.nom')
+            ->get();
+        foreach ($supLabels as $sup) {
+            $type = $sup->type_superviseur;
+            $cmd = (float) Commande::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
+            $svc = (float) ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
+            $ret = (float) Retrait::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
+            $caisses[$type] = [
+                'nom' => $sup->nom,
+                'entrees' => $cmd + $svc,
+                'sorties' => $ret,
+                'net' => $cmd + $svc - $ret,
             ];
         }
 
+        // ═══ Stock ═══
         $gestionnaireStock = Superviseur::where('type_superviseur', 'gestionnaire_stock')->first();
         $stockTshirts = $stockPapiers = collect();
         $totalStockTshirts = 0;
@@ -143,20 +161,17 @@ class AdminController extends Controller
                 + $stockPapiers->filter(fn($p) => $p->metres_restants <= $p->seuil_alerte)->count();
         }
 
-        // Historique des annulations (30 derniers jours)
-        $annulations = Commande::where('statut_paiement', 'annule')
-            ->where('date', '>=', now()->subDays(30)->toDateString())
+        // ═══ Annulations (30j) — 1 seule requête ═══
+        $annulationQuery = Commande::where('statut_paiement', 'annule')
+            ->where('date', '>=', now()->subDays(30)->toDateString());
+        $annulations = (clone $annulationQuery)
             ->join('utilisateur', 'commandes.superviseur_id', '=', 'utilisateur.id')
             ->select('commandes.*', 'utilisateur.nom as superviseur_nom')
             ->orderByDesc('commandes.date')
             ->limit(15)
             ->get();
-        $totalAnnulationsMontant = Commande::where('statut_paiement', 'annule')
-            ->where('date', '>=', now()->subDays(30)->toDateString())
-            ->sum('montant');
-        $totalRemboursements = Commande::where('statut_paiement', 'annule')
-            ->where('date', '>=', now()->subDays(30)->toDateString())
-            ->sum('montant_paye');
+        $totalAnnulationsMontant = (clone $annulationQuery)->sum('montant');
+        $totalRemboursements = (clone $annulationQuery)->sum('montant_paye');
 
         return view('admin.dashboard', compact(
             'totalEmployees', 'totalSupervisors',

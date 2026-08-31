@@ -161,11 +161,13 @@ class CommandeSuperviseurService
             ->firstOrFail();
 
         $montantPaye = (float) $commande->montant_paye;
+        $oldValues = $commande->toArray();
         $commande->update(['statut_paiement' => 'annule']);
 
         AuditService::updated(
             $this->typePoste,
             "Commande #{$id} annulée" . ($montantPaye > 0 ? " (remboursement: {$montantPaye} FCFA)" : ''),
+            $oldValues,
             $commande->toArray()
         );
 
