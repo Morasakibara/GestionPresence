@@ -123,8 +123,7 @@ abstract class AbstractCaisseController extends Controller
             ->latest()->take(10)->get();
 
         return view("{$this->viewPrefix()}.commandes", compact('commandes', 'envoisEchecs'))
-            ->with($this->typesViewKey(), $this->types())
-            ->with('typesPhoto', $this->types());
+            ->with($this->typesViewKey(), $this->types());
     }
 
     /**
