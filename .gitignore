@@ -18,7 +18,8 @@ yarn-error.log
 /.idea
 /.vscode
 /skills-main
-
+/.agents
+/andrej-karpathy-skills-main
 # Mailpit local (binaire téléchargé)
 tools/mailpit/
 

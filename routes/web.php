@@ -159,6 +159,11 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/rapport/export/html', [DirectriceController::class, 'exportHtml'])->name('rapport.exportHtml');
         Route::get('/rapport/export/pdf', [DirectriceController::class, 'exportPdf'])->name('rapport.exportPdf');
         Route::post('/encaisser-reste', [DirectriceController::class, 'encaisserReste'])->name('encaisserReste');
+
+        // ── Facturation acompte / solde (Étapes 2/3/4) ──
+        Route::post('/commandes/{id}/encaisser-solde', [DirectriceController::class, 'encaisserSolde'])->name('commandes.encaisserSolde');
+        Route::get('/factures/{factureId}/pdf', [DirectriceController::class, 'facturePdf'])->name('factures.pdf');
+        Route::post('/whatsapp-envois/{envoi}/renvoyer', [DirectriceController::class, 'renvoyerWhatsApp'])->name('whatsapp.renvoyer');
     });
 
     // ===================== SECRETAIRE (SuperviseurS) =====================
@@ -182,6 +187,11 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
         Route::get('/rapport/export/html', [SecretaireController::class, 'exportHtml'])->name('rapport.exportHtml');
         Route::get('/rapport/export/pdf', [SecretaireController::class, 'exportPdf'])->name('rapport.exportPdf');
         Route::post('/encaisser-reste', [SecretaireController::class, 'encaisserReste'])->name('encaisserReste');
+
+        // ── Facturation acompte / solde (Étapes 2/3/4) ──
+        Route::post('/commandes/{id}/encaisser-solde', [SecretaireController::class, 'encaisserSolde'])->name('commandes.encaisserSolde');
+        Route::get('/factures/{factureId}/pdf', [SecretaireController::class, 'facturePdf'])->name('factures.pdf');
+        Route::post('/whatsapp-envois/{envoi}/renvoyer', [SecretaireController::class, 'renvoyerWhatsApp'])->name('whatsapp.renvoyer');
     });
 
     // ===================== GESTIONNAIRE DE STOCK (Superviseur3) =====================

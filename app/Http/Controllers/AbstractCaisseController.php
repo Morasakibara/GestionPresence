@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\EnvoyerFactureWhatsAppJob;
 use App\Models\Commande;
+use App\Models\Facture;
 use App\Models\ServiceFourni;
 use App\Models\Retrait;
 use App\Models\Superviseur;
+use App\Models\WhatsappEnvoi;
 use App\Services\AuditService;
 use App\Services\CommandeSuperviseurService;
+use App\Services\FacturePdfService;
+use App\Services\FactureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Contrôleur abstrait pour les postes spécialisés (directrice / secrétaire).
@@ -51,6 +57,11 @@ abstract class AbstractCaisseController extends Controller
         $prefix = $this->cachePrefix();
         \Illuminate\Support\Facades\Cache::forget("{$prefix}dash_{$id}");
         \Illuminate\Support\Facades\Cache::forget("{$prefix}types_{$id}_" . now()->toDateString());
+    }
+
+    protected function serviceFacture(): FactureService
+    {
+        return new FactureService(Auth::id(), 'facture_' . $this->module());
     }
 
     protected function caisseType(): string
@@ -104,15 +115,34 @@ abstract class AbstractCaisseController extends Controller
     public function showCommandes()
     {
         $commandes = $this->service()->toutesLesCommandes();
-        return view("{$this->viewPrefix()}.commandes", compact('commandes'))
-            ->with($this->typesViewKey(), $this->types());
+
+        // Étape 4.2 — alertes visibles des envois WhatsApp en échec
+        $envoisEchecs = WhatsappEnvoi::where('superviseur_id', Auth::id())
+            ->where('statut', WhatsappEnvoi::STATUT_ECHEC)
+            ->with('commande')
+            ->latest()->take(10)->get();
+
+        return view("{$this->viewPrefix()}.commandes", compact('commandes', 'envoisEchecs'))
+            ->with($this->typesViewKey(), $this->types())
+            ->with('typesPhoto', $this->types());
     }
 
+    /**
+     * Étape 2.1 — Nouveau flux : « Valider l'acompte ».
+     * Si le formulaire du nouveau flux est utilisé (numero_whatsapp + acompte),
+     * la commande passe par le service de facturation (PDF + WhatsApp automatiques).
+     * Sinon, on garde l'ancien chemin (API mobile, scripts).
+     */
     public function storeCommande(Request $request)
     {
-        $this->service()->enregistrerCommande($request);
+        if ($request->filled('numero_whatsapp')) {
+            $this->serviceFacture()->creerAcompte($request);
+        } else {
+            $this->service()->enregistrerCommande($request);
+        }
+
         $this->flushDashboardCache();
-        return redirect()->route("{$this->module()}.commandes")->with('success', 'Commande enregistrée.');
+        return redirect()->route("{$this->module()}.commandes")->with('success', "Facture d'acompte enregistrée.");
     }
 
     public function editCommande($id)
@@ -127,27 +157,136 @@ abstract class AbstractCaisseController extends Controller
     {
         $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->first();
         if ($commande) $this->authorize('update', $commande);
+
+        // Verrou (Étape 1.2) : une facture déjà encaissée ne bouge pas sans le mot de passe administrateur
+        if ($commande && $commande->estVerrouillee()) {
+            $autorisation = $this->serviceFacture()->autoriserMouvement($commande, 'modification', $request->input('manager_password'));
+            if (!$autorisation['authorized']) {
+                return redirect()->back()->with('error', 'Modification bloquée : cette facture a un acompte. Mot de passe administrateur requis.');
+            }
+        }
+
         $this->service()->modifierCommande($request, $id);
         $this->flushDashboardCache();
         return redirect()->route("{$this->module()}.commandes")->with('success', 'Commande mise à jour.');
     }
 
-    public function destroyCommande($id)
+    public function destroyCommande(Request $request, $id)
     {
         $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->first();
         if ($commande) $this->authorize('delete', $commande);
+
+        if ($commande) {
+            $autorisation = $this->serviceFacture()->autoriserMouvement($commande, 'suppression', $request->input('manager_password'));
+            if (!$autorisation['authorized']) {
+                return redirect()->back()->with('error', 'Suppression bloquée : mot de passe administrateur requis pour une facture encaissée.');
+            }
+        }
+
         $this->service()->supprimerCommande($id);
         $this->flushDashboardCache();
+
         return redirect()->route("{$this->module()}.commandes")->with('success', 'Commande supprimée.');
     }
 
-    public function annulerCommande($id)
+    /**
+     * Mode minimal — page de liste sans les types (si le template n'a pas la variable).
+     */
+    public function listCommandes(Request $request)
+    {
+        $commandes = $this->service()->toutesLesCommandes();
+
+        // Étape 4.2 — alertes visibles des envois WhatsApp en échec
+        $envoisEchecs = WhatsappEnvoi::where('superviseur_id', Auth::id())
+            ->where('statut', WhatsappEnvoi::STATUT_ECHEC)
+            ->with('commande')
+            ->latest()->take(10)->get();
+
+        $data = ['commandes' => $commandes, 'envoisEchecs' => $envoisEchecs];
+        $data[$this->typesViewKey()] = $this->types();
+
+        return view("{$this->viewPrefix()}.commandes", $data);
+    }
+
+    public function annulerCommande(Request $request, $id)
     {
         $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
         $this->authorize('update', $commande);
+
+        $autorisation = $this->serviceFacture()->autoriserMouvement($commande, 'annulation', $request->input('manager_password'));
+        if (!$autorisation['authorized']) {
+            return redirect()->back()->with('error', 'Annulation bloquée : mot de passe administrateur requis pour une facture encaissée.');
+        }
+
         $this->service()->annulerCommande($id);
         $this->flushDashboardCache();
         return redirect()->route("{$this->module()}.commandes")->with('success', 'Commande annulée.');
+    }
+
+    /** ───────── Étape 2.2 — Clôture du solde (montant verrouillé) ──────── */
+
+    public function encaisserSolde(Request $request, $id)
+    {
+        $resultat = $this->serviceFacture()->encaisserSolde((int) $id, $request);
+        $this->flushDashboardCache();
+
+        if (!$resultat['success']) {
+            return redirect()->route("{$this->module()}.commandes")->with('error', $resultat['error']);
+        }
+
+        return redirect()->route("{$this->module()}.commandes")->with('success', $resultat['message']);
+    }
+
+    /** ───────── Étape 3.1 — Facture PDF en lecture seule ───────────── */
+
+    public function facturePdf(int $factureId)
+    {
+        $facture = Facture::whereKey($factureId)
+            ->whereHas('commande', fn($q) => $q->where('superviseur_id', Auth::id()))
+            ->firstOrFail();
+
+        if (!Storage::disk('local')->exists($facture->pdf_path)) {
+            abort(404, 'PDF introuvable.');
+        }
+
+        if (!FacturePdfService::integrity($facture)) {
+            abort(412, 'Facture altérée — contrôle d’empreinte SHA-256 en échec.');
+        }
+
+        return response()->download(
+            Storage::disk('local')->path($facture->pdf_path),
+            basename($facture->pdf_path),
+            ['Content-Type' => 'application/pdf']
+        )
+        ->header('Cache-Control', 'no-store, private')
+        ->header('X-Content-Type-Options', 'nosniff');
+    }
+
+    /** ───────── Étape 4.2 — Alertes d'envoi WhatsApp ───────────────── */
+
+    public function renvoyerWhatsApp(Request $request, int $envoiId)
+    {
+        $envoi = WhatsappEnvoi::where('id', $envoiId)
+            ->where('superviseur_id', Auth::id())
+            ->with('facture')
+            ->firstOrFail();
+
+        $request->validate(['numero_whatsapp' => ['required', 'string', 'regex:' . config('facture.whatsapp_regex')]]);
+
+        $envoi->update([
+            'telephone' => FactureService::normaliserTelephone($request->numero_whatsapp),
+            'statut'    => WhatsappEnvoi::STATUT_EN_ATTENTE,
+            'erreur'    => null,
+            'tentative' => $envoi->tentative + 1,
+        ]);
+        $envoi->commande()->update(['numero_whatsapp' => $envoi->telephone]);
+
+        if ($envoi->facture) {
+            EnvoyerFactureWhatsAppJob::dispatch($envoi->facture->id);
+        }
+
+        $this->flushDashboardCache();
+        return redirect()->route("{$this->module()}.commandes")->with('success', 'Nouvel envoi WhatsApp programmé sur ' . $envoi->telephone . '.');
     }
 
     // ─── ENCAISSEMENT ──────────────────────────────────────────────

@@ -21,7 +21,7 @@ class AuditService
     ): AuditLog {
         $user = Auth::user();
 
-        return AuditLog::create([
+        return self::entrer([
             'user_id' => $user?->id,
             'role' => $user?->role,
             'action' => $action,
@@ -32,6 +32,40 @@ class AuditService
             'ip_address' => $request?->ip(),
             'user_agent' => $request?->userAgent(),
         ]);
+    }
+
+    /**
+     * Enregistre une entrée dans le journal d'audit.
+     *
+     * Étape 1.1 (verrou) : la table est scellée par une chaîne de hachage —
+     * chaque entrée signe l'empreinte (sha256) de l'entrée précédente.
+     * Toute suppression ou modification d'une ligne casse la chaîne et
+     * devient visible via self::integriteOk().
+     */
+    public static function entrer(array $attributs): AuditLog
+    {
+        return AuditLog::create($attributs);
+    }
+
+    /**
+     * Vérifie la chaîne de hachage complète (teinte de falsification).
+     */
+    public static function integriteOk(): bool
+    {
+        $entrees = AuditLog::orderBy('id')->select('id', 'previous_hash', 'hash')->get();
+        $precedent = null;
+
+        foreach ($entrees as $entree) {
+            if ($entree->hash === null) {
+                continue; // éventuelles lignes antérieures à la chaîne
+            }
+            if ($precedent !== null && $entree->previous_hash !== $precedent) {
+                return false;
+            }
+            $precedent = $entree->hash;
+        }
+
+        return $precedent === null || $entrees->last()->hash !== null;
     }
 
     /**

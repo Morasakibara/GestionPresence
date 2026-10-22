@@ -39,4 +39,18 @@ return [
         'key' => env('RESEND_KEY'),
     ],
 
+    // ---------------------------------------------------------------------------
+    // Étape 4.1 — Passerelle WhatsApp (API officielle Meta Cloud).
+    //   driver = 'meta' → WHATSAPP_TOKEN + WHATSAPP_PHONE_NUMBER_ID requis
+    //   driver = 'log'  → mode simulation (défaut) : l'envoi est journalisé
+    // Le serveur envoie lui-même le PDF (upload media → message document).
+    // ---------------------------------------------------------------------------
+    'whatsapp' => [
+        'driver' => env('WHATSAPP_DRIVER', 'log'),
+        'meta'   => [
+            'token'            => env('WHATSAPP_TOKEN'),
+            'phone_number_id'  => env('WHATSAPP_PHONE_NUMBER_ID'),
+            'version'          => env('WHATSAPP_GRAPH_VERSION', 'v21.0'),
+        ],
+    ],
 ];

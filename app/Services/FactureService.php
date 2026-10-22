@@ -1,0 +1,252 @@
+<?php
+
+namespace App\Services;
+
+use App\Jobs\EnvoyerFactureWhatsAppJob;
+use App\Models\Commande;
+use App\Models\Facture;
+use App\Models\Utilisateur;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Étapes 2.1 / 2.2 — Orchestration du flux de facturation (acompte / solde).
+ *
+ * Les montants sont figés : dès le premier versement, le prix est verrouillé
+ * et le solde calculé automatiquement. L'encaissement du solde n'accepte que
+ * le montant exact restant — aucune saisie manuelle possible.
+ */
+class FactureService
+{
+    public const MODULE = 'facture';
+
+    public function __construct(
+        private readonly int $superviseurId,
+        private readonly string $module,
+        private readonly ManagerAuthService $managerAuth = new ManagerAuthService(),
+    ) {}
+
+    /*────────────── Étape 2.1 — Saisie initiale (acompte) ──────────────*/
+
+    /**
+     * Crée la commande + facture d'acompte via le nouveau formulaire.
+     *
+     * Champs : type, montant (total), acompte (versement initial obligatoire),
+     * client_nom (facultatif), numero_whatsapp (obligatoire, format +237...),
+     * details (facultatif).
+     */
+    public function creerAcompte(Request $request): Commande
+    {
+        $request->validate([
+            'type'            => 'required|string',
+            'montant'         => 'required|numeric|min:1|max:100000000',
+            'acompte'         => 'required|numeric|min:1|max:100000000',
+            'client_nom'      => 'nullable|string|max:100',
+            'numero_whatsapp' => ['required', 'string', 'regex:' . config('facture.whatsapp_regex')],
+            'details'         => 'nullable|string|max:1000',
+        ]);
+
+        $montant  = round((float) $request->montant, 2);
+        $acompte  = round((float) $request->acompte, 2);
+
+        if ($acompte > $montant) {
+            $request->validate(['acompte' => 'numeric|max:0'], []);
+            abort(422, "L'acompte ($acompte) ne peut pas dépasser le montant total ($montant).");
+        }
+
+        $comptant = $acompte >= $montant;
+
+        $commande = DB::transaction(function () use ($request, $montant, $acompte, $comptant) {
+            $numero = self::genererNumero();
+
+            $commande = Commande::create([
+                'superviseur_id'   => $this->superviseurId,
+                'type'             => $request->type,
+                'montant'          => $montant,
+                'montant_paye'     => $acompte,
+                'statut_paiement'  => $comptant ? 'paye' : Commande::STATUT_EN_ATTENTE_SOLDE,
+                'details'          => $request->details,
+                'date'             => now()->toDateString(),
+                'numero_whatsapp'  => self::normaliserTelephone($request->numero_whatsapp),
+                'client_nom'       => $request->client_nom,
+                'numero_facture'   => $numero,
+                'prix_verrouille'  => true, // verrou dès le premier versement
+            ]);
+
+            FacturePdfService::figer(
+                $commande,
+                $numero,
+                $comptant ? Facture::PHASE_SOLDE : Facture::PHASE_ACOMPTE
+            );
+
+            return $commande;
+        });
+
+        AuditService::created(
+            $this->module,
+            "Facture {$commande->numero_facture} — acompte " . number_format($acompte, 0, ',', '.') .
+            " FCFA sur " . number_format($montant, 0, ',', '.') . " FCFA (WhatsApp {$commande->numero_whatsapp})",
+            $commande->toArray(),
+            $request
+        );
+
+        // Étape 4.2 — envoi WhatsApp automatique dès la confirmation du paiement
+        $this->envoyerWhatsApp($commande->numero_facture, Facture::PHASE_ACOMPTE);
+
+        return $commande;
+    }
+
+    /*────────────── Étape 2.2 — Clôture (solde) ──────────────*/
+
+    /**
+     * Encaisse le solde exact d'une commande en attente.
+     *
+     * Verrou (Étape 2.2) : le champ reste à payer n'accepte AUCUN montant —
+     * le serveur calcule le reste et bascule la facture à "Payée".
+     */
+    public function encaisserSolde(int $commandeId, ?Request $request = null): array
+    {
+        $commande = Commande::where('id', $commandeId)
+            ->where('superviseur_id', $this->superviseurId)
+            ->firstOrFail();
+
+        if ($commande->statut_paiement === 'paye') {
+            return ['success' => false, 'error' => "La facture {$commande->numero_facture} est déjà payée."];
+        }
+        if (in_array($commande->statut_paiement, ['annule'], true)) {
+            return ['success' => false, 'error' => "Commande annulée — encaissement impossible."];
+        }
+
+        $solde = round($commande->solde, 2);
+
+        $ancien = $commande->toArray();
+        $commande->update([
+            'montant_paye'    => round((float) $commande->montant, 2),
+            'statut_paiement' => 'paye',
+        ]);
+
+        FacturePdfService::figer($commande, $commande->numero_facture, Facture::PHASE_SOLDE);
+
+        AuditService::updated(
+            $this->module,
+            "Encaissement du solde — facture {$commande->numero_facture} : {$solde} FCFA → PAYÉE",
+            $ancien,
+            $commande->toArray(),
+            $request
+        );
+
+        try {
+            $admin = Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
+            if ($admin) {
+                $admin->notify(new \App\Notifications\PaiementCommandeNotification($commande, $solde, 'paye'));
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification paiement échouée: ' . $e->getMessage());
+        }
+
+        $this->envoyerWhatsApp($commande->numero_facture, Facture::PHASE_SOLDE);
+
+        return [
+            'success' => true,
+            'message' => "Facture {$commande->numero_facture} payée — solde " .
+                number_format($solde, 0, ',', '.') . " FCFA encaissé.",
+        ];
+    }
+
+    /*────────────── Verrou manager (Étape 1.2) ──────────────*/
+
+    /**
+     * Vérifie l'autorisation manager sur une commande verrouillée.
+     *
+     * @return array{authorized: bool, gestionnaire: ?Utilisateur}
+     */
+    public function autoriserMouvement(Commande $commande, string $action, ?string $motDePasseManager): array
+    {
+        if (!$commande->estVerrouillee()) {
+            return ['authorized' => true, 'gestionnaire' => null];
+        }
+
+        $gestionnaire = $this->managerAuth->valider($motDePasseManager);
+
+        $this->managerAuth->tracer(
+            "caisse.{$action}",
+            "{$action} sur la facture verrouillée {$commande->numero_facture}",
+            $gestionnaire,
+            Auth::user()
+        );
+
+        return ['authorized' => $gestionnaire !== null, 'gestionnaire' => $gestionnaire];
+    }
+
+    /*────────────── Aides ──────────────*/
+
+    /** Numéro séquentiel annuel : FAC-2026-00001. */
+    public static function genererNumero(): string
+    {
+        $annee  = now()->format('Y');
+        $longueur = (int) config('facture.numerotation.longueur', 5);
+
+        $dernier = Commande::whereYear('created_at', $annee)
+            ->where('numero_facture', 'like', "FAC-{$annee}-%")
+            ->orderByDesc('numero_facture')
+            ->value('numero_facture');
+
+        $sequence = $dernier
+            ? (int) substr((string) $dernier, -1 * $longueur) + 1
+            : 1;
+
+        // Garde-fou anti-collision (retry contrôlé par l'appelant)
+        $numero = "FAC-{$annee}-" . str_pad((string) $sequence, $longueur, '0', STR_PAD_LEFT);
+        if (Commande::where('numero_facture', $numero)->exists()) {
+            $numero = "FAC-{$annee}-" . str_pad((string) random_int(1, (int) str_repeat('9', $longueur)), $longueur, '0', STR_PAD_LEFT);
+        }
+
+        return $numero;
+    }
+
+    /** Format international E.164 (ex: 690123456 → +237690123456). */
+    public static function normaliserTelephone(string $brut): string
+    {
+        $tel = preg_replace('/[^0-9+]/', '', trim($brut));
+
+        if (str_starts_with($tel, '+')) {
+            return $tel;
+        }
+        if (str_starts_with($tel, '00')) {
+            return '+' . substr($tel, 2);
+        }
+        if (in_array(substr($tel, 0, 3), ['237', '236', '225', '226', '229', '00237'], true) && strlen($tel) >= 10) {
+            return '+' . ltrim($tel, '0');
+        }
+
+        return '+237' . $tel;
+    }
+
+    /** Téléphone compatible passerelle (meta/twilio : sans le « + »). */
+    public static function telephonePasserelle(string $tel): string
+    {
+        return str_replace('+', '', self::normaliserTelephone($tel));
+    }
+
+    /** Dispatch du job WhatsApp (serveur → passerelle, jamais l'utilisateur). */
+    public function envoyerWhatsApp(string $numeroFacture, string $phase): void
+    {
+        $facture = Facture::where('numero', $numeroFacture)->where('phase', $phase)->first();
+
+        if (!$facture) {
+            return;
+        }
+
+        \App\Models\WhatsappEnvoi::create([
+            'facture_id'     => $facture->id,
+            'commande_id'    => $facture->commande_id,
+            'superviseur_id' => $this->superviseurId,
+            'telephone'      => $facture->client_whatsapp,
+            'canal'          => config('services.whatsapp.driver', 'log'),
+            'statut'         => \App\Models\WhatsappEnvoi::STATUT_EN_ATTENTE,
+        ]);
+
+        \App\Jobs\EnvoyerFactureWhatsAppJob::dispatch($facture->id);
+    }
+}

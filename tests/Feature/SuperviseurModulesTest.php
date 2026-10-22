@@ -289,6 +289,7 @@ class SuperviseurModulesTest extends TestCase
             'montant' => 5000,
             'montant_paye' => 5000,
             'statut_paiement' => 'paye',
+            'manager_password' => 'password'
         ]);
         $response->assertStatus(302);
 
@@ -308,7 +309,9 @@ class SuperviseurModulesTest extends TestCase
         ]);
         $cmd = Commande::where('superviseur_id', $sup->id)->orderByDesc('id')->first();
 
-        $response = $this->delete('/directrice/commandes/' . $cmd->id);
+        $response = $this->delete('/directrice/commandes/' . $cmd->id, [
+            'manager_password' => 'password'
+        ]);
         $response->assertStatus(302);
         $this->assertSoftDeleted('commandes', ['id' => $cmd->id]);
     }
@@ -479,11 +482,13 @@ class SuperviseurModulesTest extends TestCase
     public function test_secretaire_edit_update_delete_commande(): void
     {
         $sup = $this->loginSuperviseur('secretaire');
+        // Créer une commande sans acompte initial (statut a_payer)
         $this->post('/secretaire/commandes', [
             'type' => 'shooting',
             'montant' => 5000,
-            'montant_paye' => 2500,
-            'statut_paiement' => 'partiel',
+            'montant_paye' => 0,
+            'statut_paiement' => 'a_payer',
+            'details' => 'Shooting corporate.',
         ]);
         $cmd = Commande::where('superviseur_id', $sup->id)->orderByDesc('id')->first();
 
@@ -491,7 +496,7 @@ class SuperviseurModulesTest extends TestCase
         $response = $this->get('/secretaire/commandes/' . $cmd->id . '/edit');
         $response->assertOk();
 
-        // Update
+        // Update - passage du statut a_payer à paye avec le montant complet
         $response = $this->put('/secretaire/commandes/' . $cmd->id, [
             'type' => 'shooting',
             'montant' => 5000,
@@ -500,10 +505,15 @@ class SuperviseurModulesTest extends TestCase
         ]);
         $response->assertStatus(302);
         $cmd->refresh();
+        // Le montant est maintenant payé complet
+        $this->assertEquals(5000, $cmd->montant_paye);
         $this->assertEquals('paye', $cmd->statut_paiement);
 
-        // Delete
-        $response = $this->delete('/secretaire/commandes/' . $cmd->id);
+        // Delete (suppression soft) - verrouillé car déjà payé, besoin du mot de passe admin
+        // On simule le mot de passe admin (mot de passe par défaut: password)
+        $response = $this->delete('/secretaire/commandes/' . $cmd->id, [
+            'manager_password' => 'password'
+        ]);
         $response->assertStatus(302);
         $this->assertSoftDeleted('commandes', ['id' => $cmd->id]);
     }

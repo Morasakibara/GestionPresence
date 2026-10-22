@@ -205,16 +205,12 @@ class CaisseFlowTest extends TestCase
         session(['current_role' => 'Superviseur']);
         $this->get('/directrice/commandes')->assertOk();
 
-        // La secrétaire ne voit rien
+        // La secrétaire ne voit pas les commandes de la directrice
         $this->actingAs($this->secretaire);
         session(['current_role' => 'Superviseur']);
-        $this->get('/secretaire/commandes')->assertOk();
-
-        // Vérifier que la commande créée appartient bien à la directrice
-        $this->assertDatabaseHas('commandes', [
-            'superviseur_id' => $this->directrice->id,
-            'type' => 'impression',
-            'montant' => 15000,
-        ]);
+        $response = $this->get('/secretaire/commandes');
+        $response->assertOk();
+        $this->assertStringNotContainsString((string) $this->directrice->id, $response->content());
     }
 }
+

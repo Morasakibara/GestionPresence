@@ -38,7 +38,7 @@ class CommandeSuperviseurService
             'type'             => 'required|string|in:' . implode(',', array_keys($this->typesAutorises)),
             'montant'          => 'required|numeric|min:0.01',
             'montant_paye'     => 'required|numeric|min:0',
-            'statut_paiement'  => 'required|string|in:paye,partiel,a_payer,annule',
+            'statut_paiement'  => 'required|string|in:paye,partiel,a_payer,annule,en_attente_solde',
             'details'          => 'nullable|string|max:1000',
         ]);
 
@@ -87,7 +87,7 @@ class CommandeSuperviseurService
         }
 
         $newMontantPaye = (float) $commande->montant_paye + (float) $request->montant_verse;
-        $newStatut = $newMontantPaye >= (float) $commande->montant ? 'paye' : 'partiel';
+        $newStatut = $newMontantPaye >= (float) $commande->montant ? 'paye' : $commande->statut_paiement;
 
         $commande->update([
             'montant_paye'    => $newMontantPaye,
@@ -117,7 +117,7 @@ class CommandeSuperviseurService
     {
         $request->validate([
             'montant_paye'    => 'required|numeric|min:0',
-            'statut_paiement' => 'required|string|in:paye,partiel,a_payer,annule',
+            'statut_paiement' => 'required|string|in:paye,partiel,a_payer,annule,en_attente_solde',
             'details'         => 'nullable|string|max:1000',
         ]);
 

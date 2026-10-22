@@ -14,6 +14,42 @@ class AuditLog extends Model
         'old_values', 'new_values', 'ip_address', 'user_agent',
     ];
 
+    /**
+     * Étape 1.1 — personne ne peut réécrire ou vider le journal :
+     * Eloquent refuse update/delete sur l'entité (les entrées sont scellées).
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (AuditLog $log) {
+            $log->previous_hash = static::latest()->value('hash');
+            $log->hash = hash('sha256', (
+                ($log->previous_hash ?? '')
+                . '|' . ($log->user_id ?? '0')
+                . '|' . $log->action
+                . '|' . $log->module
+                . '|' . $log->description
+                . '|' . json_encode($log->new_values ?? [])
+            ));
+        });
+    }
+
+    public function scopeLatest($query)
+    {
+        return $query->orderByDesc('id');
+    }
+
+    /**
+     * Le journal est en lecture seule : Eloquent refuse toute réécriture
+     * ou suppression — les lignes restent ineffaçables côté application.
+     */
+    protected static function booted(): void
+    {
+        static::updating(fn() => false);
+        static::deleting(fn() => false);
+    }
+
     protected $casts = [
         'old_values' => 'array',
         'new_values' => 'array',
