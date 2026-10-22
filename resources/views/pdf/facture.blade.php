@@ -128,8 +128,8 @@
 
     {{-- Verrou d'intégrité --}}
     <div class="verrou">
-        Document généré par le système — lecture seule. Empreinte SHA-256 : {{ substr($facture['hash'], 0, 32) }}…
-        Toute altération invalide la facture (contrôle <span style="font-weight:bold;">{{ strtoupper($facture['numero']) }}</span> — {{ $facture['phase'] }}).
+        Document généré par le système — lecture seule. Empreinte SHA-256 enregistrée à la génération.
+        Toute altération invalide la facture (contrôle d'intégrité sur <span style="font-weight:bold;">{{ strtoupper($facture['numero']) }}</span> — {{ $facture['phase'] }}).
     </div>
 
     <div class="signature">

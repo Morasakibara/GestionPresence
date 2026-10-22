@@ -51,8 +51,9 @@ class FactureService
         $acompte  = round((float) $request->acompte, 2);
 
         if ($acompte > $montant) {
-            $request->validate(['acompte' => 'numeric|max:0'], []);
-            abort(422, "L'acompte ($acompte) ne peut pas dépasser le montant total ($montant).");
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'acompte' => "L'acompte (" . number_format($acompte, 0, ',', '.') . ") ne peut pas dépasser le montant total (" . number_format($montant, 0, ',', '.') . ").",
+            ]);
         }
 
         $comptant = $acompte >= $montant;
