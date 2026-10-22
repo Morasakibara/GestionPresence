@@ -20,6 +20,7 @@
     <php>
         <env name="APP_ENV" value="testing" force="true"/>
         <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <env name="BROADCAST_DRIVER" value="null" force="true"/>
         <env name="CACHE_DRIVER" value="array" force="true"/>
         <!-- <env name="DB_CONNECTION" value="sqlite"/> -->
         <!-- <env name="DB_DATABASE" value=":memory:"/> -->
