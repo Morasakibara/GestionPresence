@@ -53,6 +53,8 @@ Route::post('register', [RegisterController::class, 'register'])->middleware('th
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login'])->middleware('throttle:login');
 Route::post('/select-role', [LoginController::class, 'selectRole'])->name('select-role');
+// Récupération de session expirée par code PIN (invité, depuis le cookie de récupération)
+Route::post('/pin/recovery', [\App\Http\Controllers\PinController::class, 'verifyRecovery'])->name('pin.recovery');
 Route::get('/Auth/role_selection',[LoginController::class,'showRoleSelectionModal'])->name('auth.role_selection');
 
 //Deconnexion de l'admin et superviseur

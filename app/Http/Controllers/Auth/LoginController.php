@@ -20,9 +20,14 @@ class LoginController extends Controller
         $this->loginAttempts = $loginAttempts;
     }
 
-    public function showLoginForm()
+    public function showLoginForm(Request $request)
     {
-        return view('auth.login');
+        // Session expirée + cookie de récupération → panneau « déverrouillage par PIN »
+        $pinRecovery = \App\Http\Controllers\PinController::recoveryUser($request);
+
+        return view('auth.login', [
+            'pinRecovery' => $pinRecovery ? ['email' => $pinRecovery->email] : null,
+        ]);
     }
 
     public function login(Request $request)
@@ -75,6 +80,13 @@ class LoginController extends Controller
             RateLimiter::clear($throttleKey);
             $this->loginAttempts->reset($email);
             Auth::login($user);
+
+            // Le PIN ne doit être demandé qu'à l'expiration de la session :
+            // une connexion email + mot de passe est un jeton plus fort que le PIN.
+            session(['pin_verified' => true, 'pin_verified_at' => now()->timestamp]);
+
+            // Cookie permettant de se relogger au seul PIN si la session expire.
+            \App\Http\Controllers\PinController::issueRecoveryCookie($user);
 
             Log::info('Utilisateur connecté avec succès', ['id' => $user->id, 'role' => $user->role]);
 

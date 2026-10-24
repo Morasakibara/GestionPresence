@@ -3,13 +3,80 @@
 namespace App\Http\Controllers;
 
 use App\Models\Utilisateur;
+use Illuminate\Cookie\CookieJar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\RateLimiter;
 
 class PinController extends Controller
 {
+    /** Cookie chiffré de récupération par PIN après expiration de session. */
+    public const COOKIE_NAME = 'pharaon_pin_recovery';
+
+    /** Durée de validité du cookie de récupération (12 h). */
+    public const COOKIE_TTL_MINUTES = 720;
+
+    /** Nombre max de tentatives de PIN en récupération (par heure). */
+    public const MAX_ATTEMPTS = 5;
+
+    /**
+     * Poser le cookie de récupération PIN (appelé après une connexion réussie).
+     *
+     * Ce cookie survit à l'expiration de la session : il permettra de se
+     * reloguer au seul code PIN, au lieu du couple email + mot de passe.
+     * Ne s'applique qu'aux utilisateurs ayant activé le PIN.
+     */
+    public static function issueRecoveryCookie(Utilisateur $user): void
+    {
+        if ($user->pin_required && $user->pin_code) {
+            $payload = json_encode(['id' => $user->id, 'iat' => now()->timestamp]);
+            Cookie::queue(
+                Cookie::make(self::COOKIE_NAME, $payload, self::COOKIE_TTL_MINUTES, '/', null, false, true)
+            );
+        }
+    }
+
+    /** Supprimer le cookie de récupération (déconnexion explicite). */
+    public static function forgetRecoveryCookie(): void
+    {
+        Cookie::queue(Cookie::forget(self::COOKIE_NAME));
+    }
+
+    /**
+     * L'utilisateur désigné par le cookie de récupération, s'il est valide.
+     */
+    public static function recoveryUser(Request $request): ?Utilisateur
+    {
+        $raw = $request->cookie(self::COOKIE_NAME);
+        if (!is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        try {
+            $payload = json_decode($raw, true);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (!is_array($payload) || !isset($payload['id'], $payload['iat'])) {
+            return null;
+        }
+
+        // Expiration côté serveur aussi (le cookie peut être trafiqué hors app)
+        if (now()->timestamp - (int) $payload['iat'] > self::COOKIE_TTL_MINUTES * 60) {
+            return null;
+        }
+
+        $user = Utilisateur::find((int) $payload['id']);
+        if (!$user || !$user->pin_required || !$user->pin_code) {
+            return null;
+        }
+
+        return $user;
+    }
+
     /**
      * Vérifier le PIN et restaurer la session.
      */
@@ -38,6 +105,55 @@ class PinController extends Controller
 
         return response()->json([
             'success' => true,
+            'redirect' => $this->redirectPath($user),
+        ]);
+    }
+
+    /**
+     * Récupération de session expirée : connexion au seul code PIN.
+     *
+     * Déclenché depuis la page de login quand le cookie de récupération
+     * est présent. Limité à 5 tentatives par heure.
+     */
+    public function verifyRecovery(Request $request)
+    {
+        $request->validate(['pin' => 'required|string|size:4']);
+
+        $user = self::recoveryUser($request);
+        if (!$user) {
+            return response()->json(
+                ['error' => 'Récupération indisponible — connectez-vous avec email et mot de passe.'],
+                401
+            );
+        }
+
+        $key = 'pin-recovery:' . $user->id;
+        if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
+            self::forgetRecoveryCookie();
+            return response()->json(
+                ['error' => 'Trop de tentatives. Connectez-vous avec votre email et mot de passe.'],
+                429
+            );
+        }
+
+        if (!Hash::check($request->pin, $user->pin_code)) {
+            RateLimiter::hit($key, 3600);
+            return response()->json(['error' => 'Code PIN incorrect.'], 422);
+        }
+
+        RateLimiter::clear($key);
+
+        // Reconnexion complète équivalente : session fraîche + PIN approuvé
+        Auth::login($user);
+        session()->regenerate();
+        session([
+            'pin_verified'    => true,
+            'pin_verified_at' => now()->timestamp,
+            'current_role'    => $user->role === 'Superviseur' ? 'Superviseur' : $user->role,
+        ]);
+
+        return response()->json([
+            'success'  => true,
             'redirect' => $this->redirectPath($user),
         ]);
     }
@@ -114,6 +230,7 @@ class PinController extends Controller
     public static function clearPinSession(): void
     {
         session()->forget(['pin_verified', 'pin_verified_at']);
+        self::forgetRecoveryCookie();
     }
 
     /**

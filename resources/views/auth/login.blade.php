@@ -57,7 +57,113 @@
       </div>
       @endif
 
-      <form class="space-y-6" method="POST" action="{{ route('login') }}">
+      @if(!empty($pinRecovery ?? null))
+      {{-- ═══ Récupération de session expirée par code PIN ═══ --}}
+      <div id="pinRecoveryPanel" class="rounded-xl border-2 border-pharaoh-gold bg-white p-5 shadow-md mb-6">
+        <div class="flex items-center gap-2 mb-1">
+          <svg class="h-5 w-5 text-pharaoh-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <span class="font-semibold text-[#080808]">Session expirée — déverrouillage rapide</span>
+        </div>
+        <p class="text-xs text-gray-500 mb-3">Connecté précédemment sous <b>{{ $pinRecovery['email'] }}</b>… saisissez votre code PIN pour reprendre votre session.</p>
+
+        <div id="pinRecoveryError" class="hidden bg-red-50 border border-red-200 text-red-600 text-sm rounded-md px-3 py-2 mb-3"></div>
+
+        <div class="flex justify-center gap-2">
+          @for($i = 0; $i < 4; $i++)
+            <input type="tel" inputmode="numeric" maxlength="1"
+                   class="recovery-digit w-12 h-12 text-center text-xl font-bold rounded-lg border-2 border-gray-300 focus:border-pharaoh-gold focus:outline-none"
+                   autocomplete="off">
+          @endfor
+        </div>
+
+        <button type="button" id="pinRecoverySubmit"
+                class="mt-4 w-full rounded-xl bg-pharaoh-gold py-2.5 text-sm font-semibold text-white hover:brightness-110">
+          Déverrouiller
+        </button>
+
+        <button type="button" id="pinRecoverySwitch"
+                class="mt-2 w-full text-xs font-medium text-gray-500 hover:text-pharaoh-gold">
+          Utiliser email &amp; mot de passe
+        </button>
+      </div>
+
+      <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const panel = document.getElementById('pinRecoveryPanel');
+        const form = panel.nextElementSibling;
+        const errorMsg = document.getElementById('pinRecoveryError');
+        const digits = panel.querySelectorAll('.recovery-digit');
+        const btn = document.getElementById('pinRecoverySubmit');
+
+        digits[0].focus();
+
+        digits.forEach((input, i) => {
+          input.addEventListener('input', function (e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value && i < digits.length - 1) digits[i + 1].focus();
+            if (digits[0].value && digits[1].value && digits[2].value && digits[3].value) submitRecovery();
+          });
+          input.addEventListener('keydown', function (e) {
+            if (e.key === 'Backspace' && !this.value && i > 0) { digits[i - 1].focus(); digits[i - 1].value = ''; }
+            if (e.key === 'Enter') { e.preventDefault(); submitRecovery(); }
+          });
+          input.addEventListener('click', function () { this.select(); });
+        });
+
+        function submitRecovery() {
+          const code = Array.from(digits).map(d => d.value).join('');
+          if (code.length !== 4) return;
+          errorMsg.classList.add('hidden');
+          btn.disabled = true;
+          btn.textContent = 'Vérification…';
+
+          fetch('{{ route('pin.recovery') }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'Accept': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ pin: code })
+          })
+          .then(r => r.json().then(j => ({ ok: r.ok, data: j })))
+          .then(({ ok, data }) => {
+            if (ok && data.success) {
+              btn.textContent = '✅ Session restaurée ! Redirection…';
+              setTimeout(() => { window.location.href = data.redirect || '/'; }, 600);
+            } else {
+              errorMsg.textContent = data.error || 'Code PIN incorrect.';
+              errorMsg.classList.remove('hidden');
+              digits.forEach(d => { d.value = ''; });
+              digits[0].focus();
+              btn.disabled = false;
+              btn.textContent = 'Déverrouiller';
+            }
+          })
+          .catch(() => {
+            errorMsg.textContent = 'Erreur réseau. Vérifiez votre connexion.';
+            errorMsg.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = 'Déverrouiller';
+          });
+        }
+
+        btn.addEventListener('click', submitRecovery);
+        document.getElementById('pinRecoverySwitch').addEventListener('click', function () {
+          panel.classList.add('hidden');
+          form.classList.remove('hidden');
+          form.querySelector('#email').focus();
+        });
+      });
+      </script>
+
+      @endif
+
+      {{-- Le formulaire complet apparaît uniquement si aucun PIN de récupération n'est disponible --}}
+      <form class="{{ empty($pinRecovery ?? null) ? 'space-y-6' : 'space-y-6 hidden' }}" method="POST" action="{{ route('login') }}">
         @csrf
 
         <div>
