@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Commande;
 use App\Models\Facture;
+use App\Models\ServiceFourni;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 
@@ -32,35 +33,67 @@ class FacturePdfService
      */
     public static function figer(Commande $commande, string $numero, string $phase): Facture
     {
-        $montantTotal   = (float) $commande->montant;
-        $montantAcompte = min((float) $commande->montant_paye, $montantTotal);
+        return self::genererFacture([
+            'commande_id'     => $commande->id,
+            'type'            => $commande->type,
+            'client_nom'      => $commande->client_nom,
+            'client_whatsapp' => $commande->numero_whatsapp,
+            'montant'         => $commande->montant,
+            'montant_paye'    => $commande->montant_paye,
+            'details'         => $commande->details,
+        ], $numero, $phase);
+    }
+
+    /**
+     * Génère (fige) le PDF d'une facture d'un service fourni (Étape 2 services).
+     */
+    public static function figerService(ServiceFourni $service, string $numero, string $phase): Facture
+    {
+        return self::genererFacture([
+            'service_id'      => $service->id,
+            'type'            => $service->type,
+            'client_nom'      => $service->client_nom,
+            'client_whatsapp' => $service->numero_whatsapp,
+            'montant'         => $service->montant,
+            'montant_paye'    => $service->montant_paye,
+            'details'         => $service->details,
+        ], $numero, $phase);
+    }
+
+    /**
+     * Cœur commun : rend le modèle visuel, calcule acompte/solde, écrit le PDF
+     * et crée le snapshot immuable (hash SHA-256).
+     *
+     * @param array{commande_id?: int, service_id?: int, type: string, client_nom?: ?string,
+     *     client_whatsapp: string, montant: float|string, montant_paye: float|string,
+     *     details?: ?string} $titulaire
+     */
+    private static function genererFacture(array $titulaire, string $numero, string $phase): Facture
+    {
+        $montantTotal   = (float) $titulaire['montant'];
+        $montantAcompte = min((float) $titulaire['montant_paye'], $montantTotal);
         $solde          = max(0.0, $montantTotal - $montantAcompte);
 
+        $factureDonnees = [
+            'numero'          => $numero,
+            'phase'           => $phase,
+            'type'            => $titulaire['type'],
+            'client_nom'      => $titulaire['client_nom'],
+            'client_whatsapp' => $titulaire['client_whatsapp'],
+            'montant_total'   => $montantTotal,
+            'montant_acompte' => $montantAcompte,
+            'solde'           => $solde,
+            'details'         => $titulaire['details'],
+            'date'            => now(),
+        ];
+
         $data = [
-            'facture' => [
-                'numero'          => $numero,
-                'phase'           => $phase,
-                'type'            => $commande->type,
-                'client_nom'      => $commande->client_nom,
-                'client_whatsapp' => $commande->numero_whatsapp,
-                'montant_total'   => $montantTotal,
-                'montant_acompte' => $montantAcompte,
-                'solde'           => $solde,
-                'details'         => $commande->details,
-                'date'            => now(),
-            ],
-            'entreprise' => [
-                'nom'     => config('facture.societe.nom', 'LE PHARAON'),
-                'adresse' => config('facture.societe.adresse'),
-                'phone'   => config('facture.societe.phone'),
-                'devise'  => config('facture.devise', 'FCFA'),
-            ],
+            'facture'    => $factureDonnees,
+            'entreprise' => self::donneesEntreprise(),
             'logoBase64' => self::logoBase64(),
         ];
 
-        $html = view('pdf.facture', $data)->render();
-
-        $pdf = Pdf::loadHtml($html)
+        $pdf = Pdf::loadHtml(view('pdf.facture', $data))
             ->setPaper('a5', 'landscape')
             ->setOption([
                 'isHtml5ParserEnabled' => true,
@@ -75,19 +108,23 @@ class FacturePdfService
         $nomFichier = "{$numero}_" . ($phase === Facture::PHASE_SOLDE ? 'SOLDE' : 'ACOMPTE') . ".pdf";
         Storage::disk('local')->put("factures/{$nomFichier}", $contenu);
 
-        return Facture::create([
-            'commande_id'      => $commande->id,
-            'numero'           => $numero,
-            'phase'            => $phase,
-            'type'             => $commande->type,
-            'client_nom'       => $commande->client_nom,
-            'client_whatsapp'  => $commande->numero_whatsapp,
-            'montant_total'    => $montantTotal,
-            'montant_acompte'  => $montantAcompte,
-            'solde'            => $solde,
-            'hash'             => $hash,
-            'pdf_path'         => "factures/{$nomFichier}",
-        ]);
+        return Facture::create(array_merge($factureDonnees, [
+            'commande_id' => $titulaire['commande_id'] ?? null,
+            'service_id'  => $titulaire['service_id'] ?? null,
+            'hash'        => $hash,
+            'pdf_path'    => "factures/{$nomFichier}",
+        ]));
+    }
+
+    /** Bloc « entreprise » commun au modèle visuel du PDF. */
+    private static function donneesEntreprise(): array
+    {
+        return [
+            'nom'     => config('facture.societe.nom', 'LE PHARAON'),
+            'adresse' => config('facture.societe.adresse'),
+            'phone'   => config('facture.societe.phone'),
+            'devise'  => config('facture.devise', 'FCFA'),
+        ];
     }
 
     /**

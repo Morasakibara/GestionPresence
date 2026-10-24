@@ -16,10 +16,11 @@ return [
 
     'devise' => 'FCFA',
 
-    // Numérotation séquentielle annuelle : FAC-2026-00001
+    // Numérotation séquentielle annuelle : FAC-2026-00001 (commandes), SVC-2026-00001 (services)
     'numerotation' => [
-        'prefixe'  => 'FAC-',
-        'longueur' => 5,
+        'prefixe'         => 'FAC-',
+        'prefixe_service' => 'SVC-',
+        'longueur'        => 5,
     ],
 
     // Validation stricte du numéro WhatsApp (format international E.164, ex: +2376XXXXXXX)

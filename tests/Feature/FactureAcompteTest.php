@@ -5,10 +5,13 @@ namespace Tests\Feature;
 use App\Models\Commande;
 use App\Models\Facture;
 use App\Models\Utilisateur;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class FactureAcompteTest extends TestCase
 {
+    use DatabaseTransactions;
+
     private function loginDirectrice(): Utilisateur
     {
         $directrice = Utilisateur::where('role', 'Superviseur')->first();
@@ -36,6 +39,7 @@ class FactureAcompteTest extends TestCase
 
         $commande = Commande::where('superviseur_id', $directrice->id)
             ->where('numero_whatsapp', '+237690123456')
+            ->latest('id')
             ->first();
 
         $this->assertNotNull($commande, 'Commande non créée');
@@ -113,6 +117,7 @@ class FactureAcompteTest extends TestCase
             'acompte'         => 8000,
             'numero_whatsapp' => '+237690123456',
         ])->assertSessionHasErrors('acompte');
+        // (aucune commande ne doit être créée)
 
         $this->assertStringContainsString(
             'ne peut pas dépasser le montant total',
@@ -135,7 +140,7 @@ class FactureAcompteTest extends TestCase
         ])->assertRedirect('/directrice/commandes');
 
         $commande = Commande::where('superviseur_id', $directrice->id)
-            ->where('montant', 7000)->first();
+            ->where('montant', 7000)->latest('id')->first();
         $this->assertNotNull($commande);
         $this->assertNull($commande->numero_facture);
     }

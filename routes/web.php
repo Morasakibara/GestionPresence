@@ -164,6 +164,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
 
         // ── Facturation acompte / solde (Étapes 2/3/4) ──
         Route::post('/commandes/{id}/encaisser-solde', [DirectriceController::class, 'encaisserSolde'])->name('commandes.encaisserSolde');
+        Route::post('/services/{id}/encaisser-solde', [DirectriceController::class, 'encaisserSoldeService'])->name('services.encaisserSolde');
         Route::get('/factures/{factureId}/pdf', [DirectriceController::class, 'facturePdf'])->name('factures.pdf');
         Route::post('/whatsapp-envois/{envoi}/renvoyer', [DirectriceController::class, 'renvoyerWhatsApp'])->name('whatsapp.renvoyer');
     });
@@ -192,6 +193,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserRoleAndNetwork::class])
 
         // ── Facturation acompte / solde (Étapes 2/3/4) ──
         Route::post('/commandes/{id}/encaisser-solde', [SecretaireController::class, 'encaisserSolde'])->name('commandes.encaisserSolde');
+        Route::post('/services/{id}/encaisser-solde', [SecretaireController::class, 'encaisserSoldeService'])->name('services.encaisserSolde');
         Route::get('/factures/{factureId}/pdf', [SecretaireController::class, 'facturePdf'])->name('factures.pdf');
         Route::post('/whatsapp-envois/{envoi}/renvoyer', [SecretaireController::class, 'renvoyerWhatsApp'])->name('whatsapp.renvoyer');
     });

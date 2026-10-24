@@ -199,7 +199,9 @@ class FactureService
 
         // Garde-fou anti-collision (retry contrôlé par l'appelant)
         $numero = "FAC-{$annee}-" . str_pad((string) $sequence, $longueur, '0', STR_PAD_LEFT);
-        if (Commande::where('numero_facture', $numero)->exists()) {
+
+        // L'index unique inclut les lignes supprimées (SoftDeletes) — vérifier avec withTrashed()
+        if (Commande::withTrashed()->where('numero_facture', $numero)->exists()) {
             $numero = "FAC-{$annee}-" . str_pad((string) random_int(1, (int) str_repeat('9', $longueur)), $longueur, '0', STR_PAD_LEFT);
         }
 

@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class WhatsappEnvoi extends Model
 {
     protected $fillable = [
-        'facture_id', 'commande_id', 'superviseur_id',
+        'facture_id', 'commande_id', 'service_id', 'superviseur_id',
         'telephone', 'canal', 'statut',
         'message_id', 'erreur', 'tentative',
     ];
@@ -32,5 +32,10 @@ class WhatsappEnvoi extends Model
     public function commande(): BelongsTo
     {
         return $this->belongsTo(Commande::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\ServiceFourni::class);
     }
 }

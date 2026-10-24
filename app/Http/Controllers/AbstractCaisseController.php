@@ -13,6 +13,7 @@ use App\Services\AuditService;
 use App\Services\CommandeSuperviseurService;
 use App\Services\FacturePdfService;
 use App\Services\FactureService;
+use App\Services\ServiceFactureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -62,6 +63,12 @@ abstract class AbstractCaisseController extends Controller
     protected function serviceFacture(): FactureService
     {
         return new FactureService(Auth::id(), 'facture_' . $this->module());
+    }
+
+    /** Service de facturation des services fournis (Étape 2 services). */
+    protected function serviceFacturation(): ServiceFactureService
+    {
+        return new ServiceFactureService(Auth::id(), 'facture_' . $this->module());
     }
 
     protected function caisseType(): string
@@ -241,7 +248,10 @@ abstract class AbstractCaisseController extends Controller
     public function facturePdf(int $factureId)
     {
         $facture = Facture::whereKey($factureId)
-            ->whereHas('commande', fn($q) => $q->where('superviseur_id', Auth::id()))
+            ->where(function ($q) {
+                $q->whereHas('commande', fn($c) => $c->where('superviseur_id', Auth::id()))
+                  ->orWhereHas('service', fn($s) => $s->where('superviseur_id', Auth::id()));
+            })
             ->firstOrFail();
 
         if (!Storage::disk('local')->exists($facture->pdf_path)) {
@@ -278,14 +288,21 @@ abstract class AbstractCaisseController extends Controller
             'erreur'    => null,
             'tentative' => $envoi->tentative + 1,
         ]);
-        $envoi->commande()->update(['numero_whatsapp' => $envoi->telephone]);
+
+        // L'envoi peut concerner une commande OU un service (Étape 2 services)
+        if ($envoi->commande) {
+            $envoi->commande->update(['numero_whatsapp' => $envoi->telephone]);
+        } elseif ($envoi->service) {
+            $envoi->service->update(['numero_whatsapp' => $envoi->telephone]);
+        }
 
         if ($envoi->facture) {
             EnvoyerFactureWhatsAppJob::dispatch($envoi->facture->id);
         }
 
         $this->flushDashboardCache();
-        return redirect()->route("{$this->module()}.commandes")->with('success', 'Nouvel envoi WhatsApp programmé sur ' . $envoi->telephone . '.');
+        $page = $envoi->service ? 'services' : 'commandes';
+        return redirect()->route("{$this->module()}.{$page}")->with('success', 'Nouvel envoi WhatsApp programmé sur ' . $envoi->telephone . '.');
     }
 
     // ─── ENCAISSEMENT ──────────────────────────────────────────────
@@ -310,6 +327,12 @@ abstract class AbstractCaisseController extends Controller
             ->with($this->typesViewKey(), $this->types());
     }
 
+    /**
+     * Étape 2.1 services — même flux que les commandes : si le formulaire de
+     * facturation est utilisé (numero_whatsapp + acompte), le service passe
+     * par ServiceFactureService (PDF + WhatsApp automatiques). Sinon, chemin
+     * historique (API mobile, scripts) conservé.
+     */
     public function storeService(Request $request)
     {
         $request->validate([
@@ -318,18 +341,35 @@ abstract class AbstractCaisseController extends Controller
             'details' => 'nullable|string|max:1000',
         ]);
 
-        $svc = ServiceFourni::create([
-            'superviseur_id' => Auth::id(),
-            'type'           => $request->type,
-            'montant'        => $request->montant,
-            'details'        => $request->details,
-            'date'           => now()->toDateString(),
-        ]);
+        if ($request->filled('numero_whatsapp')) {
+            $this->serviceFacturation()->creerAcompte($request);
+        } else {
+            $svc = ServiceFourni::create([
+                'superviseur_id' => Auth::id(),
+                'type'           => $request->type,
+                'montant'        => $request->montant,
+                'details'        => $request->details,
+                'date'           => now()->toDateString(),
+            ]);
+            AuditService::created($this->module(), "Service {$request->type} de {$request->montant} FCFA", $svc->toArray(), $request);
+        }
 
-        AuditService::created($this->module(), "Service {$request->type} de {$request->montant} FCFA", $svc->toArray(), $request);
+        $this->flushDashboardCache();
+        return redirect()->route("{$this->module()}.services")->with('success', "Facture d'acompte du service enregistrée.");
+    }
+
+    /** ───────── Étape 2.2 services — Clôture du solde (montant verrouillé) ──────── */
+
+    public function encaisserSoldeService(Request $request, $id)
+    {
+        $resultat = $this->serviceFacturation()->encaisserSolde((int) $id, $request);
         $this->flushDashboardCache();
 
-        return redirect()->route("{$this->module()}.services")->with('success', 'Service enregistré.');
+        if (!$resultat['success']) {
+            return redirect()->route("{$this->module()}.services")->with('error', $resultat['error']);
+        }
+
+        return redirect()->route("{$this->module()}.services")->with('success', $resultat['message']);
     }
 
     public function editService($id)
@@ -349,16 +389,33 @@ abstract class AbstractCaisseController extends Controller
 
         $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
         $this->authorize('update', $service);
+
+        // Verrou (Étape 1.2) : un service déjà encaissé ne bouge pas sans le mot de passe administrateur
+        if ($service->estVerrouillee()) {
+            $autorisation = $this->serviceFacturation()->autoriserMouvement($service, 'modification', $request->input('manager_password'));
+            if (!$autorisation['authorized']) {
+                return redirect()->back()->with('error', 'Modification bloquée : cette facture a un acompte. Mot de passe administrateur requis.');
+            }
+        }
+
         $service->update($request->only('montant', 'details'));
         $this->flushDashboardCache();
 
         return redirect()->route("{$this->module()}.services")->with('success', 'Service mis à jour.');
     }
 
-    public function destroyService($id)
+    public function destroyService(Request $request, $id)
     {
         $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
         $this->authorize('delete', $service);
+
+        if ($service->estVerrouillee()) {
+            $autorisation = $this->serviceFacturation()->autoriserMouvement($service, 'suppression', $request->input('manager_password'));
+            if (!$autorisation['authorized']) {
+                return redirect()->back()->with('error', 'Suppression bloquée : mot de passe administrateur requis pour une facture encaissée.');
+            }
+        }
+
         $service->delete();
         $this->flushDashboardCache();
         return redirect()->route("{$this->module()}.services")->with('success', 'Service supprimé.');

@@ -19,7 +19,7 @@ class Facture extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'commande_id', 'numero', 'phase', 'type',
+        'commande_id', 'service_id', 'numero', 'phase', 'type',
         'client_nom', 'client_whatsapp',
         'montant_total', 'montant_acompte', 'solde',
         'hash', 'pdf_path',
@@ -37,6 +37,11 @@ class Facture extends Model
     public function commande(): BelongsTo
     {
         return $this->belongsTo(Commande::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(ServiceFourni::class);
     }
 
     public function envois(): HasMany
