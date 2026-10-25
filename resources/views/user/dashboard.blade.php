@@ -1,441 +1,468 @@
 @extends('layouts.dashboard')
 
+@section('content_shell', 'flush')
+
+@section('breadcrumb', 'Mon espace')
+
 @section('header')
-<div class="flex items-center justify-between">
-    <span>Tableau de bord Employé</span>
-    <!-- Indicateur de notifications -->
-    <a href="{{ route('notifications.index') }}" class="relative inline-flex items-center px-2 py-1 text-sm font-medium rounded-md text-pharaoh-gold hover:bg-gray-100">
-        <svg class="w-6 h-6 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+<div class="flex w-full flex-wrap items-end justify-between gap-4">
+    <div>
+        <h1 class="console-title">Tableau de bord</h1>
+        <p class="console-subtitle">Pointage, présence et évaluations — {{ now()->format('d/m/Y') }}</p>
+    </div>
+    <a href="{{ route('user.presence.report') }}" class="btn-secondary inline-flex items-center gap-2 text-sm">
+        <svg class="h-4 w-4 text-pharaoh-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20V4a.5.5 0 0 1 .5-.5Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12h6M9.5 15.5h4" />
         </svg>
-        Notifications
-        @if(Auth::user()->unreadNotifications->count() > 0)
-            <span class="absolute right-0 flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-600 rounded-full -top-1">
-                {{ Auth::user()->unreadNotifications->count() > 9 ? '9+' : Auth::user()->unreadNotifications->count() }}
-            </span>
-        @endif
+        Bilan de présence
     </a>
 </div>
 @endsection
 
+@section('tabs')
+<a href="#user-pointage" class="console-tab is-active" aria-current="page">Pointage</a>
+<a href="#user-evaluation" class="console-tab">Évaluation</a>
+<a href="#user-historique" class="console-tab">Historique</a>
+<a href="#user-notifications" class="console-tab">Notifications</a>
+@endsection
+
 @section('content')
-<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-    <div class="pharaoh-card p-6">
-        <h2 class="mb-4 text-xl font-semibold text-gray-900">Marquer la présence</h2>
+@php
+    $evalTone = match ($evaluation['couleur']) {
+        'vert' => 'success',
+        'rouge' => 'danger',
+        default => 'warning',
+    };
+    $evalBox = match ($evaluation['couleur']) {
+        'vert' => 'border-green-200 bg-green-50 text-green-700',
+        'rouge' => 'border-red-200 bg-red-50 text-red-700',
+        default => 'border-amber-200 bg-amber-50 text-amber-700',
+    };
+    $evalBadge = match ($evaluation['couleur']) {
+        'vert' => 'badge-success',
+        'rouge' => 'badge-danger',
+        default => 'badge-warning',
+    };
+    $evalMessage = match ($evaluation['couleur']) {
+        'vert' => 'Excellent — discipline et rendement au rendez-vous',
+        'rouge' => 'Critique — attention discipline et rendement',
+        default => 'Satisfaisant — à surveiller',
+    };
+    $arriveeLabel = $lastArrival ? \Illuminate\Support\Carbon::parse($lastArrival)->format('d/m H:i') : '—';
+    $departLabel = $lastDeparture ? \Illuminate\Support\Carbon::parse($lastDeparture)->format('d/m H:i') : '—';
 
-        <div class="space-y-4">
-            @php
-                // Pointage libre : plus de restriction horaire ni de week-end
-                $isWeekend = false;
-            @endphp
+    $notesEvolUser = array_values(array_filter(array_column($historique, 'note'), fn ($n) => $n > 0));
+    $moyenneEvolUser = count($notesEvolUser) > 0 ? round(array_sum($notesEvolUser) / count($notesEvolUser), 1) : 0;
+    $seqUser = array_column($historique, 'note');
+    $dernierUser = (float) (end($seqUser) ?: 0);
+    $avantUser = (float) (count($seqUser) >= 2 ? $seqUser[count($seqUser) - 2] : 0);
+    if ($dernierUser <= 0 || $avantUser <= 0) {
+        $tendanceUser = 'stable';
+    } elseif ($dernierUser > $avantUser) {
+        $tendanceUser = 'hausse';
+    } elseif ($dernierUser < $avantUser) {
+        $tendanceUser = 'baisse';
+    } else {
+        $tendanceUser = 'stable';
+    }
+    $deltaUser = round($dernierUser - $avantUser, 1);
 
-            @if($isWeekend)
-                <div class="p-4 rounded-md bg-red-50">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="w-5 h-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-red-800">
-                                Le marquage de présence n'est pas disponible pendant le week-end.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            @else
-                <!-- Bouton pour marquer l'heure d'arrivée -->
-                <div>
-                    @if(true)
-                        <form method="POST" action="{{ route('presence.arrival') }}" id="arrival-form">
-                            @csrf
-                            <input type="hidden" name="latitude" id="latitude-arrival">
-                            <input type="hidden" name="longitude" id="longitude-arrival">
-                            <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="btn-gold w-full px-4 py-2.5 text-base">
-                                <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                </svg>
-                                Marquer l'arrivée
-                            </button>
-                        </form>
-                    @else
-                        <div class="p-4 rounded-md bg-yellow-50">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <svg class="w-5 h-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div class="ml-3">
-                                    <p class="text-sm text-yellow-700">
-                                        Le bouton d'arrivée est actif entre 7h et 10h
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-                </div>
+    $tendanceKpi = match ($tendanceUser) {
+        'hausse' => '▲ ' . ($deltaUser > 0 ? '+' . number_format($deltaUser, 1, ',', '') : '0'),
+        'baisse' => '▼ ' . number_format(abs($deltaUser), 1, ',', ''),
+        default => '—',
+    };
+    $tendanceTone = match ($tendanceUser) {
+        'hausse' => 'success',
+        'baisse' => 'danger',
+        default => 'default',
+    };
 
-                <!-- Bouton pour marquer l'heure de départ -->
-                <div>
-                    @if(true)
-                        <form method="POST" action="{{ route('presence.departure') }}" id="departure-form">
-                            @csrf
-                            <input type="hidden" name="latitude" id="latitude-departure">
-                            <input type="hidden" name="longitude" id="longitude-departure">
-                            <label for="rendement" class="block text-sm font-medium text-gray-700 mb-1">Fiche de rendement du jour <span class="text-red-600">*</span></label>
-                            <textarea name="rendement" id="rendement" rows="3" required
-                                placeholder="Décrivez ce que vous avez fait aujourd'hui..."
-                                class="block w-full px-3 py-2 mb-3 text-sm border border-gray-300 rounded-md shadow-sm focus:border-pharaoh-gold focus:outline-none focus:ring-pharaoh-gold"></textarea>
-                            <button type="button" onclick="getLocationAndSubmit('departure-form')" class="btn-press inline-flex items-center justify-center w-full rounded-lg bg-green-600 px-4 py-2.5 text-base font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
-                                <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                                Marquer le départ
-                            </button>
-                        </form>
-                    @else
-                        <div class="p-4 rounded-md bg-yellow-50">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <svg class="w-5 h-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div class="ml-3">
-                                    <p class="text-sm text-yellow-700">
-                                        Le bouton de départ est actif entre 17h et 18h30
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            @endif
+    $chartLabels = array_map(fn ($h) => ucfirst($h['label']), $historique);
+    $chartNotes = array_map(fn ($h) => (float) $h['note'], $historique);
+    $chartCouleurs = array_map(fn ($h) => $h['couleur'] === 'vert' ? '#2E8B57' : ($h['couleur'] === 'rouge' ? '#D64545' : '#D97706'), $historique);
+    $dernieresNotifications = Auth::user()->notifications->take(4);
+@endphp
 
-            <!-- Horloge et informations -->
-            <div class="p-4 mt-2 rounded-md bg-gray-50">
-                <div class="flex justify-center">
-                    <div class="text-center">
-                        <div class="text-sm font-medium text-gray-500">Heure actuelle</div>
-                        <div class="mt-1 text-xl font-semibold text-pharaoh-bronze-dark" id="current-time"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Messages de feedback -->
-            @if(session('success'))
-                <div class="p-4 rounded-md bg-pharaoh-green-light/20 text-pharaoh-green-dark">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="w-5 h-5 text-pharaoh-green" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-pharaoh-green-dark">
-                                {{ session('success') }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            @if($errors->any())
-                <div class="p-4 rounded-md bg-red-50">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="w-5 h-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-red-800">
-                                {{ $errors->first() }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            @endif
-        </div>
+<div class="space-y-5">
+    <!-- ═══ Indicateurs clés ═══ -->
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
+        @include('partials.dashboard.kpi', ['label' => 'Présences ce mois', 'value' => $presenceCount ?? 0, 'meta' => 'Jours pointés', 'tone' => 'gold'])
+        @include('partials.dashboard.kpi', ['label' => 'Note du mois', 'value' => $evaluation['note'] . '/20', 'meta' => 'Évaluation', 'tone' => $evalTone])
+        @include('partials.dashboard.kpi', ['label' => 'Dernière arrivée', 'value' => $arriveeLabel, 'meta' => 'Pointage d\'arrivée'])
+        @include('partials.dashboard.kpi', ['label' => 'Dernier départ', 'value' => $departLabel, 'meta' => 'Pointage de départ'])
+        @include('partials.dashboard.kpi', ['label' => 'Moyenne 6 mois', 'value' => number_format($moyenneEvolUser, 1, ',', '') . '/20', 'meta' => 'Évolution'])
+        @include('partials.dashboard.kpi', ['label' => 'Tendance', 'value' => $tendanceKpi, 'meta' => 'vs mois précédent', 'tone' => $tendanceTone])
     </div>
 
-    <div class="pharaoh-card p-6">
-        <h2 class="mb-4 text-xl font-semibold text-gray-900">Résumé de présence</h2>
-
-        <div class="space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-gray-200">
-                <span class="text-sm font-medium text-gray-500">Présences ce mois-ci</span>
-                <span class="text-lg font-semibold text-pharaoh-gold">{{ isset($presenceCount) ? $presenceCount : '0' }}</span>
-            </div>
-
-            <div class="flex items-center justify-between pb-3 border-b border-gray-200">
-                <span class="text-sm font-medium text-gray-500">Dernière arrivée</span>
-                <span class="text-gray-700">{{ isset($lastArrival) ? $lastArrival->format('d/m/Y H:i') : 'Aucune donnée' }}</span>
-            </div>
-
-            <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-500">Dernier départ</span>
-                <span class="text-gray-700">{{ isset($lastDeparture) ? $lastDeparture->format('d/m/Y H:i') : 'Aucune donnée' }}</span>
-            </div>
-        </div>
-
-        <div class="mt-6">
-            <a href="{{ route('user.presence.report') }}" class="inline-flex items-center text-sm font-medium text-pharaoh-gold hover:text-pharaoh-gold-light">
-                Voir le bilan complet
-                <svg class="w-5 h-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-            </a>
-        </div>
-    </div>
-
-    @php
-        $couleurClasses = [
-            'vert' => 'bg-green-50 text-green-700 ring-green-600/20',
-            'orange' => 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
-            'rouge' => 'bg-red-50 text-red-700 ring-red-600/20',
-        ];
-        $c = $couleurClasses[$evaluation['couleur']] ?? $couleurClasses['orange'];
-    @endphp
-    <div class="pharaoh-card p-6">
-        <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-[#080808]">Mon évaluation du mois</h2>
-            <span class="badge {{ $c }} ring-1 ring-inset uppercase tracking-wider text-xs">{{ $evaluation['couleur'] }}</span>
-        </div>
-        <div class="flex items-center justify-center">
-            <div class="w-full rounded-2xl ring-1 ring-inset p-6 text-center {{ $c }}">
-                <div class="flex justify-center mb-3">
-                    <span class="relative flex h-6 w-6">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 {{ $evaluation['couleur'] === 'vert' ? 'bg-green-400' : ($evaluation['couleur'] === 'orange' ? 'bg-yellow-400' : 'bg-red-400') }}"></span>
-                        <span class="relative inline-flex rounded-full h-6 w-6 {{ $evaluation['couleur'] === 'vert' ? 'bg-green-500' : ($evaluation['couleur'] === 'orange' ? 'bg-yellow-500' : 'bg-red-500') }}"></span>
-                    </span>
+    <!-- ═══ Pointage + évaluation du mois ═══ -->
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <section id="user-pointage" class="console-card lg:col-span-2">
+            <div class="console-card-head">
+                <div>
+                    <h2 class="console-card-title">Pointage du jour</h2>
+                    <p class="console-card-sub">Arrivée, départ et fiche de rendement — géolocalisation obligatoire</p>
                 </div>
-                <div class="mt-2 text-4xl font-bold tracking-tight">{{ $evaluation['note'] }}/20</div>
-                <div class="mt-2 text-sm font-medium">
-                    {{ $evaluation['couleur'] === 'vert' ? 'Excellent — discipline et rendement au rendez-vous' : ($evaluation['couleur'] === 'orange' ? 'Satisfaisant — à surveiller' : 'Critique — attention discipline et rendement') }}
+                <span class="badge badge-gold">Géolocalisé</span>
+            </div>
+            <div class="console-card-body space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-[#080808] px-5 py-4">
+                    <div>
+                        <p class="text-[0.625rem] uppercase tracking-[0.22em] text-white/50">Heure actuelle</p>
+                        <p id="current-time" class="mt-1 text-3xl font-extrabold tabular-nums tracking-tight text-pharaoh-gold">--:--:--</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[0.625rem] uppercase tracking-[0.18em] text-white/50">Aujourd'hui</p>
+                        <p class="text-sm font-semibold capitalize text-white">{{ \Illuminate\Support\Carbon::now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}</p>
+                    </div>
                 </div>
-                @if($evaluation['manuelle'])
-                    <div class="mt-2 text-xs">Évaluation manuelle de votre hiérarchie</div>
+
+                @if($errors->any())
+                    <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ $errors->first() }}</div>
                 @endif
-            </div>
-        </div>
-        <p class="mt-3 text-xs text-gray-500 text-center">{{ $evaluation['commentaire'] }}</p>
-    </div>
 
-    <div class="pharaoh-card p-6">
-        <h2 class="mb-4 text-xl font-semibold text-gray-900">Mon historique d'évaluation (6 mois)</h2>
-        <div class="space-y-2">
-            @php
-                $histoClasses = [
-                    'vert' => ['bg-green-50 border-green-200 text-green-800', 'bg-green-500'],
-                    'orange' => ['bg-orange-50 border-orange-200 text-orange-800', 'bg-orange-500'],
-                    'rouge' => ['bg-red-50 border-red-200 text-red-800', 'bg-red-500'],
-                ];
-            @endphp
-            @foreach($historique as $i => $h)
-                @php
-                    $hc = $histoClasses[$h['couleur']] ?? $histoClasses['orange'];
-                    $prev = $historique[$i - 1] ?? null;
-                    $tendance = $prev
-                        ? ($h['note'] > $prev['note'] ? 'up' : ($h['note'] < $prev['note'] ? 'down' : 'flat'))
-                        : 'flat';
-                @endphp
-                <div class="flex items-center justify-between rounded-lg border px-4 py-2.5 {{ $hc[0] }}">
-                    <div class="flex items-center gap-3">
-                        <span class="inline-block h-3 w-3 rounded-full {{ $hc[1] }}"></span>
-                        <span class="text-sm font-medium capitalize">{{ $h['label'] }}</span>
-                        @if($h['manuelle'])
-                            <span class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500">manuelle</span>
-                        @endif
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm font-bold">{{ $h['note'] }}/20</span>
-                        @if($tendance === 'up')
-                            <span class="text-xs font-semibold text-green-600" title="En hausse vs mois précédent">▲</span>
-                        @elseif($tendance === 'down')
-                            <span class="text-xs font-semibold text-red-600" title="En baisse vs mois précédent">▼</span>
-                        @else
-                            <span class="text-xs text-gray-400" title="Stable vs mois précédent">—</span>
-                        @endif
-                    </div>
-                </div>
-            @endforeach
-        </div>
-        <p class="mt-3 text-xs text-gray-500">Évolution de votre note sur 20 mois par mois. <span class="text-green-600">▲ hausse</span> · <span class="text-red-600">▼ baisse</span> · <span class="text-gray-400">— stable</span></p>
-        <div class="mt-4">
-            <canvas id="evaluationChart" height="120"></canvas>
-        </div>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <!-- Arrivée -->
+                    <form method="POST" action="{{ route('presence.arrival') }}" id="arrival-form" class="flex flex-col rounded-2xl border border-gray-200/70 bg-gray-50/70 p-4">
+                        @csrf
+                        <input type="hidden" name="latitude" id="latitude-arrival">
+                        <input type="hidden" name="longitude" id="longitude-arrival">
 
-        @php
-            $notesEvolUser = array_values(array_filter(array_column($historique, 'note'), fn ($n) => $n > 0));
-            $moyenneEvolUser = count($notesEvolUser) > 0 ? round(array_sum($notesEvolUser) / count($notesEvolUser), 1) : 0;
-            $seqUser = array_column($historique, 'note');
-            $dernierUser = (float) (end($seqUser) ?: 0);
-            $avantUser = (float) (count($seqUser) >= 2 ? $seqUser[count($seqUser) - 2] : 0);
-            if ($dernierUser <= 0 || $avantUser <= 0) {
-                $tendanceUser = 'stable';
-            } elseif ($dernierUser > $avantUser) {
-                $tendanceUser = 'hausse';
-            } elseif ($dernierUser < $avantUser) {
-                $tendanceUser = 'baisse';
-            } else {
-                $tendanceUser = 'stable';
-            }
-            $deltaUser = round($dernierUser - $avantUser, 1);
-        @endphp
-        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div class="rounded-xl border border-gray-200/70 bg-gray-50 p-4">
-                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Moyenne (6 mois)</div>
-                <div class="mt-1 flex items-baseline gap-2">
-                    <span class="text-2xl font-bold text-[#080808]">{{ number_format($moyenneEvolUser, 1, ',', '') }}</span>
-                    <span class="text-sm text-gray-500">/20</span>
+                        <div class="mb-4 flex items-start gap-3">
+                            <span class="console-quick-icon">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14" /><path stroke-linecap="round" stroke-linejoin="round" d="M17 16.5v1a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-11a3 3 0 0 1 3-3h7a3 3 0 0 1 3 3v1" /></svg>
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-[#080808]">Marquer l'arrivée</p>
+                                <p class="text-xs text-gray-500">Après 08:00, la journée est comptée en retard</p>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="btn-gold mt-auto w-full text-sm">
+                            <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" /><circle cx="12" cy="10" r="2.6" /></svg>
+                            Marquer l'arrivée
+                        </button>
+                    </form>
+
+                    <!-- Départ -->
+                    <form method="POST" action="{{ route('presence.departure') }}" id="departure-form" class="flex flex-col rounded-2xl border border-gray-200/70 bg-gray-50/70 p-4">
+                        @csrf
+                        <input type="hidden" name="latitude" id="latitude-departure">
+                        <input type="hidden" name="longitude" id="longitude-departure">
+
+                        <div class="mb-3 flex items-start gap-3">
+                            <span class="console-quick-icon">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7" /><path stroke-linecap="round" stroke-linejoin="round" d="M13 16.5v1a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-11a3 3 0 0 1 3-3h3a3 3 0 0 1 3 3v1" /></svg>
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-[#080808]">Marquer le départ</p>
+                                <p class="text-xs text-gray-500">La fiche de rendement est obligatoire</p>
+                            </div>
+                        </div>
+
+                        <label for="rendement" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Fiche de rendement du jour <span class="text-red-600">*</span>
+                        </label>
+                        <textarea name="rendement" id="rendement" rows="3" required
+                            placeholder="Décrivez ce que vous avez fait aujourd'hui…"
+                            class="input-field mb-3 w-full text-sm">{{ old('rendement') }}</textarea>
+
+                        <button type="button" onclick="getLocationAndSubmit('departure-form')" class="mt-auto inline-flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
+                            <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" /><circle cx="12" cy="10" r="2.6" /></svg>
+                            Marquer le départ
+                        </button>
+                    </form>
                 </div>
             </div>
-            <div class="rounded-xl border border-gray-200/70 bg-gray-50 p-4">
-                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Tendance (dernier mois)</div>
-                <div class="mt-1 flex items-center gap-2">
-                    @if($tendanceUser === 'hausse')
-                        <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-bold text-green-700">▲ Hausse {{ $deltaUser > 0 ? '+' . number_format($deltaUser, 1, ',', '') : '' }} pt</span>
-                    @elseif($tendanceUser === 'baisse')
-                        <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-sm font-bold text-red-700">▼ Baisse {{ number_format(abs($deltaUser), 1, ',', '') }} pt</span>
-                    @else
-                        <span class="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-sm font-bold text-gray-600">— Stable</span>
+        </section>
+
+        <section id="user-evaluation" class="console-card">
+            <div class="console-card-head">
+                <div>
+                    <h2 class="console-card-title">Mon évaluation du mois</h2>
+                    <p class="console-card-sub">Note sur 20 et appréciation</p>
+                </div>
+                <span class="badge {{ $evalBadge }}">{{ ucfirst($evaluation['couleur']) }}</span>
+            </div>
+            <div class="console-card-body">
+                <div class="rounded-2xl border p-6 text-center {{ $evalBox }}">
+                    <p class="text-4xl font-extrabold tracking-tight">
+                        {{ $evaluation['note'] }}<span class="text-base font-semibold opacity-70">/20</span>
+                    </p>
+                    <p class="mt-2 text-sm font-medium">{{ $evalMessage }}</p>
+                    @if($evaluation['manuelle'])
+                        <p class="mt-2 text-xs opacity-70">Évaluation manuelle de votre hiérarchie</p>
                     @endif
                 </div>
+                <p class="mt-3 text-center text-xs text-gray-500">{{ $evaluation['commentaire'] }}</p>
             </div>
-        </div>
+        </section>
     </div>
 
-    <div class="pharaoh-card p-6">
-        <h2 class="flex items-center justify-between mb-4 text-xl font-semibold text-gray-900">
-            <span>Notifications</span>
-            @if(Auth::user()->unreadNotifications->count() > 0)
-                <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-red-600 rounded-full">
-                    {{ Auth::user()->unreadNotifications->count() }}
-                </span>
-            @endif
-        </h2>
+    <!-- ═══ Historique d'évaluation ═══ -->
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <section id="user-historique" class="console-card lg:col-span-2">
+            <div class="console-card-head">
+                <div>
+                    <h2 class="console-card-title">Historique d'évaluation</h2>
+                    <p class="console-card-sub">Vos 6 derniers mois</p>
+                </div>
+                <span class="badge badge-gold">Note /20</span>
+            </div>
+            <div class="console-card-body">
+                <div class="h-56"><canvas id="evaluationChart"></canvas></div>
+                <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div class="console-panel-row">
+                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-400">Moyenne (6 mois)</span>
+                        <span class="text-sm font-semibold text-[#080808]">{{ number_format($moyenneEvolUser, 1, ',', '') }} / 20</span>
+                    </div>
+                    <div class="console-panel-row">
+                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-400">Tendance</span>
+                        @if($tendanceUser === 'hausse')
+                            <span class="text-sm font-semibold text-green-600">▲ Hausse {{ $deltaUser > 0 ? '+' . number_format($deltaUser, 1, ',', '') : '' }} pt</span>
+                        @elseif($tendanceUser === 'baisse')
+                            <span class="text-sm font-semibold text-red-600">▼ Baisse {{ number_format(abs($deltaUser), 1, ',', '') }} pt</span>
+                        @else
+                            <span class="text-sm font-semibold text-gray-500">— Stable</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <div class="space-y-3">
-            @if(Auth::user()->notifications->count() > 0)
-                @foreach(Auth::user()->notifications->take(3) as $notification)
-                    <div class="border-l-4 {{ $notification->read_at ? 'border-gray-300 bg-gray-50' : 'border-pharaoh-gold bg-blue-50' }} p-3">
-                        <div class="flex justify-between">
-                            <p class="text-sm text-gray-700 {{ $notification->read_at ? '' : 'font-medium' }}">
-                                {{ isset($notification->data['message']) ? $notification->data['message'] : 'Notification' }}
-                            </p>
-                            <span class="text-xs text-gray-500">{{ $notification->created_at->diffForHumans() }}</span>
+        <section class="console-card">
+            <div class="console-card-head">
+                <div>
+                    <h2 class="console-card-title">Détail par mois</h2>
+                    <p class="console-card-sub">Évolution mois par mois</p>
+                </div>
+            </div>
+            <div class="console-card-body">
+                <div class="console-scroll">
+                    @foreach($historique as $i => $h)
+                        @php
+                            $prev = $historique[$i - 1] ?? null;
+                            $tendance = $prev
+                                ? ($h['note'] > $prev['note'] ? 'up' : ($h['note'] < $prev['note'] ? 'down' : 'flat'))
+                                : 'flat';
+                            $point = match ($h['couleur']) {
+                                'vert' => 'bg-green-500',
+                                'rouge' => 'bg-red-500',
+                                default => 'bg-amber-500',
+                            };
+                        @endphp
+                        <div class="console-panel-row">
+                            <span class="flex min-w-0 items-center gap-2">
+                                <span class="console-dot {{ $point }}"></span>
+                                <span class="truncate text-sm capitalize text-gray-700">{{ $h['label'] }}</span>
+                                @if($h['manuelle'])
+                                    <span class="rounded bg-gray-100 px-1.5 py-0.5 text-[0.625rem] text-gray-500">manuelle</span>
+                                @endif
+                            </span>
+                            <span class="flex items-center gap-2">
+                                <span class="text-sm font-semibold text-[#080808]">{{ $h['note'] }}/20</span>
+                                @if($tendance === 'up')
+                                    <span class="text-xs font-semibold text-green-600" title="En hausse vs mois précédent">▲</span>
+                                @elseif($tendance === 'down')
+                                    <span class="text-xs font-semibold text-red-600" title="En baisse vs mois précédent">▼</span>
+                                @else
+                                    <span class="text-xs text-gray-400" title="Stable vs mois précédent">—</span>
+                                @endif
+                            </span>
                         </div>
-                    </div>
-                @endforeach
-                <div class="mt-4 text-center">
-                    <a href="{{ route('notifications.index') }}" class="inline-flex items-center text-sm font-medium text-pharaoh-gold hover:text-pharaoh-gold-light">
-                        Voir toutes les notifications
-                        <svg class="w-5 h-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </a>
+                    @endforeach
                 </div>
-            @else
-                <div class="empty-state">
-                    <div class="empty-state-icon">
-                        <svg class="h-7 w-7 text-[#B77F1D]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                    </div>
-                    <p class="mt-3 text-sm text-gray-500">Vous n'avez aucune notification</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- ═══ Résumé, notifications et accès rapides ═══ -->
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <section class="console-card">
+            <div class="console-card-head">
+                <div>
+                    <h2 class="console-card-title">Résumé de présence</h2>
+                    <p class="console-card-sub">Votre activité du mois</p>
                 </div>
-            @endif
-        </div>
+            </div>
+            <div class="console-card-body">
+                <div class="console-panel-row">
+                    <span class="text-sm text-gray-600">Présences ce mois-ci</span>
+                    <span class="text-sm font-semibold text-pharaoh-bronze">{{ $presenceCount ?? 0 }}</span>
+                </div>
+                <div class="console-panel-row">
+                    <span class="text-sm text-gray-600">Dernière arrivée</span>
+                    <span class="text-sm font-semibold text-[#080808]">{{ $arriveeLabel }}</span>
+                </div>
+                <div class="console-panel-row">
+                    <span class="text-sm text-gray-600">Dernier départ</span>
+                    <span class="text-sm font-semibold text-[#080808]">{{ $departLabel }}</span>
+                </div>
+                <a href="{{ route('user.presence.report') }}" class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-pharaoh-bronze hover:text-pharaoh-gold">
+                    Voir le bilan complet
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </a>
+            </div>
+        </section>
+
+        <section id="user-notifications" class="console-card">
+            <div class="console-card-head">
+                <div>
+                    <h2 class="console-card-title">Notifications</h2>
+                    <p class="console-card-sub">{{ Auth::user()->unreadNotifications->count() }} non lue(s)</p>
+                </div>
+                <a href="{{ route('notifications.index') }}" class="text-xs font-semibold text-pharaoh-bronze hover:text-pharaoh-gold">Voir tout →</a>
+            </div>
+            <div class="console-card-body">
+                <div class="console-scroll">
+                    @forelse($dernieresNotifications as $notification)
+                        <div class="console-panel-row">
+                            <span class="flex min-w-0 items-center gap-2">
+                                <span class="console-dot {{ $notification->read_at ? 'bg-gray-300' : 'bg-pharaoh-gold' }}"></span>
+                                <span class="truncate text-sm {{ $notification->read_at ? 'text-gray-600' : 'font-medium text-[#080808]' }}" title="{{ $notification->data['message'] ?? 'Notification' }}">
+                                    {{ $notification->data['message'] ?? 'Notification' }}
+                                </span>
+                            </span>
+                            <span class="whitespace-nowrap text-xs text-gray-400">{{ $notification->created_at->diffForHumans() }}</span>
+                        </div>
+                    @empty
+                        <p class="py-6 text-center text-sm text-gray-400">Vous n'avez aucune notification</p>
+                    @endforelse
+                </div>
+            </div>
+        </section>
+
+        <section class="console-card">
+            <div class="console-card-head">
+                <div>
+                    <h2 class="console-card-title">Accès rapides</h2>
+                    <p class="console-card-sub">Votre espace employé</p>
+                </div>
+            </div>
+            <div class="console-card-body space-y-2">
+                <a href="{{ route('presence.index') }}" class="console-quick group">
+                    <span class="console-quick-icon">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5V12l3 1.8" /></svg>
+                    </span>
+                    <span class="min-w-0">
+                        <span class="block text-sm font-semibold text-[#080808]">Ma présence</span>
+                        <span class="block text-xs text-gray-500">Historique de pointage</span>
+                    </span>
+                </a>
+                <a href="{{ route('user.rendement') }}" class="console-quick group">
+                    <span class="console-quick-icon">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16M6.5 15.5l3.5-4 3 2 4.5-5.5" /></svg>
+                    </span>
+                    <span class="min-w-0">
+                        <span class="block text-sm font-semibold text-[#080808]">Mes rendements</span>
+                        <span class="block text-xs text-gray-500">Fiches déposées</span>
+                    </span>
+                </a>
+                <a href="{{ route('user.conges') }}" class="console-quick group">
+                    <span class="console-quick-icon">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M4 10h16M8.5 3.5v4M15.5 3.5v4" /></svg>
+                    </span>
+                    <span class="min-w-0">
+                        <span class="block text-sm font-semibold text-[#080808]">Mes congés</span>
+                        <span class="block text-xs text-gray-500">Demandes et suivi</span>
+                    </span>
+                </a>
+                <a href="{{ route('notifications.index') }}" class="console-quick group">
+                    <span class="console-quick-icon">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 0 0-4-5.7V5a2 2 0 1 0-4 0v.3A6 6 0 0 0 6 11v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0v1a3 3 0 1 1-6 0v-1" /></svg>
+                    </span>
+                    <span class="min-w-0">
+                        <span class="block text-sm font-semibold text-[#080808]">Notifications</span>
+                        <span class="block text-xs text-gray-500">Alertes et rappels</span>
+                    </span>
+                </a>
+            </div>
+        </section>
     </div>
 </div>
+@endsection
 
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Affichage et mise à jour de l'heure actuelle
+    // ═══ Horloge ═══
     function updateClock() {
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const seconds = String(now.getSeconds()).padStart(2, '0');
 
-        document.getElementById('current-time').textContent = `${hours}:${minutes}:${seconds}`;
-    }
-
-    // Mettre à jour l'heure chaque seconde
-    setInterval(updateClock, 1000);
-    updateClock(); // Appel initial
-
-    // Fonction pour obtenir la géolocalisation et soumettre le formulaire
-    function getLocationAndSubmit(formId) {
-        if (navigator.geolocation) {
-            // Afficher un message de chargement
-            showLoadingMessage('Obtention de votre position...');
-
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    // Position obtenue avec succès
-                    hideLoadingMessage();
-
-                    // Remplir les champs cachés
-                    if (formId === 'arrival-form') {
-                        document.getElementById('latitude-arrival').value = position.coords.latitude;
-                        document.getElementById('longitude-arrival').value = position.coords.longitude;
-                    } else {
-                        document.getElementById('latitude-departure').value = position.coords.latitude;
-                        document.getElementById('longitude-departure').value = position.coords.longitude;
-                    }
-
-                    // Soumettre le formulaire
-                    document.getElementById(formId).submit();
-                },
-                function(error) {
-                    // Erreur lors de l'obtention de la position
-                    hideLoadingMessage();
-
-                    let errorMessage;
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            errorMessage = "Vous devez autoriser l'accès à votre position pour marquer votre présence.";
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            errorMessage = "Impossible de déterminer votre position. Veuillez réessayer.";
-                            break;
-                        case error.TIMEOUT:
-                            errorMessage = "La demande de géolocalisation a expiré. Veuillez réessayer.";
-                            break;
-                        default:
-                            errorMessage = "Une erreur inconnue s'est produite lors de la géolocalisation.";
-                            break;
-                    }
-
-                    displayError(errorMessage);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
-            );
-        } else {
-            displayError("La géolocalisation n'est pas prise en charge par votre navigateur.");
+        const clock = document.getElementById('current-time');
+        if (clock) {
+            clock.textContent = `${hours}:${minutes}:${seconds}`;
         }
     }
 
-    // Fonction pour afficher un message de chargement
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ═══ Géolocalisation et soumission ═══
+    function getLocationAndSubmit(formId) {
+        if (!navigator.geolocation) {
+            displayError("La géolocalisation n'est pas prise en charge par votre navigateur.");
+            return;
+        }
+
+        showLoadingMessage('Obtention de votre position...');
+
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                hideLoadingMessage();
+
+                if (formId === 'arrival-form') {
+                    document.getElementById('latitude-arrival').value = position.coords.latitude;
+                    document.getElementById('longitude-arrival').value = position.coords.longitude;
+                } else {
+                    document.getElementById('latitude-departure').value = position.coords.latitude;
+                    document.getElementById('longitude-departure').value = position.coords.longitude;
+                }
+
+                document.getElementById(formId).submit();
+            },
+            function (error) {
+                hideLoadingMessage();
+
+                let errorMessage;
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = "Vous devez autoriser l'accès à votre position pour marquer votre présence.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = "Impossible de déterminer votre position. Veuillez réessayer.";
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = "La demande de géolocalisation a expiré. Veuillez réessayer.";
+                        break;
+                    default:
+                        errorMessage = "Une erreur inconnue s'est produite lors de la géolocalisation.";
+                        break;
+                }
+
+                displayError(errorMessage);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }
+
     function showLoadingMessage(message) {
-        // Créer un div pour le message de chargement s'il n'existe pas déjà
         if (!document.getElementById('loading-message')) {
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'loading-message';
-            loadingDiv.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
+            loadingDiv.className = 'fixed inset-0 z-[9990] flex items-center justify-center bg-black/50';
             loadingDiv.innerHTML = `
-                <div class="p-6 bg-white rounded-lg shadow-xl">
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 mr-3 -ml-1 animate-spin text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <div class="rounded-2xl bg-white p-6 shadow-2xl">
+                    <div class="flex items-center gap-3">
+                        <svg class="h-5 w-5 animate-spin text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span id="loading-text" class="text-gray-700"></span>
+                        <span id="loading-text" class="text-sm text-gray-700"></span>
                     </div>
                 </div>
             `;
@@ -446,7 +473,6 @@
         document.getElementById('loading-message').style.display = 'flex';
     }
 
-    // Fonction pour masquer le message de chargement
     function hideLoadingMessage() {
         const loadingMessage = document.getElementById('loading-message');
         if (loadingMessage) {
@@ -454,56 +480,39 @@
         }
     }
 
-    // Fonction pour afficher un message d'erreur
     function displayError(message) {
-        // Créer un div pour le message d'erreur
         const errorDiv = document.createElement('div');
-        errorDiv.className = 'fixed inset-x-0 top-0 flex items-center justify-center mt-4 z-50';
+        errorDiv.className = 'fixed inset-x-0 top-0 z-[9991] mt-4 flex items-center justify-center px-4';
         errorDiv.innerHTML = `
-            <div class="relative max-w-md px-4 py-3 text-red-700 bg-red-100 border border-red-400 rounded">
-                <span class="block sm:inline">${message}</span>
-                <span class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.parentElement.remove();">
-                    <svg class="w-6 h-6 text-red-500 fill-current" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+            <div class="relative max-w-md rounded-xl border border-red-400 bg-red-100 px-4 py-3 text-red-700 shadow-lg">
+                <span class="block pr-6 text-sm">${message}</span>
+                <span class="absolute inset-y-0 right-0 px-4 py-3" onclick="this.parentElement.parentElement.remove();">
+                    <svg class="h-4 w-4 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <title>Fermer</title>
-                        <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </span>
             </div>
         `;
         document.body.appendChild(errorDiv);
 
-        // Supprimer le message après 5 secondes
-        setTimeout(() => {
-            errorDiv.remove();
-        }, 5000);
+        setTimeout(() => errorDiv.remove(), 5000);
     }
-</script>
 
-@php
-    $chartLabels = array_map(fn ($h) => ucfirst($h['label']), $historique);
-    $chartNotes = array_map(fn ($h) => (float) $h['note'], $historique);
-    $chartCouleurs = array_map(function ($h) {
-        return $h['couleur'] === 'vert' ? '#22c55e' : ($h['couleur'] === 'rouge' ? '#ef4444' : '#f97316');
-    }, $historique);
-@endphp
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
+    // ═══ Historique d'évaluation ═══
     document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('evaluationChart');
         if (!ctx) {
             return;
         }
-        const labels = @json($chartLabels);
-        const data = @json($chartNotes);
-        const couleurs = @json($chartCouleurs);
 
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: @json($chartLabels),
                 datasets: [{
                     label: 'Note /20',
-                    data: data,
+                    data: @json($chartNotes),
                     borderColor: '#D39B23',
                     backgroundColor: 'rgba(211, 155, 35, 0.10)',
                     borderWidth: 2,
@@ -511,13 +520,14 @@
                     fill: true,
                     pointRadius: 5,
                     pointHoverRadius: 7,
-                    pointBackgroundColor: couleurs,
+                    pointBackgroundColor: @json($chartCouleurs),
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
                     tooltip: {
@@ -543,4 +553,4 @@
         });
     });
 </script>
-@endsection
+@endpush
