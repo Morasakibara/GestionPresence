@@ -29,3 +29,6 @@ storage/backups/
 # Karpathy skills (source)
 andrej-karpathy-skills-main/
 .agents/skills/
+
+# Configuration Qoder locale
+/.qoder/settings.local.json
