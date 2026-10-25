@@ -205,7 +205,41 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 - Chaque notification contient : nom de l'employé, date, heure (pour les retards), préfixe `[Admin]` ou `[Équipe]`.
 - Le **centre de notifications** filtre selon le rôle : l'admin voit tout, le superviseur uniquement son équipe, l'employé ses propres notifications.
 
-### 6.3 Rapports PDF
+### 6.4 Caisse : commandes / services et facturation (Étapes 2/3/4)
+
+Modules **directrice** (impression, photocopie, papeterie, scan, plastification)
+et **secrétaire** (shooting, montages, agrandissements…), flux **identique** pour
+les commandes et les services fournis :
+
+- **Formulaire unique** : montant total + **acompte** + **numéro WhatsApp** ; prix
+  verrouillé dès le premier versement ; **clôture par encaissement du solde exact**
+  (calculé par le serveur — champ verrouillé, aucune saisie).
+  Acompte = montant total → facture **comptant** payée d'emblée.
+- **Règle des 1 000 FCFA** (`config/facture.php` → `montant_minimum`) : une facture
+  PDF n'est générée que si **montant > 1 000 FCFA**. En dessous, la vente est
+  simplement enregistrée (caisse, rapports), **sans PDF ni WhatsApp** ; un éventuel
+  solde reste encaissable, sans facture.
+- **Numérotation annuelle** : `FAC-2026-00001` (commandes), `SVC-2026-00001` (services).
+- **Facture PDF figée** : A5 paysage, logo, mention « ACOMPTE REÇU — SOLDE À PAYER »
+  ou « FACTURE PAYÉE » ; empreinte **SHA-256** en base, lecture seule, contrôle
+  d'intégrité au téléchargement.
+- **WhatsApp automatique** : job `EnvoyerFactureWhatsAppJob` mis en file dès un
+  versement ; échecs tracés (`whatsapp_envois`, statut `echec`), alerte + correction
+  du numéro et renvoi côté caissier.
+- **Verrou manager** : modification/suppression d'une facture encaissée → mot de
+  passe administrateur (`ManagerAuthService`).
+- **Registre caisse** (`CaisseService`) : entrées (acomptes + comptants), retraits,
+  remboursements des annulations, impayés restants — calculé en SQL agrégé
+  (dashboard en ~10 requêtes au lieu de ~35).
+
+### 6.5 PIN et session
+
+- Le code PIN n'est demandé **qu'à l'expiration de la session** (récupération express
+  via `/pin/recovery`, limité à 5 tentatives) — jamais après une connexion fraîche
+  (email + mot de passe, plus fort que le PIN).
+- Gestion (définir / changer / supprimer) : `/pin/settings`.
+
+### 6.6 Rapports PDF
 - **Admin** : période libre (date de début → fin), compte les statuts `présent` par employé, génère un PDF signé (dompdf), l'enregistre dans `storage/app/public/rapports/` et l'archivie dans la table `rapport`.
 - **Superviseur** : rapport mensuel de son équipe, mêmes mécanismes (PDF + archivage).
 
@@ -302,7 +336,9 @@ composer audit --locked        # sécurité des dépendances
 
 ## 11. Tests
 
-Suite PHPUnit (`tests/`) — **28 tests / 183 assertions**, tous verts (`env -u APP_ENV MAIL_MAILER=array php artisan test`).
+Suite PHPUnit (`tests/`) — **229 tests / ~900 assertions** (1 skip attendu), tous verts
+(`php artisan test`). Les classes `FactureAcompteTest` et `ServiceFacturationTest`
+utilisent `DatabaseTransactions` pour rester hermétiques.
 Couverture : flux de pointage (arrivée/départ, fiche de rendement obligatoire), géolocalisation, évaluations, rapports, exports Excel chartés, bulletins PDF, notifications et **rendu frontend des pages harmonisées** (lieux de travail, notifications, présence — vérification de la charte Pharaon).
 
 ### Déploiement
