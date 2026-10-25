@@ -20,6 +20,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Super administrateurs (développeur)
+    |--------------------------------------------------------------------------
+    | Emails (séparés par des virgules) autorisés à voir les métriques système,
+    | réservées au développement. Définir SUPER_ADMIN_EMAILS dans .env.
+    */
+
+    'super_admins' => array_values(array_filter(array_map('trim', explode(',', (string) env('SUPER_ADMIN_EMAILS', 'admin@3hcig.com'))))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

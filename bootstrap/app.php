@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'check.role.network' => \App\Http\Middleware\CheckUserRoleAndNetwork::class,
             'registration.access' => \App\Http\Middleware\RegistrationAccessMiddleware::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'superadmin' => \App\Http\Middleware\SuperAdminOnly::class,
         ]);
 
         // Remplacer le CSRF natif par notre version (désactive en testing)
@@ -31,6 +32,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('presence:auto-absences')->dailyAt('18:45');
         $schedule->command('presence:alertes-evaluations-rouges')->monthlyOn(1, '08:00');
         $schedule->command('presence:rappel-fiches-rendement')->weeklyOn(5, '17:00');
+
+        // Envois WhatsApp : traitement de la file (database) chaque minute
+        $schedule->command('queue:work --stop-when-empty --max-time=50')
+            ->everyMinute()
+            ->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Rediriger les rate-limits vers la page de login avec un message clair

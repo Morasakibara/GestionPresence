@@ -26,6 +26,20 @@ class Utilisateur extends Authenticatable
     ];
 
     /**
+     * Super administrateur (développeur) : accès aux métriques système.
+     */
+    public function isSuperAdmin(): bool
+    {
+        if ($this->role !== 'Administrateur') {
+            return false;
+        }
+
+        $emails = array_map('strtolower', (array) config('app.super_admins', []));
+
+        return in_array(strtolower((string) $this->email), $emails, true);
+    }
+
+    /**
      * Get the password for the user.
      *
      * @return string
