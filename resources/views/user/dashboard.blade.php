@@ -18,39 +18,6 @@
 </div>
 @endsection
 
-@section('navigation')
-<!-- Current: "bg-pharaoh-gold text-white", Default: "text-gray-300 hover:bg-pharaoh-gold hover:text-white" -->
-<a href="{{ route('user.dashboard') }}" class="px-3 py-2 text-sm font-medium text-white rounded-md bg-pharaoh-gold" aria-current="page">Tableau de bord</a>
-<a href="{{ route('presence.index') }}" class="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-pharaoh-gold hover:text-white">Présence</a>
-<a href="{{ route('user.presence.report') }}" class="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-pharaoh-gold hover:text-white">Bilan de présence</a>
-<a href="{{ route('user.rendement') }}" class="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-pharaoh-gold hover:text-white">Mes rendements</a>
-<a href="{{ route('user.conges') }}" class="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-pharaoh-gold hover:text-white">Congés</a>
-<a href="{{ route('notifications.index') }}" class="relative px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-pharaoh-gold hover:text-white">
-    Notifications
-    @if(Auth::user()->unreadNotifications->count() > 0)
-        <span class="absolute flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-600 rounded-full -top-1 -right-1">
-            {{ Auth::user()->unreadNotifications->count() }}
-        </span>
-    @endif
-</a>
-@endsection
-
-@section('mobile-navigation')
-<a href="{{ route('user.dashboard') }}" class="block px-3 py-2 text-base font-medium text-white rounded-md bg-pharaoh-gold" aria-current="page">Tableau de bord</a>
-<a href="{{ route('presence.index') }}" class="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-pharaoh-gold hover:text-white">Présence</a>
-<a href="{{ route('user.presence.report') }}" class="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-pharaoh-gold hover:text-white">Bilan de présence</a>
-<a href="{{ route('user.rendement') }}" class="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-pharaoh-gold hover:text-white">Mes rendements</a>
-<a href="{{ route('user.conges') }}" class="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-pharaoh-gold hover:text-white">Congés</a>
-<a href="{{ route('notifications.index') }}" class="relative block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-pharaoh-gold hover:text-white">
-    Notifications
-    @if(Auth::user()->unreadNotifications->count() > 0)
-        <span class="absolute flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-600 rounded-full top-2 right-2">
-            {{ Auth::user()->unreadNotifications->count() }}
-        </span>
-    @endif
-</a>
-@endsection
-
 @section('content')
 <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
     <div class="pharaoh-card p-6">

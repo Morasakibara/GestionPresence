@@ -2,18 +2,6 @@
 
 @section('header', 'Gestion des Congés & Absences')
 
-@section('navigation')
-<a href="{{ route('superviseur.supdashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
-<a href="{{ route('superviseur.conges.index') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Congés</a>
-<a href="{{ route('superviseur.showFollowPresence') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Présences</a>
-@endsection
-
-@section('mobile-navigation')
-<a href="{{ route('superviseur.supdashboard') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
-<a href="{{ route('superviseur.conges.index') }}" class="block rounded-md bg-pharaoh-gold px-3 py-2 text-base font-medium text-white" aria-current="page">Congés</a>
-<a href="{{ route('superviseur.showFollowPresence') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Présences</a>
-@endsection
-
 @section('content')
 @php
     $statutFilter = request('statut');

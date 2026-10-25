@@ -18,55 +18,19 @@
 </div>
 @endsection
 
-@section('navigation')
-<!-- Current: "bg-pharaoh-gold text-white", Default: "text-gray-300 hover:bg-pharaoh-gold hover:text-white" -->
-<a href="{{ route('admin.dashboard') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Tableau de bord</a>
-<a href="{{ route('admin.paiements') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Paiements</a>
-<a href="{{ route('admin.addEmployee') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Ajouter employé</a>
-<a href="{{ route('admin.generateReport') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Générer Bilan</a>
-<a href="{{ route('admin.showEmployeeList') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Liste des employés</a>
-<a href="{{ route('notifications.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white relative">
-    Notifications
-    @if(Auth::user()->unreadNotifications->count() > 0)
-        <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
-            {{ Auth::user()->unreadNotifications->count() }}
-        </span>
-    @endif
-</a>
-<a href="{{ route('admin.workplace-locations.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
-    Lieux de travail
-</a>
-<a href="{{ route('admin.conges') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
-    Congés
-</a>
-<a href="{{ route('admin.auditLogs') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
-    Audit
-</a>
-<a href="{{ route('admin.metrics') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
-    Métriques
-</a>
-@endsection
-
-@section('mobile-navigation')
-<a href="{{ route('admin.dashboard') }}" class="block rounded-md bg-pharaoh-gold px-3 py-2 text-base font-medium text-white" aria-current="page">Tableau de bord</a>
-<a href="{{ route('admin.addEmployee') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Ajouter employé</a>
-<a href="{{ route('admin.generateReport') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Générer Bilan</a>
-<a href="{{ route('admin.showEmployeeList') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Liste des employés</a>
-<a href="{{ route('notifications.index') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white relative">
-    Notifications
-    @if(Auth::user()->unreadNotifications->count() > 0)
-        <span class="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
-            {{ Auth::user()->unreadNotifications->count() }}
-        </span>
-    @endif
-</a>
-<a href="{{ route('admin.workplace-locations.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
-    Lieux de travail
-</a>
-<a href="{{ route('admin.metrics') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Métriques</a>
-@endsection
-
 @section('content')
+@if(Auth::user()->isSuperAdmin())
+<!-- Développement — réservé au super administrateur -->
+<div class="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-pharaoh-gold/40 bg-pharaoh-gold/5 px-5 py-4">
+    <div>
+        <p class="text-sm font-semibold text-[#080808]">Outils de développement</p>
+        <p class="text-xs text-gray-500">Métriques système (erreurs, requêtes, uptime) — visible uniquement par le super administrateur.</p>
+    </div>
+    <a href="{{ route('admin.metrics') }}" class="btn-gold btn-press whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold text-white">
+        Métriques système
+    </a>
+</div>
+@endif
 <!-- Vue d'ensemble -->
 <div class="mb-6">
     <div class="mb-4 flex items-center justify-between">

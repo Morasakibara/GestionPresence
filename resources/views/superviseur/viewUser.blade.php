@@ -6,32 +6,6 @@
 </div>
 @endsection
 
-@section('navigation')
-<a href="{{ route('superviseur.supdashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Dashboard</a>
-<a href="{{ route('superviseur.showAddMember') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Ajout membre</a>
-<a href="{{ route('superviseur.showFollowPresence') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Suivre présences</a>
-<a href="{{ route('superviseur.generateReport2') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Rapports</a>
-<a href="{{ route('notifications.index') }}" class="relative rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
-    Notifications
-    @if(Auth::user()->unreadNotifications->count() > 0)
-        <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">{{ Auth::user()->unreadNotifications->count() }}</span>
-    @endif
-</a>
-@endsection
-
-@section('mobile-navigation')
-<a href="{{ route('superviseur.supdashboard') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Dashboard</a>
-<a href="{{ route('superviseur.showAddMember') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Ajout membre</a>
-<a href="{{ route('superviseur.showFollowPresence') }}" class="block rounded-md bg-pharaoh-gold px-3 py-2 text-base font-medium text-white">Suivre présences</a>
-<a href="{{ route('superviseur.generateReport2') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Rapports</a>
-<a href="{{ route('notifications.index') }}" class="relative block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">
-    Notifications
-    @if(Auth::user()->unreadNotifications->count() > 0)
-        <span class="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">{{ Auth::user()->unreadNotifications->count() }}</span>
-    @endif
-</a>
-@endsection
-
 @section('content')
 
 <!-- Profil utilisateur -->

@@ -4,14 +4,6 @@
 <div class="flex items-center justify-between"><span>Modifier le service</span></div>
 @endsection
 
-@section('navigation')
-<a href="{{ route('directrice.dashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Dashboard</a>
-<a href="{{ route('directrice.commandes') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Commandes</a>
-<a href="{{ route('directrice.services') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Services</a>
-<a href="{{ route('directrice.retraits') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Retraits</a>
-<a href="{{ route('directrice.rapport') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Rapport</a>
-@endsection
-
 @section('content')
 <div class="max-w-xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
     <h1 class="page-heading-title mb-6">Modifier le service</h1>

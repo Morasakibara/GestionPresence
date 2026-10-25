@@ -4,18 +4,6 @@
 <div class="flex items-center justify-between"><span>Gestion T-Shirts</span></div>
 @endsection
 
-@section('navigation')
-<a href="{{ route('gestionnaire.dashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Dashboard</a>
-<a href="{{ route('gestionnaire.tshirts') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">T-Shirts</a>
-<a href="{{ route('gestionnaire.papier') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Papier</a>
-@endsection
-
-@section('mobile-navigation')
-<a href="{{ route('gestionnaire.dashboard') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Dashboard</a>
-<a href="{{ route('gestionnaire.tshirts') }}" class="block rounded-md bg-pharaoh-gold px-3 py-2 text-base font-medium text-white">T-Shirts</a>
-<a href="{{ route('gestionnaire.papier') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Papier</a>
-@endsection
-
 @section('content')
 <div class="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
     @if(session('success'))<div class="alert alert-success"><svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>{{ session('success') }}</span></div>@endif

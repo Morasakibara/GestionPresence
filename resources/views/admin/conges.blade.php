@@ -2,17 +2,6 @@
 
 @section('header', 'Gestion des Congés — Entreprise')
 
-@section('navigation')
-<a href="{{ route('admin.dashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
-<a href="{{ route('admin.conges') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Congés</a>
-<a href="{{ route('admin.showEmployeeList') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Employés</a>
-@endsection
-
-@section('mobile-navigation')
-<a href="{{ route('admin.dashboard') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
-<a href="{{ route('admin.conges') }}" class="block rounded-md bg-pharaoh-gold px-3 py-2 text-base font-medium text-white" aria-current="page">Congés</a>
-@endsection
-
 @section('content')
 <!-- Export PDF -->
 <div class="flex flex-wrap items-center justify-end gap-2 mb-6">

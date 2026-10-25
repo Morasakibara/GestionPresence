@@ -2,11 +2,6 @@
 
 @section('title', 'Journal d\'audit — Le Pharaon')
 
-@section('navigation')
-<a href="{{ route('admin.dashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
-<a href="{{ route('admin.auditLogs') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Audit</a>
-@endsection
-
 @section('content')
 <div class="min-h-screen bg-[#F8F8F8]">
     <main class="p-8">

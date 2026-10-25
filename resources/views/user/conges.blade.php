@@ -2,18 +2,6 @@
 
 @section('header', 'Mes Congés & Absences')
 
-@section('navigation')
-<a href="{{ route('user.dashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
-<a href="{{ route('user.conges') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Congés</a>
-<a href="{{ route('presence.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Présence</a>
-@endsection
-
-@section('mobile-navigation')
-<a href="{{ route('user.dashboard') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
-<a href="{{ route('user.conges') }}" class="block rounded-md bg-pharaoh-gold px-3 py-2 text-base font-medium text-white" aria-current="page">Congés</a>
-<a href="{{ route('presence.index') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Présence</a>
-@endsection
-
 @section('content')
 @php
     $userConges = \App\Models\Conge::where('employer_id', auth()->id())->orderByDesc('created_at')->get();

@@ -4,10 +4,6 @@
 <div class="flex items-center justify-between"><span>Paramètres — Code PIN</span></div>
 @endsection
 
-@section('navigation')
-<a href="{{ url()->previous() }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">← Retour</a>
-@endsection
-
 @section('content')
 
 @if(session('success'))

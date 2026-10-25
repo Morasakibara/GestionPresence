@@ -4,21 +4,6 @@
 <div class="flex items-center justify-between"><span>État de la Caisse — Admin</span></div>
 @endsection
 
-@section('navigation')
-<a href="{{ route('admin.dashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
-<a href="{{ route('admin.caisse') }}" class="rounded-md bg-pharaoh-gold px-3 py-2 text-sm font-medium text-white" aria-current="page">Caisse</a>
-<a href="{{ route('admin.stock') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Stock</a>
-<a href="{{ route('admin.addEmployee') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Ajouter employé</a>
-<a href="{{ route('admin.generateReport') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Générer Bilan</a>
-<a href="{{ route('admin.showEmployeeList') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Liste des employés</a>
-@endsection
-
-@section('mobile-navigation')
-<a href="{{ route('admin.dashboard') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Tableau de bord</a>
-<a href="{{ route('admin.caisse') }}" class="block rounded-md bg-pharaoh-gold px-3 py-2 text-base font-medium text-white">Caisse</a>
-<a href="{{ route('admin.stock') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-pharaoh-gold hover:text-white">Stock</a>
-@endsection
-
 @section('content')
 <div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
     <h1 class="page-heading-title mb-6">État des caisses — {{ now()->format('d/m/Y') }}</h1>

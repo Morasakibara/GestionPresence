@@ -6,14 +6,6 @@
 </div>
 @endsection
 
-@section('navigation')
-<a href="{{ route('admin.dashboard') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-[#D39B23] hover:text-white">Tableau de bord</a>
-<a href="{{ route('admin.paiements') }}" class="rounded-md bg-[#D39B23] px-3 py-2 text-sm font-medium text-white" aria-current="page">Paiements</a>
-<a href="{{ route('admin.addEmployee') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-[#D39B23] hover:text-white">Ajouter employé</a>
-<a href="{{ route('admin.generateReport') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-[#D39B23] hover:text-white">Générer Bilan</a>
-<a href="{{ route('admin.showEmployeeList') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-[#D39B23] hover:text-white">Liste employés</a>
-@endsection
-
 @section('content')
 <div class="py-6 px-4 sm:px-6 lg:px-8">
 

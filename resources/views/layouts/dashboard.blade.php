@@ -24,6 +24,18 @@
     </div>
 
     <div class="min-h-full relative z-[1]">
+        @php
+            // Menu unique par rôle : toutes les fonctionnalités, état actif selon la route
+            $navRole = 'user';
+            if (Auth::user()->role === 'Administrateur') {
+                $navRole = 'admin';
+            } elseif (Auth::user()->role === 'Superviseur') {
+                $prefix = explode('/', trim(request()->path(), '/'))[0] ?? '';
+                $navRole = in_array($prefix, ['directrice', 'secretaire', 'gestionnaire'], true)
+                    ? $prefix
+                    : 'superviseur';
+            }
+        @endphp
         <nav class="bg-[#080808] shadow-lg sticky top-0 z-50">
             <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
@@ -33,7 +45,8 @@
                         </div>
                         <div class="hidden md:block">
                             <div class="flex items-center ml-10 space-x-1">
-                                {!! preg_replace('/^[\s\r\n]+/', '', $__env->yieldContent('navigation')) !!}
+                                {{-- Menu de rôle unique (toutes les fonctionnalités, état actif) --}}
+                                @include('partials.nav.' . $navRole)
                             </div>
                         </div>
                     </div>
@@ -388,8 +401,8 @@
 
             <!-- Mobile menu, show/hide based on menu state. -->
             <div class="hidden mobile-menu md:hidden" id="mobile-menu">
-                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                    {!! preg_replace('/^[\s\r\n]+/', '', $__env->yieldContent('mobile-navigation')) !!}
+                <div class="flex flex-col gap-1 px-2 pt-2 pb-3 sm:px-3">
+                    @include('partials.nav.' . $navRole)
                 </div>
                 <div class="pt-4 pb-3 border-t border-white/10">
                     <div class="flex items-center px-5">
@@ -487,6 +500,7 @@
     </button>
 
     <!-- Notifications temps réel -->
+    <script>window.__notifSoundArmed = @json((bool) session()->pull('notif_sound_armed', false));</script>
     <script src="{{ asset('js/notifications.js') }}"></script>
 
     <!-- Additional Scripts -->
