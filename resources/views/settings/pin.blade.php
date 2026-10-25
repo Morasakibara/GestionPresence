@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between"><span>Paramètres — Code PIN</span></div>
+<div><span>Paramètres — Code PIN</span><p class="console-subtitle">Sécurisez la reprise de session avec un code personnel.</p></div>
 @endsection
 
 @section('content')
@@ -54,7 +54,7 @@
 
     <!-- Formulaire set/change PIN -->
     <div class="pharaoh-card p-6 mb-6">
-        <h3 class="text-lg font-semibold text-[#080808] mb-4">{{ $user->pin_required ? 'Modifier le code PIN' : 'Définir un code PIN' }}</h3>
+        <h3 class="section-title mb-4">{{ $user->pin_required ? 'Modifier le code PIN' : 'Définir un code PIN' }}</h3>
         <form method="POST" action="{{ route('pin.set') }}" class="space-y-4">
             @csrf
             <div>
@@ -84,7 +84,7 @@
     <!-- Supprimer le PIN -->
     @if($user->pin_required)
     <div class="pharaoh-card p-6 border border-red-200">
-        <h3 class="text-lg font-semibold text-red-700 mb-4">Supprimer le code PIN</h3>
+        <h3 class="section-title mb-4 text-red-700">Supprimer le code PIN</h3>
         <p class="text-sm text-gray-600 mb-4">La récupération de session par PIN sera désactivée. Vous devrez utiliser email + mot de passe à chaque fois.</p>
         <form method="POST" action="{{ route('pin.remove') }}" class="space-y-4" onsubmit="return confirm('Désactiver le code PIN ?')">
             @csrf

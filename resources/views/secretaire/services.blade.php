@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between"><span>Services Photo</span></div>
+<div><span>Services Photo</span><p class="console-subtitle">Prestations facturées à la caisse et suivi des soldes.</p></div>
 @endsection
 
 @section('content')
@@ -75,7 +75,7 @@
         {{-- Clôture du solde (Étape 2.2) --}}
         <div class="pharaoh-card overflow-hidden mb-6">
             <div class="px-6 py-4 border-b border-gray-100 bg-orange-50/40">
-                <h3 class="text-lg font-semibold text-[#080808] flex items-center gap-2">
+                <h3 class="section-title flex items-center gap-2">
                     <svg class="h-5 w-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <span>Clôture du solde — services en attente de paiement</span>
                 </h3>
@@ -117,7 +117,7 @@
         {{-- Historique --}}
         <div class="pharaoh-card overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100">
-                <h3 class="text-lg font-semibold text-[#080808] flex items-center gap-2">
+                <h3 class="section-title flex items-center gap-2">
                     <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                     <span>Services enregistrés</span>
                 </h3>
@@ -174,7 +174,7 @@
 <div id="soldeServiceModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4" onclick="event.stopPropagation()">
         <div class="bg-[#080808] px-6 py-5 text-center">
-            <h3 class="text-lg font-bold text-white">Clôture — Encaisser le solde</h3>
+            <h3 class="font-display text-[1.125rem] font-semibold leading-tight text-white">Clôture — Encaisser le solde</h3>
             <p class="text-sm text-gray-400 mt-1">Le reste à payer est verrouillé par le système</p>
         </div>
         <div class="px-6 py-5">
@@ -202,7 +202,7 @@
             <div class="mx-auto w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
                 <svg class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </div>
-            <h3 class="text-lg font-bold text-white">Supprimer le service</h3>
+            <h3 class="font-display text-[1.125rem] font-semibold leading-tight text-white">Supprimer le service</h3>
             <p class="text-sm text-gray-400 mt-1">Cette action est irréversible</p>
         </div>
         <div class="px-6 py-5">
@@ -212,7 +212,7 @@
             </div>
             <div id="deleteSvcVerrou" class="hidden bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 mb-4">
                 <p class="text-sm font-semibold text-amber-800 mb-2">🔐 Facture avec acompte — mot de passe administrateur requis</p>
-                <input type="password" name="manager_password" id="deleteSvcManagerPassword" class="w-full rounded-lg border border-amber-300 px-3 py-2 text-sm" placeholder="Mot de passe administrateur" autocomplete="current-password">
+                <input type="password" name="manager_password" id="deleteSvcManagerPassword" class="input-field input-field-warn" placeholder="Mot de passe administrateur" autocomplete="current-password">
             </div>
             <p class="text-sm text-gray-500 mb-4">Êtes-vous sûr de vouloir supprimer ce service ?</p>
             <form id="deleteServiceForm" method="POST">

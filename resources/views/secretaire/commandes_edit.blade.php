@@ -1,8 +1,9 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between">
+<div>
     <span>Modifier la commande #{{ $commande->id }}</span>
+    <p class="console-subtitle">Ajustez les lignes, le montant payé et le statut de la commande.</p>
 </div>
 @endsection
 

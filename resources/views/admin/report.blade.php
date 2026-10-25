@@ -164,14 +164,14 @@
                                 <input type="hidden" name="employerID" value="{{ $data->employerID }}">
                                 <input type="hidden" name="mois" value="{{ substr($startDate, 0, 7) }}">
                                 <div class="flex items-center gap-1 mb-1">
-                                    <input type="number" name="note" min="0" max="20" step="0.5" value="{{ $data->evaluation_note }}" class="w-16 rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold/20" title="Note /20">
-                                    <select name="couleur" class="rounded-lg border border-gray-300 px-1 py-1 text-xs focus:border-pharaoh-gold">
+                                    <input type="number" name="note" min="0" max="20" step="0.5" value="{{ $data->evaluation_note }}" class="input-field-sm w-16" title="Note /20">
+                                    <select name="couleur" class="select-field-sm">
                                         <option value="vert" {{ $data->evaluation_couleur === 'vert' ? 'selected' : '' }}>Vert</option>
                                         <option value="orange" {{ $data->evaluation_couleur === 'orange' ? 'selected' : '' }}>Orange</option>
                                         <option value="rouge" {{ $data->evaluation_couleur === 'rouge' ? 'selected' : '' }}>Rouge</option>
                                     </select>
                                 </div>
-                                <input type="text" name="commentaire" placeholder="Commentaire..." class="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs mb-1 focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold/20">
+                                <input type="text" name="commentaire" placeholder="Commentaire..." class="input-field-sm mb-1 w-full">
                                 <button type="submit" class="rounded-lg bg-pharaoh-gold px-3 py-1 text-xs font-semibold text-white hover:bg-pharaoh-gold-light transition-colors">Enregistrer</button>
                             </form>
                         </div>

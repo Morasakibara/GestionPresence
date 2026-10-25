@@ -1,6 +1,9 @@
 /* Polices Le Pharaon — doit précéder tout le reste */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
-@import url('login.css');
+/* L'ancien login.css n'est plus importé : ses règles globales non layerisées
+   (Arial sur body, carte blanche et max-width sur tous les <form>, bordure 1px
+   des champs email/mot de passe, boutons submit pleine largeur) écrasaient la
+   charte Tailwind et les classes .input-field de tous les formulaires. */
 @import './components/tailwind/auth.css';
 
 @tailwind base;
@@ -119,11 +122,9 @@ body {
   .page-heading {
     @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
   }
-  .page-heading-title {
-    @apply text-2xl font-bold tracking-tight text-[#080808] sm:text-3xl;
-  }
+  /* Le style du titre est défini avec l'échelle typographique des titres (section Console) */
   .page-heading-sub {
-    @apply mt-1 text-sm text-gray-500;
+    @apply mt-1.5 max-w-[42rem] text-xs leading-relaxed text-gray-500 sm:text-sm;
   }
 
   /* Stat card moderne : icône dans un carré teinté, valeur large (bloc « Stats ») */
@@ -233,10 +234,19 @@ body {
 
   /* ═══ Champs de formulaire — style identique au login ═══ */
   .input-field {
-    @apply block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors;
+    @apply block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 transition-colors duration-150 hover:border-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500;
   }
   .input-field-error {
     @apply border-red-600 bg-red-600/5;
+  }
+  /* Champ signalé invalide par le serveur : même rendu que l'erreur du login */
+  .input-field[aria-invalid="true"],
+  .select-field[aria-invalid="true"] {
+    @apply border-red-600 bg-red-600/5;
+  }
+  /* Message d'erreur sous un champ, comme sur les formulaires de connexion */
+  .input-error {
+    @apply mt-1 text-sm text-red-600;
   }
   .input-label {
     @apply block text-sm font-medium leading-6 text-gray-700;
@@ -266,7 +276,34 @@ body {
     @apply btn-press inline-flex items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors;
   }
   .select-field {
-    @apply block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors;
+    @apply block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 transition-colors duration-150 hover:border-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500;
+  }
+  /* Variante compacte : mêmes effets que le login, en plus petit
+     (lignes d'évaluation, filtres de tableau) */
+  .input-field-sm,
+  .select-field-sm {
+    @apply rounded-lg border-2 border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 placeholder:text-gray-400 transition-colors duration-150 hover:border-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold;
+  }
+  /* Filtres de barre de recherche / tableau : mêmes effets que le login,
+     gabarit compact (dates, type, recherche) */
+  .input-filter {
+    @apply rounded-lg border-2 border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 transition-colors duration-150 hover:border-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold;
+  }
+  /* Champ accolé à un encart d'avertissement (mot de passe manager) */
+  .input-field-warn {
+    @apply border-amber-300 hover:border-amber-400 focus:border-amber-500 focus:ring-amber-500;
+  }
+  /* Socle commun : un champ resté sans classe dans une carte de formulaire
+     prend le même habillage que les formulaires de connexion. */
+  .form-card input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="color"]),
+  .form-card select,
+  .form-card textarea {
+    @apply rounded-md border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors duration-150;
+  }
+  .form-card input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="file"]):focus,
+  .form-card select:focus,
+  .form-card textarea:focus {
+    @apply border-pharaoh-gold outline-none ring-1 ring-pharaoh-gold;
   }
 
   /* ============================================================
@@ -347,14 +384,33 @@ body {
   .console-eyebrow {
     @apply flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-gray-400;
   }
-  .console-heading > div > span:first-child {
-    @apply text-xl font-bold tracking-tight text-[#080808] sm:text-2xl lg:text-[1.75rem];
-  }
-  .console-title {
-    @apply text-xl font-bold tracking-tight text-[#080808] sm:text-2xl lg:text-[1.75rem];
+  /* ------------------------------------------------------------
+     Échelle typographique des titres
+     Playfair Display pour les titres, Inter pour l'interface.
+     ------------------------------------------------------------ */
+  /* Titre principal de page : premier libellé de l'en-tête, qu'il soit
+     direct ou encapsulé avec son sous-titre dans un bloc. */
+  .console-heading > div > span:first-child,
+  .console-heading > div > div > span:first-child,
+  .console-heading h1,
+  .console-title,
+  .page-heading-title {
+    @apply font-display text-[1.375rem] font-semibold leading-[1.2] tracking-[-0.011em] text-[#080808] sm:text-[1.625rem] lg:text-[1.875rem];
   }
   .console-subtitle {
-    @apply mt-1 text-xs text-gray-500 sm:text-sm;
+    @apply mt-1.5 max-w-[42rem] text-xs leading-relaxed text-gray-500 sm:text-sm;
+  }
+  /* Micro-ligne dorée sous un titre (date, période, référence) */
+  .console-kicker {
+    @apply mt-2 inline-flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-pharaoh-bronze;
+  }
+  .console-kicker::before {
+    content: "";
+    @apply h-[0.0625rem] w-5 bg-pharaoh-gold/70;
+  }
+  /* Titre de section à l'intérieur d'une carte */
+  .section-title {
+    @apply font-display text-base font-semibold leading-snug tracking-[-0.005em] text-[#080808] sm:text-[1.0625rem];
   }
 
   /* Onglets de dashboard */
@@ -393,7 +449,7 @@ body {
     @apply flex flex-wrap items-start justify-between gap-3 px-4 pt-4 sm:px-5 sm:pt-5;
   }
   .console-card-title {
-    @apply text-sm font-semibold text-[#080808];
+    @apply font-display text-[0.9375rem] font-semibold leading-snug tracking-[-0.005em] text-[#080808] sm:text-base;
   }
   .console-card-sub {
     @apply mt-0.5 text-xs text-gray-500;
@@ -554,7 +610,13 @@ html[data-theme="dark"] .hover\:bg-gray-200:hover {
 html[data-theme="dark"] .text-gray-900,
 html[data-theme="dark"] [class*="text-\\[\\#080808\\]"],
 html[data-theme="dark"] .text-black,
-html[data-theme="dark"] .page-heading-title {
+html[data-theme="dark"] .page-heading-title,
+html[data-theme="dark"] .console-title,
+html[data-theme="dark"] .console-heading h1,
+html[data-theme="dark"] .console-heading > div > span:first-child,
+html[data-theme="dark"] .console-heading > div > div > span:first-child,
+html[data-theme="dark"] .console-card-title,
+html[data-theme="dark"] .section-title {
   color: var(--text-primary) !important;
 }
 html[data-theme="dark"] .text-gray-800,
@@ -563,7 +625,8 @@ html[data-theme="dark"] .text-gray-600 {
   color: var(--text-secondary) !important;
 }
 html[data-theme="dark"] .text-\[\#885910\],
-html[data-theme="dark"] .text-pharaoh-bronze {
+html[data-theme="dark"] .text-pharaoh-bronze,
+html[data-theme="dark"] .console-kicker {
   color: var(--gold-text) !important;
 }
 html[data-theme="dark"] .text-gray-500,

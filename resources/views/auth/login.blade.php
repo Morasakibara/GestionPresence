@@ -24,7 +24,7 @@
         <span class="h-2 w-2 rounded-full bg-pharaoh-gold-bright"></span>
         Gestion de présence & rendement
       </div>
-      <h1 class="text-4xl font-extrabold leading-tight mb-4 text-white text-shadow animate-fade-in">Bienvenue au <span class="text-pharaoh-gold-bright">Pharaon</span></h1>
+      <h1 class="font-display text-4xl font-bold leading-tight mb-4 text-white text-shadow animate-fade-in">Bienvenue au <span class="text-pharaoh-gold-bright">Pharaon</span></h1>
       <p class="text-lg text-gray-200 mb-6 max-w-md animate-slide-up">
         Connectez-vous pour accéder à votre espace personnel : pointage, fiches de rendement et évaluation de votre discipline.
       </p>
@@ -42,7 +42,7 @@
       <div class="md:hidden">
         <img class="mx-auto h-20 w-auto" src="{{ asset('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
       </div>
-      <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-[#080808]">Connexion à votre compte</h2>
+      <h2 class="font-display mt-10 text-center text-2xl font-semibold leading-9 tracking-tight text-[#080808]">Connexion à votre compte</h2>
       <p class="mt-2 text-center text-sm text-gray-500">Accédez à votre espace Le Pharaon</p>
     </div>
 
@@ -170,12 +170,11 @@
           <label for="email" class="block text-sm font-medium leading-6 text-gray-700">Adresse email</label>
           <div class="mt-2">
             <input id="email" type="email" name="email" autocomplete="email" required
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors 
-                  @error('email') border-red-600 bg-red-600/5 @enderror"
+                  class="input-field @error('email') input-field-error @enderror"
                   value="{{ old('email') }}">
           </div>
           @error('email')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            <p class="input-error">{{ $message }}</p>
           @enderror
         </div>
 
@@ -185,8 +184,7 @@
           </div>
           <div class="mt-2 relative">
             <input id="password" type="password" name="password" autocomplete="current-password" required
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors
-                  @error('password') border-red-600 bg-red-600/5 @enderror">
+                  class="input-field pr-10 @error('password') input-field-error @enderror">
             <button type="button" id="togglePassword" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-transparent border-none cursor-pointer p-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 opacity-50 hover:opacity-100 transition-opacity duration-300"
                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -196,7 +194,7 @@
             </button>
           </div>
           @error('password')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            <p class="input-error">{{ $message }}</p>
           @enderror
         </div>
 

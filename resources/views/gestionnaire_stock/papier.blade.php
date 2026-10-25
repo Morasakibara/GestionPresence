@@ -1,17 +1,21 @@
 @extends('layouts.dashboard')
 
+@section('title', 'Papier d\'impression')
+@section('breadcrumb', 'Papier d\'impression')
+
 @section('header')
-<div class="flex items-center justify-between"><span>Gestion Papier d'impression</span></div>
+    <div>
+        <span>Papier d'impression</span>
+        <p class="console-subtitle">Suivi des rouleaux par imprimante et alertes de seuil bas.</p>
+    </div>
 @endsection
 
+@section('content_shell', 'flush')
+
 @section('content')
-<div class="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    @if(session('success'))<div class="alert alert-success"><svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>{{ session('success') }}</span></div>@endif
-
-    <h1 class="page-heading-title mb-6">Gestion du Papier d'impression</h1>
-
-    <div class="pharaoh-card p-6 mb-6">
-        <h3 class="text-base font-semibold text-[#080808] mb-4">Ajouter / Modifier le stock papier</h3>
+<div class="space-y-5">
+    <div class="console-card p-6">
+        <h3 class="section-title mb-4">Ajouter / Modifier le stock papier</h3>
         <form action="{{ route('gestionnaire.papier.store') }}" method="POST" class="space-y-4">
             @csrf
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -24,8 +28,8 @@
         </form>
     </div>
 
-    <div class="pharaoh-card overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200/70"><h2 class="text-lg font-semibold text-[#080808]">Stock Papier ({{ $papiers->count() }} imprimante(s))</h2></div>
+    <div class="console-card overflow-hidden">
+        <div class="console-card-head pb-3"><h2 class="section-title">Stock Papier ({{ $papiers->count() }} imprimante(s))</h2></div>
         <div class="table-scroll">
             <table class="min-w-full">
                 <thead class="table-head"><tr><th>Imprimante</th><th class="text-right">Reste (m)</th><th class="text-right">Total (m)</th><th class="text-right">%</th><th>Statut</th><th></th></tr></thead>

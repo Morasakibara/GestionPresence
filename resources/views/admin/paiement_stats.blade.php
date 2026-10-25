@@ -1,8 +1,9 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between">
+<div>
     <span>Statistiques des paiements</span>
+    <p class="console-subtitle">Montants encaissés, partiels et restants, par poste de facturation.</p>
 </div>
 @endsection
 
@@ -45,7 +46,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
         @foreach($caParPoste as $poste => $data)
         <div class="bg-white rounded-xl shadow border border-[#E7E7E7] p-6">
-            <h3 class="text-lg font-semibold text-[#080808] mb-3">{{ $poste }}</h3>
+            <h3 class="section-title mb-3">{{ $poste }}</h3>
             <div class="space-y-2 text-sm">
                 <div class="flex justify-between"><span class="text-[#555555]">Total commandé</span><span class="font-semibold text-[#080808]">{{ number_format($data['total'], 0, ',', '.') }} FCFA</span></div>
                 <div class="flex justify-between"><span class="text-[#555555]">Encaissé</span><span class="font-semibold text-[#2E8B57]">{{ number_format($data['paye'], 0, ',', '.') }} FCFA</span></div>
@@ -66,14 +67,14 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {{-- Doughnut: répartition par statut --}}
         <div class="bg-white rounded-xl shadow border border-[#E7E7E7] p-6">
-            <h3 class="text-lg font-semibold text-[#080808] mb-4">Répartition des paiements</h3>
+            <h3 class="section-title mb-4">Répartition des paiements</h3>
             <div class="relative" style="max-width: 320px; margin: 0 auto;">
                 <canvas id="pieStatutChart"></canvas>
             </div>
         </div>
         {{-- Bar: évolution 30 jours --}}
         <div class="bg-white rounded-xl shadow border border-[#E7E7E7] p-6">
-            <h3 class="text-lg font-semibold text-[#080808] mb-4">Évolution sur 30 jours</h3>
+            <h3 class="section-title mb-4">Évolution sur 30 jours</h3>
             <canvas id="evolutionStatutChart" height="220"></canvas>
         </div>
     </div>
@@ -81,7 +82,7 @@
     {{-- ══════════ TABLEAU TOP 10 ══════════ --}}
     <div class="bg-white rounded-xl shadow border border-[#E7E7E7] overflow-hidden mb-8">
         <div class="px-6 py-4 border-b border-[#E7E7E7]">
-            <h3 class="text-lg font-semibold text-[#080808]">Top 10 commandes</h3>
+            <h3 class="section-title">Top 10 commandes</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-[#E7E7E7]">

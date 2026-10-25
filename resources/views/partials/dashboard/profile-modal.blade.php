@@ -8,7 +8,7 @@
             <div id="profile-view" class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                 <div class="sm:flex sm:items-start">
                     <div class="mt-3 w-full text-center sm:mt-0 sm:text-left">
-                        <h3 class="text-lg font-semibold leading-6 text-[#080808]" id="profile-modal-title">Votre Profil</h3>
+                        <h3 class="section-title" id="profile-modal-title">Votre Profil</h3>
 
                         <div class="mt-4 flex flex-col items-center">
                             <div class="mb-4 h-24 w-24 overflow-hidden rounded-full border-4 border-pharaoh-gold-light">
@@ -40,7 +40,7 @@
             <div id="profile-edit" class="hidden bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                 <div class="sm:flex sm:items-start">
                     <div class="mt-3 w-full text-center sm:mt-0 sm:text-left">
-                        <h3 class="text-lg font-semibold leading-6 text-[#080808]">Modifier votre profil</h3>
+                        <h3 class="section-title">Modifier votre profil</h3>
 
                         <form id="profile-edit-form" class="mt-4" enctype="multipart/form-data">
                             @csrf

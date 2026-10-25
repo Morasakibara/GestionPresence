@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between"><span>Rapport Financier Photo</span></div>
+<div><span>Rapport Financier Photo</span><p class="console-subtitle">Commandes, services et retraits consolidés sur la période.</p></div>
 @endsection
 
 @section('content')
@@ -107,14 +107,14 @@
 
 <!-- Graphique -->
 <div class="pharaoh-card p-6 mb-6">
-    <h3 class="text-lg font-semibold text-[#080808] mb-4">📈 Évolution journalière</h3>
+    <h3 class="section-title mb-4">📈 Évolution journalière</h3>
     <div style="height:300px;"><canvas id="rapportChart"></canvas></div>
 </div>
 
 <!-- Répartition -->
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
     <div class="pharaoh-card p-6">
-        <h3 class="text-lg font-semibold text-[#080808] mb-4">Commandes par type</h3>
+        <h3 class="section-title mb-4">Commandes par type</h3>
         @forelse($commandesParType as $type => $montant)
             <div class="flex items-center justify-between py-2 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
                 <span class="text-sm text-gray-700">{{ $typesPhoto[$type] ?? $type }}</span>
@@ -125,7 +125,7 @@
         @endforelse
     </div>
     <div class="pharaoh-card p-6">
-        <h3 class="text-lg font-semibold text-[#080808] mb-4">Services par type</h3>
+        <h3 class="section-title mb-4">Services par type</h3>
         @forelse($servicesParType as $type => $montant)
             <div class="flex items-center justify-between py-2 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
                 <span class="text-sm text-gray-700">{{ $typesPhoto[$type] ?? $type }}</span>

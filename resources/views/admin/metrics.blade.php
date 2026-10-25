@@ -1,19 +1,22 @@
 @extends('layouts.dashboard')
 
-@section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+@section('breadcrumb', 'Métriques système')
 
-    {{-- Header --}}
-    <div class="mb-8 flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-pharaoh-black sm:text-3xl font-display">Métriques Système</h1>
-            <p class="mt-1 text-sm text-gray-500">Monitoring en temps réel de l'application Le Pharaon</p>
-        </div>
-        <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-            Retour
-        </a>
+@section('header')
+    <div>
+        <span>Métriques Système</span>
+        <p class="console-subtitle">Monitoring en temps réel de l'application Le Pharaon.</p>
     </div>
+    <a href="{{ route('admin.dashboard') }}" class="btn-secondary">
+        <svg class="-ml-1 mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Retour
+    </a>
+@endsection
+
+@section('content_shell', 'flush')
+
+@section('content')
+<div class="space-y-5">
 
     {{-- KPI Cards --}}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -61,7 +64,7 @@
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
         {{-- Répartition par module --}}
         <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 class="text-lg font-semibold text-pharaoh-black mb-4">Activité par module</h3>
+            <h3 class="section-title mb-4">Activité par module</h3>
             <canvas id="moduleChart" height="200"></canvas>
             @if($requeteParModule->isEmpty())
                 <p class="text-center text-gray-400 text-sm mt-4">Aucune activité enregistrée aujourd'hui</p>
@@ -70,7 +73,7 @@
 
         {{-- Erreurs récentes --}}
         <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 class="text-lg font-semibold text-pharaoh-black mb-4">
+            <h3 class="section-title mb-4">
                 <span class="inline-flex items-center gap-2">
                     <span class="h-2 w-2 rounded-full bg-danger animate-pulse"></span>
                     Erreurs récentes
@@ -98,7 +101,7 @@
 
     {{-- Info système --}}
     <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 class="text-lg font-semibold text-pharaoh-black mb-4">Informations Système</h3>
+        <h3 class="section-title mb-4">Informations Système</h3>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div class="rounded-lg bg-gray-50 p-4">
                 <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">PHP</div>

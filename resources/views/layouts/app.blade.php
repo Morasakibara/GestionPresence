@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Le Pharaon') }}</title>
+
+    {{-- Favicon : le logo sur fond noir (l'ancien favicon.ico était vide). --}}
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    <meta name="theme-color" content="#080808">
+
     @vite('resources/css/app.css')
     @yield('additional_css')
 </head>
@@ -428,7 +435,7 @@
             <!-- Top Navigation Bar -->
             <header class="sticky top-0 z-40 border-b border-gray-200/70 bg-white/80 backdrop-blur-md">
                 <div class="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-                    <h1 class="text-lg font-bold text-[#080808] sm:text-xl">
+                    <h1 class="font-display text-lg font-semibold leading-tight text-[#080808] sm:text-xl">
                         @yield('title', config('app.name', 'Le Pharaon'))
                     </h1>
                     <div class="flex items-center">
@@ -567,6 +574,9 @@
 
     <!-- Notifications temps réel -->
     <script src="{{ asset('js/notifications.js') }}"></script>
+
+    {{-- Mêmes effets de formulaire que la connexion (œil sur les mots de passe) --}}
+    <script src="{{ asset('js/forms.js') }}"></script>
 
     @yield('scripts')
 

@@ -7,8 +7,6 @@ use Tests\TestCase;
 
 class AdminFinanceTest extends TestCase
 {
-    
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -27,7 +25,7 @@ class AdminFinanceTest extends TestCase
 
         $response = $this->get('/admin/caisse');
         $response->assertOk();
-        $response->assertSee('Caisse');
+        $response->assertSee('État des caisses');
     }
 
     /** GET /admin/stock affiche l'état du stock */
@@ -37,7 +35,7 @@ class AdminFinanceTest extends TestCase
 
         $response = $this->get('/admin/stock');
         $response->assertOk();
-        $response->assertSee('Stock');
+        $response->assertSee('État du stock');
     }
 
     /** GET /admin/paiements affiche les stats de paiements */
@@ -75,7 +73,7 @@ class AdminFinanceTest extends TestCase
     public function test_employe_cannot_access_finance(): void
     {
         $employe = Utilisateur::where('role', 'Employer')->first();
-        if (!$employe) {
+        if (! $employe) {
             $this->markTestSkipped('No employer in test DB');
         }
         $this->actingAs($employe);

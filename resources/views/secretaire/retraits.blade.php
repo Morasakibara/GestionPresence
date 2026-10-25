@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between"><span>Retraits</span></div>
+<div><span>Retraits</span><p class="console-subtitle">Sorties de caisse avec motif, montant et justificatif.</p></div>
 @endsection
 
 @section('content')
@@ -44,7 +44,7 @@
 <!-- ═══ GRAPHIQUE + TOP MOTIFS ═══ -->
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
     <div class="lg:col-span-2 pharaoh-card p-6">
-        <h3 class="text-lg font-semibold text-[#080808] mb-4 flex items-center gap-2">
+        <h3 class="section-title mb-4 flex items-center gap-2">
             <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
             <span>Évolution des retraits — 30 derniers jours</span>
         </h3>
@@ -52,7 +52,7 @@
     </div>
 
     <div class="pharaoh-card p-6">
-        <h3 class="text-lg font-semibold text-[#080808] mb-4">📋 Top motifs</h3>
+        <h3 class="section-title mb-4">📋 Top motifs</h3>
         @forelse($topMotifs as $item)
         <div class="flex items-center justify-between py-2.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
             <div class="flex-1 min-w-0">
@@ -98,7 +98,7 @@
     <div class="lg:col-span-2">
         <div class="pharaoh-card overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100">
-                <h3 class="text-lg font-semibold text-[#080808] flex items-center gap-2">
+                <h3 class="section-title flex items-center gap-2">
                     <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>

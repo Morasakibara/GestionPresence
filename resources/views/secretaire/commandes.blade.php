@@ -1,10 +1,13 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between">
-    <span>Facturation — Imprimerie</span>
-    <a href="{{ route('notifications.index') }}" class="relative inline-flex items-center px-2 py-1 text-sm font-medium text-pharaoh-gold hover:bg-white/10 rounded-md">
-        <svg class="h-6 w-6 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+<div class="flex w-full flex-wrap items-center justify-between gap-3">
+    <div>
+        <span>Facturation — Imprimerie</span>
+        <p class="console-subtitle">Commandes, encaissements et soldes restants.</p>
+    </div>
+    <a href="{{ route('notifications.index') }}" class="btn-secondary" title="Notifications">
+        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
     </a>
 </div>
 @endsection
@@ -112,13 +115,13 @@
         {{-- Clôture du solde --}}
         <div class="pharaoh-card overflow-hidden mb-6">
             <div class="px-6 py-4 border-b border-gray-100 bg-orange-50/40">
-                <h3 class="text-lg font-semibold text-[#080808] flex items-center gap-2">
+                <h3 class="section-title flex items-center gap-2">
                     <svg class="h-5 w-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <span>Clôture du solde — en attente de paiement</span>
                 </h3>
                 <div class="mt-3">
                     <input type="text" id="searchSolde" oninput="filterSolde()" placeholder="Rechercher : client, WhatsApp, n° facture…"
-                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold">
+                           class="input-field">
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -159,7 +162,7 @@
         <div class="pharaoh-card overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-semibold text-[#080808] flex items-center gap-2">
+                    <h3 class="section-title flex items-center gap-2">
                         <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                         <span>Factures enregistrées</span>
                     </h3>
@@ -172,15 +175,15 @@
                 <div class="flex flex-wrap items-end gap-3 pt-2 border-t border-gray-100">
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1">Du</label>
-                        <input type="date" id="filterDateDebut" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm" onchange="applyAllFilters()">
+                        <input type="date" id="filterDateDebut" class="input-filter" onchange="applyAllFilters()">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1">Au</label>
-                        <input type="date" id="filterDateFin" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm" onchange="applyAllFilters()">
+                        <input type="date" id="filterDateFin" class="input-filter" onchange="applyAllFilters()">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1">Type</label>
-                        <select id="filterType" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm" onchange="applyAllFilters()">
+                        <select id="filterType" class="input-filter" onchange="applyAllFilters()">
                             <option value="">Tous les types</option>
                             @foreach($typesPhoto as $key => $label)
                                 <option value="{{ $key }}">{{ $label }}</option>
@@ -271,7 +274,7 @@
 <div id="soldeModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4" onclick="event.stopPropagation()">
         <div class="bg-[#080808] px-6 py-5 text-center">
-            <h3 class="text-lg font-bold text-white">Clôture — Encaisser le solde</h3>
+            <h3 class="font-display text-[1.125rem] font-semibold leading-tight text-white">Clôture — Encaisser le solde</h3>
             <p class="text-sm text-gray-400 mt-1">Le montant reste à payer est verrouillé par le système</p>
         </div>
         <div class="px-6 py-5">
@@ -315,7 +318,7 @@
             {{-- Verrou manager : visible dès que la facture a un versement --}}
             <div id="verrouManager" class="hidden bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 mb-4">
                 <p class="text-sm font-semibold text-amber-800 mb-2">🔐 Facture avec acompte — mot de passe administrateur requis</p>
-                <input type="password" name="manager_password" id="managerPassword" class="w-full rounded-lg border border-amber-300 px-3 py-2 text-sm" placeholder="Mot de passe administrateur" autocomplete="current-password">
+                <input type="password" name="manager_password" id="managerPassword" class="input-field input-field-warn" placeholder="Mot de passe administrateur" autocomplete="current-password">
             </div>
             <form id="verrouForm" method="POST">
                 @csrf
@@ -332,14 +335,14 @@
 <div id="renvoyerModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4" onclick="event.stopPropagation()">
         <div class="bg-[#080808] px-6 py-5 text-center">
-            <h3 class="text-lg font-bold text-white">Corriger le numéro WhatsApp</h3>
+            <h3 class="font-display text-[1.125rem] font-semibold leading-tight text-white">Corriger le numéro WhatsApp</h3>
             <p class="text-sm text-gray-400 mt-1">Le PDF de la facture sera renvoyé automatiquement</p>
         </div>
         <div class="px-6 py-5">
             <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4 text-sm text-red-700" id="renvoyerErreur"></div>
             <form id="renvoyerForm" method="POST" class="space-y-4">
                 @csrf
-                <input type="tel" name="numero_whatsapp" id="renvoyerTel" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="+2376XXXXXXXX" pattern="^\+[1-9]\d{7,14}$">
+                <input type="tel" name="numero_whatsapp" id="renvoyerTel" required class="input-field" placeholder="+2376XXXXXXXX" pattern="^\+[1-9]\d{7,14}$">
                 <div class="flex gap-3">
                     <button type="button" onclick="closeModal('renvoyerModal')" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold">Fermer</button>
                     <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl bg-pharaoh-gold text-sm font-semibold text-white hover:brightness-110">📤 Renvoyer</button>

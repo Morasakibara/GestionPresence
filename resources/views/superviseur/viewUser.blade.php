@@ -1,8 +1,9 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between">
+<div>
     <span>Détails de l'utilisateur</span>
+    <p class="console-subtitle">Profil, statistiques de présence et dernières localisations.</p>
 </div>
 @endsection
 
@@ -23,7 +24,7 @@
                 @endif
             </div>
             <div class="text-center sm:text-left">
-                <h2 class="text-xl font-bold">{{ $utilisateur->nom }}</h2>
+                <h2 class="font-display text-[1.375rem] font-semibold leading-tight text-white">{{ $utilisateur->nom }}</h2>
                 <p class="text-pharaoh-gold-light text-sm">{{ $utilisateur->email }}</p>
                 <div class="mt-2">
                     @if(strtolower($utilisateur->role) == 'superviseur')
@@ -42,7 +43,7 @@
     <div class="px-6 py-6">
         <!-- Statistiques -->
         <div class="mb-6">
-            <h3 class="text-lg font-semibold text-[#080808] mb-4">Statistiques de présence</h3>
+            <h3 class="section-title mb-4">Statistiques de présence</h3>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div class="stat-card">
                     <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">
@@ -56,7 +57,7 @@
 
         <!-- Graphique -->
         <div class="mb-6">
-            <h3 class="text-lg font-semibold text-[#080808] mb-4">Présences du mois</h3>
+            <h3 class="section-title mb-4">Présences du mois</h3>
             <div class="pharaoh-card p-4" style="height: 300px;">
                 <canvas id="presenceChart"></canvas>
             </div>
@@ -64,7 +65,7 @@
 
         <!-- Géolocalisation -->
         <div class="mb-6">
-            <h3 class="text-lg font-semibold text-[#080808] mb-4">Dernières localisations</h3>
+            <h3 class="section-title mb-4">Dernières localisations</h3>
             @php
                 $lastPresence = App\Models\Presence::where('employerID', $utilisateur->id)
                     ->whereNotNull('latitude_arrivee')

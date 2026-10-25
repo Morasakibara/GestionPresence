@@ -1,8 +1,11 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between">
-    <span>Suivi des Présences</span>
+<div class="flex w-full flex-wrap items-center justify-between gap-3">
+    <div>
+        <span>Suivi des Présences</span>
+        <p class="console-subtitle">Pointages, retards et absences de votre équipe.</p>
+    </div>
     <a href="{{ route('superviseur.showAddMember') }}" class="btn-gold btn-press">
         <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
         Ajouter membre
@@ -104,7 +107,7 @@
             <div class="bg-white px-6 pt-6 pb-4 sm:pb-6 rounded-t-2xl">
                 <div class="sm:flex sm:items-start">
                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                        <h3 class="text-lg font-semibold text-[#080808]" id="modal-title">Informations de l'utilisateur</h3>
+                        <h3 class="section-title" id="modal-title">Informations de l'utilisateur</h3>
                         <div class="mt-4" id="userDetails">
                             <div class="animate-pulse">
                                 <div class="flex items-center space-x-4">

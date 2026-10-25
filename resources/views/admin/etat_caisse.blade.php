@@ -1,21 +1,28 @@
 @extends('layouts.dashboard')
 
+@section('title', 'État des caisses')
+@section('breadcrumb', 'État des caisses')
+
 @section('header')
-<div class="flex items-center justify-between"><span>État de la Caisse — Admin</span></div>
+    <div>
+        <span>État des caisses</span>
+        <p class="console-subtitle">Entrées, sorties et chiffre d'affaires par caisse, pour la journée.</p>
+    </div>
+    <span class="console-kicker mt-0">{{ now()->format('d/m/Y') }}</span>
 @endsection
 
-@section('content')
-<div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    <h1 class="page-heading-title mb-6">État des caisses — {{ now()->format('d/m/Y') }}</h1>
+@section('content_shell', 'flush')
 
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+@section('content')
+<div class="space-y-5">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
         @forelse($data as $label => $info)
-            <div class="pharaoh-card p-6">
+            <div class="console-card p-6">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="rounded-full bg-pharaoh-gold/10 p-2 text-pharaoh-gold">
                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-[#080808]">{{ $info['nom'] }}</h3>
+                    <h3 class="section-title">{{ $info['nom'] }}</h3>
                 </div>
                 <div class="grid grid-cols-3 gap-4 mb-4">
                     <div class="rounded-xl bg-green-50 p-4 text-center">

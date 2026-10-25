@@ -40,7 +40,7 @@
             <img src="{{ asset('storage/avatars/loginBackground.jpg') }}" alt="Connexion" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105">
             <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20"></div>
             <div class="absolute inset-0 flex items-center justify-center">
-                <h2 class="text-4xl font-bold text-white drop-shadow">Espace connexion</h2>
+                <h2 class="font-display text-4xl font-semibold text-white drop-shadow">Espace connexion</h2>
             </div>
         </div>
         <div class="p-8">
@@ -59,7 +59,7 @@
             <img src="{{ asset('storage/avatars/regiterBackground.jpg') }}" alt="Inscription" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105">
             <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20"></div>
             <div class="absolute inset-0 flex items-center justify-center">
-                <h2 class="text-4xl font-bold text-white drop-shadow">Nouvel administrateur</h2>
+                <h2 class="font-display text-4xl font-semibold text-white drop-shadow">Nouvel administrateur</h2>
             </div>
         </div>
         <div class="p-8">

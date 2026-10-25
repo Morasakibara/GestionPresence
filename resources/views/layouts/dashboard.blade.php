@@ -7,6 +7,13 @@
 
     <title>@yield('title', config('app.name', 'Le Pharaon'))</title>
 
+    {{-- Favicon : le logo sur fond noir. L'ancien public/favicon.ico était vide,
+         d'où l'onglet sans icône ; on déclare aussi la version PNG et iOS. --}}
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    <meta name="theme-color" content="#080808">
+
     @vite('resources/css/app.css')
 
     {{-- Applique le thème enregistré avant le rendu pour éviter tout clignotement. --}}
@@ -63,12 +70,14 @@
     <aside id="consoleSidebar"
            class="console-sidebar -translate-x-full transition-transform duration-200 ease-out lg:translate-x-0"
            aria-label="Navigation principale">
-        <div class="flex items-start justify-between gap-2 px-4 pb-3 pt-4 sm:pt-5">
+        {{-- Logo centré dans le menu ; la croix de fermeture mobile est ancrée
+             dans le coin pour ne pas décaler la plaque. --}}
+        <div class="relative flex items-center justify-center px-4 pb-3 pt-4 sm:pt-5">
             <a href="{{ $homeRoute }}" class="console-brand-plate" aria-label="Le Pharaon — Accueil">
                 <img src="{{ asset('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon" width="606" height="610" class="h-auto w-full" decoding="async">
             </a>
             <button type="button" id="consoleSidebarClose"
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold/60 lg:hidden"
+                    class="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold/60 lg:hidden"
                     aria-label="Fermer le menu">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -292,7 +301,10 @@
     </div>
 </div>
 
-<!-- Notifications temps réel -->
+<!-- Notifications temps réel.
+     alert-sound.js doit précéder notifications.js : celui-ci utilise
+     AlertSound pour le son « nouvelle notification » et « après connexion ». -->
+<script src="{{ asset('js/alert-sound.js') }}"></script>
 <script>window.__notifSoundArmed = @json((bool) session()->pull('notif_sound_armed', false));</script>
 <script src="{{ asset('js/notifications.js') }}"></script>
 
@@ -404,8 +416,10 @@
 
 <!-- Alertes de présence temps réel -->
 <link rel="stylesheet" href="{{ asset('css/presence-toasts.css') }}">
-<script src="{{ asset('js/alert-sound.js') }}"></script>
 <script src="{{ asset('js/presence-alerts.js') }}"></script>
+
+{{-- Mêmes effets de formulaire que la connexion (œil sur les mots de passe) --}}
+<script src="{{ asset('js/forms.js') }}"></script>
 
 <!-- Additional Scripts -->
 @stack('scripts')
@@ -415,7 +429,7 @@
     <div class="relative mx-4 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl" onclick="event.stopPropagation()">
         <div class="bg-[#080808] px-6 py-8 text-center">
             <img class="mx-auto mb-4 h-16 w-auto drop-shadow-[0_2px_8px_rgba(211,155,35,0.35)]" src="{{ asset('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
-            <h2 class="text-xl font-bold text-white">Session expirée</h2>
+            <h2 class="font-display text-[1.375rem] font-semibold leading-tight text-white">Session expirée</h2>
             <p class="mt-1 text-sm text-gray-400">Entrez votre code PIN pour récupérer votre session</p>
         </div>
 

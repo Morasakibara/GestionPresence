@@ -288,7 +288,7 @@
 <div id="modal-presents" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'modal-presents')">
     <div class="mx-4 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl" onclick="event.stopPropagation()">
         <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-base font-bold text-[#080808]">Personnes présentes</h3>
+            <h3 class="section-title">Personnes présentes</h3>
             <button type="button" onclick="toggleStatModal('modal-presents')" class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label="Fermer">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -312,7 +312,7 @@
 <div id="modal-absents" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'modal-absents')">
     <div class="mx-4 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl" onclick="event.stopPropagation()">
         <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-base font-bold text-[#080808]">Personnes absentes</h3>
+            <h3 class="section-title">Personnes absentes</h3>
             <button type="button" onclick="toggleStatModal('modal-absents')" class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label="Fermer">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -333,7 +333,7 @@
 <div id="modal-arrives" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'modal-arrives')">
     <div class="mx-4 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl" onclick="event.stopPropagation()">
         <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-base font-bold text-[#080808]">Heures d'arrivée</h3>
+            <h3 class="section-title">Heures d'arrivée</h3>
             <button type="button" onclick="toggleStatModal('modal-arrives')" class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label="Fermer">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -354,7 +354,7 @@
 <div id="modal-partis" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 backdrop-blur-sm" onclick="closeStatModal(event, 'modal-partis')">
     <div class="mx-4 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl" onclick="event.stopPropagation()">
         <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-base font-bold text-[#080808]">Heures de départ</h3>
+            <h3 class="section-title">Heures de départ</h3>
             <button type="button" onclick="toggleStatModal('modal-partis')" class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label="Fermer">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>

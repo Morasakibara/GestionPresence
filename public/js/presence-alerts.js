@@ -20,9 +20,33 @@
                `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
     }
 
-    let lastCheck = nowLocal();
+    // Curseur partagé entre les pages : sans lui, chaque navigation repartait de
+    // « maintenant » et le serveur rejouait des alertes déjà vues (donc le son).
+    const CURSOR_KEY = 'pharaon.presence.cursor';
+
+    function readCursor() {
+        try {
+            const stored = sessionStorage.getItem(CURSOR_KEY);
+            if (stored && stored.slice(0, 10) === nowLocal().slice(0, 10)) {
+                return stored;
+            }
+        } catch (e) { /* stockage indisponible */ }
+        return nowLocal();
+    }
+
+    function saveCursor(value) {
+        try {
+            sessionStorage.setItem(CURSOR_KEY, value);
+        } catch (e) { /* stockage indisponible */ }
+    }
+
+    let lastCheck = readCursor();
     let timer = null;
     let isPaused = false;
+
+    // Le premier appel de chaque page ne fait que caler le curseur : ni toast ni
+    // son, sinon un simple changement de page déclencherait une alerte.
+    let primed = false;
     let browserNotifPermission = false;
     let wsConnected = false;
 
@@ -260,25 +284,30 @@
             if (!response.ok) return;
             const data = await response.json();
 
-            if (data.arrivals && data.arrivals.length > 0) {
-                data.arrivals.forEach(arr => {
-                    handleArrival({
-                        user_id: arr.id,
-                        nom: arr.nom,
-                        heure: arr.heure,
-                        retard: arr.retard,
-                    });
-                });
-            }
+            const isBaseline = !primed;
+            primed = true;
 
-            if (data.departures && data.departures.length > 0) {
-                data.departures.forEach(dep => {
-                    handleDeparture({
-                        user_id: dep.id,
-                        nom: dep.nom,
-                        heure: dep.heure,
+            if (!isBaseline) {
+                if (data.arrivals && data.arrivals.length > 0) {
+                    data.arrivals.forEach(arr => {
+                        handleArrival({
+                            user_id: arr.id,
+                            nom: arr.nom,
+                            heure: arr.heure,
+                            retard: arr.retard,
+                        });
                     });
-                });
+                }
+
+                if (data.departures && data.departures.length > 0) {
+                    data.departures.forEach(dep => {
+                        handleDeparture({
+                            user_id: dep.id,
+                            nom: dep.nom,
+                            heure: dep.heure,
+                        });
+                    });
+                }
             }
 
             if (data.counts) {
@@ -286,6 +315,7 @@
             }
 
             lastCheck = data.timestamp || nowLocal();
+            saveCursor(lastCheck);
         } catch (err) {
             // Silencieux
         }
@@ -305,7 +335,12 @@
         } else {
             isPaused = false;
             if (!wsConnected) {
+                // On repart de maintenant et on rend le prochain appel muet :
+                // au retour d'onglet, les alertes manquées ne doivent pas
+                // s'empiler en rafale de toasts et de sons.
                 lastCheck = nowLocal();
+                saveCursor(lastCheck);
+                primed = false;
                 startPolling();
             }
         }

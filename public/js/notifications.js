@@ -10,6 +10,27 @@
     let timer = null;
     let isPaused = false;
 
+    // Le premier appel de chaque page sert seulement de référence : sans lui, un
+    // simple changement de page pouvait déclencher un toast et le son.
+    let primed = false;
+
+    /**
+     * Joue le son de notification. On passe par AlertSound quand il est chargé :
+     * le bouton « son » du bandeau coupe alors aussi ces alertes.
+     */
+    function playSound() {
+        if (window.AlertSound && typeof window.AlertSound.notification === 'function') {
+            window.AlertSound.notification();
+            return;
+        }
+
+        try {
+            const audio = new Audio('data:audio/wav;base64,UklGRl4FAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YToFAACAgICAgICAgI=');
+            audio.volume = 0.1;
+            audio.play().catch(() => {});
+        } catch (e) { /* audio indisponible */ }
+    }
+
     const BADGE_SELECTORS = [
         '.notif-badge-count',
         '[data-notif-count]',
@@ -87,26 +108,24 @@
             const data = await response.json();
             const newCount = data.unread_count || 0;
 
-            if (lastCount > 0 && newCount > lastCount) {
+            const isBaseline = !primed;
+            primed = true;
+
+            if (!isBaseline && newCount > lastCount) {
                 const diff = newCount - lastCount;
                 const msg = diff === 1
                     ? (data.latest_message || 'Vous avez une nouvelle notification')
                     : `Vous avez ${diff} nouvelles notifications`;
                 showToast(msg, data.latest_type || 'info');
+                playSound();
             }
 
-            // Son de notification : uniquement une fois, juste après la connexion
-            // (drapeau posé par le serveur dans la session puis consommé ici).
-            if (window.__notifSoundArmed) {
-                window.__notifSoundArmed = false;
-                if (newCount > 0) {
-                    try {
-                        const audio = new Audio('data:audio/wav;base64,UklGRl4FAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YToFAACAgICAgICAgI=');
-                        audio.volume = 0.1;
-                        audio.play().catch(() => {});
-                    } catch(e) {}
-                }
+            // Son « après connexion » : drapeau à usage unique posé par le serveur
+            // dans la session (session()->pull), joué au premier passage seulement.
+            if (isBaseline && window.__notifSoundArmed) {
+                playSound();
             }
+            window.__notifSoundArmed = false;
 
             updateBadges(newCount);
             lastCount = newCount;
@@ -118,6 +137,7 @@
     }
 
     function startPolling() {
+        clearInterval(timer);
         timer = setInterval(checkNotifications, pollInterval);
         checkNotifications();
     }
@@ -129,7 +149,6 @@
             clearInterval(timer);
         } else {
             isPaused = false;
-            checkNotifications();
             startPolling();
         }
     });

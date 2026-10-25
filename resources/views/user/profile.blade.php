@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('header')
-<div class="flex items-center justify-between"><span>Mon Profil</span></div>
+<div><span>Mon Profil</span><p class="console-subtitle">Informations personnelles, photo et mot de passe.</p></div>
 @endsection
 
 @section('content')
@@ -80,7 +80,7 @@
                         </svg>
                     </div>
                 @endif
-                <h3 class="text-lg font-bold text-[#080808]">{{ $user->nom }}</h3>
+                <h3 class="section-title">{{ $user->nom }}</h3>
                 <p class="text-sm text-gray-500">{{ $user->email }}</p>
                 <span class="mt-2 inline-flex items-center rounded-full bg-[#FBF3E6] px-3 py-1 text-xs font-semibold text-[#885910]">
                     {{ $user->role }}

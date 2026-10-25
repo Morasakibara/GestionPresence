@@ -135,14 +135,14 @@
                                 <input type="hidden" name="employerID" value="{{ $report['employerID'] ?? '' }}">
                                 <input type="hidden" name="mois" value="{{ now()->format('Y-m') }}">
                                 <div class="flex flex-wrap items-center gap-1">
-                                    <input type="number" name="note" min="0" max="20" step="0.5" value="{{ $report['evaluation_note'] }}" aria-label="Note sur 20" class="w-16 rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold">
-                                    <select name="couleur" aria-label="Couleur de l'évaluation" class="rounded-lg border border-gray-300 px-1 py-1 text-xs focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold">
+                                    <input type="number" name="note" min="0" max="20" step="0.5" value="{{ $report['evaluation_note'] }}" aria-label="Note sur 20" class="input-field-sm w-16">
+                                    <select name="couleur" aria-label="Couleur de l'évaluation" class="select-field-sm">
                                         <option value="vert" {{ $report['evaluation_couleur'] === 'vert' ? 'selected' : '' }}>🟢 Vert</option>
                                         <option value="orange" {{ $report['evaluation_couleur'] === 'orange' ? 'selected' : '' }}>🟠 Orange</option>
                                         <option value="rouge" {{ $report['evaluation_couleur'] === 'rouge' ? 'selected' : '' }}>🔴 Rouge</option>
                                     </select>
                                 </div>
-                                <input type="text" name="commentaire" placeholder="Commentaire (optionnel)" aria-label="Commentaire d'évaluation" class="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold">
+                                <input type="text" name="commentaire" placeholder="Commentaire (optionnel)" aria-label="Commentaire d'évaluation" class="input-field-sm w-full">
                                 <button type="submit" class="btn-gold px-2 py-1 text-xs">Enregistrer l'évaluation</button>
                             </form>
                         </td>

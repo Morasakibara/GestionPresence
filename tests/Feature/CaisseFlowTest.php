@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Commande;
-use App\Models\Retrait;
-use App\Models\ServiceFourni;
 use App\Models\Superviseur;
 use App\Models\Utilisateur;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -15,6 +13,7 @@ class CaisseFlowTest extends TestCase
     use DatabaseTransactions;
 
     private Utilisateur $directrice;
+
     private Utilisateur $secretaire;
 
     protected function setUp(): void
@@ -60,13 +59,13 @@ class CaisseFlowTest extends TestCase
         $this->actingAs($this->directrice);
         session(['current_role' => 'Superviseur']);
         $this->post('/directrice/commandes', [
-                 'type' => 'impression',
-                 'montant' => 5000,
-                 'montant_paye' => 5000,
-                 'statut_paiement' => 'paye',
-                 'description' => 'Impression A4',
-             ])
-             ->assertRedirect();
+            'type' => 'impression',
+            'montant' => 5000,
+            'montant_paye' => 5000,
+            'statut_paiement' => 'paye',
+            'description' => 'Impression A4',
+        ])
+            ->assertRedirect();
 
         $this->assertDatabaseHas('commandes', [
             'superviseur_id' => $this->directrice->id,
@@ -82,11 +81,11 @@ class CaisseFlowTest extends TestCase
         $this->actingAs($this->directrice);
         session(['current_role' => 'Superviseur']);
         $this->post('/directrice/services', [
-                 'type' => 'photocopie',
-                 'montant' => 3000,
-                 'description' => '50 photocopies',
-             ])
-             ->assertRedirect();
+            'type' => 'photocopie',
+            'montant' => 3000,
+            'description' => '50 photocopies',
+        ])
+            ->assertRedirect();
 
         $this->assertDatabaseHas('services_fournis', [
             'superviseur_id' => $this->directrice->id,
@@ -108,11 +107,12 @@ class CaisseFlowTest extends TestCase
         ]);
 
         $this->actingAs($this->directrice);
-        session(['current_role' => 'Superviseur']);$this->post('/directrice/retraits', [
-                 'montant' => 5000,
-                 'motif' => 'Achat papier',
-             ])
-             ->assertRedirect();
+        session(['current_role' => 'Superviseur']);
+        $this->post('/directrice/retraits', [
+            'montant' => 5000,
+            'motif' => 'Achat papier',
+        ])
+            ->assertRedirect();
 
         $this->assertDatabaseHas('retraits', [
             'superviseur_id' => $this->directrice->id,
@@ -124,23 +124,25 @@ class CaisseFlowTest extends TestCase
     public function test_directrice_retrait_depasse_caisse_refuse(): void
     {
         $this->actingAs($this->directrice);
-        session(['current_role' => 'Superviseur']);$this->post('/directrice/retraits', [
-                 'montant' => 50000,
-                 'motif' => 'Retrait trop grand',
-             ])
-             ->assertSessionHas('error');
+        session(['current_role' => 'Superviseur']);
+        $this->post('/directrice/retraits', [
+            'montant' => 50000,
+            'motif' => 'Retrait trop grand',
+        ])
+            ->assertSessionHas('error');
     }
 
     public function test_commande_payee_partiellement_caisse_reflete(): void
     {
         $this->actingAs($this->directrice);
-        session(['current_role' => 'Superviseur']);$this->post('/directrice/commandes', [
-                 'type' => 'impression',
-                 'montant' => 10000,
-                 'montant_paye' => 3000,
-                 'statut_paiement' => 'partiel',
-             ])
-             ->assertRedirect();
+        session(['current_role' => 'Superviseur']);
+        $this->post('/directrice/commandes', [
+            'type' => 'impression',
+            'montant' => 10000,
+            'montant_paye' => 3000,
+            'statut_paiement' => 'partiel',
+        ])
+            ->assertRedirect();
 
         // Seul le montant payé (3000) doit être en caisse
         $commande = Commande::where('superviseur_id', $this->directrice->id)->first();
@@ -162,13 +164,13 @@ class CaisseFlowTest extends TestCase
         $this->actingAs($this->secretaire);
         session(['current_role' => 'Superviseur']);
         $this->post('/secretaire/commandes', [
-                 'type' => 'shooting',
-                 'montant' => 25000,
-                 'montant_paye' => 25000,
-                 'statut_paiement' => 'paye',
-                 'description' => 'Shooting complet',
-             ])
-             ->assertRedirect();
+            'type' => 'shooting',
+            'montant' => 25000,
+            'montant_paye' => 25000,
+            'statut_paiement' => 'paye',
+            'description' => 'Shooting complet',
+        ])
+            ->assertRedirect();
 
         $this->assertDatabaseHas('commandes', [
             'superviseur_id' => $this->secretaire->id,
@@ -180,11 +182,12 @@ class CaisseFlowTest extends TestCase
     public function test_secretaire_retrait_depasse_caisse_refuse(): void
     {
         $this->actingAs($this->secretaire);
-        session(['current_role' => 'Superviseur']);$this->post('/secretaire/retraits', [
-                 'montant' => 99999,
-                 'motif' => 'Test',
-             ])
-             ->assertSessionHas('error');
+        session(['current_role' => 'Superviseur']);
+        $this->post('/secretaire/retraits', [
+            'montant' => 99999,
+            'motif' => 'Test',
+        ])
+            ->assertSessionHas('error');
     }
 
     // ── ISOLATION ──
@@ -210,7 +213,8 @@ class CaisseFlowTest extends TestCase
         session(['current_role' => 'Superviseur']);
         $response = $this->get('/secretaire/commandes');
         $response->assertOk();
-        $this->assertStringNotContainsString((string) $this->directrice->id, $response->content());
+        // On vérifie l'identité de la directrice, pas son ID numérique :
+        // un identifiant peut coïncider avec un montant ou une référence affichée.
+        $response->assertDontSee('Directrice Test');
     }
 }
-

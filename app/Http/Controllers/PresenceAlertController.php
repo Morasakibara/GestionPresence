@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employer;
 use App\Models\Presence;
 use App\Models\Superviseur;
-use App\Models\Employer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,31 +24,39 @@ class PresenceAlertController extends Controller
     public function check(): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
         $since = request()->query('since');
         $today = now()->toDateString();
 
-        // `heureArrivee` / `heureDepart` sont des colonnes TIME : on compare
-        // uniquement l'heure (jamais un datetime complet), sinon l'API rejoue
-        // toutes les alertes de la journée à chaque chargement.
+        // `heureArrivee` / `heureDepart` sont des colonnes DATETIME (pas TIME).
+        // Les comparer à une chaîne « H:i:s » donnait une comparaison
+        // lexicographique (« 2026-10-25 … » > « 13:12:07 ») : toutes les alertes
+        // du jour étaient donc rejouées à chaque chargement de page, avec le son.
         try {
-            $sinceDate = $since ? \Carbon\Carbon::parse($since) : now()->subMinutes(5);
+            $sinceDate = $since ? Carbon::parse($since) : now()->subMinutes(5);
         } catch (\Throwable $e) {
             $sinceDate = now()->subMinutes(5);
         }
-        $sinceTime = ($sinceDate->toDateString() === $today)
-            ? $sinceDate->format('H:i:s')
-            : '00:00:00';
+
+        // Fenêtre bornée : jamais avant le début de la journée locale, jamais
+        // dans le futur (une horloge de navigateur en avance ne doit rien sauter).
+        $now = now();
+        if ($sinceDate->lt($now->copy()->startOfDay())) {
+            $sinceDate = $now->copy()->startOfDay();
+        }
+        if ($sinceDate->gt($now)) {
+            $sinceDate = $now->copy();
+        }
 
         if ($user->role === 'Administrateur') {
             $equipeFilter = null;
         } else {
             $supInfo = Superviseur::where('id', $user->id)->first();
             $equipe = $supInfo ? $supInfo->equipe : null;
-            if (!$equipe) {
+            if (! $equipe) {
                 return response()->json(['arrivals' => [], 'departures' => [], 'counts' => ['present' => 0, 'absent' => 0]]);
             }
             $employerIds = Employer::where('equipe', $equipe)->pluck('id')->toArray();
@@ -56,7 +65,8 @@ class PresenceAlertController extends Controller
         // Nouvelles arrivées depuis $sinceDate
         $arrivalsQuery = Presence::whereDate('date', $today)
             ->whereNotNull('heureArrivee')
-            ->where('heureArrivee', '>', $sinceTime)
+            ->where('heureArrivee', '>', $sinceDate)
+            ->where('heureArrivee', '<=', $now)
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
             ->select(
                 'presence.employerID',
@@ -70,17 +80,18 @@ class PresenceAlertController extends Controller
             $arrivalsQuery->whereIn('presence.employerID', $employerIds);
         }
 
-        $arrivals = $arrivalsQuery->get()->map(fn($a) => [
+        $arrivals = $arrivalsQuery->get()->map(fn ($a) => [
             'id' => $a->employerID,
             'nom' => $a->nom,
-            'heure' => \Carbon\Carbon::parse($a->heureArrivee)->format('H:i'),
-            'retard' => \Carbon\Carbon::parse($a->heureArrivee)->format('H:i') > '08:00',
+            'heure' => Carbon::parse($a->heureArrivee)->format('H:i'),
+            'retard' => Carbon::parse($a->heureArrivee)->format('H:i') > '08:00',
         ]);
 
         // Nouveaux départs depuis $sinceDate
         $departuresQuery = Presence::whereDate('date', $today)
             ->whereNotNull('heureDepart')
-            ->where('heureDepart', '>', $sinceTime)
+            ->where('heureDepart', '>', $sinceDate)
+            ->where('heureDepart', '<=', $now)
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
             ->select(
                 'presence.employerID',
@@ -93,10 +104,10 @@ class PresenceAlertController extends Controller
             $departuresQuery->whereIn('presence.employerID', $employerIds);
         }
 
-        $departures = $departuresQuery->get()->map(fn($d) => [
+        $departures = $departuresQuery->get()->map(fn ($d) => [
             'id' => $d->employerID,
             'nom' => $d->nom,
-            'heure' => \Carbon\Carbon::parse($d->heureDepart)->format('H:i'),
+            'heure' => Carbon::parse($d->heureDepart)->format('H:i'),
         ]);
 
         // Compteurs actuels
@@ -116,7 +127,7 @@ class PresenceAlertController extends Controller
                 'present' => $presentQuery->count(),
                 'absent' => $absentQuery->count(),
             ],
-            'timestamp' => now()->toDateTimeString(),
+            'timestamp' => $now->toDateTimeString(),
         ]);
     }
 }

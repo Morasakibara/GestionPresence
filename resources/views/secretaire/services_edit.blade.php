@@ -1,13 +1,20 @@
 @extends('layouts.dashboard')
 
+@section('title', 'Modifier le service')
+@section('breadcrumb', 'Services / Modifier')
+
 @section('header')
-<div class="flex items-center justify-between"><span>Modifier le service — Secrétaire</span></div>
+    <div>
+        <span>Modifier le service photo</span>
+        <p class="console-subtitle">Tarifs et libellés appliqués à la caisse.</p>
+    </div>
 @endsection
 
+@section('content_shell', 'flush')
+
 @section('content')
-<div class="max-w-xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    <h1 class="page-heading-title mb-6">Modifier le service photo</h1>
-    <div class="pharaoh-card p-6">
+<div class="space-y-5">
+    <div class="console-card p-6">
         <form action="{{ route('secretaire.services.update', $service->id) }}" method="POST" class="space-y-4">
             @csrf
             @method('PUT')

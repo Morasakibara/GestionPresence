@@ -304,7 +304,7 @@
 <div id="modalImpayes" class="fixed inset-0 z-[9990] hidden items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
     <div class="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b border-gray-100 bg-[#FBF3E6] px-5 py-4">
-            <h3 class="text-base font-bold text-[#080808]">Commandes en attente — {{ $impayees->count() }}</h3>
+            <h3 class="section-title">Commandes en attente — {{ $impayees->count() }}</h3>
             <button type="button" onclick="closeImpayes()" class="rounded-lg p-1 text-gray-400 transition-colors hover:bg-white hover:text-gray-600" aria-label="Fermer">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>

@@ -1,18 +1,22 @@
 @extends('layouts.dashboard')
 
+@section('title', 'Stock T-Shirts')
+@section('breadcrumb', 'Stock T-Shirts')
+
 @section('header')
-<div class="flex items-center justify-between"><span>Gestion T-Shirts</span></div>
+    <div>
+        <span>Stock T-Shirts</span>
+        <p class="console-subtitle">Références par couleur et par taille, avec seuils d'alerte.</p>
+    </div>
 @endsection
 
+@section('content_shell', 'flush')
+
 @section('content')
-<div class="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    @if(session('success'))<div class="alert alert-success"><svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>{{ session('success') }}</span></div>@endif
-
-    <h1 class="page-heading-title mb-6">Gestion des T-Shirts</h1>
-
+<div class="space-y-5">
     <!-- Formulaire d'ajout -->
-    <div class="pharaoh-card p-6 mb-6">
-        <h3 class="text-base font-semibold text-[#080808] mb-4">Ajouter / Modifier un T-Shirt</h3>
+    <div class="console-card p-6">
+        <h3 class="section-title mb-4">Ajouter / Modifier un T-Shirt</h3>
         <form action="{{ route('gestionnaire.tshirts.store') }}" method="POST" class="space-y-4">
             @csrf
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -26,8 +30,8 @@
     </div>
 
     <!-- Liste -->
-    <div class="pharaoh-card overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200/70"><h2 class="text-lg font-semibold text-[#080808]">Stock T-Shirts ({{ $tshirts->count() }})</h2></div>
+    <div class="console-card overflow-hidden">
+        <div class="console-card-head pb-3"><h2 class="section-title">Stock T-Shirts ({{ $tshirts->count() }})</h2></div>
         <div class="table-scroll">
             <table class="min-w-full">
                 <thead class="table-head"><tr><th>Couleur</th><th>Taille</th><th class="text-right">Quantité</th><th class="text-right">Seuil</th><th>Statut</th><th></th></tr></thead>

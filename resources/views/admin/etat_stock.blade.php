@@ -1,18 +1,28 @@
 @extends('layouts.dashboard')
 
+@section('title', 'État du stock')
+@section('breadcrumb', 'État du stock')
+
 @section('header')
-<div class="flex items-center justify-between"><span>État du Stock — Admin</span></div>
+    <div>
+        <span>État du stock</span>
+        <p class="console-subtitle">Inventaire des T-shirts et du papier d'impression, avec seuils d'alerte.</p>
+    </div>
+    <span class="console-kicker mt-0">{{ now()->format('d/m/Y') }}</span>
 @endsection
 
-@section('content')
-<div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    <h1 class="page-heading-title mb-6">État du stock — {{ now()->format('d/m/Y') }}</h1>
+@section('content_shell', 'flush')
 
+@section('content')
+<div class="space-y-5">
     <!-- T-Shirts -->
-    <div class="mb-6">
-        <div class="pharaoh-card overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200/70 flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-[#080808]">T-Shirts ({{ $totalTshirts }} au total)</h2>
+    <div>
+        <div class="console-card overflow-hidden">
+            <div class="console-card-head">
+                <div>
+                    <h2 class="section-title">T-Shirts</h2>
+                    <p class="console-card-sub">{{ $totalTshirts }} pièce(s) au total</p>
+                </div>
                 <span class="badge badge-info">{{ $tshirts->count() }} référence(s)</span>
             </div>
             @if($tshirts->isEmpty())
@@ -42,9 +52,12 @@
 
     <!-- Papier -->
     <div>
-        <div class="pharaoh-card overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200/70 flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-[#080808]">Papier d'impression</h2>
+        <div class="console-card overflow-hidden">
+            <div class="console-card-head">
+                <div>
+                    <h2 class="section-title">Papier d'impression</h2>
+                    <p class="console-card-sub">Consommation par imprimante, en mètres restants.</p>
+                </div>
                 <span class="badge badge-info">{{ $papiers->count() }} imprimante(s)</span>
             </div>
             @if($papiers->isEmpty())

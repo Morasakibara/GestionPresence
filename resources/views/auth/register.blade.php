@@ -22,7 +22,7 @@
         <span class="h-2 w-2 rounded-full bg-pharaoh-gold-bright"></span>
         Création de compte
       </div>
-      <h1 class="text-4xl font-extrabold leading-tight mb-4 text-white text-shadow animate-fade-in">Rejoignez <span class="text-pharaoh-gold-bright">Le Pharaon</span></h1>
+      <h1 class="font-display text-4xl font-bold leading-tight mb-4 text-white text-shadow animate-fade-in">Rejoignez <span class="text-pharaoh-gold-bright">Le Pharaon</span></h1>
       <p class="text-lg text-gray-200 mb-6 max-w-md animate-slide-up">
         Créez votre compte pour faire partie de notre structure et contribuer à nos projets communs.
       </p>
@@ -40,7 +40,7 @@
       <div class="md:hidden">
         <img class="mx-auto h-20 w-auto" src="{{ asset('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon">
       </div>
-      <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-[#080808]">Création de compte</h2>
+      <h2 class="font-display mt-10 text-center text-2xl font-semibold leading-9 tracking-tight text-[#080808]">Création de compte</h2>
       <p class="mt-2 text-center text-sm text-gray-500">Un code d'accès est requis pour continuer</p>
     </div>
 
@@ -63,11 +63,10 @@
           <div class="mt-2">
             <input id="name" type="text" name="name" required autofocus 
                   value="{{ old('name') }}"
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors
-                  @error('name') border-red-600 bg-red-600/5 @enderror">
+                  class="input-field @error('name') input-field-error @enderror">
           </div>
           @error('name')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            <p class="input-error">{{ $message }}</p>
           @enderror
         </div>
 
@@ -76,11 +75,10 @@
           <div class="mt-2">
             <input id="email" type="email" name="email" required
                   value="{{ old('email') }}"
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors
-                  @error('email') border-red-600 bg-red-600/5 @enderror">
+                  class="input-field @error('email') input-field-error @enderror">
           </div>
           @error('email')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            <p class="input-error">{{ $message }}</p>
           @enderror
         </div>
 
@@ -88,8 +86,7 @@
           <label for="password" class="block text-sm font-medium leading-6 text-gray-700">Mot de passe</label>
           <div class="mt-2 relative">
             <input id="password" type="password" name="password" required
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors
-                  @error('password') border-red-600 bg-red-600/5 @enderror">
+                  class="input-field pr-10 @error('password') input-field-error @enderror">
             <button type="button" id="togglePassword" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-transparent border-none cursor-pointer p-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 opacity-50 hover:opacity-100 transition-opacity duration-300"
                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -99,7 +96,7 @@
             </button>
           </div>
           @error('password')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            <p class="input-error">{{ $message }}</p>
           @enderror
         </div>
 
@@ -107,8 +104,7 @@
           <label for="password_confirmation" class="block text-sm font-medium leading-6 text-gray-700">Confirmez le mot de passe</label>
           <div class="mt-2 relative">
             <input id="password_confirmation" type="password" name="password_confirmation" required
-                  class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors
-                  @error('password_confirmation') border-red-600 bg-red-600/5 @enderror">
+                  class="input-field pr-10 @error('password_confirmation') input-field-error @enderror">
             <button type="button" id="togglePasswordConfirmation" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-transparent border-none cursor-pointer p-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 opacity-50 hover:opacity-100 transition-opacity duration-300"
                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -123,15 +119,14 @@
           <label for="poste" class="block text-sm font-medium leading-6 text-gray-700">Poste</label>
           <div class="mt-2">
             <select name="poste" id="poste" required
-                    class="block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 placeholder:text-gray-400 focus:border-pharaoh-green focus:outline-none focus:ring-1 focus:ring-pharaoh-green sm:text-sm sm:leading-6 appearance-none bg-no-repeat pr-10 transition-colors
-                    @error('poste') border-red-600 bg-red-600/5 @enderror"
+                    class="select-field appearance-none bg-no-repeat pr-10 @error('poste') input-field-error @enderror"
                     style="background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E'); background-position: right 0.5rem center; background-size: 1.5em 1.5em;">
               <option value="" {{ old('poste') ? '' : 'selected' }}>Sélectionnez votre poste</option>
               <option value="administrateur" {{ old('poste') == 'administrateur' ? 'selected' : '' }}>Administrateur</option>
             </select>
           </div>
           @error('poste')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            <p class="input-error">{{ $message }}</p>
           @enderror
         </div>
 
