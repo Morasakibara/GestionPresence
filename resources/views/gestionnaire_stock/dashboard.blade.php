@@ -303,71 +303,52 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/pharaoh-charts.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Stock de T-shirts par référence (barres horizontales)
-        const ctxTshirts = document.getElementById('stockTshirtsChart');
-        if (ctxTshirts) {
-            const refs = @json($chartTshirts);
-            new Chart(ctxTshirts, {
-                type: 'bar',
-                data: {
-                    labels: refs.map(r => r.label),
-                    datasets: [{
-                        label: 'Pièces en stock',
-                        data: refs.map(r => r.quantite),
-                        backgroundColor: refs.map(r => r.alerte ? '#D64545' : '#D39B23'),
-                        borderRadius: 6,
-                        maxBarThickness: 18
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: ctx => ctx.parsed.x + ' pièce(s)' + (refs[ctx.dataIndex].alerte ? ' — sous le seuil' : '')
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+        const refs = @json($chartTshirts);
+        const couleursAlertes = refs.map(r => r.alerte ? PharaohCharts.colors().danger : PharaohCharts.colors().gold);
+
+        PharaohCharts.bar(document.getElementById('stockTshirtsChart'), {
+            labels: refs.map(r => r.label),
+            datasets: [{
+                label: 'Pièces en stock',
+                data: refs.map(r => r.quantite),
+                backgroundColor: couleursAlertes
+            }]
+        }, {
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.parsed.x + ' pièce(s)' + (refs[ctx.dataIndex].alerte ? ' — sous le seuil' : '')
                     }
                 }
-            });
-        }
+            },
+            scales: {
+                x: { beginAtZero: true, ticks: { precision: 0 } },
+                y: { grid: { display: false } }
+            }
+        });
 
         // Répartition des alertes (donut)
-        const ctxAlertes = document.getElementById('stockAlertesChart');
-        if (ctxAlertes) {
-            const alertesTshirts = {{ $totalAlertesTshirts }};
-            const alertesPapier = {{ $totalAlertesPapier }};
-            const total = alertesTshirts + alertesPapier;
+        const alertesTshirts = {{ $totalAlertesTshirts }};
+        const alertesPapier = {{ $totalAlertesPapier }};
+        const total = alertesTshirts + alertesPapier;
 
-            new Chart(ctxAlertes, {
-                type: 'doughnut',
-                data: {
-                    labels: ['T-shirts', 'Papier'],
-                    datasets: [{
-                        data: total > 0 ? [alertesTshirts, alertesPapier] : [1, 0],
-                        backgroundColor: total > 0 ? ['#D64545', '#D97706'] : ['#E5E7EB', '#F3F4F6'],
-                        borderWidth: 0,
-                        hoverOffset: total > 0 ? 6 : 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '72%',
-                    plugins: { legend: { display: false }, tooltip: { enabled: total > 0 } }
-                }
-            });
-        }
+        PharaohCharts.doughnut(document.getElementById('stockAlertesChart'), {
+            labels: ['T-shirts', 'Papier'],
+            datasets: [{
+                data: total > 0 ? [alertesTshirts, alertesPapier] : [1, 0],
+                backgroundColor: total > 0 ? ['danger', 'warning'] : ['grid', 'grid'],
+                hoverOffset: total > 0 ? 6 : 0
+            }]
+        }, {
+            plugins: { legend: { display: false }, tooltip: { enabled: total > 0 } }
+        });
     });
 </script>
 @endpush

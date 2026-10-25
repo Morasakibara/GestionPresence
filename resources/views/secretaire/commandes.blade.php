@@ -18,7 +18,7 @@
 @if(session('error'))<div class="alert alert-danger"><svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>{{ session('error') }}</span></div>@endif
 
 @if($errors->any())
-<div class="bg-red-600/10 border-2 border-red-600 text-red-600 px-4 py-3 rounded-md mb-4">
+<div class="alert alert-danger">
     <ul class="list-disc list-inside text-sm">
         @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
     </ul>
@@ -39,7 +39,7 @@
         <span class="text-sm text-gray-600">{{ $envoi->telephone }}</span>
         <span class="text-xs text-red-600 flex-1 min-w-[180px] truncate" title="{{ $envoi->erreur }}">{{ $envoi->erreur }}</span>
         <button type="button" onclick="showRenvoyerModal({{ $envoi->id }}, '{{ $envoi->telephone }}', '{{ addslashes($envoi->erreur) }}')"
-                class="rounded-lg bg-pharaoh-gold px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110">
+                class="btn-gold btn-sm">
             Corriger le numéro &amp; renvoyer
         </button>
     </div>
@@ -145,7 +145,7 @@
                             <td class="px-4 py-3 text-sm text-right font-bold text-orange-600">{{ number_format($cmd->solde, 0, ',', '.') }} FCFA</td>
                             <td class="px-4 py-3 text-center">
                                 <button type="button" onclick="showSoldeModal({{ $cmd->id }}, '{{ e($cmd->numero_facture) }}', {{ $cmd->montant }}, {{ $cmd->montant_paye }}, '{{ e($typesPhoto[$cmd->type] ?? $cmd->type) }}')"
-                                        class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 shadow">
+                                        class="btn-success btn-sm">
                                     Encaisser le solde
                                 </button>
                             </td>
@@ -190,7 +190,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <button onclick="resetFilters()" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-100">Réinitialiser</button>
+                    <button onclick="resetFilters()" class="btn-secondary btn-sm">Réinitialiser</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -288,8 +288,8 @@
                 @csrf
                 <input type="hidden" name="montant_verse" value="">
                 <div class="flex gap-3">
-                    <button type="button" onclick="closeModal('soldeModal')" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50">Annuler</button>
-                    <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl bg-green-600 text-sm font-semibold text-white hover:bg-green-700 shadow-lg">💰 Encaisser le solde</button>
+                    <button type="button" onclick="closeModal('soldeModal')" class="btn-secondary btn-lg flex-1">Annuler</button>
+                    <button type="submit" class="btn-success btn-lg flex-1">💰 Encaisser le solde</button>
                 </div>
                 <input type="hidden" name="types_photo_fallback" value="1">
             </form>
@@ -323,8 +323,8 @@
             <form id="verrouForm" method="POST">
                 @csrf
                 <div class="flex gap-3">
-                    <button type="button" onclick="closeModal('verrouModal')" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50">Non, garder</button>
-                    <button type="submit" id="verrouSubmit" class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-sm font-semibold text-white hover:bg-red-700 shadow-lg">Oui, confirmer</button>
+                    <button type="button" onclick="closeModal('verrouModal')" class="btn-secondary btn-lg flex-1">Non, garder</button>
+                    <button type="submit" id="verrouSubmit" class="btn-danger btn-lg flex-1">Oui, confirmer</button>
                 </div>
             </form>
         </div>
@@ -344,8 +344,8 @@
                 @csrf
                 <input type="tel" name="numero_whatsapp" id="renvoyerTel" required class="input-field" placeholder="+2376XXXXXXXX" pattern="^\+[1-9]\d{7,14}$">
                 <div class="flex gap-3">
-                    <button type="button" onclick="closeModal('renvoyerModal')" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold">Fermer</button>
-                    <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl bg-pharaoh-gold text-sm font-semibold text-white hover:brightness-110">📤 Renvoyer</button>
+                    <button type="button" onclick="closeModal('renvoyerModal')" class="btn-secondary btn-lg flex-1">Fermer</button>
+                    <button type="submit" class="btn-gold btn-lg flex-1">📤 Renvoyer</button>
                 </div>
             </form>
         </div>

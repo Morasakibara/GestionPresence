@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employer;
-use App\Models\Utilisateur;
-use App\Models\Superviseur;
 use App\Models\Presence;
+use App\Models\Superviseur;
+use App\Models\Utilisateur;
+use App\Services\EvaluationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class SuperviseurController extends Controller
@@ -19,7 +21,7 @@ class SuperviseurController extends Controller
 
         // Rediriger les superviseurs spécialisés vers leur dashboard dédié
         if ($superviseurInfo && $superviseurInfo->type_superviseur && $superviseurInfo->type_superviseur !== 'superviseur_a') {
-            return match($superviseurInfo->type_superviseur) {
+            return match ($superviseurInfo->type_superviseur) {
                 'directrice' => redirect()->route('directrice.dashboard'),
                 'secretaire' => redirect()->route('secretaire.dashboard'),
                 'gestionnaire_stock' => redirect()->route('gestionnaire.dashboard'),
@@ -35,23 +37,23 @@ class SuperviseurController extends Controller
         $teamMemberCount = count($employerIds);
 
         $presentToday = Presence::whereIn('employerID', $employerIds)
-                               ->whereDate('date', $today)
-                               ->where('status', 'présent')
-                               ->count();
+            ->where('date', $today)
+            ->where('status', 'présent')
+            ->count();
 
         $absentToday = Presence::whereIn('employerID', $employerIds)
-                              ->whereDate('date', $today)
-                              ->where('status', 'Absent')
-                              ->count();
+            ->where('date', $today)
+            ->where('status', 'Absent')
+            ->count();
 
         $lateToday = Presence::whereIn('employerID', $employerIds)
-                            ->whereDate('date', $today)
-                            ->whereRaw('(HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0))')
-                            ->count();
+            ->where('date', $today)
+            ->whereRaw('(HOUR(heureArrivee) > 8 OR (HOUR(heureArrivee) = 8 AND MINUTE(heureArrivee) > 0))')
+            ->count();
 
         // Listes détaillées pour les modals au survol
         $presentsAujourdhui = Presence::whereIn('employerID', $employerIds)
-            ->whereDate('date', $today)
+            ->where('date', $today)
             ->where('status', 'present')
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
             ->select('utilisateur.nom', 'presence.heureArrivee', 'presence.heureDepart')
@@ -60,13 +62,18 @@ class SuperviseurController extends Controller
 
         $absentsAujourdhui = DB::table('utilisateur')
             ->whereIn('id', $employerIds)
-            ->whereNotIn('id', Presence::whereDate('date', $today)->pluck('employerID'))
+            ->whereNotExists(function ($query) use ($today) {
+                $query->select(DB::raw(1))
+                    ->from('presence')
+                    ->whereColumn('presence.employerID', 'utilisateur.id')
+                    ->whereDate('presence.date', $today);
+            })
             ->select('nom')
             ->orderBy('nom')
             ->get();
 
         $arrivesAujourdhui = Presence::whereIn('employerID', $employerIds)
-            ->whereDate('date', $today)
+            ->where('date', $today)
             ->whereNotNull('heureArrivee')
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
             ->select('utilisateur.nom', 'presence.heureArrivee')
@@ -74,7 +81,7 @@ class SuperviseurController extends Controller
             ->get();
 
         $partisAujourdhui = Presence::whereIn('employerID', $employerIds)
-            ->whereDate('date', $today)
+            ->where('date', $today)
             ->whereNotNull('heureDepart')
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
             ->select('utilisateur.nom', 'presence.heureDepart')
@@ -83,10 +90,10 @@ class SuperviseurController extends Controller
 
         $unreadNotifications = $superviseur->unreadNotifications->count();
 
-        $cacheKey = 'sup_evolution_' . $superviseur->id . '_' . now()->format('Y-m-d-H');
-        $evolutionEvaluations = \Illuminate\Support\Facades\Cache::remember($cacheKey . '_evo', 300, fn() => \App\Services\EvaluationService::evolutionMensuelle($employerIds, 6));
-        $statsEvolution = \Illuminate\Support\Facades\Cache::remember($cacheKey . '_stats', 300, fn() => \App\Services\EvaluationService::statsEvolution($evolutionEvaluations));
-        $notesParEmploye = \Illuminate\Support\Facades\Cache::remember($cacheKey . '_notes', 300, fn() => \App\Services\EvaluationService::notesParEmploye($employerIds, 6));
+        $cacheKey = 'sup_evolution_'.$superviseur->id.'_'.now()->format('Y-m-d-H');
+        $evolutionEvaluations = Cache::remember($cacheKey.'_evo', 300, fn () => EvaluationService::evolutionMensuelle($employerIds, 6));
+        $statsEvolution = Cache::remember($cacheKey.'_stats', 300, fn () => EvaluationService::statsEvolution($evolutionEvaluations));
+        $notesParEmploye = Cache::remember($cacheKey.'_notes', 300, fn () => EvaluationService::notesParEmploye($employerIds, 6));
 
         return view('superviseur.supdashboard', compact(
             'equipe',
@@ -111,7 +118,7 @@ class SuperviseurController extends Controller
         $superviseur = Auth::user();
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
 
-        if (!$superviseurInfo) {
+        if (! $superviseurInfo) {
             return view('superviseur.followPresence', ['utilisateurs' => collect([])]);
         }
 
@@ -126,7 +133,7 @@ class SuperviseurController extends Controller
     {
         $utilisateur = Utilisateur::find($id);
 
-        if (!$utilisateur) {
+        if (! $utilisateur) {
             return response()->json(['error' => 'Utilisateur non trouvé'], 404);
         }
 
@@ -152,19 +159,19 @@ class SuperviseurController extends Controller
     {
         $utilisateur = Utilisateur::find($id);
 
-        if (!$utilisateur) {
+        if (! $utilisateur) {
             abort(404);
         }
 
         $totalPresences = Presence::where('employerID', $utilisateur->id)
-                                ->where('status', 'présent')
-                                ->count();
+            ->where('status', 'présent')
+            ->count();
 
         $currentMonth = now()->month;
         $presenceStats = Presence::where('employerID', $utilisateur->id)
-                                ->where('status', 'présent')
-                                ->whereMonth('date', $currentMonth)
-                                ->get();
+            ->where('status', 'présent')
+            ->whereMonth('date', $currentMonth)
+            ->get();
 
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $currentMonth, now()->year);
         $labels = [];
@@ -172,7 +179,7 @@ class SuperviseurController extends Controller
 
         for ($day = 1; $day <= $daysInMonth; $day++) {
             $labels[] = $day;
-            $data[] = $presenceStats->where('date', now()->year . '-' . $currentMonth . '-' . str_pad($day, 2, '0', STR_PAD_LEFT))->count();
+            $data[] = $presenceStats->where('date', now()->year.'-'.$currentMonth.'-'.str_pad($day, 2, '0', STR_PAD_LEFT))->count();
         }
 
         return view('superviseur.viewUser', [
@@ -192,7 +199,7 @@ class SuperviseurController extends Controller
         $superviseur = Auth::user();
         $superviseurData = Superviseur::where('id', $superviseur->id)->first();
 
-        if (!$superviseurData) {
+        if (! $superviseurData) {
             return redirect()->back()->with('error', 'Erreur : informations du superviseur non trouvées.');
         }
 
@@ -207,7 +214,7 @@ class SuperviseurController extends Controller
     {
         $superviseur = Auth::user();
 
-        if (!$superviseur || $superviseur->role !== 'Superviseur') {
+        if (! $superviseur || $superviseur->role !== 'Superviseur') {
             return redirect()->back()->with('error', 'Vous devez être un superviseur pour ajouter des membres à une équipe.');
         }
 
@@ -219,14 +226,14 @@ class SuperviseurController extends Controller
 
         $utilisateur = Utilisateur::where('id', $employerId)->where('role', 'Employer')->first();
 
-        if (!$utilisateur) {
+        if (! $utilisateur) {
             return redirect()->back()->with('error', 'Utilisateur non trouvé ou n\'est pas un employé.');
         }
 
         $employer = Employer::where('id', $employerId)->first();
 
-        if (!$employer) {
-            $employer = new Employer();
+        if (! $employer) {
+            $employer = new Employer;
             $employer->id = $employerId;
             $employer->Sup_id = $superviseur->id;
             $employer->poste = 'Employer';
@@ -243,19 +250,19 @@ class SuperviseurController extends Controller
     {
         $superviseur = Auth::user();
 
-        if (!$superviseur || $superviseur->role !== 'Superviseur') {
+        if (! $superviseur || $superviseur->role !== 'Superviseur') {
             return redirect()->back()->with('error', 'Vous devez être un superviseur pour retirer des membres de votre équipe.');
         }
 
         $superviseurData = Superviseur::where('id', $superviseur->id)->first();
 
-        if (!$superviseurData) {
+        if (! $superviseurData) {
             return redirect()->back()->with('error', 'Erreur : informations du superviseur non trouvées.');
         }
 
         $employer = Employer::where('id', $employerId)->first();
 
-        if (!$employer) {
+        if (! $employer) {
             return redirect()->back()->with('error', 'Employé non trouvé.');
         }
 
@@ -275,7 +282,7 @@ class SuperviseurController extends Controller
         $superviseur = Auth::user();
         $superviseurData = Superviseur::where('id', $superviseur->id)->first();
 
-        if (!$superviseurData) {
+        if (! $superviseurData) {
             return redirect()->back()->with('error', 'Erreur : informations du superviseur non trouvées.');
         }
 
@@ -285,7 +292,7 @@ class SuperviseurController extends Controller
         $query = Utilisateur::where('role', 'Employer');
 
         if ($search) {
-            $query->where('nom', 'LIKE', '%' . $search . '%');
+            $query->where('nom', 'LIKE', '%'.$search.'%');
         }
 
         $employers = $query->get();

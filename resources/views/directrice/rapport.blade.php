@@ -51,115 +51,97 @@
                 <label class="input-label">Montant max (FCFA)</label>
                 <input type="number" name="montant_max" class="input-field" placeholder="∞" value="{{ $filters['montant_max'] ?? '' }}" min="0">
             </div>
-            <div class="flex gap-2">
-                <button type="submit" class="btn-primary gap-1">
+            <div class="flex flex-wrap gap-2">
+                <button type="submit" class="btn-gold btn-sm gap-1.5">
                     <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                     Filtrer
                 </button>
-                <a href="{{ route('directrice.rapport') }}" class="btn-secondary">Réinitialiser</a>
+                <a href="{{ route('directrice.rapport') }}" class="btn-secondary btn-sm">Réinitialiser</a>
             </div>
         </div>
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route('directrice.rapport.export', array_merge(['date_debut' => $dateDebut, 'date_fin' => $dateFin], $filters)) }}" class="btn-secondary text-xs gap-1">
-                📥 CSV
-            </a>
-            <a href="{{ route('directrice.rapport.exportHtml', array_merge(['date_debut' => $dateDebut, 'date_fin' => $dateFin], $filters)) }}" target="_blank" class="btn-primary text-xs gap-1">
-                📊 HTML
-            </a>
-            <a href="{{ route('directrice.rapport.exportPdf', array_merge(['date_debut' => $dateDebut, 'date_fin' => $dateFin], $filters)) }}" class="btn-secondary text-xs gap-1" style="background:#D64545;color:white;border-color:#D64545;">
-                📄 PDF
-            </a>
+            <a href="{{ route('directrice.rapport.export', array_merge(['date_debut' => $dateDebut, 'date_fin' => $dateFin], $filters)) }}" class="btn-secondary btn-sm gap-1.5">CSV</a>
+            <a href="{{ route('directrice.rapport.exportHtml', array_merge(['date_debut' => $dateDebut, 'date_fin' => $dateFin], $filters)) }}" target="_blank" class="btn-ghost btn-sm gap-1.5">HTML</a>
+            <a href="{{ route('directrice.rapport.exportPdf', array_merge(['date_debut' => $dateDebut, 'date_fin' => $dateFin], $filters)) }}" class="btn-danger btn-sm gap-1.5">PDF</a>
         </div>
     </form>
 </div>
 
 <!-- Totaux -->
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-    <div class="stat-card">
-        <div class="stat-card-icon bg-green-50 text-green-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1" /></svg>
-        </div>
-        <div class="stat-card-value text-green-600">{{ number_format($totalCommandes, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label">Commandes</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-icon bg-blue-50 text-blue-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-        </div>
-        <div class="stat-card-value text-blue-600">{{ number_format($totalServices, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label">Services</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-icon bg-red-50 text-red-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-        </div>
-        <div class="stat-card-value text-red-600">{{ number_format($totalRetraits, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label">Retraits</div>
-    </div>
-    <div class="stat-card border-pharaoh-gold/30 bg-gradient-to-br from-[#FBF3E6] to-white">
-        <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-        </div>
-        <div class="stat-card-value text-pharaoh-gold">{{ number_format($totalCommandes + $totalServices - $totalRetraits, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label font-semibold">Bilan net</div>
-    </div>
+<div class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+    @include('partials.dashboard.kpi', ['label' => 'Commandes', 'value' => number_format($totalCommandes, 0, ',', ' '), 'meta' => 'FCFA encaissés', 'tone' => 'success'])
+    @include('partials.dashboard.kpi', ['label' => 'Services', 'value' => number_format($totalServices, 0, ',', ' '), 'meta' => 'FCFA facturés', 'tone' => 'info'])
+    @include('partials.dashboard.kpi', ['label' => 'Retraits', 'value' => number_format($totalRetraits, 0, ',', ' '), 'meta' => 'FCFA sortis', 'tone' => 'danger'])
+    @include('partials.dashboard.kpi', ['label' => 'Bilan net', 'value' => number_format($totalCommandes + $totalServices - $totalRetraits, 0, ',', ' '), 'meta' => 'FCFA sur la période', 'tone' => 'gold'])
 </div>
 
 <!-- Graphique -->
-<div class="pharaoh-card p-6 mb-6">
-    <h3 class="section-title mb-4">📈 Évolution journalière</h3>
-    <div style="height:300px;"><canvas id="rapportChart"></canvas></div>
+<div class="console-card mb-6">
+    <div class="console-card-head">
+        <div>
+            <h3 class="console-card-title">Évolution journalière</h3>
+            <p class="console-card-sub">Entrées et sorties de caisse</p>
+        </div>
+    </div>
+    <div class="console-card-body">
+        <div class="h-[300px]"><canvas id="rapportChart" aria-label="Évolution journalière des entrées et sorties" role="img"></canvas></div>
+    </div>
 </div>
 
 <!-- Répartition -->
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-    <div class="pharaoh-card p-6">
-        <h3 class="section-title mb-4">Commandes par type</h3>
-        @forelse($commandesParType as $type => $montant)
-            <div class="flex items-center justify-between py-2 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
-                <span class="text-sm text-gray-700 capitalize">{{ $typesCaisse[$type] ?? $type }}</span>
-                <span class="text-sm font-semibold text-green-700">{{ number_format($montant, 0, ',', '.') }} FCFA</span>
-            </div>
-        @empty
-            <p class="text-sm text-gray-400">Aucune donnée</p>
-        @endforelse
+    <div class="console-card">
+        <div class="console-card-head">
+            <h3 class="console-card-title">Commandes par type</h3>
+        </div>
+        <div class="console-card-body">
+            @forelse($commandesParType as $type => $montant)
+                <div class="flex items-center justify-between py-2 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
+                    <span class="text-sm text-gray-700 capitalize">{{ $typesCaisse[$type] ?? $type }}</span>
+                    <span class="text-sm font-semibold tabular-nums text-green-700">{{ number_format($montant, 0, ',', ' ') }} FCFA</span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400">Aucune donnée</p>
+            @endforelse
+        </div>
     </div>
-    <div class="pharaoh-card p-6">
-        <h3 class="section-title mb-4">Services par type</h3>
-        @forelse($servicesParType as $type => $montant)
-            <div class="flex items-center justify-between py-2 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
-                <span class="text-sm text-gray-700 capitalize">{{ $typesCaisse[$type] ?? $type }}</span>
-                <span class="text-sm font-semibold text-blue-700">{{ number_format($montant, 0, ',', '.') }} FCFA</span>
-            </div>
-        @empty
-            <p class="text-sm text-gray-400">Aucune donnée</p>
-        @endforelse
+    <div class="console-card">
+        <div class="console-card-head">
+            <h3 class="console-card-title">Services par type</h3>
+        </div>
+        <div class="console-card-body">
+            @forelse($servicesParType as $type => $montant)
+                <div class="flex items-center justify-between py-2 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
+                    <span class="text-sm text-gray-700 capitalize">{{ $typesCaisse[$type] ?? $type }}</span>
+                    <span class="text-sm font-semibold tabular-nums text-blue-700">{{ number_format($montant, 0, ',', ' ') }} FCFA</span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400">Aucune donnée</p>
+            @endforelse
+        </div>
     </div>
 </div>
 
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/pharaoh-charts.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const ctx = document.getElementById('rapportChart');
-    if (!ctx) return;
     const data = @json($detailJournalier);
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: data.map(d => d.label),
-            datasets: [
-                { label: 'Entrées', data: data.map(d => d.entrees), backgroundColor: 'rgba(46,139,87,0.7)', borderRadius: 6 },
-                { label: 'Sorties', data: data.map(d => d.sorties), backgroundColor: 'rgba(214,69,69,0.7)', borderRadius: 6 }
-            ]
+
+    PharaohCharts.bar(document.getElementById('rapportChart'), {
+        labels: data.map(d => d.label),
+        datasets: [
+            { label: 'Entrées', data: data.map(d => d.entrees), backgroundColor: 'success' },
+            { label: 'Sorties', data: data.map(d => d.sorties), backgroundColor: 'danger' }
+        ]
+    }, {
+        plugins: {
+            tooltip: { callbacks: { label: ctx => ctx.dataset.label + ' : ' + PharaohCharts.money(ctx.parsed.y) } }
         },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('fr-FR') + ' FCFA' } } },
-            plugins: { legend: { position: 'top' } }
-        }
+        scales: { y: { ticks: { callback: value => PharaohCharts.number(value) } } }
     });
 });
 </script>

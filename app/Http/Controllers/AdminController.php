@@ -6,12 +6,11 @@ use App\Models\AuditLog;
 use App\Models\Commande;
 use App\Models\Employer;
 use App\Models\Presence;
-use App\Models\Retrait;
-use App\Models\ServiceFourni;
 use App\Models\StockPapier;
 use App\Models\StockTshirt;
 use App\Models\Superviseur;
 use App\Models\Utilisateur;
+use App\Services\EvaluationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -32,7 +31,7 @@ class AdminController extends Controller
         $currentYear = now()->year;
 
         // ═══ 1 seule requête pour tous les compteurs présence du jour ═══
-        $presenceStats = Presence::whereDate('date', $today)
+        $presenceStats = Presence::where('date', $today)
             ->selectRaw('SUM(status = ?) as presents, SUM(status = ?) as absents', ['présent', 'Absent'])
             ->first();
         $totalEmployees = Utilisateur::where('role', 'Employer')->count();
@@ -41,18 +40,23 @@ class AdminController extends Controller
         $absentToday = (int) ($presenceStats->absents ?? 0);
 
         // ═══ Listes modals en 2 requêtes max ═══
-        $presenceJour = Presence::whereDate('date', $today)
+        $presenceJour = Presence::where('date', $today)
             ->whereNotNull('heureArrivee')
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
             ->select('utilisateur.nom', 'presence.heureArrivee', 'presence.heureDepart', 'presence.status')
             ->orderBy('presence.heureArrivee')
             ->get();
-        $presentsAujourdhui = $presenceJour->filter(fn($p) => in_array($p->status, ['présent', 'present']))->values();
-        $arrivesAujourdhui = $presenceJour->filter(fn($p) => $p->heureArrivee !== null)->values();
-        $partisAujourdhui = $presenceJour->filter(fn($p) => $p->heureDepart !== null)->values();
+        $presentsAujourdhui = $presenceJour->filter(fn ($p) => in_array($p->status, ['présent', 'present']))->values();
+        $arrivesAujourdhui = $presenceJour->filter(fn ($p) => $p->heureArrivee !== null)->values();
+        $partisAujourdhui = $presenceJour->filter(fn ($p) => $p->heureDepart !== null)->values();
 
         $absentsAujourdhui = Utilisateur::where('role', 'Employer')
-            ->whereNotIn('id', Presence::whereDate('date', $today)->pluck('employerID'))
+            ->whereNotExists(function ($query) use ($today) {
+                $query->select(DB::raw(1))
+                    ->from('presence')
+                    ->whereColumn('presence.employerID', 'utilisateur.id')
+                    ->whereDate('presence.date', $today);
+            })
             ->select('nom')->orderBy('nom')->get();
 
         // ═══ Stats mensuelles en 2 requêtes max ═══
@@ -71,15 +75,15 @@ class AdminController extends Controller
         if ($equipeSelectionnee) {
             $employerIdsFiltre = Employer::where('equipe', $equipeSelectionnee)->pluck('id')->toArray();
         }
-        $evolutionEvaluations = \App\Services\EvaluationService::evolutionMensuelle($employerIdsFiltre, 6);
-        $statsEvolution = \App\Services\EvaluationService::statsEvolution($evolutionEvaluations);
+        $evolutionEvaluations = EvaluationService::evolutionMensuelle($employerIdsFiltre, 6);
+        $statsEvolution = EvaluationService::statsEvolution($evolutionEvaluations);
 
         // ═══ IDs des superviseurs caisse ═══
         $supCaisseIds = Superviseur::whereIn('type_superviseur', ['directrice', 'secretaire'])
             ->pluck('id', 'type_superviseur');
 
         // ═══ Graphique CA 7 jours en 2 requêtes (au lieu de 56) ═══
-        $caisseChart = Cache::remember('admin_caisse_chart_' . now()->format('Y-m-d-H'), 120, function () use ($supCaisseIds) {
+        $caisseChart = Cache::remember('admin_caisse_chart_'.now()->format('Y-m-d-H'), 120, function () use ($supCaisseIds) {
             $labels = [];
             $entrees = [];
             $sorties = [];
@@ -91,6 +95,7 @@ class AdminController extends Controller
                     $entrees[] = 0;
                     $sorties[] = 0;
                 }
+
                 return ['labels' => $labels, 'entrees' => $entrees, 'sorties' => $sorties];
             }
 
@@ -126,25 +131,43 @@ class AdminController extends Controller
                 $entrees[] = $e;
                 $sorties[] = $s;
             }
+
             return ['labels' => $labels, 'entrees' => $entrees, 'sorties' => $sorties];
         });
 
-        // ═══ Caisses du jour en 1 seule requête groupée ═══
+        // ═══ Caisses du jour : 3 requêtes groupées quel que soit le nombre de superviseurs ═══
         $caisses = [];
         $supLabels = Superviseur::whereIn('type_superviseur', ['directrice', 'secretaire'])
             ->join('utilisateur', 'superviseur.id', '=', 'utilisateur.id')
             ->select('superviseur.id', 'superviseur.type_superviseur', 'utilisateur.nom')
             ->get();
+
+        $supIdsJour = $supLabels->pluck('id')->all();
+        $sommeJour = function (string $table) use ($supIdsJour, $today): array {
+            if (empty($supIdsJour)) {
+                return [];
+            }
+
+            return DB::table($table)
+                ->selectRaw('superviseur_id, SUM(montant) as total')
+                ->whereIn('superviseur_id', $supIdsJour)
+                ->where('date', $today)
+                ->groupBy('superviseur_id')
+                ->pluck('total', 'superviseur_id')
+                ->toArray();
+        };
+        $cmdJour = $sommeJour('commandes');
+        $svcJour = $sommeJour('services_fournis');
+        $retJour = $sommeJour('retraits');
+
         foreach ($supLabels as $sup) {
-            $type = $sup->type_superviseur;
-            $cmd = (float) Commande::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
-            $svc = (float) ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
-            $ret = (float) Retrait::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
-            $caisses[$type] = [
+            $entrees = (float) ($cmdJour[$sup->id] ?? 0) + (float) ($svcJour[$sup->id] ?? 0);
+            $sorties = (float) ($retJour[$sup->id] ?? 0);
+            $caisses[$sup->type_superviseur] = [
                 'nom' => $sup->nom,
-                'entrees' => $cmd + $svc,
-                'sorties' => $ret,
-                'net' => $cmd + $svc - $ret,
+                'entrees' => $entrees,
+                'sorties' => $sorties,
+                'net' => $entrees - $sorties,
             ];
         }
 
@@ -157,8 +180,8 @@ class AdminController extends Controller
             $stockTshirts = StockTshirt::where('superviseur_id', $gestionnaireStock->id)->get();
             $stockPapiers = StockPapier::where('superviseur_id', $gestionnaireStock->id)->get();
             $totalStockTshirts = $stockTshirts->sum('quantite');
-            $alertesStock = $stockTshirts->filter(fn($t) => $t->quantite <= $t->seuil_alerte)->count()
-                + $stockPapiers->filter(fn($p) => $p->metres_restants <= $p->seuil_alerte)->count();
+            $alertesStock = $stockTshirts->filter(fn ($t) => $t->quantite <= $t->seuil_alerte)->count()
+                + $stockPapiers->filter(fn ($p) => $p->metres_restants <= $p->seuil_alerte)->count();
         }
 
         // ═══ Annulations (30j) — 1 seule requête ═══
@@ -205,7 +228,9 @@ class AdminController extends Controller
             $lines = file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             $recentLines = array_reverse($lines);
             foreach ($recentLines as $line) {
-                if (!str_contains($line, $today)) continue;
+                if (! str_contains($line, $today)) {
+                    continue;
+                }
                 if (str_contains($line, 'local.ERROR')) {
                     $erreurs++;
                     if (count($recentErrors) < 10) {
@@ -234,7 +259,7 @@ class AdminController extends Controller
         // ── Rate limiting : nombre de tentatives de login ──
         $rateLimitCount = 0;
         try {
-            $rateLimits = Cache::get('login_attempts_' . now()->format('Y-m-d'), []);
+            $rateLimits = Cache::get('login_attempts_'.now()->format('Y-m-d'), []);
             $rateLimitCount = is_array($rateLimits) ? count($rateLimits) : 0;
         } catch (\Exception $e) {
             // Ignorer
@@ -274,6 +299,7 @@ class AdminController extends Controller
     {
         /** @var Utilisateur|null $user */
         $user = Auth::user();
+
         return view('admin.profile', ['user' => $user]);
     }
 
@@ -281,7 +307,7 @@ class AdminController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nom' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . Auth::id(),
+            'email' => 'required|string|email|max:255|unique:users,email,'.Auth::id(),
             'password' => 'nullable|string|min:8|confirmed',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -305,10 +331,10 @@ class AdminController extends Controller
             }
 
             if ($request->hasFile('avatar')) {
-                if ($user->avatar && Storage::disk('public')->exists('avatars/' . $user->avatar)) {
-                    Storage::disk('public')->delete('avatars/' . $user->avatar);
+                if ($user->avatar && Storage::disk('public')->exists('avatars/'.$user->avatar)) {
+                    Storage::disk('public')->delete('avatars/'.$user->avatar);
                 }
-                $avatarName = time() . '.' . $request->avatar->extension();
+                $avatarName = time().'.'.$request->avatar->extension();
                 $request->avatar->storeAs('avatars', $avatarName, 'public');
                 $user->avatar = $avatarName;
             }
@@ -323,7 +349,7 @@ class AdminController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la mise à jour du profil: ' . $e->getMessage(),
+                'message' => 'Erreur lors de la mise à jour du profil: '.$e->getMessage(),
             ], 500);
         }
     }

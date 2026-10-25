@@ -181,54 +181,38 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/pharaoh-charts.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('teamEvaluationChart');
-        if (!ctx) {
-            return;
-        }
-        const labels = @json($chartLabels);
         const datasets = @json($chartDatasets).map(d => ({
             label: d.label,
             data: d.data,
             borderColor: d.color,
-            backgroundColor: d.color,
-            borderWidth: 2,
-            tension: 0.35,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            pointBackgroundColor: d.color,
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 1.5
+            backgroundColor: d.color + '22',
+            fill: false,
+            pointBackgroundColor: d.color
         }));
 
-        new Chart(ctx, {
-            type: 'line',
-            data: { labels: labels, datasets: datasets },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top' },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return context.dataset.label + ' : ' + context.parsed.y + '/20';
-                            }
+        PharaohCharts.line(document.getElementById('teamEvaluationChart'), {
+            labels: @json($chartLabels),
+            datasets: datasets
+        }, {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return context.dataset.label + ' : ' + context.parsed.y + '/20';
                         }
                     }
-                },
-                scales: {
-                    y: {
-                        min: 0,
-                        max: 20,
-                        ticks: { stepSize: 4 },
-                        title: { display: true, text: 'Note sur 20' }
-                    },
-                    x: {
-                        ticks: { maxRotation: 45, minRotation: 0 }
-                    }
+                }
+            },
+            scales: {
+                y: {
+                    min: 0,
+                    max: 20,
+                    ticks: { stepSize: 4 },
+                    title: { display: true, text: 'Note sur 20', color: PharaohCharts.colors().text }
                 }
             }
         });

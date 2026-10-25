@@ -20,7 +20,7 @@
             </div>
 
             @if ($errors->any())
-            <div class="bg-red-600/10 border-2 border-red-600 text-red-600 px-4 py-3 rounded-md mb-6">
+            <div class="alert alert-danger">
                 <ul class="list-disc list-inside text-sm">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
             </div>
             @endif
@@ -101,7 +101,7 @@
                             <td class="px-4 py-3 text-sm text-right font-bold text-orange-600">{{ number_format($svc->solde, 0, ',', '.') }} FCFA</td>
                             <td class="px-4 py-3 text-center">
                                 <button type="button" onclick="showSoldeServiceModal({{ $svc->id }}, '{{ e($svc->numero_facture) }}', {{ $svc->montant }}, {{ $svc->montant_paye }}, '{{ e($typesPhoto[$svc->type] ?? $svc->type) }}')"
-                                        class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 shadow">
+                                        class="btn-success btn-sm">
                                     Encaisser le solde
                                 </button>
                             </td>
@@ -187,8 +187,8 @@
             <form id="svcSoldeForm" method="POST" onsubmit="return confirm('Confirmer l\'encaissement du solde ?')">
                 @csrf
                 <div class="flex gap-3">
-                    <button type="button" onclick="closeModal('soldeServiceModal')" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50">Annuler</button>
-                    <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl bg-green-600 text-sm font-semibold text-white hover:bg-green-700 shadow-lg">💰 Encaisser le solde</button>
+                    <button type="button" onclick="closeModal('soldeServiceModal')" class="btn-secondary btn-lg flex-1">Annuler</button>
+                    <button type="submit" class="btn-success btn-lg flex-1">💰 Encaisser le solde</button>
                 </div>
             </form>
         </div>
@@ -219,8 +219,8 @@
                 @csrf
                 @method('DELETE')
                 <div class="flex gap-3">
-                    <button type="button" onclick="closeDeleteServiceModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Non, garder</button>
-                    <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-sm font-semibold text-white hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20">Oui, supprimer</button>
+                    <button type="button" onclick="closeDeleteServiceModal()" class="btn-secondary btn-lg flex-1">Non, garder</button>
+                    <button type="submit" class="btn-danger btn-lg flex-1">Oui, supprimer</button>
                 </div>
             </form>
         </div>

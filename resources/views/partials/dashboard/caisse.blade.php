@@ -263,7 +263,7 @@
                     <h2 class="console-card-title">Commandes en attente d'encaissement</h2>
                     <p class="console-card-sub">{{ $impayees->count() }} commande(s) · reste {{ number_format($resteAEncaisser ?? 0, 0, ',', ' ') }} FCFA</p>
                 </div>
-                <button type="button" onclick="openImpayes()" class="btn-gold text-xs">Encaisser</button>
+                <button type="button" onclick="openImpayes()" class="btn-gold btn-sm">Encaisser</button>
             </div>
             <div class="console-card-body">
                 <div class="table-scroll overflow-hidden rounded-xl border border-gray-200/70">
@@ -305,7 +305,7 @@
     <div class="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b border-gray-100 bg-[#FBF3E6] px-5 py-4">
             <h3 class="section-title">Commandes en attente — {{ $impayees->count() }}</h3>
-            <button type="button" onclick="closeImpayes()" class="rounded-lg p-1 text-gray-400 transition-colors hover:bg-white hover:text-gray-600" aria-label="Fermer">
+            <button type="button" onclick="closeImpayes()" class="btn-icon" aria-label="Fermer">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
@@ -333,7 +333,7 @@
                         <input type="number" name="montant_verse" min="0.01" step="any" max="{{ $cmd->montant - $cmd->montant_paye }}" value="{{ $cmd->montant - $cmd->montant_paye }}" required
                                class="input-field w-36 py-2 text-sm">
                         <span class="text-xs text-gray-400">FCFA</span>
-                        <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700">
+                        <button type="submit" class="btn-success btn-sm gap-1.5">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                             Encaisser
                         </button>
@@ -359,14 +359,15 @@
 
         <div class="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-5 py-3">
             <span class="text-sm font-semibold text-orange-700">Total reste : {{ number_format($resteAEncaisser ?? 0, 0, ',', ' ') }} FCFA</span>
-            <button type="button" onclick="closeImpayes()" class="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-300">Fermer</button>
+            <button type="button" onclick="closeImpayes()" class="btn-secondary btn-sm">Fermer</button>
         </div>
     </div>
 </div>
 @endif
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/pharaoh-charts.js') }}"></script>
 <script>
     function openImpayes() {
         const modal = document.getElementById('modalImpayes');
@@ -395,89 +396,44 @@
     });
 
     document.addEventListener('DOMContentLoaded', function () {
-        const fmt = v => Number(v).toLocaleString('fr-FR') + ' FCFA';
+        const number = value => PharaohCharts.number(value);
 
         // Entrées / sorties 7 jours
-        const ctxFlux = document.getElementById('chart7j');
-        if (ctxFlux) {
-            new Chart(ctxFlux, {
-                type: 'bar',
-                data: {
-                    labels: @json($labels7j ?? []),
-                    datasets: [
-                        { label: 'Entrées', data: @json($dataEntrees7j ?? []), backgroundColor: '#D39B23', borderRadius: 6, maxBarThickness: 20 },
-                        { label: 'Sorties', data: @json($dataSorties7j ?? []), backgroundColor: '#111111', borderRadius: 6, maxBarThickness: 20 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, font: { size: 11 } } },
-                        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ' : ' + fmt(ctx.parsed.y) } }
-                    },
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString('fr-FR') } }
-                    }
-                }
-            });
-        }
+        PharaohCharts.bar(document.getElementById('chart7j'), {
+            labels: @json($labels7j ?? []),
+            datasets: [
+                { label: 'Entrées', data: @json($dataEntrees7j ?? []), backgroundColor: 'gold' },
+                { label: 'Sorties', data: @json($dataSorties7j ?? []), backgroundColor: 'ink' }
+            ]
+        }, {
+            plugins: {
+                tooltip: { callbacks: { label: ctx => ctx.dataset.label + ' : ' + PharaohCharts.money(ctx.parsed.y) } }
+            },
+            scales: { y: { ticks: { callback: number } } }
+        });
 
         // Répartition de l'activité (donut)
-        const ctxActivite = document.getElementById('caisseActiviteChart');
-        if (ctxActivite) {
-            new Chart(ctxActivite, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Commandes', 'Services', 'Retraits'],
-                    datasets: [{
-                        data: [{{ (float) ($totalCommandes ?? 0) }}, {{ (float) ($totalServices ?? 0) }}, {{ (float) ($totalRetraits ?? 0) }}],
-                        backgroundColor: ['#2E8B57', '#3B82C4', '#D64545'],
-                        borderWidth: 0,
-                        hoverOffset: 6
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false } } }
-            });
-        }
+        PharaohCharts.doughnut(document.getElementById('caisseActiviteChart'), {
+            labels: ['Commandes', 'Services', 'Retraits'],
+            datasets: [{
+                data: [{{ (float) ($totalCommandes ?? 0) }}, {{ (float) ($totalServices ?? 0) }}, {{ (float) ($totalRetraits ?? 0) }}],
+                backgroundColor: ['success', 'info', 'danger']
+            }]
+        }, {
+            plugins: { legend: { display: false } }
+        });
 
         // Encaissements cumulés (ligne)
-        const ctxCumul = document.getElementById('caisseCumulChart');
-        if (ctxCumul) {
-            new Chart(ctxCumul, {
-                type: 'line',
-                data: {
-                    labels: @json($labels7j ?? []),
-                    datasets: [{
-                        label: 'Cumul des entrées',
-                        data: @json($cumulEntrees),
-                        borderColor: '#D39B23',
-                        backgroundColor: 'rgba(211, 155, 35, 0.12)',
-                        borderWidth: 2,
-                        tension: 0.35,
-                        fill: true,
-                        pointRadius: 3,
-                        pointHoverRadius: 5,
-                        pointBackgroundColor: '#D39B23',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => 'Cumul : ' + fmt(ctx.parsed.y) } }
-                    },
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString('fr-FR') } }
-                    }
-                }
-            });
-        }
+        PharaohCharts.line(document.getElementById('caisseCumulChart'), {
+            labels: @json($labels7j ?? []),
+            datasets: [{ label: 'Cumul des entrées', data: @json($cumulEntrees) }]
+        }, {
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => 'Cumul : ' + PharaohCharts.money(ctx.parsed.y) } }
+            },
+            scales: { y: { ticks: { callback: number } } }
+        });
 
         // Commandes par type (barres horizontales)
         const ctxTypes = document.getElementById('commandesTypeChart');
@@ -486,30 +442,18 @@
             const commandes = @json($commandesParType);
             const cles = Object.keys(commandes);
 
-            new Chart(ctxTypes, {
-                type: 'bar',
-                data: {
-                    labels: cles.map(cle => types[cle] || cle),
-                    datasets: [{
-                        label: 'Montant',
-                        data: cles.map(cle => Number(commandes[cle])),
-                        backgroundColor: '#111111',
-                        borderRadius: 6,
-                        maxBarThickness: 18
-                    }]
+            PharaohCharts.bar(ctxTypes, {
+                labels: cles.map(cle => types[cle] || cle),
+                datasets: [{ label: 'Montant', data: cles.map(cle => Number(commandes[cle])), backgroundColor: 'ink' }]
+            }, {
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => PharaohCharts.money(ctx.parsed.x) } }
                 },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => fmt(ctx.parsed.x) } }
-                    },
-                    scales: {
-                        x: { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString('fr-FR') } },
-                        y: { grid: { display: false } }
-                    }
+                scales: {
+                    x: { beginAtZero: true, ticks: { callback: number } },
+                    y: { grid: { display: false } }
                 }
             });
         }

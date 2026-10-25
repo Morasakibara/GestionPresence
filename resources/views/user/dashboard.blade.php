@@ -139,7 +139,7 @@
                             </div>
                         </div>
 
-                        <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="btn-gold mt-auto w-full text-sm">
+                        <button type="button" onclick="getLocationAndSubmit('arrival-form')" class="btn-gold mt-auto w-full">
                             <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" /><circle cx="12" cy="10" r="2.6" /></svg>
                             Marquer l'arrivée
                         </button>
@@ -168,7 +168,7 @@
                             placeholder="Décrivez ce que vous avez fait aujourd'hui…"
                             class="input-field mb-3 w-full text-sm">{{ old('rendement') }}</textarea>
 
-                        <button type="button" onclick="getLocationAndSubmit('departure-form')" class="mt-auto inline-flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
+                        <button type="button" onclick="getLocationAndSubmit('departure-form')" class="btn-success mt-auto w-full">
                             <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" /><circle cx="12" cy="10" r="2.6" /></svg>
                             Marquer le départ
                         </button>
@@ -384,7 +384,8 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/pharaoh-charts.js') }}"></script>
 <script>
     // ═══ Horloge ═══
     function updateClock() {
@@ -501,53 +502,30 @@
 
     // ═══ Historique d'évaluation ═══
     document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('evaluationChart');
-        if (!ctx) {
-            return;
-        }
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: @json($chartLabels),
-                datasets: [{
-                    label: 'Note /20',
-                    data: @json($chartNotes),
-                    borderColor: '#D39B23',
-                    backgroundColor: 'rgba(211, 155, 35, 0.10)',
-                    borderWidth: 2,
-                    tension: 0.35,
-                    fill: true,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    pointBackgroundColor: @json($chartCouleurs),
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return 'Note : ' + context.parsed.y + '/20';
-                            }
+        PharaohCharts.line(document.getElementById('evaluationChart'), {
+            labels: @json($chartLabels),
+            datasets: [{
+                label: 'Note /20',
+                data: @json($chartNotes),
+                pointBackgroundColor: @json($chartCouleurs)
+            }]
+        }, {
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return 'Note : ' + context.parsed.y + '/20';
                         }
                     }
-                },
-                scales: {
-                    y: {
-                        min: 0,
-                        max: 20,
-                        ticks: { stepSize: 4 },
-                        title: { display: true, text: 'Note sur 20' }
-                    },
-                    x: {
-                        ticks: { maxRotation: 45, minRotation: 0 }
-                    }
+                }
+            },
+            scales: {
+                y: {
+                    min: 0,
+                    max: 20,
+                    ticks: { stepSize: 4 },
+                    title: { display: true, text: 'Note sur 20', color: PharaohCharts.colors().text }
                 }
             }
         });

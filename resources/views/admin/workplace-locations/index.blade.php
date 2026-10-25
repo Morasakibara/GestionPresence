@@ -78,13 +78,13 @@
                             </td>
                             <td class="whitespace-nowrap px-5 py-4 text-right text-sm font-medium">
                                 <div class="inline-flex items-center gap-2">
-                                    <a href="{{ route('admin.workplace-locations.edit', $location) }}" class="inline-flex items-center rounded-lg bg-pharaoh-gold/10 px-3 py-1.5 text-xs font-semibold text-pharaoh-bronze-dark transition-colors hover:bg-pharaoh-gold/20">
+                                    <a href="{{ route('admin.workplace-locations.edit', $location) }}" class="btn-soft">
                                         Modifier
                                     </a>
                                     <form action="{{ route('admin.workplace-locations.destroy', $location) }}" method="POST" class="inline-block">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-red-600 ring-1 ring-inset ring-red-600/20 transition-colors duration-150 hover:bg-red-50" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce lieu de travail?')">
+                                        <button type="submit" class="btn-danger-soft ring-1 ring-inset ring-red-600/20" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce lieu de travail?')">
                                             Supprimer
                                         </button>
                                     </form>

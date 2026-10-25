@@ -48,7 +48,10 @@
     $currentRole = $roleMeta[$navRole];
     $isHomeRoute = request()->routeIs($currentRole['home']);
     $homeRoute = route($currentRole['home']);
-    $unreadCount = $account->unreadNotifications->count();
+    // Compteur et panneau de notifications : deux requêtes légères plutôt que
+    // le chargement de toutes les notifications non lues en mémoire à chaque page.
+    $unreadCount = $account->unreadNotifications()->count();
+    $recentNotifications = $account->notifications()->latest()->limit(6)->get();
     $hideSound = false;
     $contentShell = trim($__env->yieldContent('content_shell'));
     $avatarPath = $account->avatar
@@ -173,7 +176,7 @@
 
                     <!-- Thème clair / sombre -->
                     <button type="button" id="darkModeToggle" onclick="toggleDarkMode()"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-[#080808] focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold/60"
+                            class="btn-icon"
                             title="Mode sombre" aria-label="Basculer le thème">
                         <svg id="sunIcon" class="hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -183,17 +186,78 @@
                         </svg>
                     </button>
 
-                    <!-- Notifications -->
-                    <a href="{{ route('notifications.index') }}" title="Notifications" aria-label="Notifications"
-                       class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-[#080808] focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold/60">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 15.5V11a6 6 0 10-12 0v4.5L4.5 18h15z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 18a2.25 2.25 0 004.5 0" />
-                        </svg>
-                        <span class="notif-badge-count absolute right-0.5 top-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-600 px-1 text-[0.625rem] font-bold text-white"
-                              data-notif-count="{{ $unreadCount }}"
-                              style="display: {{ $unreadCount > 0 ? 'flex' : 'none' }}">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
-                    </a>
+                    <!-- Notifications : menu déroulant -->
+                    <div class="relative">
+                        <button type="button" id="notif-menu-button" aria-expanded="false" aria-haspopup="true"
+                                aria-controls="notif-dropdown" title="Notifications" aria-label="Notifications"
+                                class="btn-icon relative">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 15.5V11a6 6 0 10-12 0v4.5L4.5 18h15z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 18a2.25 2.25 0 004.5 0" />
+                            </svg>
+                            <span class="notif-badge-count absolute right-0.5 top-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-600 px-1 text-[0.625rem] font-bold text-white"
+                                  data-notif-count="{{ $unreadCount }}"
+                                  style="display: {{ $unreadCount > 0 ? 'flex' : 'none' }}">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
+                        </button>
+
+                        <div id="notif-dropdown"
+                             class="absolute right-0 z-50 mt-2 hidden w-[min(22rem,calc(100vw-1.5rem))] origin-top-right overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl focus:outline-none"
+                             role="region" aria-label="Notifications récentes">
+                            <div class="flex items-start justify-between gap-2 border-b border-gray-100 px-4 py-3">
+                                <div>
+                                    <p class="text-sm font-semibold text-[#080808]">Notifications</p>
+                                    <p class="mt-0.5 text-xs text-gray-500">
+                                        <span data-notif-panel-count>{{ $unreadCount }}</span> non lue(s)
+                                    </p>
+                                </div>
+                                @if($unreadCount > 0)
+                                    <form action="{{ route('notifications.readAll') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn-soft">Tout lire</button>
+                                    </form>
+                                @endif
+                            </div>
+
+                            <ul role="list" class="max-h-80 divide-y divide-gray-100 overflow-y-auto">
+                                @forelse($recentNotifications as $notification)
+                                    @php
+                                        $notifUnread = $notification->read_at === null;
+                                        $notifTone = match ($notification->data['type'] ?? 'info') {
+                                            'absence' => ['bg-red-100', 'text-red-600'],
+                                            'retard' => ['bg-amber-100', 'text-amber-600'],
+                                            'conge' => ['bg-blue-100', 'text-blue-600'],
+                                            default => ['bg-pharaoh-gold-light/20', 'text-pharaoh-gold'],
+                                        };
+                                    @endphp
+                                    <li>
+                                        <a href="{{ route('notifications.index') }}"
+                                           class="flex items-start gap-3 px-4 py-3 transition-colors duration-150 hover:bg-[#FBF3E6] {{ $notifUnread ? 'bg-[#FDF8EF]' : 'bg-white' }}">
+                                            <span class="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full {{ $notifTone[0] }}">
+                                                <svg class="h-4 w-4 {{ $notifTone[1] }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 15.5V11a6 6 0 10-12 0v4.5L4.5 18h15z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 18a2.25 2.25 0 004.5 0" />
+                                                </svg>
+                                            </span>
+                                            <span class="min-w-0 flex-1">
+                                                <span class="block truncate text-sm {{ $notifUnread ? 'font-semibold text-[#080808]' : 'text-gray-700' }}">{{ $notification->data['message'] ?? 'Notification' }}</span>
+                                                <span class="mt-0.5 block text-xs text-gray-500">{{ $notification->created_at->diffForHumans() }}</span>
+                                            </span>
+                                            @if($notifUnread)
+                                                <span class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-pharaoh-gold" title="Non lue"></span>
+                                            @endif
+                                        </a>
+                                    </li>
+                                @empty
+                                    <li class="px-4 py-8 text-center text-sm text-gray-500">Aucune notification pour le moment.</li>
+                                @endforelse
+                            </ul>
+
+                            <a href="{{ route('notifications.index') }}"
+                               class="flex items-center justify-center gap-1.5 border-t border-gray-100 px-4 py-3 text-sm font-semibold text-pharaoh-bronze-dark transition-colors duration-150 hover:bg-[#FBF3E6]">
+                                Voir toutes les notifications
+                            </a>
+                        </div>
+                    </div>
 
                     <!-- Menu du compte -->
                     <div class="relative ml-1">
@@ -374,6 +438,36 @@
                     profileDropdown.classList.add('hidden');
                     profileButton.setAttribute('aria-expanded', 'false');
                     profileButton.focus();
+                }
+            });
+        }
+
+        // Menu des notifications (même comportement que le menu du compte)
+        const notifButton = document.getElementById('notif-menu-button');
+        const notifDropdown = document.getElementById('notif-dropdown');
+
+        if (notifButton && notifDropdown) {
+            const closeNotifications = function () {
+                notifDropdown.classList.add('hidden');
+                notifButton.setAttribute('aria-expanded', 'false');
+            };
+
+            notifButton.addEventListener('click', function () {
+                const willOpen = notifDropdown.classList.contains('hidden');
+                notifDropdown.classList.toggle('hidden');
+                notifButton.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!notifButton.contains(event.target) && !notifDropdown.contains(event.target)) {
+                    closeNotifications();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !notifDropdown.classList.contains('hidden')) {
+                    closeNotifications();
+                    notifButton.focus();
                 }
             });
         }

@@ -11,13 +11,13 @@
     <div class="flex flex-wrap items-center gap-2">
         <form action="{{ route('admin.evaluations.export') }}" method="GET">
             <input type="hidden" name="mois" value="{{ substr($startDate, 0, 7) }}">
-            <button type="submit" class="btn-gold inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm">
+            <button type="submit" class="btn-gold btn-sm gap-1.5">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 Export Évaluations
             </button>
         </form>
         <a href="{{ route('admin.evaluations.export.pdf', ['mois' => substr($startDate, 0, 7)]) }}"
-           class="inline-flex items-center gap-2 rounded-xl border-2 border-[#D39B23] bg-white px-3.5 py-2 text-xs font-semibold text-[#D39B23] transition-colors hover:bg-[#FBF3E6] sm:text-sm">
+           class="btn-secondary btn-sm gap-1.5">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
             PDF Évaluations
         </a>
@@ -25,7 +25,7 @@
             @csrf
             <input type="hidden" name="start_date" value="{{ $startDate }}">
             <input type="hidden" name="end_date" value="{{ $endDate }}">
-            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-[#080808] px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-gray-800 sm:text-sm">
+            <button type="submit" class="btn-dark btn-sm gap-1.5">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                 Export PDF
             </button>
@@ -172,7 +172,7 @@
                                     </select>
                                 </div>
                                 <input type="text" name="commentaire" placeholder="Commentaire..." class="input-field-sm mb-1 w-full">
-                                <button type="submit" class="rounded-lg bg-pharaoh-gold px-3 py-1 text-xs font-semibold text-white hover:bg-pharaoh-gold-light transition-colors">Enregistrer</button>
+                                <button type="submit" class="btn-gold btn-sm">Enregistrer</button>
                             </form>
                         </div>
                     </td>
@@ -217,87 +217,50 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/pharaoh-charts.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Graphique évolution
-    const ctxLine = document.getElementById('companyEvaluationChart');
-    if (ctxLine) {
-        const labels = @json($chartLabels);
-        const datasets = @json($chartDatasets).map(d => ({
-            label: d.label,
-            data: d.data,
-            borderColor: d.color,
-            backgroundColor: d.color + '33',
-            borderWidth: 2.5,
-            tension: 0.4,
-            pointRadius: 4,
-            pointHoverRadius: 7,
-            pointBackgroundColor: d.color,
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            fill: false,
-        }));
+    const datasets = @json($chartDatasets).map(d => ({
+        label: d.label,
+        data: d.data,
+        borderColor: d.color,
+        backgroundColor: d.color + '33',
+        fill: false,
+    }));
 
-        new Chart(ctxLine, {
-            type: 'line',
-            data: { labels, datasets },
-            options: {
-                responsive: true,
-                interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    legend: { position: 'top', labels: { usePointStyle: true, padding: 16, font: { size: 11 } } },
-                    tooltip: {
-                        backgroundColor: '#080808',
-                        titleFont: { size: 13 },
-                        bodyFont: { size: 12 },
-                        padding: 12,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: ctx => ctx.dataset.label + ' : ' + ctx.parsed.y + '/20'
-                        }
-                    }
-                },
-                scales: {
-                    y: { min: 0, max: 20, ticks: { stepSize: 4, font: { size: 11 } }, title: { display: true, text: 'Note /20', font: { size: 12 } } },
-                    x: { ticks: { maxRotation: 45, font: { size: 11 } } }
-                }
+    PharaohCharts.line(document.getElementById('companyEvaluationChart'), {
+        labels: @json($chartLabels),
+        datasets: datasets
+    }, {
+        plugins: {
+            tooltip: { callbacks: { label: ctx => ctx.dataset.label + ' : ' + ctx.parsed.y + '/20' } }
+        },
+        scales: {
+            y: {
+                min: 0,
+                max: 20,
+                ticks: { stepSize: 4 },
+                title: { display: true, text: 'Note /20', color: PharaohCharts.colors().text }
             }
-        });
-    }
+        }
+    });
 
     // Graphique pie/doughnut
-    const ctxPie = document.getElementById('evaluationPieChart');
-    if (ctxPie) {
-        new Chart(ctxPie, {
-            type: 'doughnut',
-            data: {
-                labels: ['Vert (≥14)', 'Orange (10-13)', 'Rouge (<10)'],
-                datasets: [{
-                    data: [{{ $verts }}, {{ $oranges }}, {{ $rouges }}],
-                    backgroundColor: ['#2E8B57', '#D97706', '#D64545'],
-                    borderWidth: 3,
-                    borderColor: '#ffffff',
-                    hoverOffset: 8,
-                }]
-            },
-            options: {
-                responsive: true,
-                cutout: '60%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: 12 } } },
-                    tooltip: {
-                        backgroundColor: '#080808',
-                        padding: 12,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: ctx => ctx.label + ' : ' + ctx.parsed + ' employé(s)'
-                        }
-                    }
-                }
-            }
-        });
-    }
+    PharaohCharts.doughnut(document.getElementById('evaluationPieChart'), {
+        labels: ['Vert (≥14)', 'Orange (10-13)', 'Rouge (<10)'],
+        datasets: [{
+            data: [{{ $verts }}, {{ $oranges }}, {{ $rouges }}],
+            backgroundColor: ['success', 'warning', 'danger']
+        }]
+    }, {
+        cutout: '60%',
+        plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { callbacks: { label: ctx => ctx.label + ' : ' + ctx.parsed + ' employé(s)' } }
+        }
+    });
 });
 </script>
 @endpush

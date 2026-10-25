@@ -63,7 +63,7 @@ class PresenceAlertController extends Controller
         }
 
         // Nouvelles arrivées depuis $sinceDate
-        $arrivalsQuery = Presence::whereDate('date', $today)
+        $arrivalsQuery = Presence::where('date', $today)
             ->whereNotNull('heureArrivee')
             ->where('heureArrivee', '>', $sinceDate)
             ->where('heureArrivee', '<=', $now)
@@ -88,7 +88,7 @@ class PresenceAlertController extends Controller
         ]);
 
         // Nouveaux départs depuis $sinceDate
-        $departuresQuery = Presence::whereDate('date', $today)
+        $departuresQuery = Presence::where('date', $today)
             ->whereNotNull('heureDepart')
             ->where('heureDepart', '>', $sinceDate)
             ->where('heureDepart', '<=', $now)
@@ -113,7 +113,12 @@ class PresenceAlertController extends Controller
         // Compteurs actuels
         $presentQuery = Presence::whereDate('date', $today)->where('status', 'présent');
         $absentQuery = DB::table('utilisateur')->where('role', 'Employer')
-            ->whereNotIn('id', Presence::whereDate('date', $today)->pluck('employerID'));
+            ->whereNotExists(function ($query) use ($today) {
+                $query->select(DB::raw(1))
+                    ->from('presence')
+                    ->whereColumn('presence.employerID', 'utilisateur.id')
+                    ->whereDate('presence.date', $today);
+            });
 
         if (isset($employerIds)) {
             $presentQuery->whereIn('employerID', $employerIds);

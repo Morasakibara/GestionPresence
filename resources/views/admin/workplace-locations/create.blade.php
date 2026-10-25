@@ -80,7 +80,7 @@
 
                 <div>
                     <p class="mb-2 text-sm text-gray-700">Obtenir les coordonnées actuelles :</p>
-                    <button type="button" id="getLocation" class="inline-flex items-center gap-2 rounded-lg bg-pharaoh-gold/10 px-4 py-2 text-sm font-semibold text-pharaoh-bronze-dark transition-colors hover:bg-pharaoh-gold/20">
+                    <button type="button" id="getLocation" class="btn-soft btn-lg">
                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />

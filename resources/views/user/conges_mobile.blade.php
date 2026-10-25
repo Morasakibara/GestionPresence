@@ -88,7 +88,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Motif *</label>
                         <textarea name="motif" rows="3" required class="w-full rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-base transition-colors duration-150 hover:border-gray-400 focus:border-pharaoh-gold focus:outline-none focus:ring-2 focus:ring-pharaoh-gold/20" placeholder="Décrivez le motif..."></textarea>
                     </div>
-                    <button type="submit" class="w-full rounded-xl bg-pharaoh-gold px-4 py-3 text-base font-bold text-white shadow-gold hover:bg-pharaoh-gold-light active:scale-[0.97] transition-all" onclick="return confirm('Envoyer cette demande ?')">
+                    <button type="submit" class="btn-gold btn-lg w-full" onclick="return confirm('Envoyer cette demande ?')">
                         Soumettre la demande
                     </button>
                 </div>

@@ -88,6 +88,11 @@
             badge.textContent = count > 9 ? '9+' : count;
             badge.style.display = count > 0 ? 'flex' : 'none';
         });
+
+        // Compteur du panneau déroulant de la barre supérieure.
+        document.querySelectorAll('[data-notif-panel-count]').forEach(el => {
+            el.textContent = count;
+        });
     }
 
     async function checkNotifications() {

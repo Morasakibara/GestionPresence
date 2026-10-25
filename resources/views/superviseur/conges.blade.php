@@ -35,16 +35,16 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2 px-4 pt-4 sm:px-5">
-            <a href="{{ route('superviseur.conges.index') }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ !$statutFilter ? 'bg-pharaoh-gold text-white' : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100' }}">
+            <a href="{{ route('superviseur.conges.index') }}" class="chip {{ !$statutFilter ? 'is-active' : '' }}">
                 Tous
             </a>
-            <a href="{{ route('superviseur.conges.index', ['statut' => 'en_attente']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'en_attente' ? 'bg-pharaoh-gold text-white' : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100' }}">
+            <a href="{{ route('superviseur.conges.index', ['statut' => 'en_attente']) }}" class="chip {{ $statutFilter === 'en_attente' ? 'is-active' : '' }}">
                 En attente
             </a>
-            <a href="{{ route('superviseur.conges.index', ['statut' => 'approuve']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'approuve' ? 'bg-pharaoh-gold text-white' : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100' }}">
+            <a href="{{ route('superviseur.conges.index', ['statut' => 'approuve']) }}" class="chip {{ $statutFilter === 'approuve' ? 'is-active' : '' }}">
                 Approuvés
             </a>
-            <a href="{{ route('superviseur.conges.index', ['statut' => 'refuse']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'refuse' ? 'bg-pharaoh-gold text-white' : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100' }}">
+            <a href="{{ route('superviseur.conges.index', ['statut' => 'refuse']) }}" class="chip {{ $statutFilter === 'refuse' ? 'is-active' : '' }}">
                 Refusés
             </a>
         </div>

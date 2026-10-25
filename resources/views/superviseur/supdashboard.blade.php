@@ -289,7 +289,7 @@
     <div class="mx-4 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl" onclick="event.stopPropagation()">
         <div class="mb-4 flex items-center justify-between">
             <h3 class="section-title">Personnes présentes</h3>
-            <button type="button" onclick="toggleStatModal('modal-presents')" class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label="Fermer">
+            <button type="button" onclick="toggleStatModal('modal-presents')" class="btn-icon" aria-label="Fermer">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
@@ -313,7 +313,7 @@
     <div class="mx-4 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl" onclick="event.stopPropagation()">
         <div class="mb-4 flex items-center justify-between">
             <h3 class="section-title">Personnes absentes</h3>
-            <button type="button" onclick="toggleStatModal('modal-absents')" class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label="Fermer">
+            <button type="button" onclick="toggleStatModal('modal-absents')" class="btn-icon" aria-label="Fermer">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
@@ -334,7 +334,7 @@
     <div class="mx-4 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl" onclick="event.stopPropagation()">
         <div class="mb-4 flex items-center justify-between">
             <h3 class="section-title">Heures d'arrivée</h3>
-            <button type="button" onclick="toggleStatModal('modal-arrives')" class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label="Fermer">
+            <button type="button" onclick="toggleStatModal('modal-arrives')" class="btn-icon" aria-label="Fermer">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
@@ -355,7 +355,7 @@
     <div class="mx-4 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl" onclick="event.stopPropagation()">
         <div class="mb-4 flex items-center justify-between">
             <h3 class="section-title">Heures de départ</h3>
-            <button type="button" onclick="toggleStatModal('modal-partis')" class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label="Fermer">
+            <button type="button" onclick="toggleStatModal('modal-partis')" class="btn-icon" aria-label="Fermer">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
@@ -374,7 +374,8 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/pharaoh-charts.js') }}"></script>
 <script>
     // ═══ Modales de détail ═══
     function toggleStatModal(id) {
@@ -459,94 +460,55 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         // Évolution des évaluations
-        const ctx = document.getElementById('evaluationEvolChart');
-        if (ctx) {
-            const evolution = @json($evolutionEvaluations ?? ['labels' => [], 'notes' => [], 'couleurs' => []]);
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: evolution.labels,
-                    datasets: [{
-                        label: 'Note moyenne /20',
-                        data: evolution.notes,
-                        borderColor: '#D39B23',
-                        backgroundColor: 'rgba(211, 155, 35, 0.10)',
-                        borderWidth: 2,
-                        tension: 0.35,
-                        fill: true,
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
-                        pointBackgroundColor: evolution.couleurs,
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: context => 'Moyenne : ' + context.parsed.y + '/20' } }
-                    },
-                    scales: {
-                        y: { min: 0, max: 20, ticks: { stepSize: 4 } },
-                        x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 0 } }
-                    }
-                }
-            });
-        }
+        const evolution = @json($evolutionEvaluations ?? ['labels' => [], 'notes' => [], 'couleurs' => []]);
+        PharaohCharts.line(document.getElementById('evaluationEvolChart'), {
+            labels: evolution.labels,
+            datasets: [{
+                label: 'Note moyenne /20',
+                data: evolution.notes,
+                pointBackgroundColor: evolution.couleurs
+            }]
+        }, {
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: context => 'Moyenne : ' + context.parsed.y + '/20' } }
+            },
+            scales: { y: { min: 0, max: 20, ticks: { stepSize: 4 } } }
+        });
 
         // Statut du jour (donut)
-        const ctxStatut = document.getElementById('supStatutChart');
-        if (ctxStatut) {
-            new Chart(ctxStatut, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Présents', 'Absents', 'Retards'],
-                    datasets: [{
-                        data: [{{ (int) ($presentToday ?? 0) }}, {{ (int) ($absentToday ?? 0) }}, {{ (int) ($lateToday ?? 0) }}],
-                        backgroundColor: ['#2E8B57', '#D64545', '#D97706'],
-                        borderWidth: 0,
-                        hoverOffset: 6
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false } } }
-            });
-        }
+        PharaohCharts.doughnut(document.getElementById('supStatutChart'), {
+            labels: ['Présents', 'Absents', 'Retards'],
+            datasets: [{
+                data: [{{ (int) ($presentToday ?? 0) }}, {{ (int) ($absentToday ?? 0) }}, {{ (int) ($lateToday ?? 0) }}],
+                backgroundColor: ['success', 'danger', 'warning']
+            }]
+        }, {
+            plugins: { legend: { display: false } }
+        });
 
         // Notes par membre (barres horizontales)
-        const ctxNotes = document.getElementById('notesMembresChart');
-        if (ctxNotes) {
-            const membres = @json($membresChart ?? []);
-            const couleurs = membres.map(m => m.moyenne >= 14 ? '#2E8B57' : (m.moyenne >= 10 ? '#D97706' : '#D64545'));
+        const membres = @json($membresChart ?? []);
+        const couleurs = membres.map(m => m.moyenne >= 14 ? PharaohCharts.colors().success : (m.moyenne >= 10 ? PharaohCharts.colors().warning : PharaohCharts.colors().danger));
 
-            new Chart(ctxNotes, {
-                type: 'bar',
-                data: {
-                    labels: membres.map(m => m.nom),
-                    datasets: [{
-                        label: 'Moyenne /20',
-                        data: membres.map(m => m.moyenne),
-                        backgroundColor: couleurs,
-                        borderRadius: 6,
-                        maxBarThickness: 18
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => ctx.parsed.x + '/20' } }
-                    },
-                    scales: {
-                        x: { min: 0, max: 20, ticks: { stepSize: 4 }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                        y: { grid: { display: false } }
-                    }
-                }
-            });
-        }
+        PharaohCharts.bar(document.getElementById('notesMembresChart'), {
+            labels: membres.map(m => m.nom),
+            datasets: [{
+                label: 'Moyenne /20',
+                data: membres.map(m => m.moyenne),
+                backgroundColor: couleurs
+            }]
+        }, {
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.x + '/20' } }
+            },
+            scales: {
+                x: { min: 0, max: 20, ticks: { stepSize: 4 } },
+                y: { grid: { display: false } }
+            }
+        });
     });
 </script>
 @endpush

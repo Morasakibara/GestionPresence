@@ -10,28 +10,28 @@
     </div>
     <div class="flex flex-wrap items-center gap-2">
         <a href="{{ route('admin.conges.planning.pdf', ['mois' => now()->format('Y-m')]) }}" target="_blank" rel="noopener"
-           class="inline-flex items-center gap-2 rounded-xl bg-[#080808] px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-gray-800 sm:text-sm">
+           class="btn-dark btn-sm gap-1.5">
             <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <span>Planning PDF</span>
         </a>
         <a href="{{ route('admin.conges.resume.pdf') }}" target="_blank" rel="noopener"
-           class="inline-flex items-center gap-2 rounded-xl bg-pharaoh-gold px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-pharaoh-gold-light sm:text-sm">
+           class="btn-gold btn-sm gap-1.5">
             <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <span>Résumé PDF</span>
         </a>
         <a href="{{ route('admin.conges.export.pivot', ['mois' => now()->format('Y-m')]) }}"
-           class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 sm:text-sm">
+           class="btn-success btn-sm gap-1.5">
             <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
             <span>Excel Pivot</span>
         </a>
         <a href="{{ route('admin.conges.export.liste') }}"
-           class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 sm:text-sm">
+           class="btn-secondary btn-sm gap-1.5">
             <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
@@ -66,7 +66,7 @@
                 </div>
             </div>
             <div class="console-card-body">
-                <canvas id="congesChart" height="120" aria-label="Évolution des demandes de congé sur six mois" role="img"></canvas>
+                <div class="h-56"><canvas id="congesChart" aria-label="Évolution des demandes de congé sur six mois" role="img"></canvas></div>
             </div>
         </div>
 
@@ -97,21 +97,21 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2 px-4 pt-4 sm:px-5">
-            <a href="{{ route('admin.conges') }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ !$statutFilter && !$typeFilter && !$equipeFilter ? 'bg-pharaoh-gold text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
+            <a href="{{ route('admin.conges') }}" class="chip {{ !$statutFilter && !$typeFilter && !$equipeFilter ? 'is-active' : '' }}">
                 Tous
             </a>
-            <a href="{{ route('admin.conges', ['statut' => 'en_attente']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'en_attente' ? 'bg-amber-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
+            <a href="{{ route('admin.conges', ['statut' => 'en_attente']) }}" class="chip {{ $statutFilter === 'en_attente' ? 'is-active' : '' }}">
                 En attente
             </a>
-            <a href="{{ route('admin.conges', ['statut' => 'approuve']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'approuve' ? 'bg-emerald-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
+            <a href="{{ route('admin.conges', ['statut' => 'approuve']) }}" class="chip {{ $statutFilter === 'approuve' ? 'is-active' : '' }}">
                 Approuvés
             </a>
-            <a href="{{ route('admin.conges', ['statut' => 'refuse']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'refuse' ? 'bg-red-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
+            <a href="{{ route('admin.conges', ['statut' => 'refuse']) }}" class="chip {{ $statutFilter === 'refuse' ? 'is-active' : '' }}">
                 Refusés
             </a>
 
             <select onchange="window.location.href=this.value" aria-label="Filtrer par équipe"
-                    class="rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm">
+                    class="select-field-sm rounded-full py-1.5 pl-3 pr-8">
                 <option value="{{ route('admin.conges') }}" {{ !$equipeFilter ? 'selected' : '' }}>Toutes les équipes</option>
                 @foreach($equipes as $eq)
                     <option value="{{ route('admin.conges', array_merge(request()->query(), ['equipe' => $eq])) }}" {{ $equipeFilter === $eq ? 'selected' : '' }}>{{ $eq }}</option>
@@ -179,38 +179,17 @@
 @push('scripts')
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="{{ asset('js/pharaoh-charts.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const ctx = document.getElementById('congesChart');
-            if (ctx) {
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: @json($chartLabels),
-                        datasets: [{
-                            label: 'Demandes',
-                            data: @json($chartData),
-                            backgroundColor: '#D39B2340',
-                            borderColor: '#D39B23',
-                            borderWidth: 2,
-                            borderRadius: 8,
-                            hoverBackgroundColor: '#D39B23',
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: { backgroundColor: '#080808', padding: 12, cornerRadius: 8 }
-                        },
-                        scales: {
-                            y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                        }
-                    }
-                });
-            }
+            PharaohCharts.bar(document.getElementById('congesChart'), {
+                labels: @json($chartLabels),
+                datasets: [{ label: 'Demandes', data: @json($chartData), backgroundColor: 'gold' }]
+            }, {
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } }
+            });
         });
 
         // FullCalendar via CDN

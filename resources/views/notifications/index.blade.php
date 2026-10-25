@@ -11,7 +11,7 @@
     <div class="flex flex-wrap items-center gap-2">
         <form action="{{ route('notifications.readAll') }}" method="POST">
             @csrf
-            <button type="submit" class="btn-gold">
+            <button type="submit" class="btn-secondary btn-sm">
                 Marquer tout comme lu
             </button>
         </form>
@@ -58,7 +58,7 @@
                         @if(!$notification->read_at)
                             <form action="{{ route('notifications.read', $notification->id) }}" method="POST" class="flex-shrink-0">
                                 @csrf
-                                <button type="submit" class="inline-flex items-center rounded-lg bg-pharaoh-gold/10 px-3 py-1.5 text-xs font-semibold text-pharaoh-bronze-dark transition-colors duration-150 hover:bg-pharaoh-gold/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold">
+                                <button type="submit" class="btn-soft">
                                     Marquer comme lu
                                 </button>
                             </form>

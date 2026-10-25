@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Employer;
 use App\Models\Evaluation;
-use App\Models\Utilisateur;
-use App\Models\Superviseur;
 use App\Models\Presence;
-use Illuminate\Http\Request;
+use App\Models\Rapport;
+use App\Models\Superviseur;
+use App\Models\Utilisateur;
+use App\Notifications\EvaluationRougeNotification;
+use App\Services\EvaluationService;
+use App\Services\ExcelExportService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -23,7 +28,7 @@ class SuperviseurEvaluationController extends Controller
         $superviseur = auth()->user();
         $superviseurInfo = Superviseur::where('id', $superviseur->id)->first();
 
-        if (!$superviseurInfo) {
+        if (! $superviseurInfo) {
             return ['equipe' => null, 'employerIds' => [], 'superviseurInfo' => null];
         }
 
@@ -43,11 +48,13 @@ class SuperviseurEvaluationController extends Controller
     public function generateReport()
     {
         $info = $this->equipeInfo();
-        if (!$info['equipe']) {
+        if (! $info['equipe']) {
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
 
-        $equipe = $info["equipe"]; $employerIds = $info["employerIds"]; $superviseur = $info["superviseur"];
+        $equipe = $info['equipe'];
+        $employerIds = $info['employerIds'];
+        $superviseur = $info['superviseur'];
 
         $users = Utilisateur::whereIn('id', $employerIds)->get();
         $debut = now()->startOfMonth()->toDateString();
@@ -71,16 +78,16 @@ class SuperviseurEvaluationController extends Controller
             $presencesPeriode = Presence::where('employerID', $user->id)
                 ->whereBetween('date', [$debut, $fin])
                 ->get(['heureArrivee', 'heureDepart']);
-            $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
-            $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+            $totalMinutes = $presencesPeriode->sum(fn ($p) => EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
+            $totalHeures = EvaluationService::formaterDureeTotale($totalMinutes);
 
-            $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
+            $evaluation = EvaluationService::evaluer($user->id, $debut, $fin);
 
             // Historique 6 mois pour le graphique comparatif
             $historique = [];
             for ($i = 5; $i >= 0; $i--) {
                 $mois = now()->subMonths($i);
-                $eval = \App\Services\EvaluationService::evaluer(
+                $eval = EvaluationService::evaluer(
                     $user->id,
                     $mois->copy()->startOfMonth()->toDateString(),
                     $mois->copy()->endOfMonth()->toDateString()
@@ -118,17 +125,19 @@ class SuperviseurEvaluationController extends Controller
     {
         $superviseur = auth()->user();
 
-        if (!$superviseur || $superviseur->role !== 'Superviseur') {
+        if (! $superviseur || $superviseur->role !== 'Superviseur') {
             return redirect()->back()->with('error', 'Vous devez être un superviseur pour générer un rapport.');
         }
 
         $info = $this->equipeInfo();
-        if (!$info['equipe']) {
+        if (! $info['equipe']) {
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
 
-        $equipe = $info["equipe"]; $employerIds = $info["employerIds"]; $superviseur = $info["superviseur"];
-        $superviseurInfo = $info["superviseurInfo"];
+        $equipe = $info['equipe'];
+        $employerIds = $info['employerIds'];
+        $superviseur = $info['superviseur'];
+        $superviseurInfo = $info['superviseurInfo'];
 
         $debut = now()->startOfMonth()->toDateString();
         $fin = now()->endOfMonth()->toDateString();
@@ -152,10 +161,10 @@ class SuperviseurEvaluationController extends Controller
             $presencesPeriode = Presence::where('employerID', $user->id)
                 ->whereBetween('date', [$debut, $fin])
                 ->get(['heureArrivee', 'heureDepart']);
-            $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
-            $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+            $totalMinutes = $presencesPeriode->sum(fn ($p) => EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
+            $totalHeures = EvaluationService::formaterDureeTotale($totalMinutes);
 
-            $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
+            $evaluation = EvaluationService::evaluer($user->id, $debut, $fin);
 
             $reports[] = [
                 'name' => $user->nom,
@@ -172,7 +181,7 @@ class SuperviseurEvaluationController extends Controller
 
         usort($reports, fn ($a, $b) => $b['totalPresences'] <=> $a['totalPresences']);
 
-        $pdf = PDF::loadView('superviseur.generateReportPDF', [
+        $pdf = Pdf::loadView('superviseur.generateReportPDF', [
             'reports' => $reports,
             'equipe' => $equipe,
             'date' => now()->format('d/m/Y'),
@@ -180,18 +189,18 @@ class SuperviseurEvaluationController extends Controller
         ]);
 
         $periode = now()->format('Y-m-d H:i:s');
-        $filename = 'rapport_equipe_' . $equipe . '_' . now()->format('Y_m_d_His') . '.pdf';
-        $pdfPath = 'rapports/' . $filename;
+        $filename = 'rapport_equipe_'.$equipe.'_'.now()->format('Y_m_d_His').'.pdf';
+        $pdfPath = 'rapports/'.$filename;
         Storage::disk('public')->put($pdfPath, $pdf->output());
 
         try {
-            $existingReport = \App\Models\Rapport::where([
+            $existingReport = Rapport::where([
                 'Sup_id' => $superviseur->id,
                 'contenu' => $pdfPath,
             ])->first();
 
-            if (!$existingReport) {
-                $rapport = new \App\Models\Rapport();
+            if (! $existingReport) {
+                $rapport = new Rapport;
                 $rapport->Sup_id = $superviseur->id;
                 $rapport->periode = $periode;
                 $rapport->contenu = $pdfPath;
@@ -207,7 +216,7 @@ class SuperviseurEvaluationController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la sauvegarde du rapport: ' . $e->getMessage());
+            Log::error('Erreur lors de la sauvegarde du rapport: '.$e->getMessage());
         }
 
         return $pdf->download($filename);
@@ -219,20 +228,22 @@ class SuperviseurEvaluationController extends Controller
     public function exportEvaluationsPdf(Request $request)
     {
         $info = $this->equipeInfo();
-        if (!$info['equipe']) {
+        if (! $info['equipe']) {
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
 
-        $equipe = $info["equipe"]; $employerIds = $info["employerIds"]; $superviseur = $info["superviseur"];
-        $superviseurInfo = $info["superviseurInfo"];
+        $equipe = $info['equipe'];
+        $employerIds = $info['employerIds'];
+        $superviseur = $info['superviseur'];
+        $superviseurInfo = $info['superviseurInfo'];
 
         $mois = $request->input('mois', now()->format('Y-m'));
         $couleur = $request->input('couleur'); // vert, orange, rouge ou null
-        $debut = $mois . '-01';
+        $debut = $mois.'-01';
         $fin = now()->parse($debut)->endOfMonth()->toDateString();
-        $titre = 'Équipe ' . $equipe . ' — ' . ucfirst(now()->parse($debut)->locale('fr')->isoFormat('MMMM YYYY'));
+        $titre = 'Équipe '.$equipe.' — '.ucfirst(now()->parse($debut)->locale('fr')->isoFormat('MMMM YYYY'));
         if ($couleur && in_array($couleur, ['vert', 'orange', 'rouge'])) {
-            $titre .= ' (Filtre : ' . strtoupper($couleur) . ')';
+            $titre .= ' (Filtre : '.strtoupper($couleur).')';
         }
 
         $users = Utilisateur::whereIn('id', $employerIds)->get();
@@ -240,13 +251,13 @@ class SuperviseurEvaluationController extends Controller
         $historique = [];
 
         foreach ($users as $user) {
-            $evaluation = \App\Services\EvaluationService::evaluer($user->id, $debut, $fin);
+            $evaluation = EvaluationService::evaluer($user->id, $debut, $fin);
 
             $presencesPeriode = Presence::where('employerID', $user->id)
                 ->whereBetween('date', [$debut, $fin])
                 ->get(['heureArrivee', 'heureDepart']);
-            $totalMinutes = $presencesPeriode->sum(fn ($p) => \App\Services\EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
-            $totalHeures = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+            $totalMinutes = $presencesPeriode->sum(fn ($p) => EvaluationService::minutesTravail($p->heureArrivee, $p->heureDepart));
+            $totalHeures = EvaluationService::formaterDureeTotale($totalMinutes);
 
             $rendements = Presence::where('employerID', $user->id)
                 ->whereBetween('date', [$debut, $fin])
@@ -258,7 +269,7 @@ class SuperviseurEvaluationController extends Controller
             $reports->push((object) [
                 'name' => $user->nom,
                 'employerID' => $user->id,
-                'totalPresences' => $presencesPeriode->filter(fn($p) => $p->status === 'présent')->count(),
+                'totalPresences' => $presencesPeriode->filter(fn ($p) => $p->status === 'présent')->count(),
                 'totalHeures' => $totalHeures,
                 'rendements' => $rendements,
                 'evaluation_note' => $evaluation['note'],
@@ -270,7 +281,7 @@ class SuperviseurEvaluationController extends Controller
             $histEmp = [];
             for ($i = 5; $i >= 0; $i--) {
                 $m = now()->subMonths($i);
-                $eval = \App\Services\EvaluationService::evaluer(
+                $eval = EvaluationService::evaluer(
                     $user->id,
                     $m->copy()->startOfMonth()->toDateString(),
                     $m->copy()->endOfMonth()->toDateString()
@@ -286,14 +297,14 @@ class SuperviseurEvaluationController extends Controller
 
         // Filtre par couleur
         if ($couleur && in_array($couleur, ['vert', 'orange', 'rouge'])) {
-            $reports = $reports->filter(fn($r) => ($r->evaluation_couleur ?? '') === $couleur);
+            $reports = $reports->filter(fn ($r) => ($r->evaluation_couleur ?? '') === $couleur);
         }
 
         $reports = $reports->sortByDesc('evaluation_note');
 
         $logoPath = public_path('storage/avatars/logo-pharaon.png');
         $logoBase64 = file_exists($logoPath)
-            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath))
             : null;
 
         $filtreCouleur = $couleur;
@@ -306,7 +317,8 @@ class SuperviseurEvaluationController extends Controller
             'auteur' => $superviseur->nom ?? 'Superviseur',
         ]);
 
-        $filename = 'evaluations_equipe_' . str_replace(' ', '_', $equipe) . '_' . str_replace('-', '_', $mois) . '.pdf';
+        $filename = 'evaluations_equipe_'.str_replace(' ', '_', $equipe).'_'.str_replace('-', '_', $mois).'.pdf';
+
         return $pdf->download($filename);
     }
 
@@ -331,7 +343,7 @@ class SuperviseurEvaluationController extends Controller
                 'note' => (float) $request->note,
                 'couleur' => $request->couleur,
                 'commentaire' => $request->commentaire,
-                'evaluateur_id' => \Illuminate\Support\Facades\Auth::id(),
+                'evaluateur_id' => Auth::id(),
             ]
         );
 
@@ -339,8 +351,8 @@ class SuperviseurEvaluationController extends Controller
         if ($request->couleur === 'rouge') {
             $employe = Utilisateur::find($request->employerID);
             $adminPrincipal = Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
-            if ($employe && $adminPrincipal && (int) $adminPrincipal->id !== (int) \Illuminate\Support\Facades\Auth::id()) {
-                $adminPrincipal->notify(new \App\Notifications\EvaluationRougeNotification(
+            if ($employe && $adminPrincipal && (int) $adminPrincipal->id !== (int) Auth::id()) {
+                $adminPrincipal->notify(new EvaluationRougeNotification(
                     $employe->nom,
                     $request->mois,
                     (float) $request->note
@@ -354,16 +366,16 @@ class SuperviseurEvaluationController extends Controller
     public function evaluationBulletin(Request $request, $id)
     {
         $info = $this->equipeInfo();
-        if (!$info['equipe']) {
+        if (! $info['equipe']) {
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
 
-        if (!in_array((int) $id, array_map('intval', $info['employerIds']))) {
+        if (! in_array((int) $id, array_map('intval', $info['employerIds']))) {
             return redirect()->back()->with('error', 'Ce membre ne fait pas partie de votre équipe.');
         }
 
         $mois = $request->input('mois', now()->format('Y-m'));
-        $debut = $mois . '-01';
+        $debut = $mois.'-01';
         $fin = now()->parse($debut)->endOfMonth()->toDateString();
 
         $employe = DB::table('employer')
@@ -372,12 +384,12 @@ class SuperviseurEvaluationController extends Controller
             ->select('employer.id', 'utilisateur.nom')
             ->first();
 
-        if (!$employe) {
+        if (! $employe) {
             return redirect()->back()->with('error', 'Membre non trouvé.');
         }
 
-        $evaluation = \App\Services\EvaluationService::evaluer($id, $debut, $fin);
-        $stats = \App\Services\EvaluationService::statsPeriode($id, $debut, $fin);
+        $evaluation = EvaluationService::evaluer($id, $debut, $fin);
+        $stats = EvaluationService::statsPeriode($id, $debut, $fin);
         $rendements = Presence::where('employerID', $id)
             ->whereBetween('date', [$debut, $fin])
             ->whereNotNull('rendement')
@@ -385,10 +397,10 @@ class SuperviseurEvaluationController extends Controller
             ->orderBy('date')
             ->get(['date', 'heureArrivee', 'heureDepart', 'rendement']);
 
-        $historique = \App\Services\EvaluationService::historiqueMensuel((int) $id, 6);
+        $historique = EvaluationService::historiqueMensuel((int) $id, 6);
 
         $pdf = Pdf::loadView('superviseur.evaluation_bulletin_pdf', compact('employe', 'evaluation', 'stats', 'rendements', 'mois', 'debut', 'fin', 'historique'));
-        $filename = 'bulletin_evaluation_' . $mois . '_' . $id . '.pdf';
+        $filename = 'bulletin_evaluation_'.$mois.'_'.$id.'.pdf';
 
         return $pdf->download($filename);
     }
@@ -396,11 +408,11 @@ class SuperviseurEvaluationController extends Controller
     public function exportComparatifPdf()
     {
         $info = $this->equipeInfo();
-        if (!$info['equipe']) {
+        if (! $info['equipe']) {
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
 
-        $notesParEmploye = \App\Services\EvaluationService::notesParEmploye($info['employerIds'], 6);
+        $notesParEmploye = EvaluationService::notesParEmploye($info['employerIds'], 6);
 
         $pdf = Pdf::loadView('superviseur.comparatif_notes_pdf', [
             'notesParEmploye' => $notesParEmploye,
@@ -408,7 +420,8 @@ class SuperviseurEvaluationController extends Controller
             'date' => now()->format('d/m/Y'),
         ]);
 
-        $filename = 'comparatif_notes_' . str_replace(' ', '_', $info['equipe']) . '_' . now()->format('Y_m_d') . '.pdf';
+        $filename = 'comparatif_notes_'.str_replace(' ', '_', $info['equipe']).'_'.now()->format('Y_m_d').'.pdf';
+
         return $pdf->download($filename);
     }
 
@@ -420,7 +433,7 @@ class SuperviseurEvaluationController extends Controller
     public function teamRendements(Request $request)
     {
         $info = $this->equipeInfo();
-        if (!$info['equipe']) {
+        if (! $info['equipe']) {
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
 
@@ -438,16 +451,19 @@ class SuperviseurEvaluationController extends Controller
 
         $totalMinutes = 0;
         foreach ($rendements as $r) {
-            $r->duree = \App\Services\EvaluationService::dureeTravail($r->heureArrivee, $r->heureDepart);
-            $totalMinutes += \App\Services\EvaluationService::minutesTravail($r->heureArrivee, $r->heureDepart);
+            $r->duree = EvaluationService::dureeTravail($r->heureArrivee, $r->heureDepart);
+            $totalMinutes += EvaluationService::minutesTravail($r->heureArrivee, $r->heureDepart);
         }
-        $totalDuree = \App\Services\EvaluationService::formaterDureeTotale($totalMinutes);
+        $totalDuree = EvaluationService::formaterDureeTotale($totalMinutes);
 
         $membresSansFiche = Utilisateur::whereIn('id', $info['employerIds'])
-            ->whereNotIn('id', DB::table('presence')
-                ->whereDate('date', $date)
-                ->whereNotNull('rendement')
-                ->pluck('employerID'))
+            ->whereNotExists(function ($query) use ($date) {
+                $query->select(DB::raw(1))
+                    ->from('presence')
+                    ->whereColumn('presence.employerID', 'utilisateur.id')
+                    ->whereDate('presence.date', $date)
+                    ->whereNotNull('presence.rendement');
+            })
             ->get(['id', 'nom']);
 
         return view('superviseur.rendements', compact('rendements', 'membresSansFiche', 'date', 'totalDuree'));
@@ -459,7 +475,7 @@ class SuperviseurEvaluationController extends Controller
     public function exportTeamRendementsCsv(Request $request)
     {
         $info = $this->equipeInfo();
-        if (!$info['equipe']) {
+        if (! $info['equipe']) {
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
 
@@ -488,21 +504,21 @@ class SuperviseurEvaluationController extends Controller
                 date('d/m/Y', strtotime($r->date)),
                 $r->heureArrivee ? date('H:i', strtotime($r->heureArrivee)) : '',
                 $r->heureDepart ? date('H:i', strtotime($r->heureDepart)) : '',
-                \App\Services\EvaluationService::dureeTravail($r->heureArrivee, $r->heureDepart) ?? '',
+                EvaluationService::dureeTravail($r->heureArrivee, $r->heureDepart) ?? '',
                 $r->rendement,
             ];
         }
 
-        $contenu = \App\Services\ExcelExportService::creer(
-            'Rendement de l\'équipe ' . $info['equipe'],
-            'Période du ' . date('d/m/Y', strtotime($debut)) . ' au ' . date('d/m/Y', strtotime($fin)) . ' — Le Pharaon',
+        $contenu = ExcelExportService::creer(
+            'Rendement de l\'équipe '.$info['equipe'],
+            'Période du '.date('d/m/Y', strtotime($debut)).' au '.date('d/m/Y', strtotime($fin)).' — Le Pharaon',
             ['Équipe', 'Employé', 'Date', 'Arrivée', 'Départ', 'Durée', 'Rendement'],
             $lignes
         )->contenu();
 
         return response($contenu, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename=rendements_equipe_' . $debut . '_' . $fin . '.xlsx',
+            'Content-Disposition' => 'attachment; filename=rendements_equipe_'.$debut.'_'.$fin.'.xlsx',
         ]);
     }
 
@@ -512,13 +528,13 @@ class SuperviseurEvaluationController extends Controller
     public function exportEvolutionEvaluationsCsv(Request $request)
     {
         $info = $this->equipeInfo();
-        if (!$info['equipe']) {
+        if (! $info['equipe']) {
             return redirect()->back()->with('error', 'Informations du superviseur non trouvées.');
         }
 
-        $evolution = \App\Services\EvaluationService::evolutionMensuelle($info['employerIds'], 6);
+        $evolution = EvaluationService::evolutionMensuelle($info['employerIds'], 6);
 
-        $lignes = ["Équipe;Mois;Note moyenne /20;Couleur"];
+        $lignes = ['Équipe;Mois;Note moyenne /20;Couleur'];
         $couleurLibelle = [
             '#2E8B57' => 'Vert (>=14)',
             '#D97706' => 'Orange (10-13)',
@@ -526,15 +542,15 @@ class SuperviseurEvaluationController extends Controller
             '#888888' => 'Aucune donnée',
         ];
         foreach ($evolution['labels'] as $i => $label) {
-            $lignes[] = $info['equipe'] . ';' . $label . ';' . str_replace('.', ',', (string) $evolution['notes'][$i]) . ';' . ($couleurLibelle[$evolution['couleurs'][$i]] ?? $evolution['couleurs'][$i]);
+            $lignes[] = $info['equipe'].';'.$label.';'.str_replace('.', ',', (string) $evolution['notes'][$i]).';'.($couleurLibelle[$evolution['couleurs'][$i]] ?? $evolution['couleurs'][$i]);
         }
 
-        $contenu = implode("\n", $lignes) . "\n";
-        $nomFichier = 'evolution_evaluations_equipe_' . str_replace(' ', '_', $info['equipe']) . '.csv';
+        $contenu = implode("\n", $lignes)."\n";
+        $nomFichier = 'evolution_evaluations_equipe_'.str_replace(' ', '_', $info['equipe']).'.csv';
 
         return response($contenu, 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename=' . $nomFichier,
+            'Content-Disposition' => 'attachment; filename='.$nomFichier,
         ]);
     }
 }

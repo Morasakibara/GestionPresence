@@ -9,50 +9,36 @@
 @if(session('success'))<div class="alert alert-success"><svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>{{ session('success') }}</span></div>@endif
 @if(session('error'))<div class="alert alert-danger"><svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>{{ session('error') }}</span></div>@endif
 
-<!-- ═══ STATS CARDS ═══ -->
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-    <div class="stat-card border-pharaoh-gold/30 bg-gradient-to-br from-[#FBF3E6] to-white">
-        <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-        </div>
-        <div class="stat-card-value text-pharaoh-gold">{{ number_format($solde, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label font-semibold">Solde en caisse</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-icon bg-red-50 text-red-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-        </div>
-        <div class="stat-card-value text-red-600">{{ number_format($totalRetraits, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label">{{ $countRetraits }} retrait(s)</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-icon bg-blue-50 text-blue-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-        </div>
-        <div class="stat-card-value text-blue-600">{{ number_format($moyenne, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label">Moyenne / retrait</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-icon bg-orange-50 text-orange-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
-        </div>
-        <div class="stat-card-value text-orange-600">{{ number_format($maxRetrait, 0, ',', '.') }} FCFA</div>
-        <div class="stat-card-label">Plus gros retrait</div>
-    </div>
+<!-- ═══ INDICATEURS ═══ -->
+<div class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+    @include('partials.dashboard.kpi', ['label' => 'Solde en caisse', 'value' => number_format($solde, 0, ',', ' '), 'meta' => 'FCFA disponibles', 'tone' => 'gold'])
+    @include('partials.dashboard.kpi', ['label' => 'Total retraits', 'value' => number_format($totalRetraits, 0, ',', ' '), 'meta' => $countRetraits . ' retrait(s) — FCFA sortis', 'tone' => 'danger'])
+    @include('partials.dashboard.kpi', ['label' => 'Moyenne / retrait', 'value' => number_format($moyenne, 0, ',', ' '), 'meta' => 'FCFA par opération', 'tone' => 'info'])
+    @include('partials.dashboard.kpi', ['label' => 'Plus gros retrait', 'value' => number_format($maxRetrait, 0, ',', ' '), 'meta' => 'FCFA sur la période', 'tone' => 'warning'])
 </div>
 
 <!-- ═══ GRAPHIQUE + TOP MOTIFS ═══ -->
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
-    <div class="lg:col-span-2 pharaoh-card p-6">
-        <h3 class="section-title mb-4 flex items-center gap-2">
-            <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
-            <span>Évolution des retraits — 30 derniers jours</span>
-        </h3>
-        <div style="height:280px;"><canvas id="retraitsChart"></canvas></div>
+    <div class="console-card lg:col-span-2">
+        <div class="console-card-head">
+            <div>
+                <h3 class="console-card-title">Évolution des retraits</h3>
+                <p class="console-card-sub">30 derniers jours</p>
+            </div>
+        </div>
+        <div class="console-card-body">
+            <div class="h-[280px]"><canvas id="retraitsChart" aria-label="Évolution des retraits sur 30 jours" role="img"></canvas></div>
+        </div>
     </div>
 
-    <div class="pharaoh-card p-6">
-        <h3 class="section-title mb-4">📋 Top motifs</h3>
+    <div class="console-card">
+        <div class="console-card-head">
+            <div>
+                <h3 class="console-card-title">Top motifs</h3>
+                <p class="console-card-sub">Répartition des sorties</p>
+            </div>
+        </div>
+        <div class="console-card-body">
         @forelse($topMotifs as $item)
         <div class="flex items-center justify-between py-2.5 {{ !$loop->last ? 'border-b border-gray-100' : '' }}">
             <div class="flex-1 min-w-0">
@@ -64,6 +50,7 @@
         @empty
         <p class="text-sm text-gray-400">Aucun retrait enregistré</p>
         @endforelse
+        </div>
     </div>
 </div>
 
@@ -137,36 +124,19 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/pharaoh-charts.js') }}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('retraitsChart');
-    if (!ctx) return;
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: @json($labels30j),
-            datasets: [{
-                label: 'Retraits',
-                data: @json($data30j),
-                backgroundColor: 'rgba(214,69,69,0.65)',
-                borderRadius: 4,
-                borderSkipped: false,
-            }]
+document.addEventListener('DOMContentLoaded', function () {
+    PharaohCharts.bar(document.getElementById('retraitsChart'), {
+        labels: @json($labels30j),
+        datasets: [{ label: 'Retraits', data: @json($data30j), backgroundColor: 'gold' }]
+    }, {
+        plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => PharaohCharts.money(ctx.parsed.y) } }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('fr-FR') + ' FCFA' } },
-                x: { ticks: { maxRotation: 45, font: { size: 10 } } }
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toLocaleString('fr-FR') + ' FCFA' } }
-            }
-        }
+        scales: { y: { ticks: { callback: value => PharaohCharts.number(value) } } }
     });
 });
 </script>

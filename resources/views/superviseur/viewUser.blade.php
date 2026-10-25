@@ -10,7 +10,7 @@
 @section('content')
 
 <!-- Profil utilisateur -->
-<div class="pharaoh-card overflow-hidden mb-6">
+<div class="console-card mb-6 overflow-hidden">
     <!-- En-tête -->
     <div class="bg-gradient-to-r from-pharaoh-black to-pharaoh-bronze-dark px-6 py-6 text-white">
         <div class="flex flex-col items-center space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0">
@@ -43,29 +43,30 @@
     <div class="px-6 py-6">
         <!-- Statistiques -->
         <div class="mb-6">
-            <h3 class="section-title mb-4">Statistiques de présence</h3>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div class="stat-card">
-                    <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">
-                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </div>
-                    <div class="stat-card-value text-pharaoh-gold">{{ $totalPresences }}</div>
-                    <div class="stat-card-label">Total présences</div>
-                </div>
+            <h3 class="console-card-title mb-4">Statistiques de présence</h3>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                @include('partials.dashboard.kpi', ['label' => 'Total présences', 'value' => $totalPresences, 'meta' => 'Jours pointés', 'tone' => 'gold'])
             </div>
         </div>
 
         <!-- Graphique -->
         <div class="mb-6">
-            <h3 class="section-title mb-4">Présences du mois</h3>
-            <div class="pharaoh-card p-4" style="height: 300px;">
-                <canvas id="presenceChart"></canvas>
+            <div class="console-card">
+                <div class="console-card-head">
+                    <div>
+                        <h3 class="console-card-title">Présences du mois</h3>
+                        <p class="console-card-sub">Jours pointés sur la période</p>
+                    </div>
+                </div>
+                <div class="console-card-body">
+                    <div class="h-[300px]"><canvas id="presenceChart" role="img" aria-label="Présences du mois"></canvas></div>
+                </div>
             </div>
         </div>
 
         <!-- Géolocalisation -->
         <div class="mb-6">
-            <h3 class="section-title mb-4">Dernières localisations</h3>
+            <h3 class="console-card-title mb-4">Dernières localisations</h3>
             @php
                 $lastPresence = App\Models\Presence::where('employerID', $utilisateur->id)
                     ->whereNotNull('latitude_arrivee')
@@ -75,9 +76,9 @@
 
             @if($lastPresence)
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div class="pharaoh-card p-4">
-                        <h4 class="font-semibold text-sm text-[#080808] mb-3 flex items-center gap-2">
-                            <span class="h-2 w-2 rounded-full bg-green-500"></span>
+                    <div class="console-card p-4">
+                        <h4 class="mb-3 flex items-center gap-2 text-sm font-semibold text-[#080808]">
+                            <span class="console-dot bg-green-500"></span>
                             Dernière arrivée
                         </h4>
                         <div class="space-y-1 text-sm">
@@ -98,9 +99,9 @@
                         </div>
                     </div>
 
-                    <div class="pharaoh-card p-4">
-                        <h4 class="font-semibold text-sm text-[#080808] mb-3 flex items-center gap-2">
-                            <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                    <div class="console-card p-4">
+                        <h4 class="mb-3 flex items-center gap-2 text-sm font-semibold text-[#080808]">
+                            <span class="console-dot bg-red-500"></span>
                             Dernier départ
                         </h4>
                         <div class="space-y-1 text-sm">
@@ -123,8 +124,8 @@
                 </div>
 
                 @if($lastPresence->workplaceLocation)
-                    <div class="mt-4 pharaoh-card p-4">
-                        <h4 class="font-semibold text-sm text-[#080808] mb-1 flex items-center gap-2">
+                    <div class="console-card mt-4 p-4">
+                        <h4 class="mb-1 flex items-center gap-2 text-sm font-semibold text-[#080808]">
                             <svg class="h-4 w-4 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
                             Lieu de travail
                         </h4>
@@ -132,8 +133,8 @@
                     </div>
                 @endif
             @else
-                <div class="pharaoh-card p-8 text-center">
-                    <svg class="h-12 w-12 mx-auto text-gray-300 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                <div class="console-empty">
+                    <svg class="mx-auto mb-3 h-12 w-12 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
                     <p class="text-sm text-gray-500">Aucune donnée de géolocalisation disponible.</p>
                 </div>
             @endif
@@ -141,7 +142,7 @@
 
         <!-- Bouton retour -->
         <div class="flex justify-end">
-            <a href="{{ route('superviseur.showFollowPresence') }}" class="btn-press inline-flex items-center rounded-lg bg-pharaoh-gold/10 px-4 py-2 text-sm font-semibold text-pharaoh-bronze-dark transition-colors hover:bg-pharaoh-gold/20">
+            <a href="{{ route('superviseur.showFollowPresence') }}" class="btn-soft">
                 <svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" /></svg>
                 Retour
             </a>
@@ -151,58 +152,29 @@
 
 @endsection
 
-@section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/pharaoh-charts.js') }}"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    setTimeout(function() {
-        var ctx = document.getElementById('presenceChart');
-        if (!ctx) return;
-        var presenceData = @json($presenceStats);
+document.addEventListener('DOMContentLoaded', function () {
+    const presenceData = @json($presenceStats);
 
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: presenceData.labels,
-                datasets: [{
-                    label: 'Présences',
-                    data: presenceData.data,
-                    borderColor: '#D39B23',
-                    backgroundColor: 'rgba(211, 155, 35, 0.1)',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#D39B23',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    tension: 0.3,
-                    fill: true,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#fff',
-                        titleColor: '#080808',
-                        bodyColor: '#555',
-                        borderColor: '#E7E7E7',
-                        borderWidth: 1,
-                        displayColors: false,
-                        callbacks: {
-                            label: function(ctx) { return 'Présences: ' + ctx.raw; }
-                        }
-                    }
-                },
-                scales: {
-                    x: { grid: { display: false }, ticks: { maxRotation: 45 } },
-                    y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } }
+    PharaohCharts.line(document.getElementById('presenceChart'), {
+        labels: presenceData.labels,
+        datasets: [{ label: 'Présences', data: presenceData.data }]
+    }, {
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function (ctx) { return 'Présences : ' + ctx.parsed.y; }
                 }
             }
-        });
-    }, 100);
+        },
+        scales: {
+            y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } }
+        }
+    });
 });
 </script>
-@endsection
+@endpush

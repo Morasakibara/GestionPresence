@@ -112,71 +112,31 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/pharaoh-charts.js') }}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const canvas = document.getElementById('presenceChart');
-    if (!canvas) {
-        return;
-    }
-
-    const ctx = canvas.getContext('2d');
-
-    const data = {
-        labels: @json($presences->pluck('date')->toArray()), // Récupère les jours du mois
+document.addEventListener('DOMContentLoaded', function () {
+    PharaohCharts.bar(document.getElementById('presenceChart'), {
+        labels: @json($presences->pluck('date')->toArray()),
         datasets: [
             {
                 label: 'Présences',
-                data: @json($presences->where('status', 'présent')->pluck('date')->countBy()->toArray()), // Comptes les jours où l'utilisateur est présent
-                backgroundColor: '#D39B23', // Or de la charte Le Pharaon
-                borderRadius: 4
+                data: @json($presences->where('status', 'présent')->pluck('date')->countBy()->toArray()),
+                backgroundColor: 'gold'
             },
             {
                 label: 'Absences',
-                data: @json($presences->where('status', 'absent')->pluck('date')->countBy()->toArray()), // Comptes les jours où l'utilisateur est absent
-                backgroundColor: '#D64545', // Danger de la charte
-                borderRadius: 4
+                data: @json($presences->where('status', 'absent')->pluck('date')->countBy()->toArray()),
+                backgroundColor: 'danger'
             }
         ]
-    };
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: data,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false // Masquer la légende par défaut car nous avons une légende personnalisée
-                },
-                tooltip: {
-                    backgroundColor: '#1F2937',
-                    titleColor: '#F9FAFB',
-                    bodyColor: '#F9FAFB',
-                    padding: 10,
-                    cornerRadius: 6
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0 // Entiers seulement
-                    },
-                    grid: {
-                        color: '#E5E7EB'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            },
-            barPercentage: 0.6,
-            categoryPercentage: 0.8
-        }
+    }, {
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+        },
+        barPercentage: 0.6,
+        categoryPercentage: 0.8
     });
 });
 </script>
