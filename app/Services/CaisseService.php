@@ -19,19 +19,21 @@ class CaisseService
      */
     public function solde(): array
     {
-        // Commandes actives (exclure annulées)
-        $totalCommandes = Commande::where('superviseur_id', $this->superviseurId)
-            ->where('statut_paiement', '!=', 'annule')->sum('montant');
-        $totalCommandesPaye = Commande::where('superviseur_id', $this->superviseurId)
-            ->where('statut_paiement', '!=', 'annule')->sum('montant_paye');
+        // Une seule requête pour les 4 totaux (agrégats conditionnels)
+        $row = Commande::where('superviseur_id', $this->superviseurId)
+            ->selectRaw("SUM(CASE WHEN statut_paiement != 'annule' THEN montant END) as total_commandes")
+            ->selectRaw("SUM(CASE WHEN statut_paiement != 'annule' THEN montant_paye END) as total_commandes_paye")
+            ->selectRaw("SUM(CASE WHEN statut_paiement = 'annule' THEN montant_paye END) as remboursements")
+            ->first();
+        $totalCommandes     = (float) ($row->total_commandes ?? 0);
+        $totalCommandesPaye = (float) ($row->total_commandes_paye ?? 0);
+        $remboursements     = (float) ($row->remboursements ?? 0);
+
+        // Total caisse (commandes + services + retraits) en deux requêtes agrégées
         $totalServices = ServiceFourni::where('superviseur_id', $this->superviseurId)->sum('montant');
         $totalRetraits = Retrait::where('superviseur_id', $this->superviseurId)->sum('montant');
 
         // Remboursements des commandes annulées (montant payé retourné en négatif)
-        $remboursements = Commande::where('superviseur_id', $this->superviseurId)
-            ->where('statut_paiement', 'annule')
-            ->sum('montant_paye');
-
         // Seul le montant PAYÉ entre en caisse, moins les remboursements
         $enCaisse = (float) $totalCommandesPaye + (float) $totalServices - (float) $totalRetraits - (float) $remboursements;
 
@@ -75,14 +77,16 @@ class CaisseService
      */
     public function commandesParCategorie(): array
     {
+        // Agrégats groupés côté SQL (au lieu de charger toute la table)
         return Commande::where('superviseur_id', $this->superviseurId)
-            ->get()
+            ->selectRaw('type, SUM(montant) as total, SUM(montant_paye) as paye, COUNT(*) as cnt')
             ->groupBy('type')
-            ->map(fn($c) => [
-                'total' => $c->sum('montant'),
-                'paye' => $c->sum('montant_paye'),
-                'count' => $c->count(),
-            ])
+            ->get()
+            ->mapWithKeys(fn($r) => [$r->type => [
+                'total' => (float) $r->total,
+                'paye' => (float) $r->paye,
+                'count' => (int) $r->cnt,
+            ]])
             ->toArray();
     }
 
@@ -92,12 +96,13 @@ class CaisseService
     public function servicesParCategorie(): array
     {
         return ServiceFourni::where('superviseur_id', $this->superviseurId)
-            ->get()
+            ->selectRaw('type, SUM(montant) as total, COUNT(*) as cnt')
             ->groupBy('type')
-            ->map(fn($s) => [
-                'total' => $s->sum('montant'),
-                'count' => $s->count(),
-            ])
+            ->get()
+            ->mapWithKeys(fn($r) => [$r->type => [
+                'total' => (float) $r->total,
+                'count' => (int) $r->cnt,
+            ]])
             ->toArray();
     }
 
@@ -110,19 +115,28 @@ class CaisseService
         $entrees = [];
         $sorties = [];
 
+        $debut = now()->subDays(6)->toDateString();
+
+        // 3 requêtes groupées (au lieu de 21 requêtes journalières)
+        $cmdParJour = Commande::where('superviseur_id', $this->superviseurId)
+            ->where('date', '>=', $debut)
+            ->selectRaw('date, SUM(montant_paye) as total')
+            ->groupBy('date')->pluck('total', 'date');
+        $svcParJour = ServiceFourni::where('superviseur_id', $this->superviseurId)
+            ->where('date', '>=', $debut)
+            ->selectRaw('date, SUM(montant) as total')
+            ->groupBy('date')->pluck('total', 'date');
+        $retParJour = Retrait::where('superviseur_id', $this->superviseurId)
+            ->where('date', '>=', $debut)
+            ->selectRaw('date, SUM(montant) as total')
+            ->groupBy('date')->pluck('total', 'date');
+
         for ($i = 6; $i >= 0; $i--) {
             $jour = now()->subDays($i)->toDateString();
             $labels[] = now()->subDays($i)->format('d/m');
 
-            $entreeCmd = Commande::where('superviseur_id', $this->superviseurId)
-                ->whereDate('date', $jour)->sum('montant_paye');
-            $entreeSvc = ServiceFourni::where('superviseur_id', $this->superviseurId)
-                ->whereDate('date', $jour)->sum('montant');
-            $sortie = Retrait::where('superviseur_id', $this->superviseurId)
-                ->whereDate('date', $jour)->sum('montant');
-
-            $entrees[] = (float) $entreeCmd + (float) $entreeSvc;
-            $sorties[] = (float) $sortie;
+            $entrees[] = (float) ($cmdParJour[$jour] ?? 0) + (float) ($svcParJour[$jour] ?? 0);
+            $sorties[] = (float) ($retParJour[$jour] ?? 0);
         }
 
         return compact('labels', 'entrees', 'sorties');
@@ -134,10 +148,12 @@ class CaisseService
     public function repartitionTypes(): array
     {
         $commandesParType = Commande::where('superviseur_id', $this->superviseurId)
-            ->get()->groupBy('type')->map(fn($c) => $c->sum('montant'));
+            ->selectRaw('type, SUM(montant) as total')
+            ->groupBy('type')->pluck('total', 'type');
 
         $servicesParType = ServiceFourni::where('superviseur_id', $this->superviseurId)
-            ->get()->groupBy('type')->map(fn($s) => $s->sum('montant'));
+            ->selectRaw('type, SUM(montant) as total')
+            ->groupBy('type')->pluck('total', 'type');
 
         return compact('commandesParType', 'servicesParType');
     }
@@ -175,11 +191,10 @@ class CaisseService
      */
     public function retraitStats(): array
     {
-        $retraits = Retrait::where('superviseur_id', $this->superviseurId)->get();
-
-        // Total retraits
-        $totalRetraits = (float) $retraits->sum('montant');
-        $countRetraits = $retraits->count();
+        // Totaux en SQL (au lieu de charger tous les retraits)
+        $base = Retrait::where('superviseur_id', $this->superviseurId);
+        $totalRetraits = (float) (clone $base)->sum('montant');
+        $countRetraits = (int) (clone $base)->count();
 
         // Retraits des 30 derniers jours — requête DB groupée (rapide)
         $retraits30j = Retrait::where('superviseur_id', $this->superviseurId)
@@ -198,23 +213,25 @@ class CaisseService
             $data30j[] = $retraits30j[$jour] ?? 0.0;
         }
 
-        // Top motifs (regroupés par motif)
-        $topMotifs = $retraits
-            ->groupBy(fn($r) => mb_strtolower(trim($r->motif)))
-            ->map(fn($group) => [
-                'motif' => $group->first()->motif,
-                'total' => $group->sum('montant'),
-                'count' => $group->count(),
-            ])
-            ->sortByDesc('total')
+        // Top motifs (agrégats groupés côté SQL)
+        $topMotifs = Retrait::where('superviseur_id', $this->superviseurId)
+            ->selectRaw('motif, SUM(montant) as total, COUNT(*) as cnt')
+            ->groupBy('motif')
+            ->orderByDesc('total')
             ->take(5)
+            ->get()
+            ->map(fn($r) => [
+                'motif' => $r->motif,
+                'total' => (float) $r->total,
+                'count' => (int) $r->cnt,
+            ])
             ->values();
 
         // Moyenne par retrait
         $moyenne = $countRetraits > 0 ? $totalRetraits / $countRetraits : 0;
 
-        // Plus gros retrait
-        $maxRetrait = (float) $retraits->max('montant');
+        // Plus gros retrait (requête d'agrégat, sans charger la liste)
+        $maxRetrait = (float) (clone $base)->max('montant');
 
         return compact(
             'totalRetraits', 'countRetraits', 'moyenne', 'maxRetrait',
