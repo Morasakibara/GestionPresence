@@ -93,13 +93,19 @@
                     ? (data.latest_message || 'Vous avez une nouvelle notification')
                     : `Vous avez ${diff} nouvelles notifications`;
                 showToast(msg, data.latest_type || 'info');
+            }
 
-                // Jouer un son subtil
-                try {
-                    const audio = new Audio('data:audio/wav;base64,UklGRl4FAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YToFAACAgICAgICAgI=');
-                    audio.volume = 0.1;
-                    audio.play().catch(() => {});
-                } catch(e) {}
+            // Son de notification : uniquement une fois, juste après la connexion
+            // (drapeau posé par le serveur dans la session puis consommé ici).
+            if (window.__notifSoundArmed) {
+                window.__notifSoundArmed = false;
+                if (newCount > 0) {
+                    try {
+                        const audio = new Audio('data:audio/wav;base64,UklGRl4FAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YToFAACAgICAgICAgI=');
+                        audio.volume = 0.1;
+                        audio.play().catch(() => {});
+                    } catch(e) {}
+                }
             }
 
             updateBadges(newCount);

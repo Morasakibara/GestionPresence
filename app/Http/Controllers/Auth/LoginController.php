@@ -83,7 +83,12 @@ class LoginController extends Controller
 
             // Le PIN ne doit être demandé qu'à l'expiration de la session :
             // une connexion email + mot de passe est un jeton plus fort que le PIN.
-            session(['pin_verified' => true, 'pin_verified_at' => now()->timestamp]);
+            session([
+                'pin_verified' => true,
+                'pin_verified_at' => now()->timestamp,
+                // Le son de notification ne doit retentir qu'une fois, juste après la connexion
+                'notif_sound_armed' => true,
+            ]);
 
             // Cookie permettant de se relogger au seul PIN si la session expire.
             \App\Http\Controllers\PinController::issueRecoveryCookie($user);

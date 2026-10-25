@@ -28,8 +28,19 @@ class PresenceAlertController extends Controller
         }
 
         $since = request()->query('since');
-        $sinceDate = $since ? \Carbon\Carbon::parse($since) : now()->subMinutes(5);
         $today = now()->toDateString();
+
+        // `heureArrivee` / `heureDepart` sont des colonnes TIME : on compare
+        // uniquement l'heure (jamais un datetime complet), sinon l'API rejoue
+        // toutes les alertes de la journée à chaque chargement.
+        try {
+            $sinceDate = $since ? \Carbon\Carbon::parse($since) : now()->subMinutes(5);
+        } catch (\Throwable $e) {
+            $sinceDate = now()->subMinutes(5);
+        }
+        $sinceTime = ($sinceDate->toDateString() === $today)
+            ? $sinceDate->format('H:i:s')
+            : '00:00:00';
 
         if ($user->role === 'Administrateur') {
             $equipeFilter = null;
@@ -45,7 +56,7 @@ class PresenceAlertController extends Controller
         // Nouvelles arrivées depuis $sinceDate
         $arrivalsQuery = Presence::whereDate('date', $today)
             ->whereNotNull('heureArrivee')
-            ->where('heureArrivee', '>=', $sinceDate)
+            ->where('heureArrivee', '>', $sinceTime)
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
             ->select(
                 'presence.employerID',
@@ -69,7 +80,7 @@ class PresenceAlertController extends Controller
         // Nouveaux départs depuis $sinceDate
         $departuresQuery = Presence::whereDate('date', $today)
             ->whereNotNull('heureDepart')
-            ->where('heureDepart', '>=', $sinceDate)
+            ->where('heureDepart', '>', $sinceTime)
             ->join('utilisateur', 'presence.employerID', '=', 'utilisateur.id')
             ->select(
                 'presence.employerID',

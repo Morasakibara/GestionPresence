@@ -11,11 +11,28 @@
     'use strict';
 
     const POLL_INTERVAL = 10000;
-    let lastCheck = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    /** Horodatage local « YYYY-MM-DD HH:mm:ss » (jamais UTC : évite les rejeux). */
+    function nowLocal() {
+        const d = new Date();
+        const p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ` +
+               `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    }
+
+    let lastCheck = nowLocal();
     let timer = null;
     let isPaused = false;
     let browserNotifPermission = false;
     let wsConnected = false;
+
+    // Anti-doublon : un même événement (personne + heure) n'alerte qu'une fois
+    const dejaVus = new Set();
+    function estNouveau(cle) {
+        if (dejaVus.has(cle)) return false;
+        dejaVus.add(cle);
+        return true;
+    }
 
     // ── Notifications navigateur ──
     function requestNotifPermission() {
@@ -110,6 +127,7 @@
 
     // ── Événements ──
     function handleArrival(data) {
+        if (!estNouveau(`arrival-${data.user_id}-${data.heure}`)) return;
         const type = data.retard ? 'retard' : 'arrival';
         const msg = data.retard
             ? `⚠️ ${data.nom} est arrivé(e) en retard à ${data.heure}`
@@ -128,6 +146,7 @@
     }
 
     function handleDeparture(data) {
+        if (!estNouveau(`departure-${data.user_id}-${data.heure}`)) return;
         const msg = `🚪 ${data.nom} est parti(e) à ${data.heure}`;
         showToast(msg, 'departure');
         sendBrowserNotification('Départ enregistré', msg, 'departure-' + data.user_id);
@@ -266,7 +285,7 @@
                 updateCounts(data.counts);
             }
 
-            lastCheck = data.timestamp || new Date().toISOString().slice(0, 19).replace('T', ' ');
+            lastCheck = data.timestamp || nowLocal();
         } catch (err) {
             // Silencieux
         }
@@ -286,7 +305,7 @@
         } else {
             isPaused = false;
             if (!wsConnected) {
-                lastCheck = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                lastCheck = nowLocal();
                 startPolling();
             }
         }
