@@ -168,7 +168,57 @@ class ServiceFacturationTest extends TestCase
             ->assertRedirect('/directrice/services')
             ->assertSessionHas('error');
 
-        $this->assertStringContainsString('déjà payée', session('error'));
+        $this->assertStringContainsString('déjà payé', session('error'));
+    }
+
+    /** Montant <= 1 000 FCFA → service enregistré sans facture PDF ni WhatsApp */
+    public function test_service_sous_1000_sans_facture(): void
+    {
+        $directrice = $this->loginDirectrice();
+
+        $this->post('/directrice/services', [
+            'type'            => 'photocopie',
+            'montant'         => 800,
+            'acompte'         => 800,
+            'client_nom'      => 'Passage rapide',
+            'numero_whatsapp' => '+237690123456', // fourni mais ignoré (pas de facture)
+        ])->assertRedirect('/directrice/services');
+
+        $service = ServiceFourni::where('superviseur_id', $directrice->id)
+            ->where('montant', 800)->latest('id')->first();
+
+        $this->assertNotNull($service, 'Service non créé');
+        $this->assertEquals('paye', $service->statut_paiement);
+        $this->assertNull($service->numero_facture, 'Aucune facture ne doit être générée sous 1 000 FCFA');
+
+        $this->assertEquals(0, Facture::where('service_id', $service->id)->count(), 'Aucune facture PDF attendue');
+        $this->assertEquals(0, WhatsappEnvoi::where('service_id', $service->id)->count(), 'Aucun envoi WhatsApp attendu');
+    }
+
+    /** Petit montant partiel : solde encaissable mais sans génération de facture */
+    public function test_petit_service_solde_sans_facture(): void
+    {
+        $directrice = $this->loginDirectrice();
+
+        $this->post('/directrice/services', [
+            'type'    => 'scan',
+            'montant' => 900,
+            'acompte' => 400,
+        ])->assertRedirect('/directrice/services');
+
+        $service = ServiceFourni::where('superviseur_id', $directrice->id)
+            ->where('montant', 900)->latest('id')->firstOrFail();
+
+        $this->assertNull($service->numero_facture);
+        $this->assertEquals(ServiceFourni::STATUT_EN_ATTENTE_SOLDE, $service->statut_paiement);
+
+        $this->post("/directrice/services/{$service->id}/encaisser-solde")
+            ->assertRedirect('/directrice/services');
+
+        $service->refresh();
+        $this->assertEquals('paye', $service->statut_paiement);
+        $this->assertEquals(900, (float) $service->montant_paye);
+        $this->assertEquals(0, Facture::where('service_id', $service->id)->count(), 'Aucune facture solde attendue');
     }
 
     /** L'ancien formulaire (sans WhatsApp) continue de fonctionner */

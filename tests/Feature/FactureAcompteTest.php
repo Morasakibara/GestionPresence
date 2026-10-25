@@ -127,6 +127,27 @@ class FactureAcompteTest extends TestCase
         $this->assertEquals($avant, Commande::where('superviseur_id', $directrice->id)->count(), 'Aucune commande ne doit être créée');
     }
 
+    /** Montant <= 1 000 FCFA → commande enregistrée sans facture PDF */
+    public function test_commande_sous_1000_sans_facture(): void
+    {
+        $directrice = $this->loginDirectrice();
+
+        $this->post('/directrice/commandes', [
+            'type'            => 'photocopie',
+            'montant'         => 700,
+            'acompte'         => 700,
+            'numero_whatsapp' => '+237690123456',
+        ])->assertRedirect('/directrice/commandes');
+
+        $commande = Commande::where('superviseur_id', $directrice->id)
+            ->where('montant', 700)->latest('id')->first();
+
+        $this->assertNotNull($commande, 'Commande non créée');
+        $this->assertEquals('paye', $commande->statut_paiement);
+        $this->assertNull($commande->numero_facture, 'Aucune facture ne doit être générée sous 1 000 FCFA');
+        $this->assertEquals(0, Facture::where('commande_id', $commande->id)->count(), 'Aucune facture PDF attendue');
+    }
+
     /** L'ancien formulaire (sans WhatsApp) continue de fonctionner */
     public function test_ancien_formulaire_sans_whatsapp(): void
     {

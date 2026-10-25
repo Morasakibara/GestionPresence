@@ -16,6 +16,10 @@ return [
 
     'devise' => 'FCFA',
 
+    // Montant minimal pour générer une facture (PDF + WhatsApp).
+    // En dessous ou égal, la vente est simplement enregistrée sans facture.
+    'montant_minimum' => 1000,
+
     // Numérotation séquentielle annuelle : FAC-2026-00001 (commandes), SVC-2026-00001 (services)
     'numerotation' => [
         'prefixe'         => 'FAC-',

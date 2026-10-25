@@ -36,19 +36,32 @@ class FactureService
      * client_nom (facultatif), numero_whatsapp (obligatoire, format +237...),
      * details (facultatif).
      */
+    /** Le montant donne-t-il lieu à une facture ? (> seuil configuré, 1 000 FCFA). */
+    public static function doitFacturer(float $montant): bool
+    {
+        return $montant > (float) config('facture.montant_minimum', 1000);
+    }
+
     public function creerAcompte(Request $request): Commande
     {
+        $montant     = round((float) $request->montant, 2);
+        $facturable  = self::doitFacturer($montant);
+
         $request->validate([
             'type'            => 'required|string',
             'montant'         => 'required|numeric|min:1|max:100000000',
-            'acompte'         => 'required|numeric|min:1|max:100000000',
+            'acompte'         => $facturable
+                ? 'required|numeric|min:1|max:100000000'
+                : 'nullable|numeric|min:0|max:100000000',
             'client_nom'      => 'nullable|string|max:100',
-            'numero_whatsapp' => ['required', 'string', 'regex:' . config('facture.whatsapp_regex')],
+            'numero_whatsapp' => $facturable
+                ? ['required', 'string', 'regex:' . config('facture.whatsapp_regex')]
+                : ['nullable', 'string', 'regex:' . config('facture.whatsapp_regex')],
             'details'         => 'nullable|string|max:1000',
         ]);
 
-        $montant  = round((float) $request->montant, 2);
-        $acompte  = round((float) $request->acompte, 2);
+        // Montants <= 1 000 FCFA : vente simple, sans facture PDF ni WhatsApp
+        $acompte  = round((float) ($request->acompte ?? $montant), 2);
 
         if ($acompte > $montant) {
             throw \Illuminate\Validation\ValidationException::withMessages([
@@ -58,8 +71,8 @@ class FactureService
 
         $comptant = $acompte >= $montant;
 
-        $commande = DB::transaction(function () use ($request, $montant, $acompte, $comptant) {
-            $numero = self::genererNumero();
+        $commande = DB::transaction(function () use ($request, $montant, $acompte, $comptant, $facturable) {
+            $numero = $facturable ? self::genererNumero() : null;
 
             $commande = Commande::create([
                 'superviseur_id'   => $this->superviseurId,
@@ -69,31 +82,39 @@ class FactureService
                 'statut_paiement'  => $comptant ? 'paye' : Commande::STATUT_EN_ATTENTE_SOLDE,
                 'details'          => $request->details,
                 'date'             => now()->toDateString(),
-                'numero_whatsapp'  => self::normaliserTelephone($request->numero_whatsapp),
+                'numero_whatsapp'  => $request->filled('numero_whatsapp')
+                    ? self::normaliserTelephone($request->numero_whatsapp)
+                    : null,
                 'client_nom'       => $request->client_nom,
                 'numero_facture'   => $numero,
-                'prix_verrouille'  => true, // verrou dès le premier versement
+                'prix_verrouille'  => $facturable, // verrou dès le premier versement
             ]);
 
-            FacturePdfService::figer(
-                $commande,
-                $numero,
-                $comptant ? Facture::PHASE_SOLDE : Facture::PHASE_ACOMPTE
-            );
+            if ($facturable) {
+                FacturePdfService::figer(
+                    $commande,
+                    $numero,
+                    $comptant ? Facture::PHASE_SOLDE : Facture::PHASE_ACOMPTE
+                );
+            }
 
             return $commande;
         });
 
         AuditService::created(
             $this->module,
-            "Facture {$commande->numero_facture} — acompte " . number_format($acompte, 0, ',', '.') .
-            " FCFA sur " . number_format($montant, 0, ',', '.') . " FCFA (WhatsApp {$commande->numero_whatsapp})",
+            $facturable
+                ? "Facture {$commande->numero_facture} — acompte " . number_format($acompte, 0, ',', '.') .
+                    " FCFA sur " . number_format($montant, 0, ',', '.') . " FCFA (WhatsApp {$commande->numero_whatsapp})"
+                : "Vente {$request->type} de " . number_format($montant, 0, ',', '.') . " FCFA (sans facture, montant ≤ " . number_format((float) config('facture.montant_minimum', 1000), 0, ',', '.') . " FCFA)",
             $commande->toArray(),
             $request
         );
 
         // Étape 4.2 — envoi WhatsApp automatique dès la confirmation du paiement
-        $this->envoyerWhatsApp($commande->numero_facture, Facture::PHASE_ACOMPTE);
+        if ($facturable) {
+            $this->envoyerWhatsApp($commande->numero_facture, Facture::PHASE_ACOMPTE);
+        }
 
         return $commande;
     }
@@ -113,7 +134,8 @@ class FactureService
             ->firstOrFail();
 
         if ($commande->statut_paiement === 'paye') {
-            return ['success' => false, 'error' => "La facture {$commande->numero_facture} est déjà payée."];
+            $label = $commande->numero_facture ? "La facture {$commande->numero_facture}" : "La vente #{$commande->id}";
+            return ['success' => false, 'error' => "{$label} est déjà payée."];
         }
         if (in_array($commande->statut_paiement, ['annule'], true)) {
             return ['success' => false, 'error' => "Commande annulée — encaissement impossible."];
@@ -127,7 +149,10 @@ class FactureService
             'statut_paiement' => 'paye',
         ]);
 
-        FacturePdfService::figer($commande, $commande->numero_facture, Facture::PHASE_SOLDE);
+        // Facture solde uniquement si la vente a été facturée (> seuil)
+        if ($commande->numero_facture) {
+            FacturePdfService::figer($commande, $commande->numero_facture, Facture::PHASE_SOLDE);
+        }
 
         AuditService::updated(
             $this->module,
@@ -146,12 +171,14 @@ class FactureService
             \Illuminate\Support\Facades\Log::warning('Notification paiement échouée: ' . $e->getMessage());
         }
 
-        $this->envoyerWhatsApp($commande->numero_facture, Facture::PHASE_SOLDE);
+        if ($commande->numero_facture) {
+            $this->envoyerWhatsApp($commande->numero_facture, Facture::PHASE_SOLDE);
+        }
 
         return [
             'success' => true,
-            'message' => "Facture {$commande->numero_facture} payée — solde " .
-                number_format($solde, 0, ',', '.') . " FCFA encaissé.",
+            'message' => ($commande->numero_facture ? "Facture {$commande->numero_facture}" : "Vente #{$commande->id}") . ' payée — solde ' .
+                number_format($solde, 0, ',', '.') . ' FCFA encaissé.',
         ];
     }
 

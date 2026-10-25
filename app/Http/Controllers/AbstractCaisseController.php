@@ -98,18 +98,16 @@ abstract class AbstractCaisseController extends Controller
 
         $data = \Illuminate\Support\Facades\Cache::remember($cacheKey, 60, fn() => $this->service()->dashboardData());
 
+        // Les commandes par type viennent déjà du dashboardData caché (60 s)
         $today = now()->toDateString();
-        $todayKey = "{$prefix}types_{$superviseur->id}_{$today}";
-        $types = \Illuminate\Support\Facades\Cache::remember($todayKey, 60, function () use ($superviseur, $today) {
-            $commandesJour = Commande::where('superviseur_id', $superviseur->id)
-                ->whereDate('date', $today)->get();
-            return $commandesJour->groupBy('type')->map(fn($c) => $c->sum('montant'));
-        });
-
-        $data['commandesParType'] = $types;
-        $data['servicesParType'] = ServiceFourni::where('superviseur_id', $superviseur->id)
-            ->whereDate('date', $today)->get()
-            ->groupBy('type')->map(fn($s) => $s->sum('montant'));
+        $data['servicesParType'] = \Illuminate\Support\Facades\Cache::remember(
+            "{$prefix}services_types_{$superviseur->id}_{$today}",
+            60,
+            fn() => ServiceFourni::where('superviseur_id', $superviseur->id)
+                ->whereDate('date', $today)
+                ->selectRaw('type, SUM(montant) as total')
+                ->groupBy('type')->pluck('total', 'type')
+        );
 
         return view("{$this->viewPrefix()}.dashboard", array_merge($data, [
             'superviseurInfo' => $superviseurInfo,
@@ -141,7 +139,9 @@ abstract class AbstractCaisseController extends Controller
      */
     public function storeCommande(Request $request)
     {
-        if ($request->filled('numero_whatsapp')) {
+        // Nouveau formulaire (acompte/WhatsApp) → service de facturation qui décide
+        // s'il y a lieu de générer une facture (montant > 1 000 FCFA).
+        if ($request->filled('numero_whatsapp') || $request->filled('acompte')) {
             $this->serviceFacture()->creerAcompte($request);
         } else {
             $this->service()->enregistrerCommande($request);
@@ -341,7 +341,7 @@ abstract class AbstractCaisseController extends Controller
             'details' => 'nullable|string|max:1000',
         ]);
 
-        if ($request->filled('numero_whatsapp')) {
+        if ($request->filled('numero_whatsapp') || $request->filled('acompte')) {
             $this->serviceFacturation()->creerAcompte($request);
         } else {
             $svc = ServiceFourni::create([

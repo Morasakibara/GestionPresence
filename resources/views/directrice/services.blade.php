@@ -50,18 +50,19 @@
                 </div>
                 <div class="form-group">
                     <label class="input-label">Numéro WhatsApp <span class="text-red-500">*</span></label>
-                    <input type="tel" name="numero_whatsapp" required value="{{ old('numero_whatsapp') }}"
+                    <input type="tel" name="numero_whatsapp" value="{{ old('numero_whatsapp') }}"
                            class="input-field" placeholder="+2376XXXXXXXX"
                            pattern="^\+[1-9]\d{7,14}$" title="Format international : +2376XXXXXXX">
-                    <p class="text-xs text-gray-400 mt-1">Le PDF de la facture sera envoyé automatiquement sur ce numéro.</p>
+                    <p class="text-xs text-gray-400 mt-1">Requis au-delà de 1 000 FCFA — le PDF de la facture est envoyé automatiquement sur ce numéro.</p>
                 </div>
                 <div class="form-group">
                     <label class="input-label">Montant total (FCFA)</label>
                     <input type="number" name="montant" id="montant" class="input-field" min="1" step="any" value="{{ old('montant') }}" required placeholder="0">
+                    <p class="text-xs text-gray-400 mt-1">Facture PDF générée uniquement au-delà de 1 000 FCFA.</p>
                 </div>
                 <div class="form-group">
                     <label class="input-label">Acompte versé (FCFA)</label>
-                    <input type="number" name="acompte" id="acompte" class="input-field" min="1" step="any" value="{{ old('acompte') }}" required placeholder="0">
+                    <input type="number" name="acompte" id="acompte" class="input-field" min="1" step="any" value="{{ old('acompte') }}" placeholder="0">
                     <p class="text-xs mt-1 font-medium" id="soldeInfo"></p>
                 </div>
                 <div class="form-group">
@@ -289,8 +290,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const t = parseFloat(total.value) || 0;
         const a = parseFloat(acompte.value) || 0;
         const reste = t - a;
-        if (!t || !a) { info.textContent = ''; info.className = 'text-xs mt-1 font-medium'; return; }
+        if (!t) { info.textContent = ''; info.className = 'text-xs mt-1 font-medium'; return; }
         if (reste < 0) { info.textContent = "⚠️ L'acompte dépasse le montant total."; info.className = 'text-xs mt-1 font-medium text-red-600'; return; }
+        if (t <= 1000) {
+            info.textContent = 'Petit montant (≤ 1 000 FCFA) — enregistré sans facture PDF.';
+            info.className = 'text-xs mt-1 font-medium text-gray-500';
+            return;
+        }
+        if (!a) { info.textContent = 'Acompte + WhatsApp requis pour facturer ce service.'; info.className = 'text-xs mt-1 font-medium text-pharaoh-gold'; return; }
         info.textContent = reste === 0
             ? '✅ Comptant — la facture sera créée payée.'
             : 'Solde restant : ' + reste.toLocaleString('fr-FR') + ' FCFA (verrouillé)';

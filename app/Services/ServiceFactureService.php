@@ -34,11 +34,18 @@ class ServiceFactureService
      */
     public function creerAcompte(Request $request): ServiceFourni
     {
+        $montant    = round((float) $request->montant, 2);
+        $facturable = FactureService::doitFacturer($montant);
+
         $request->validate([
             'montant'         => 'required|numeric|min:1|max:100000000',
-            'acompte'         => 'required|numeric|min:1|max:100000000',
+            'acompte'         => $facturable
+                ? 'required|numeric|min:1|max:100000000'
+                : 'nullable|numeric|min:0|max:100000000',
             'client_nom'      => 'nullable|string|max:100',
-            'numero_whatsapp' => ['required', 'string', 'regex:' . config('facture.whatsapp_regex')],
+            'numero_whatsapp' => $facturable
+                ? ['required', 'string', 'regex:' . config('facture.whatsapp_regex')]
+                : ['nullable', 'string', 'regex:' . config('facture.whatsapp_regex')],
             'details'         => 'nullable|string|max:1000',
         ], [
             'acompte.required' => 'L\'acompte est obligatoire.',
@@ -46,8 +53,8 @@ class ServiceFactureService
             'numero_whatsapp.required' => 'Le numéro WhatsApp du client est obligatoire.',
         ]);
 
-        $montant  = round((float) $request->montant, 2);
-        $acompte  = round((float) $request->acompte, 2);
+        // Montants <= 1 000 FCFA : service enregistré sans facture PDF ni WhatsApp
+        $acompte  = round((float) ($request->acompte ?? $montant), 2);
 
         if ($acompte > $montant) {
             throw \Illuminate\Validation\ValidationException::withMessages([
@@ -58,8 +65,8 @@ class ServiceFactureService
 
         $comptant = $acompte >= $montant;
 
-        $service = DB::transaction(function () use ($request, $montant, $acompte, $comptant) {
-            $numero = self::genererNumeroService();
+        $service = DB::transaction(function () use ($request, $montant, $acompte, $comptant, $facturable) {
+            $numero = $facturable ? self::genererNumeroService() : null;
 
             $service = ServiceFourni::create([
                 'superviseur_id'  => $this->superviseurId,
@@ -69,31 +76,39 @@ class ServiceFactureService
                 'statut_paiement' => $comptant ? 'paye' : ServiceFourni::STATUT_EN_ATTENTE_SOLDE,
                 'details'         => $request->details,
                 'date'            => now()->toDateString(),
-                'numero_whatsapp' => FactureService::normaliserTelephone($request->numero_whatsapp),
+                'numero_whatsapp' => $request->filled('numero_whatsapp')
+                    ? FactureService::normaliserTelephone($request->numero_whatsapp)
+                    : null,
                 'client_nom'      => $request->client_nom,
                 'numero_facture'  => $numero,
-                'prix_verrouille' => true, // verrou dès le premier versement
+                'prix_verrouille' => $facturable, // verrou dès le premier versement
             ]);
 
-            FacturePdfService::figerService(
-                $service,
-                $numero,
-                $comptant ? Facture::PHASE_SOLDE : Facture::PHASE_ACOMPTE
-            );
+            if ($facturable) {
+                FacturePdfService::figerService(
+                    $service,
+                    $numero,
+                    $comptant ? Facture::PHASE_SOLDE : Facture::PHASE_ACOMPTE
+                );
+            }
 
             return $service;
         });
 
         AuditService::created(
             $this->module,
-            "Facture {$service->numero_facture} — acompte " . number_format($acompte, 0, ',', '.') .
-            " FCFA sur " . number_format($montant, 0, ',', '.') . " FCFA (WhatsApp {$service->numero_whatsapp})",
+            $facturable
+                ? "Facture {$service->numero_facture} — acompte " . number_format($acompte, 0, ',', '.') .
+                    " FCFA sur " . number_format($montant, 0, ',', '.') . " FCFA (WhatsApp {$service->numero_whatsapp})"
+                : "Service {$request->type} de " . number_format($montant, 0, ',', '.') . " FCFA (sans facture, montant ≤ " . number_format((float) config('facture.montant_minimum', 1000), 0, ',', '.') . " FCFA)",
             $service->toArray(),
             $request
         );
 
         // Étape 4.2 — envoi WhatsApp automatique dès la confirmation du paiement
-        $this->envoyerWhatsApp($service->numero_facture, Facture::PHASE_ACOMPTE);
+        if ($facturable) {
+            $this->envoyerWhatsApp($service->numero_facture, Facture::PHASE_ACOMPTE);
+        }
 
         return $service;
     }
@@ -111,7 +126,8 @@ class ServiceFactureService
             ->firstOrFail();
 
         if ($service->statut_paiement === 'paye') {
-            return ['success' => false, 'error' => "La facture {$service->numero_facture} est déjà payée."];
+            $label = $service->numero_facture ? "La facture {$service->numero_facture}" : "Le service #{$service->id}";
+            return ['success' => false, 'error' => "{$label} est déjà payé."];
         }
         if (in_array($service->statut_paiement, ['annule'], true)) {
             return ['success' => false, 'error' => "Service annulé — encaissement impossible."];
@@ -125,7 +141,10 @@ class ServiceFactureService
             'statut_paiement' => 'paye',
         ]);
 
-        FacturePdfService::figerService($service, $service->numero_facture, Facture::PHASE_SOLDE);
+        // Facture solde uniquement si le service a été facturé (> seuil)
+        if ($service->numero_facture) {
+            FacturePdfService::figerService($service, $service->numero_facture, Facture::PHASE_SOLDE);
+        }
 
         AuditService::updated(
             $this->module,
@@ -144,12 +163,14 @@ class ServiceFactureService
             \Illuminate\Support\Facades\Log::warning('Notification paiement échouée: ' . $e->getMessage());
         }
 
-        $this->envoyerWhatsApp($service->numero_facture, Facture::PHASE_SOLDE);
+        if ($service->numero_facture) {
+            $this->envoyerWhatsApp($service->numero_facture, Facture::PHASE_SOLDE);
+        }
 
         return [
             'success' => true,
-            'message' => "Facture {$service->numero_facture} payée — solde " .
-                number_format($solde, 0, ',', '.') . " FCFA encaissé.",
+            'message' => ($service->numero_facture ? "Facture {$service->numero_facture}" : "Service #{$service->id}") . ' payé — solde ' .
+                number_format($solde, 0, ',', '.') . ' FCFA encaissé.',
         ];
     }
 
