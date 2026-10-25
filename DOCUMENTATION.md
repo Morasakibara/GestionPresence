@@ -205,7 +205,26 @@ Remplie obligatoirement au départ : description des tâches effectuées dans la
 - Chaque notification contient : nom de l'employé, date, heure (pour les retards), préfixe `[Admin]` ou `[Équipe]`.
 - Le **centre de notifications** filtre selon le rôle : l'admin voit tout, le superviseur uniquement son équipe, l'employé ses propres notifications.
 
-### 6.4 Caisse : commandes / services et facturation (Étapes 2/3/4)
+### 6.4 Navigation par rôle (dashboards harmonisés)
+
+Chaque page authentifiée utilise le **même menu de rôle**, rendu par un partial
+unique (`resources/views/partials/nav/{admin,superviseur,directrice,secretaire,gestionnaire,user}.blade.php`)
+et inclus par le layout — plus aucune duplication par page :
+
+- L'onglet de la page courante est **sélectionné** (`bg-pharaoh-gold` + `aria-current="page"`),
+  y compris sur les pages d'accueil de chaque dashboard.
+- Toutes les fonctionnalités du rôle figurent au menu (admin : caisse, stock, employés,
+  bilans, lieux, congés, audit, notifications ; superviseur : équipe, présences, rapports,
+  rendements, congés, notifications ; caissiers : commandes, services, retraits, rapport ;
+  gestionnaire : stocks ; employé : présence, bilan, rendements, congés).
+- Le menu mobile réutilise le même partial (aucune divergence desktop/mobile).
+- **Métriques système** : entrée et page réservées au **super administrateur**
+  (`SUPER_ADMIN_EMAILS`, défaut `admin@3hcig.com`) — les autres administrateurs ne la voient pas (403).
+- **Son de notification** : un seul bip par connexion (drapeau de session posé au login),
+  et les alertes de présence sont dédupliquées + filtrées par heure locale pour ne jamais
+  rejouer les événements de la journée.
+
+### 6.5 Caisse : commandes / services et facturation (Étapes 2/3/4)
 
 Modules **directrice** (impression, photocopie, papeterie, scan, plastification)
 et **secrétaire** (shooting, montages, agrandissements…), flux **identique** pour
@@ -232,14 +251,14 @@ les commandes et les services fournis :
   remboursements des annulations, impayés restants — calculé en SQL agrégé
   (dashboard en ~10 requêtes au lieu de ~35).
 
-### 6.5 PIN et session
+### 6.6 PIN et session
 
 - Le code PIN n'est demandé **qu'à l'expiration de la session** (récupération express
   via `/pin/recovery`, limité à 5 tentatives) — jamais après une connexion fraîche
   (email + mot de passe, plus fort que le PIN).
 - Gestion (définir / changer / supprimer) : `/pin/settings`.
 
-### 6.6 Rapports PDF
+### 6.7 Rapports PDF
 - **Admin** : période libre (date de début → fin), compte les statuts `présent` par employé, génère un PDF signé (dompdf), l'enregistre dans `storage/app/public/rapports/` et l'archivie dans la table `rapport`.
 - **Superviseur** : rapport mensuel de son équipe, mêmes mécanismes (PDF + archivage).
 
@@ -336,7 +355,7 @@ composer audit --locked        # sécurité des dépendances
 
 ## 11. Tests
 
-Suite PHPUnit (`tests/`) — **229 tests / ~900 assertions** (1 skip attendu), tous verts
+Suite PHPUnit (`tests/`) — **235 tests / ~950 assertions** (1 skip attendu), tous verts
 (`php artisan test`). Les classes `FactureAcompteTest` et `ServiceFacturationTest`
 utilisent `DatabaseTransactions` pour rester hermétiques.
 Couverture : flux de pointage (arrivée/départ, fiche de rendement obligatoire), géolocalisation, évaluations, rapports, exports Excel chartés, bulletins PDF, notifications et **rendu frontend des pages harmonisées** (lieux de travail, notifications, présence — vérification de la charte Pharaon).
@@ -355,7 +374,7 @@ Les 4 PDF (rapport admin, rapport superviseur, bulletin admin, bulletin supervis
 
 | Sujet | État actuel | Recommandation |
 |---|---|---|
-| **Queue** | `QUEUE_CONNECTION=sync` (envoi immédiat) | Passer à une queue (Redis / database) si volume important. |
+| **Queue** | `QUEUE_CONNECTION=database` (table `jobs`) + traitement par le scheduler | Lancer un worker permanent (Supervisor) pour un envoi WhatsApp immédiat. |
 | **Emails** | **Resend** (transport natif Laravel, API `resend.com`) en production ; Mailpit en dev | Vérifier les DNS (DKIM/SPF) du domaine sur Resend pour une bonne délivrabilité. |
 | **Restriction réseau** | Code prêt mais commenté | Activer si l'usage est limité au Wi-Fi de l'entreprise. |
 | **Notifications** | Limitée au superviseur direct + admin principal (optimisation faite) | Vérifier le volume si beaucoup d'équipes. |

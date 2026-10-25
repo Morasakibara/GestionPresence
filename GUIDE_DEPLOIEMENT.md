@@ -181,6 +181,27 @@ Vérifier les tâches enregistrées :
 php artisan schedule:list
 ```
 
+### File d'attente (envois WhatsApp)
+
+Les factures PDF sont envoyées via une **file d'attente `database`** (`QUEUE_CONNECTION=database`, table `jobs`), traitée automatiquement chaque minute par le scheduler (`queue:work --stop-when-empty`).
+Un worker permanent est recommandé en production :
+
+```bash
+php artisan queue:work --tries=3 --timeout=60
+```
+
+Superviser le worker avec **Supervisor** (`numprocs=1`, redémarrage automatique).
+
+### Super administrateur (métriques système)
+
+La page `/admin/metrics` (erreurs, requêtes, uptime) est réservée au **super administrateur** :
+
+```env
+SUPER_ADMIN_EMAILS=admin@3hcig.com
+```
+
+Plusieurs emails possibles, séparés par des virgules. Les autres administrateurs n'y ont pas accès (403) et n'en voient pas le menu.
+
 ---
 
 ## 6. Comptes utilisateurs initiaux (à sécuriser)
