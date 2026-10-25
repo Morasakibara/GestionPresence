@@ -39,6 +39,8 @@
         'user' => ['label' => 'Employé', 'home' => 'user.dashboard'],
     ];
     $currentRole = $roleMeta[$navRole];
+    $isHomeRoute = request()->routeIs($currentRole['home']);
+    $homeRoute = route($currentRole['home']);
     $unreadCount = $account->unreadNotifications->count();
     $hideSound = false;
     $contentShell = trim($__env->yieldContent('content_shell'));
@@ -61,9 +63,9 @@
     <aside id="consoleSidebar"
            class="console-sidebar -translate-x-full transition-transform duration-200 ease-out lg:translate-x-0"
            aria-label="Navigation principale">
-        <div class="flex items-start justify-between gap-2 px-4 pb-3 pt-5">
-            <a href="{{ route($currentRole['home']) }}" class="console-brand-plate" aria-label="Le Pharaon — Accueil">
-                <img src="{{ asset('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon" class="h-auto w-full">
+        <div class="flex items-start justify-between gap-2 px-4 pb-3 pt-4 sm:pt-5">
+            <a href="{{ $homeRoute }}" class="console-brand-plate" aria-label="Le Pharaon — Accueil">
+                <img src="{{ asset('storage/avatars/logo-pharaon.png') }}" alt="Le Pharaon" width="606" height="610" class="h-auto w-full" decoding="async">
             </a>
             <button type="button" id="consoleSidebarClose"
                     class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold/60 lg:hidden"
@@ -118,8 +120,8 @@
     <div class="console-main flex min-h-screen flex-col">
         <!-- Barre supérieure -->
         <header class="console-topbar">
-            <div class="flex h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-                <div class="flex min-w-0 items-center gap-3">
+            <div class="flex h-14 items-center justify-between gap-2 px-3 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
+                <div class="flex min-w-0 items-center gap-2 sm:gap-3">
                     <button type="button" id="consoleSidebarToggle"
                             class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 transition-colors hover:border-pharaoh-gold/50 hover:text-[#080808] focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold/60 lg:hidden"
                             aria-controls="consoleSidebar" aria-expanded="false" aria-label="Ouvrir le menu">
@@ -128,8 +130,19 @@
                         </svg>
                     </button>
 
+                    @unless($isHomeRoute)
+                        <button type="button"
+                                onclick="if (history.length > 1) { history.back(); } else { window.location.href = '{{ $homeRoute }}'; }"
+                                class="hidden h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-[#080808] focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold/60 md:inline-flex"
+                                title="Revenir en arrière" aria-label="Revenir en arrière">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                            </svg>
+                        </button>
+                    @endunless
+
                     <nav class="console-eyebrow min-w-0" aria-label="Fil d'Ariane">
-                        <a href="{{ route($currentRole['home']) }}" class="transition-colors hover:text-[#080808]">Le Pharaon</a>
+                        <a href="{{ $homeRoute }}" class="transition-colors hover:text-[#080808]">Le Pharaon</a>
                         <svg class="h-3 w-3 flex-shrink-0 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                         </svg>
@@ -234,7 +247,7 @@
         @endif
 
         <!-- Titre de page + onglets -->
-        <div class="px-4 pt-6 sm:px-6 lg:px-8">
+        <div class="px-3 pt-4 sm:px-6 sm:pt-6 lg:px-8">
             @hasSection('header')
                 <div class="console-heading flex w-full flex-wrap items-center justify-between gap-3">
                     @yield('header')
@@ -248,14 +261,14 @@
             @endif
 
             @hasSection('tabs')
-                <div class="console-tabs mt-5" data-console-tabs>
+                <div class="console-tabs mt-4 sm:mt-5" data-console-tabs>
                     @yield('tabs')
                 </div>
             @endif
         </div>
 
         <!-- Contenu -->
-        <main class="flex-1 px-4 pb-12 pt-5 sm:px-6 lg:px-8">
+        <main class="flex-1 px-3 pb-12 pt-4 sm:px-6 sm:pt-5 lg:px-8">
             @if (session('success'))
                 <div class="mb-5 rounded-xl bg-pharaoh-green-light/20 px-4 py-3 text-sm text-pharaoh-green-dark">
                     {{ session('success') }}
@@ -271,7 +284,7 @@
             @if ($contentShell === 'flush')
                 @yield('content')
             @else
-                <div class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card backdrop-blur-sm sm:p-6">
+                <div class="rounded-3xl border border-white/70 bg-white/90 p-4 shadow-card backdrop-blur-sm sm:p-6">
                     @yield('content')
                 </div>
             @endif

@@ -1,102 +1,126 @@
-@extends('layouts.app')
+@extends('layouts.dashboard')
 
 @section('title', 'Bilan de présence du mois')
+@section('breadcrumb', 'Bilan de présence')
+
+@section('header')
+    <div>
+        <span>Bilan de présence du mois</span>
+        <p class="console-subtitle">Récapitulatif de vos présences et absences sur le mois en cours.</p>
+    </div>
+@endsection
+
+@section('content_shell', 'flush')
 
 @section('content')
-<div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    <div class="mx-auto max-w-3xl">
-        <div class="mb-6">
-            <h1 class="text-2xl font-bold text-[#080808] sm:text-3xl">Bilan de présence du mois</h1>
-            <p class="mt-2 text-sm text-gray-600">Récapitulatif de vos présences et absences</p>
+@php
+    $presenceRate = $totalPresences + $totalAbsences > 0
+        ? round(($totalPresences / ($totalPresences + $totalAbsences)) * 100)
+        : 0;
+
+    $lastPresence = App\Models\Presence::where('employerID', Auth::user()->id)
+        ->whereNotNull('latitude_arrivee')
+        ->orderBy('date', 'desc')
+        ->first();
+@endphp
+
+<div class="space-y-5">
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+        @include('partials.dashboard.kpi', ['label' => 'Présences', 'value' => $totalPresences, 'meta' => 'Jours ce mois-ci', 'tone' => 'gold'])
+        @include('partials.dashboard.kpi', ['label' => 'Absences', 'value' => $totalAbsences, 'meta' => 'Jours ce mois-ci', 'tone' => 'danger'])
+        @include('partials.dashboard.kpi', ['label' => 'Taux de présence', 'value' => $presenceRate . '%', 'meta' => 'Présences / jours pointés', 'tone' => 'success'])
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <div class="console-card xl:col-span-2">
+            <div class="console-card-head">
+                <div>
+                    <h2 class="console-card-title">Présences et absences du mois</h2>
+                    <p class="console-card-sub">Répartition jour par jour sur le mois en cours.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                    <span class="flex items-center gap-1.5"><span class="console-dot bg-[#D39B23]"></span> Présences</span>
+                    <span class="flex items-center gap-1.5"><span class="console-dot bg-[#D64545]"></span> Absences</span>
+                </div>
+            </div>
+            <div class="console-card-body">
+                <div class="relative h-64 sm:h-72">
+                    <canvas id="presenceChart" role="img" aria-label="Présences et absences du mois"></canvas>
+                </div>
+            </div>
         </div>
 
-        <div class="overflow-hidden rounded-lg bg-white p-6 shadow-sm">
-            <!-- Graphique -->
-            <div class="mb-6">
-                <canvas id="presenceChart" height="300"></canvas>
-            </div>
-
-            <!-- Légende du graphique -->
-            <div class="mb-6 flex justify-center space-x-6">
-                <div class="flex items-center">
-                    <span class="mr-2 inline-block h-4 w-4 rounded-full bg-pharaoh-gold"></span>
-                    <span class="text-sm text-gray-700">Présences</span>
-                </div>
-                <div class="flex items-center">
-                    <span class="mr-2 inline-block h-4 w-4 rounded-full bg-red-500"></span>
-                    <span class="text-sm text-gray-700">Absences</span>
+        <aside class="space-y-5">
+            <div class="console-card">
+                <div class="console-card-body">
+                    <h2 class="console-card-title">Taux de présence</h2>
+                    <p class="mt-3 text-3xl font-extrabold tabular-nums text-pharaoh-gold">{{ $presenceRate }}%</p>
+                    <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                        <div class="h-2 rounded-full bg-pharaoh-gold" style="width: {{ $presenceRate }}%"></div>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500">{{ $totalPresences }} présence(s) et {{ $totalAbsences }} absence(s) enregistrées ce mois-ci.</p>
                 </div>
             </div>
 
-            <!-- Informations de présence -->
-            <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div class="rounded-lg bg-pharaoh-gold-light/10 p-4 text-center">
-                    <p class="text-sm text-gray-600">Total de présences</p>
-                    <p class="mt-1 text-3xl font-bold text-pharaoh-gold">{{ $totalPresences }}</p>
-                    <p class="mt-1 text-xs text-gray-500">jours ce mois-ci</p>
-                </div>
-                <div class="rounded-lg bg-red-100 p-4 text-center">
-                    <p class="text-sm text-gray-600">Total d'absences</p>
-                    <p class="mt-1 text-3xl font-bold text-red-600">{{ $totalAbsences }}</p>
-                    <p class="mt-1 text-xs text-gray-500">jours ce mois-ci</p>
+            <div class="console-card">
+                <div class="console-card-body">
+                    <h2 class="console-card-title">Dernier pointage</h2>
+                    <p class="mt-1 text-xs text-gray-500">État de validation GPS de votre dernière arrivée.</p>
+
+                    <div class="mt-3">
+                        @if($lastPresence && ($lastPresence->localisation_validee_arrivee || $lastPresence->localisation_validee_depart))
+                            <span class="badge badge-success">
+                                <svg class="-ml-0.5 mr-1 h-2 w-2" fill="currentColor" viewBox="0 0 8 8" aria-hidden="true">
+                                    <circle cx="4" cy="4" r="3" />
+                                </svg>
+                                Validée
+                            </span>
+                        @elseif($lastPresence)
+                            <span class="badge badge-warning">
+                                <svg class="-ml-0.5 mr-1 h-2 w-2" fill="currentColor" viewBox="0 0 8 8" aria-hidden="true">
+                                    <circle cx="4" cy="4" r="3" />
+                                </svg>
+                                Non validée
+                            </span>
+                        @else
+                            <span class="badge badge-info">
+                                <svg class="-ml-0.5 mr-1 h-2 w-2" fill="currentColor" viewBox="0 0 8 8" aria-hidden="true">
+                                    <circle cx="4" cy="4" r="3" />
+                                </svg>
+                                Non disponible
+                            </span>
+                        @endif
+                    </div>
+
+                    @if($lastPresence)
+                        <dl class="mt-4 space-y-2 text-sm">
+                            <div class="console-panel-row">
+                                <dt class="text-gray-500">Date</dt>
+                                <dd class="font-medium text-[#080808]">{{ \Illuminate\Support\Carbon::parse($lastPresence->date)->format('d/m/Y') }}</dd>
+                            </div>
+                            <div class="console-panel-row">
+                                <dt class="text-gray-500">Arrivée</dt>
+                                <dd class="font-medium text-[#080808]">{{ $lastPresence->heureArrivee ? \Illuminate\Support\Carbon::parse($lastPresence->heureArrivee)->format('H:i') : '-' }}</dd>
+                            </div>
+                        </dl>
+                    @endif
                 </div>
             </div>
-
-            <!-- Taux de présence -->
-            @php
-                $presenceRate = $totalPresences + $totalAbsences > 0
-                    ? round(($totalPresences / ($totalPresences + $totalAbsences)) * 100)
-                    : 0;
-            @endphp
-            <div class="mt-8">
-                <div class="mb-2 flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-700">Taux de présence</span>
-                    <span class="text-sm font-medium text-pharaoh-gold">{{ $presenceRate }}%</span>
-                </div>
-                <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                    <div class="h-2 rounded-full bg-pharaoh-gold" style="width: {{ $presenceRate }}%"></div>
-                </div>
-            </div>
-            <td class="whitespace-nowrap px-6 py-4">
-                @php
-                     $lastPresence = App\Models\Presence::where('employerID', Auth::user()->id)
-                        ->whereNotNull('latitude_arrivee')
-                        ->orderBy('date', 'desc')
-                        ->first();
-                @endphp
-
-                @if($lastPresence && ($lastPresence->localisation_validee_arrivee || $lastPresence->localisation_validee_depart))
-                    <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
-                            <circle cx="4" cy="4" r="3" />
-                        </svg>
-                        Validée
-                    </span>
-                @elseif($lastPresence)
-                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8">
-                            <circle cx="4" cy="4" r="3" />
-                        </svg>
-                        Non validée
-                    </span>
-                @else
-                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                        <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-gray-400" fill="currentColor" viewBox="0 0 8 8">
-                            <circle cx="4" cy="4" r="3" />
-                        </svg>
-                        Non disponible
-                    </span>
-                @endif
-            </td>
-        </div>
+        </aside>
     </div>
 </div>
+@endsection
 
-<!-- Script Chart.js -->
+@push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('presenceChart').getContext('2d');
+    const canvas = document.getElementById('presenceChart');
+    if (!canvas) {
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
 
     const data = {
         labels: @json($presences->pluck('date')->toArray()), // Récupère les jours du mois
@@ -156,4 +180,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-@endsection
+@endpush

@@ -1,6 +1,39 @@
-@extends('layouts.app')
+@extends('layouts.dashboard')
 
-@section('header', 'Rapport de Présence & Rendement')
+@section('title', 'Rapport de Présence')
+@section('breadcrumb', 'Rapport de présence')
+
+@section('header')
+    <div>
+        <span>Rapport de Présence & Rendement</span>
+        <p class="console-subtitle">Période du {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} au {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+        <form action="{{ route('admin.evaluations.export') }}" method="GET">
+            <input type="hidden" name="mois" value="{{ substr($startDate, 0, 7) }}">
+            <button type="submit" class="btn-gold inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Export Évaluations
+            </button>
+        </form>
+        <a href="{{ route('admin.evaluations.export.pdf', ['mois' => substr($startDate, 0, 7)]) }}"
+           class="inline-flex items-center gap-2 rounded-xl border-2 border-[#D39B23] bg-white px-3.5 py-2 text-xs font-semibold text-[#D39B23] transition-colors hover:bg-[#FBF3E6] sm:text-sm">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            PDF Évaluations
+        </a>
+        <form action="{{ route('admin.exportReport') }}" method="POST">
+            @csrf
+            <input type="hidden" name="start_date" value="{{ $startDate }}">
+            <input type="hidden" name="end_date" value="{{ $endDate }}">
+            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-[#080808] px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-gray-800 sm:text-sm">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Export PDF
+            </button>
+        </form>
+    </div>
+@endsection
+
+@section('content_shell', 'flush')
 
 @section('content')
 @php
@@ -32,118 +65,70 @@
     $rouges = $reportData->filter(fn($d) => $d->evaluation_couleur === 'rouge')->count();
 @endphp
 
-<!-- En-tête période -->
-<div class="flex flex-wrap items-center justify-between mb-6 gap-4">
-    <div>
-        <p class="text-sm text-gray-500">Période</p>
-        <p class="text-lg font-bold text-[#080808]">{{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} → {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}</p>
-    </div>
-    <div class="flex gap-2">
-        <form action="{{ route('admin.evaluations.export') }}" method="GET">
-            <input type="hidden" name="mois" value="{{ substr($startDate, 0, 7) }}">
-            <button type="submit" class="btn-gold btn-press inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                Export Évaluations
-            </button>
-        </form>
-        <a href="{{ route('admin.evaluations.export.pdf', ['mois' => substr($startDate, 0, 7)]) }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-[#D39B23] bg-white px-4 py-2 text-sm font-semibold text-[#D39B23] hover:bg-[#FBF3E6] transition-colors">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-            PDF Évaluations
-        </a>
-        <form action="{{ route('admin.exportReport') }}" method="POST">
-            @csrf
-            <input type="hidden" name="start_date" value="{{ $startDate }}">
-            <input type="hidden" name="end_date" value="{{ $endDate }}">
-            <button type="submit" class="inline-flex items-center gap-2 rounded-xl border-2 border-[#080808] bg-[#080808] px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 transition-colors">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                Export PDF
-            </button>
-        </form>
-    </div>
-</div>
-
+<div class="space-y-5">
 <!-- KPI Cards -->
-<div class="grid grid-cols-2 gap-4 mb-6 sm:grid-cols-5">
-    <div class="stat-card border border-white/20 bg-gradient-to-br from-white/90 to-white/70">
-        <div class="stat-card-value">{{ $totalEmployes }}</div>
-        <div class="stat-card-label">Employés actifs</div>
-    </div>
-    <div class="stat-card border border-white/20 bg-gradient-to-br from-white/90 to-white/70">
-        <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-        </div>
-        <div class="stat-card-value">{{ $noteMoyenne }}/20</div>
-        <div class="stat-card-label">Note moyenne</div>
-    </div>
-    <div class="stat-card border border-white/20 bg-gradient-to-br from-white/90 to-white/70">
-        <div class="stat-card-value">{{ $totalPresences }}</div>
-        <div class="stat-card-label">Jours de présence</div>
-    </div>
-    <div class="stat-card border border-emerald-200/30 bg-gradient-to-br from-emerald-50/90 to-emerald-50/70">
-        <div class="stat-card-value text-emerald-600">{{ $verts }}</div>
-        <div class="stat-card-label flex items-center gap-1.5">
-            <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-            <span>Évaluations vertes</span>
-        </div>
-    </div>
-    <div class="stat-card border border-red-200/30 bg-gradient-to-br from-red-50/90 to-red-50/70">
-        <div class="stat-card-value text-red-600">{{ $rouges }}</div>
-        <div class="stat-card-label flex items-center gap-1.5">
-            <span class="h-2.5 w-2.5 rounded-full bg-red-500"></span>
-            <span>Évaluations rouges</span>
-        </div>
-    </div>
+<div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+    @include('partials.dashboard.kpi', ['label' => 'Employés actifs', 'value' => $totalEmployes, 'meta' => 'Période sélectionnée', 'tone' => 'gold'])
+    @include('partials.dashboard.kpi', ['label' => 'Note moyenne', 'value' => $noteMoyenne . '/20', 'meta' => 'Moyenne équipe', 'tone' => $noteMoyenne >= 14 ? 'success' : ($noteMoyenne >= 10 ? 'warning' : 'danger')])
+    @include('partials.dashboard.kpi', ['label' => 'Jours de présence', 'value' => $totalPresences, 'meta' => 'Cumul équipe'])
+    @include('partials.dashboard.kpi', ['label' => 'Évaluations vertes', 'value' => $verts, 'meta' => 'Note ≥ 14', 'tone' => 'success'])
+    @include('partials.dashboard.kpi', ['label' => 'Évaluations rouges', 'value' => $rouges, 'meta' => 'Note < 10', 'tone' => 'danger'])
 </div>
 
 <!-- Graphiques -->
 @if(count($reportData) > 0)
-<div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-2">
+<div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
     <!-- Graphique évolution évaluations -->
-    <div class="card">
-        <h2 class="text-lg font-bold text-[#080808] mb-1 flex items-center gap-2">
-            <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-            <span>Évolution des évaluations (6 mois)</span>
-        </h2>
-        <p class="text-sm text-gray-500 mb-4 ml-7">Comparaison de la note /20 par employé</p>
-        <canvas id="companyEvaluationChart" height="120"></canvas>
-        <p class="mt-3 text-xs text-gray-400 flex items-center flex-wrap gap-3">
-            <span>Échelle 0-20 :</span>
-            <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-green-500"></span> Vert ≥ 14</span>
-            <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-yellow-500"></span> Orange 10-13</span>
-            <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-red-500"></span> Rouge &lt; 10</span>
-        </p>
+    <div class="console-card">
+        <div class="console-card-head">
+            <div>
+                <h2 class="console-card-title">Évolution des évaluations (6 mois)</h2>
+                <p class="console-card-sub">Comparaison de la note /20 par employé.</p>
+            </div>
+        </div>
+        <div class="console-card-body">
+            <div class="relative h-64 sm:h-72">
+                <canvas id="companyEvaluationChart" role="img" aria-label="Évolution des évaluations sur six mois"></canvas>
+            </div>
+            <p class="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                <span>Échelle 0-20 :</span>
+                <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-green-500"></span> Vert ≥ 14</span>
+                <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-yellow-500"></span> Orange 10-13</span>
+                <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-red-500"></span> Rouge &lt; 10</span>
+            </p>
+        </div>
     </div>
 
     <!-- Graphique répartition évaluations -->
-    <div class="card">
-        <h2 class="text-lg font-bold text-[#080808] mb-1 flex items-center gap-2">
-            <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0 0V12m0 0L8 8" />
-            </svg>
-            <span>Répartition des évaluations</span>
-        </h2>
-        <p class="text-sm text-gray-500 mb-4 ml-7">Répartition verte / orange / rouge</p>
-        <canvas id="evaluationPieChart" height="160"></canvas>
+    <div class="console-card">
+        <div class="console-card-head">
+            <div>
+                <h2 class="console-card-title">Répartition des évaluations</h2>
+                <p class="console-card-sub">Répartition verte / orange / rouge.</p>
+            </div>
+        </div>
+        <div class="console-card-body">
+            <div class="relative h-64 sm:h-72">
+                <canvas id="evaluationPieChart" role="img" aria-label="Répartition des évaluations"></canvas>
+            </div>
+        </div>
     </div>
 </div>
 @endif
 
 <!-- Tableau détaillé -->
-<div class="card">
-    <h2 class="text-lg font-bold text-[#080808] mb-4 flex items-center gap-2">
-        <svg class="h-5 w-5 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-        <span>Détails par employé</span>
-    </h2>
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="bg-[#080808] text-white">
+<div class="console-card">
+    <div class="console-card-head">
+        <div>
+            <h2 class="console-card-title">Détails par employé</h2>
+            <p class="console-card-sub">Présences, évaluations et fiches de rendement de la période.</p>
+        </div>
+    </div>
+    <div class="console-card-body">
+        <div class="table-scroll overflow-x-auto">
+            <table class="w-full min-w-[52rem] text-sm">
+                <thead class="table-head">
+                    <tr>
                     <th class="px-4 py-3 text-left font-semibold">Employé</th>
                     <th class="px-4 py-3 text-center font-semibold">Présences</th>
                     <th class="px-4 py-3 text-center font-semibold">Heures</th>
@@ -224,10 +209,14 @@
                 </tr>
                 @endforelse
             </tbody>
-        </table>
+            </table>
+        </div>
     </div>
 </div>
+</div>
+@endsection
 
+@push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -311,4 +300,4 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-@endsection
+@endpush

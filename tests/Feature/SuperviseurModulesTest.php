@@ -3,16 +3,16 @@
 namespace Tests\Feature;
 
 use App\Models\Commande;
-use App\Models\ServiceFourni;
+use App\Models\Presence;
 use App\Models\Retrait;
-use App\Models\StockTshirt;
 use App\Models\StockPapier;
+use App\Models\StockTshirt;
 use App\Models\Superviseur;
 use App\Models\Utilisateur;
-use App\Models\Presence;
-use App\Models\Evaluation;
 use App\Models\WorkplaceLocation;
+use App\Notifications\StockAlertNotification;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -22,6 +22,7 @@ class SuperviseurModulesTest extends TestCase
     use DatabaseTransactions;
 
     private const PARIS_LAT = 48.856613;
+
     private const PARIS_LON = 2.352222;
 
     protected function setUp(): void
@@ -29,7 +30,7 @@ class SuperviseurModulesTest extends TestCase
         parent::setUp();
         Notification::fake();
 
-        if (!WorkplaceLocation::where('actif', true)->exists()) {
+        if (! WorkplaceLocation::where('actif', true)->exists()) {
             WorkplaceLocation::create([
                 'nom' => 'Siège Le Pharaon (test)',
                 'latitude' => self::PARIS_LAT,
@@ -51,15 +52,17 @@ class SuperviseurModulesTest extends TestCase
         $this->assertNotNull($supId, "Aucun superviseur de type '$type' trouvé dans la base.");
         $sup = Utilisateur::find($supId);
         $this->assertNotNull($sup, "Utilisateur superviseur '$type' introuvable.");
-        \Illuminate\Support\Facades\Auth::login($sup);
+        Auth::login($sup);
         session(['current_role' => 'Superviseur']);
+
         return $sup;
     }
 
     private function loginAdmin(): Utilisateur
     {
         $admin = Utilisateur::where('role', 'Administrateur')->first();
-        \Illuminate\Support\Facades\Auth::login($admin);
+        Auth::login($admin);
+
         return $admin;
     }
 
@@ -74,7 +77,7 @@ class SuperviseurModulesTest extends TestCase
         $response = $this->get('/superviseur/supdashboard');
         $response->assertOk();
         $response->assertSee('Tableau de bord');
-        $response->assertSee('stat-card');
+        $response->assertSee('console-kpi');
     }
 
     public function test_superviseur_a_follow_presence(): void
@@ -127,14 +130,14 @@ class SuperviseurModulesTest extends TestCase
                 'employerID' => $employe->id,
                 'Sup_id' => $employerInfo->Sup_id,
                 'date' => now()->toDateString(),
-                'heureArrivee' => now()->toDateString() . ' 08:00:00',
-                'heureDepart' => now()->toDateString() . ' 17:00:00',
+                'heureArrivee' => now()->toDateString().' 08:00:00',
+                'heureDepart' => now()->toDateString().' 17:00:00',
                 'status' => 'présent',
                 'rendement' => 'Rendement test.',
             ]);
         }
 
-        $response = $this->get('/superviseur/rendements?date=' . now()->toDateString());
+        $response = $this->get('/superviseur/rendements?date='.now()->toDateString());
         $response->assertOk();
     }
 
@@ -142,7 +145,7 @@ class SuperviseurModulesTest extends TestCase
     {
         $sup = $this->loginSuperviseur('superviseur_a');
 
-        $response = $this->get('/superviseur/rendements/export?debut=' . now()->startOfMonth()->toDateString() . '&fin=' . now()->toDateString());
+        $response = $this->get('/superviseur/rendements/export?debut='.now()->startOfMonth()->toDateString().'&fin='.now()->toDateString());
         $response->assertOk();
     }
 
@@ -160,7 +163,7 @@ class SuperviseurModulesTest extends TestCase
         $sup = $this->loginSuperviseur('superviseur_a');
         $employe = Utilisateur::where('role', 'Employer')->first();
 
-        $response = $this->get('/superviseur/getUserDetails/' . $employe->id);
+        $response = $this->get('/superviseur/getUserDetails/'.$employe->id);
         $response->assertOk();
         $response->assertJson(['detailsHtml' => true]);
     }
@@ -170,10 +173,10 @@ class SuperviseurModulesTest extends TestCase
         $sup = $this->loginSuperviseur('superviseur_a');
         $employe = Utilisateur::where('role', 'Employer')->first();
 
-        $response = $this->post('/superviseur/addMemberToTeam/' . $employe->id);
+        $response = $this->post('/superviseur/addMemberToTeam/'.$employe->id);
         $response->assertStatus(302);
 
-        $response2 = $this->post('/superviseur/remove-member/' . $employe->id);
+        $response2 = $this->post('/superviseur/remove-member/'.$employe->id);
         $response2->assertStatus(302);
     }
 
@@ -257,7 +260,7 @@ class SuperviseurModulesTest extends TestCase
     {
         $sup = $this->loginSuperviseur('directrice');
         $cmd = Commande::where('superviseur_id', $sup->id)->first();
-        if (!$cmd) {
+        if (! $cmd) {
             // Créer une commande d'abord
             $this->post('/directrice/commandes', [
                 'type' => 'papeterie',
@@ -269,7 +272,7 @@ class SuperviseurModulesTest extends TestCase
         }
         $this->assertNotNull($cmd);
 
-        $response = $this->get('/directrice/commandes/' . $cmd->id . '/edit');
+        $response = $this->get('/directrice/commandes/'.$cmd->id.'/edit');
         $response->assertOk();
     }
 
@@ -284,12 +287,12 @@ class SuperviseurModulesTest extends TestCase
         ]);
         $cmd = Commande::where('superviseur_id', $sup->id)->orderByDesc('id')->first();
 
-        $response = $this->put('/directrice/commandes/' . $cmd->id, [
+        $response = $this->put('/directrice/commandes/'.$cmd->id, [
             'type' => 'impression',
             'montant' => 5000,
             'montant_paye' => 5000,
             'statut_paiement' => 'paye',
-            'manager_password' => 'password'
+            'manager_password' => 'password',
         ]);
         $response->assertStatus(302);
 
@@ -309,8 +312,8 @@ class SuperviseurModulesTest extends TestCase
         ]);
         $cmd = Commande::where('superviseur_id', $sup->id)->orderByDesc('id')->first();
 
-        $response = $this->delete('/directrice/commandes/' . $cmd->id, [
-            'manager_password' => 'password'
+        $response = $this->delete('/directrice/commandes/'.$cmd->id, [
+            'manager_password' => 'password',
         ]);
         $response->assertStatus(302);
         $this->assertSoftDeleted('commandes', ['id' => $cmd->id]);
@@ -493,11 +496,11 @@ class SuperviseurModulesTest extends TestCase
         $cmd = Commande::where('superviseur_id', $sup->id)->orderByDesc('id')->first();
 
         // Edit
-        $response = $this->get('/secretaire/commandes/' . $cmd->id . '/edit');
+        $response = $this->get('/secretaire/commandes/'.$cmd->id.'/edit');
         $response->assertOk();
 
         // Update - passage du statut a_payer à paye avec le montant complet
-        $response = $this->put('/secretaire/commandes/' . $cmd->id, [
+        $response = $this->put('/secretaire/commandes/'.$cmd->id, [
             'type' => 'shooting',
             'montant' => 5000,
             'montant_paye' => 5000,
@@ -511,8 +514,8 @@ class SuperviseurModulesTest extends TestCase
 
         // Delete (suppression soft) - verrouillé car déjà payé, besoin du mot de passe admin
         // On simule le mot de passe admin (mot de passe par défaut: password)
-        $response = $this->delete('/secretaire/commandes/' . $cmd->id, [
-            'manager_password' => 'password'
+        $response = $this->delete('/secretaire/commandes/'.$cmd->id, [
+            'manager_password' => 'password',
         ]);
         $response->assertStatus(302);
         $this->assertSoftDeleted('commandes', ['id' => $cmd->id]);
@@ -658,7 +661,7 @@ class SuperviseurModulesTest extends TestCase
         $tshirt = StockTshirt::where('superviseur_id', $sup->id)
             ->where('couleur', 'Blanc')->first();
 
-        $response = $this->put('/gestionnaire/tshirts/' . $tshirt->id, [
+        $response = $this->put('/gestionnaire/tshirts/'.$tshirt->id, [
             'quantite' => 25,
             'seuil_alerte' => 10,
         ]);
@@ -679,7 +682,7 @@ class SuperviseurModulesTest extends TestCase
         $tshirt = StockTshirt::where('superviseur_id', $sup->id)
             ->where('couleur', 'Rouge')->first();
 
-        $response = $this->delete('/gestionnaire/tshirts/' . $tshirt->id);
+        $response = $this->delete('/gestionnaire/tshirts/'.$tshirt->id);
         $response->assertStatus(302);
         $this->assertDatabaseMissing('stock_tshirts', ['id' => $tshirt->id]);
     }
@@ -723,7 +726,7 @@ class SuperviseurModulesTest extends TestCase
         $papier = StockPapier::where('superviseur_id', $sup->id)
             ->where('imprimante', 'Epson L3150')->first();
 
-        $response = $this->put('/gestionnaire/papier/' . $papier->id, [
+        $response = $this->put('/gestionnaire/papier/'.$papier->id, [
             'metres_restants' => 100,
             'seuil_alerte' => 20,
         ]);
@@ -744,7 +747,7 @@ class SuperviseurModulesTest extends TestCase
         $papier = StockPapier::where('superviseur_id', $sup->id)
             ->where('imprimante', 'Canon PIXMA')->first();
 
-        $response = $this->delete('/gestionnaire/papier/' . $papier->id);
+        $response = $this->delete('/gestionnaire/papier/'.$papier->id);
         $response->assertStatus(302);
         $this->assertDatabaseMissing('stock_papier', ['id' => $papier->id]);
     }
@@ -763,7 +766,7 @@ class SuperviseurModulesTest extends TestCase
 
         Notification::assertSentTo(
             Utilisateur::where('role', 'Administrateur')->first(),
-            \App\Notifications\StockAlertNotification::class
+            StockAlertNotification::class
         );
     }
 

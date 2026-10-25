@@ -4,11 +4,16 @@ namespace Tests\Feature;
 
 use App\Models\Evaluation;
 use App\Models\Presence;
+use App\Models\Superviseur;
 use App\Models\Utilisateur;
 use App\Models\WorkplaceLocation;
+use App\Notifications\EvaluationRougeNotification;
+use App\Notifications\FicheRendementRappelNotification;
+use App\Notifications\RetardNotification;
 use App\Services\EvaluationService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -22,7 +27,7 @@ class PharaonFeaturesTest extends TestCase
         parent::setUp();
         Notification::fake();
         // Créer un lieu de travail actif aux coordonnées de Paris pour les tests de géolocalisation
-        if (!WorkplaceLocation::where('actif', true)->exists()) {
+        if (! WorkplaceLocation::where('actif', true)->exists()) {
             WorkplaceLocation::create([
                 'nom' => 'Siège Le Pharaon (test)',
                 'latitude' => self::PARIS_LAT,
@@ -34,13 +39,14 @@ class PharaonFeaturesTest extends TestCase
     }
 
     private const PARIS_LAT = 48.856613;
+
     private const PARIS_LON = 2.352222;
 
     private function loginEmploye(): Utilisateur
     {
         $employe = Utilisateur::where('role', 'Employer')->first();
         $this->assertNotNull($employe);
-        \Illuminate\Support\Facades\Auth::login($employe);
+        Auth::login($employe);
         session(['current_role' => 'Employer']);
         $this->assertAuthenticatedAs($employe);
 
@@ -50,7 +56,7 @@ class PharaonFeaturesTest extends TestCase
     private function loginAdmin(): Utilisateur
     {
         $admin = Utilisateur::where('role', 'Administrateur')->first();
-        \Illuminate\Support\Facades\Auth::login($admin);
+        Auth::login($admin);
 
         return $admin;
     }
@@ -146,7 +152,7 @@ class PharaonFeaturesTest extends TestCase
         $superviseurInfo = DB::table('employer')->where('id', $employe->id)->first();
         if ($superviseurInfo && $superviseurInfo->Sup_id) {
             $superviseurUser = Utilisateur::find($superviseurInfo->Sup_id);
-            Notification::assertSentTo($superviseurUser, \App\Notifications\RetardNotification::class);
+            Notification::assertSentTo($superviseurUser, RetardNotification::class);
         }
     }
 
@@ -165,8 +171,8 @@ class PharaonFeaturesTest extends TestCase
                 'employerID' => $employe->id,
                 'Sup_id' => $supId,
                 'date' => $date,
-                'heureArrivee' => $date . ' 09:30:00', // retard
-                'heureDepart' => $date . ' 17:00:00',
+                'heureArrivee' => $date.' 09:30:00', // retard
+                'heureDepart' => $date.' 17:00:00',
                 'status' => 'présent',
             ]);
         }
@@ -288,7 +294,7 @@ class PharaonFeaturesTest extends TestCase
         Carbon::setTestNow(Carbon::create(2026, 8, 17, 8, 0));
         $employe = $this->loginEmploye();
         $superviseur = Utilisateur::where('role', 'Superviseur')->first();
-        \Illuminate\Support\Facades\Auth::login($superviseur);
+        Auth::login($superviseur);
         session(['current_role' => 'Superviseur']);
 
         // Créer une présence avec rendement pour l'employé
@@ -367,9 +373,9 @@ class PharaonFeaturesTest extends TestCase
     /** Décompresse un XLSX et renvoie le contenu texte (sharedStrings + sheet). */
     private function decompresseXlsx(string $contenu): string
     {
-        $fichier = tempnam(sys_get_temp_dir(), 'xlsx') . '.xlsx';
+        $fichier = tempnam(sys_get_temp_dir(), 'xlsx').'.xlsx';
         file_put_contents($fichier, $contenu);
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         $texte = '';
         if ($zip->open($fichier) === true) {
             foreach (['xl/sharedStrings.xml', 'xl/worksheets/sheet1.xml'] as $entree) {
@@ -400,11 +406,11 @@ class PharaonFeaturesTest extends TestCase
         ])->assertStatus(302);
 
         // L'admin qui évalue est l'admin principal -> pas de notification (évite l'auto-notification)
-        Notification::assertNotSentTo($admin, \App\Notifications\EvaluationRougeNotification::class);
+        Notification::assertNotSentTo($admin, EvaluationRougeNotification::class);
 
         // Le superviseur enregistre une évaluation rouge -> l'admin principal est notifié
         $superviseur = Utilisateur::where('role', 'Superviseur')->first();
-        \Illuminate\Support\Facades\Auth::login($superviseur);
+        Auth::login($superviseur);
         session(['current_role' => 'Superviseur']);
 
         $this->post('/superviseur/evaluations', [
@@ -415,7 +421,7 @@ class PharaonFeaturesTest extends TestCase
             'commentaire' => 'Discipline critique.',
         ])->assertStatus(302);
 
-        Notification::assertSentTo($admin, \App\Notifications\EvaluationRougeNotification::class);
+        Notification::assertSentTo($admin, EvaluationRougeNotification::class);
     }
 
     /** S3bis — La commande planifiée notifie l'admin pour les évaluations rouges. */
@@ -431,8 +437,8 @@ class PharaonFeaturesTest extends TestCase
                 'employerID' => $employe->id,
                 'Sup_id' => $supId,
                 'date' => $date,
-                'heureArrivee' => $date . ' 09:30:00',
-                'heureDepart' => $date . ' 17:00:00',
+                'heureArrivee' => $date.' 09:30:00',
+                'heureDepart' => $date.' 17:00:00',
                 'status' => 'présent',
             ]);
         }
@@ -444,7 +450,7 @@ class PharaonFeaturesTest extends TestCase
             ->expectsOutputToContain('notifié');
 
         $adminPrincipal = Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
-        Notification::assertSentTo($adminPrincipal, \App\Notifications\EvaluationRougeNotification::class);
+        Notification::assertSentTo($adminPrincipal, EvaluationRougeNotification::class);
     }
 
     /** S4 — Le superviseur consulte les fiches de rendement de son équipe. */
@@ -454,7 +460,7 @@ class PharaonFeaturesTest extends TestCase
         $employerInfo = DB::table('employer')->where('id', $employe->id)->first();
 
         $superviseur = Utilisateur::where('role', 'Superviseur')->first();
-        \Illuminate\Support\Facades\Auth::login($superviseur);
+        Auth::login($superviseur);
         session(['current_role' => 'Superviseur']);
 
         Presence::create([
@@ -480,7 +486,7 @@ class PharaonFeaturesTest extends TestCase
         $employerInfo = DB::table('employer')->where('id', $employe->id)->first();
 
         $superviseur = Utilisateur::where('role', 'Superviseur')->first();
-        \Illuminate\Support\Facades\Auth::login($superviseur);
+        Auth::login($superviseur);
         session(['current_role' => 'Superviseur']);
 
         Presence::create([
@@ -538,7 +544,7 @@ class PharaonFeaturesTest extends TestCase
         $this->artisan('presence:rappel-fiches-rendement')
             ->expectsOutputToContain('notifié');
 
-        Notification::assertSentTo($superviseurUser, \App\Notifications\FicheRendementRappelNotification::class);
+        Notification::assertSentTo($superviseurUser, FicheRendementRappelNotification::class);
 
         // Si toutes les fiches sont remplies -> plus de notification
         Notification::fake(); // reset le fake
@@ -582,7 +588,7 @@ class PharaonFeaturesTest extends TestCase
         $employerInfo = DB::table('employer')->where('id', $employe->id)->first();
 
         $superviseur = Utilisateur::where('role', 'Superviseur')->first();
-        \Illuminate\Support\Facades\Auth::login($superviseur);
+        Auth::login($superviseur);
         session(['current_role' => 'Superviseur']);
 
         Presence::create([
@@ -621,7 +627,7 @@ class PharaonFeaturesTest extends TestCase
             'rendement' => 'Préparation du rapport mensuel.',
         ]);
 
-        $response = $this->get('/admin/employe/' . $employe->id . '/bulletin?mois=2026-08');
+        $response = $this->get('/admin/employe/'.$employe->id.'/bulletin?mois=2026-08');
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringStartsWith('%PDF', $response->getContent());
@@ -631,7 +637,7 @@ class PharaonFeaturesTest extends TestCase
     public function test_superviseur_bulletin_hors_equipe_refuse(): void
     {
         $superviseur = Utilisateur::where('role', 'Superviseur')->first();
-        \Illuminate\Support\Facades\Auth::login($superviseur);
+        Auth::login($superviseur);
         session(['current_role' => 'Superviseur']);
 
         // Un employé qui n'est pas dans son équipe
@@ -641,7 +647,7 @@ class PharaonFeaturesTest extends TestCase
             ->first();
         $this->assertNotNull($horsEquipe);
 
-        $response = $this->get('/superviseur/employe/' . $horsEquipe->id . '/bulletin?mois=2026-08');
+        $response = $this->get('/superviseur/employe/'.$horsEquipe->id.'/bulletin?mois=2026-08');
         $response->assertRedirect();
         $response->assertSessionHas('error');
     }
@@ -724,28 +730,28 @@ class PharaonFeaturesTest extends TestCase
         $response->assertOk();
         $response->assertSee('evaluationEvolChart'); // canvas Chart.js
         $response->assertSee('Évolution des évaluations');
-        $response->assertSee('stat-card'); // cartes de stats modernes
+        $response->assertSee('console-kpi'); // cartes KPI du shell console
     }
 
     /** S20 — Le dashboard superviseur affiche le graphique d'évolution de son équipe. */
     public function test_dashboard_superviseur_affiche_graphique_evolution(): void
     {
         $superviseur = Utilisateur::where('role', 'Superviseur')->first();
-        \Illuminate\Support\Facades\Auth::login($superviseur);
+        Auth::login($superviseur);
         session(['current_role' => 'Superviseur']);
 
         $response = $this->get('/superviseur/supdashboard');
         $response->assertOk();
         $response->assertSee('evaluationEvolChart');
         $response->assertSee('Évolution des évaluations');
-        $response->assertSee('stat-card');
+        $response->assertSee('console-kpi');
     }
 
     /** S21 — Un GET sur /superviseur/evaluations redirige proprement (au lieu d'erreur 405). */
     public function test_get_superviseur_evaluations_redirige(): void
     {
         $superviseur = Utilisateur::where('role', 'Superviseur')->first();
-        \Illuminate\Support\Facades\Auth::login($superviseur);
+        Auth::login($superviseur);
         session(['current_role' => 'Superviseur']);
 
         $response = $this->get('/superviseur/evaluations');
@@ -777,9 +783,9 @@ class PharaonFeaturesTest extends TestCase
         $this->assertStringContainsString('Mois;Note moyenne /20;Couleur', $response->getContent());
 
         // Avec filtre équipe
-        $equipe = \App\Models\Superviseur::whereNotNull('equipe')->value('equipe');
+        $equipe = Superviseur::whereNotNull('equipe')->value('equipe');
         if ($equipe) {
-            $response2 = $this->get('/admin/evaluations/evolution/export?equipe=' . urlencode($equipe));
+            $response2 = $this->get('/admin/evaluations/evolution/export?equipe='.urlencode($equipe));
             $response2->assertOk();
             $this->assertStringContainsString('Mois;Note moyenne /20;Couleur', $response2->getContent());
         }
@@ -792,13 +798,13 @@ class PharaonFeaturesTest extends TestCase
         $this->loginAdmin();
         $this->post('/select-role', ['role' => 'Administrateur']);
 
-        $response = $this->get('/admin/employe/' . $employe->id . '/bulletin?mois=2026-08');
+        $response = $this->get('/admin/employe/'.$employe->id.'/bulletin?mois=2026-08');
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringStartsWith('%PDF', $response->getContent());
 
         // La vue du bulletin contient bien le bloc d'évolution (6 mois)
-        $historique = \App\Services\EvaluationService::historiqueMensuel((int) $employe->id, 6);
+        $historique = EvaluationService::historiqueMensuel((int) $employe->id, 6);
         $html = view('admin.evaluation_bulletin_pdf', [
             'employe' => (object) ['nom' => 'Test'],
             'evaluation' => ['note' => 12.0, 'couleur' => 'orange', 'commentaire' => 'Test', 'manuelle' => false],
@@ -818,7 +824,7 @@ class PharaonFeaturesTest extends TestCase
     public function test_dashboard_superviseur_exports_et_moyenne(): void
     {
         $superviseur = Utilisateur::where('role', 'Superviseur')->first();
-        \Illuminate\Support\Facades\Auth::login($superviseur);
+        Auth::login($superviseur);
         session(['current_role' => 'Superviseur']);
 
         $response = $this->get('/superviseur/supdashboard');
@@ -834,7 +840,7 @@ class PharaonFeaturesTest extends TestCase
     public function test_export_csv_evolution_superviseur(): void
     {
         $superviseur = Utilisateur::where('role', 'Superviseur')->first();
-        \Illuminate\Support\Facades\Auth::login($superviseur);
+        Auth::login($superviseur);
         session(['current_role' => 'Superviseur']);
 
         $response = $this->get('/superviseur/evaluations/evolution/export');
@@ -863,13 +869,13 @@ class PharaonFeaturesTest extends TestCase
             'couleurs' => ['#D97706', '#D97706', '#2E8B57'],
         ];
 
-        $stats = \App\Services\EvaluationService::statsEvolution($evolution);
+        $stats = EvaluationService::statsEvolution($evolution);
         $this->assertEquals(12.3, $stats['moyenne']);
         $this->assertEquals('hausse', $stats['tendance']);
         $this->assertEquals(3.0, $stats['delta']);
 
         // Baisse
-        $stats2 = \App\Services\EvaluationService::statsEvolution([
+        $stats2 = EvaluationService::statsEvolution([
             'labels' => ['Mars', 'Avril', 'Mai'],
             'notes' => [15.0, 12.0, 10.0],
             'couleurs' => ['#2E8B57', '#D97706', '#D64545'],
@@ -918,11 +924,11 @@ class PharaonFeaturesTest extends TestCase
         $owner = env('RESEND_TEST_EMAIL', 'adriannchare@gmail.com');
 
         try {
-            \Illuminate\Support\Facades\Notification::route('mail', $owner)
-                ->notify(new \App\Notifications\RetardNotification($employe, $presence));
+            Notification::route('mail', $owner)
+                ->notify(new RetardNotification($employe, $presence));
             $this->assertTrue(true); // aucun TransportException = envoi réussi
         } catch (\Throwable $e) {
-            $this->fail('L\'envoi via Resend a échoué : ' . $e->getMessage());
+            $this->fail('L\'envoi via Resend a échoué : '.$e->getMessage());
         }
     }
 }

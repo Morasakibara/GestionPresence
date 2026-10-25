@@ -49,19 +49,19 @@
   --success-bg: #edf6f1;
   --success-text: #2E8B57;
   --success-border: rgba(46, 139, 87, 0.2);
-  
+
   --danger-bg: #fbeeec;
   --danger-text: #d64545;
   --danger-border: rgba(214, 69, 69, 0.2);
-  
+
   --warning-bg: #fbf3e6;
   --warning-text: #D97706;
   --warning-border: rgba(217, 119, 6, 0.2);
-  
+
   --info-bg: #eef4f9;
   --info-text: #3B82C4;
   --info-border: rgba(59, 130, 196, 0.2);
-  
+
   --gold-bg: #FBF3E6;
   --gold-text: #885910;
   --gold-border: rgba(211, 155, 35, 0.3);
@@ -268,6 +268,190 @@ body {
   .select-field {
     @apply block w-full rounded-md bg-white px-3 py-2 text-gray-900 border-2 border-gray-300 focus:border-pharaoh-gold focus:outline-none focus:ring-1 focus:ring-pharaoh-gold sm:text-sm sm:leading-6 transition-colors;
   }
+
+  /* ============================================================
+     Console de pilotage — coque commune à tous les rôles
+     ============================================================ */
+
+  /* Barre latérale noire, filet or, logo sur plaque noire */
+  .console-sidebar {
+    @apply fixed inset-y-0 left-0 z-50 flex w-[16.5rem] max-w-[85vw] flex-col bg-[#080808] text-white;
+    background-image:
+      radial-gradient(120% 55% at 50% 0%, rgba(211, 155, 35, 0.16) 0%, rgba(8, 8, 8, 0) 62%),
+      linear-gradient(180deg, #0b0b0d 0%, #080808 58%, #050505 100%);
+  }
+  .console-brand-plate {
+    @apply flex w-[4.625rem] max-w-[4.625rem] items-center justify-center rounded-xl bg-[#050505] p-1.5 ring-1 ring-white/10 transition-transform duration-200;
+  }
+  .console-brand-plate:hover {
+    transform: scale(1.02);
+    @apply ring-pharaoh-gold/40;
+  }
+
+  /* Barre de défilement discrète, fondue dans le menu noir */
+  .console-nav-scroll {
+    @apply flex-1 overflow-y-auto px-3 pb-6;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(211, 155, 35, 0.22) transparent;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .console-nav-scroll::-webkit-scrollbar {
+    width: 0.375rem;
+    height: 0.375rem;
+  }
+  .console-nav-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .console-nav-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 999rem;
+  }
+  .console-nav-scroll:hover::-webkit-scrollbar-thumb,
+  .console-nav-scroll:focus-within::-webkit-scrollbar-thumb {
+    background-color: rgba(211, 155, 35, 0.32);
+  }
+  .console-nav-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(211, 155, 35, 0.55);
+  }
+  .console-nav-group {
+    @apply px-3 pb-2 pt-5 text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-white/35;
+  }
+  .console-nav-link {
+    @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/65 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold/60;
+  }
+  .console-nav-link svg {
+    @apply h-[1.125rem] w-[1.125rem] flex-shrink-0 text-white/40 transition-colors duration-150;
+  }
+  .console-nav-link:hover svg {
+    @apply text-pharaoh-gold-light;
+  }
+  .console-nav-link.is-active {
+    @apply bg-pharaoh-gold/15 text-pharaoh-gold-bright;
+  }
+  .console-nav-link.is-active svg {
+    @apply text-pharaoh-gold;
+  }
+  .console-nav-link.is-active::before {
+    content: "";
+    @apply absolute left-0 top-1/2 h-6 w-[0.1875rem] -translate-y-1/2 rounded-r-full bg-pharaoh-gold;
+  }
+
+  /* Colonne de contenu */
+  .console-main {
+    @apply min-h-screen lg:pl-[16.5rem];
+  }
+  .console-topbar {
+    @apply sticky top-0 z-30 border-b border-gray-200/70 bg-white/80 backdrop-blur-xl;
+  }
+  .console-eyebrow {
+    @apply flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-gray-400;
+  }
+  .console-heading > div > span:first-child {
+    @apply text-xl font-bold tracking-tight text-[#080808] sm:text-2xl lg:text-[1.75rem];
+  }
+  .console-title {
+    @apply text-xl font-bold tracking-tight text-[#080808] sm:text-2xl lg:text-[1.75rem];
+  }
+  .console-subtitle {
+    @apply mt-1 text-xs text-gray-500 sm:text-sm;
+  }
+
+  /* Onglets de dashboard */
+  .console-tabs {
+    @apply -mb-px flex gap-1 overflow-x-auto border-b border-gray-200/70;
+  }
+  .console-tab {
+    @apply inline-flex items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 py-2.5 text-[0.8125rem] font-medium text-gray-500 transition-colors duration-150 hover:text-[#080808] focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold/50 sm:px-4 sm:py-3 sm:text-sm;
+  }
+  .console-tab.is-active {
+    @apply border-pharaoh-gold text-[#080808];
+  }
+
+  /* Cartes KPI */
+  .console-kpi {
+    @apply relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-3.5 shadow-card transition-shadow duration-200 hover:shadow-lg sm:p-5;
+  }
+  .console-kpi-label {
+    @apply block text-[0.625rem] font-semibold uppercase leading-tight tracking-[0.1em] text-gray-500 sm:text-[0.6875rem] sm:tracking-[0.12em];
+  }
+  .console-kpi-value {
+    @apply mt-1.5 block text-[1.375rem] font-extrabold leading-none tracking-tight tabular-nums sm:mt-2 sm:text-[1.75rem];
+  }
+  .console-kpi-meta {
+    @apply mt-1.5 flex items-center gap-1.5 text-[0.6875rem] text-gray-500 sm:mt-2 sm:text-xs;
+  }
+  .console-kpi-accent {
+    @apply absolute inset-x-0 top-0 h-[0.1875rem] bg-gradient-to-r from-pharaoh-gold via-pharaoh-gold-light to-transparent;
+  }
+
+  /* Cartes de contenu */
+  .console-card {
+    @apply rounded-2xl border border-gray-200/70 bg-white shadow-card;
+  }
+  .console-card-head {
+    @apply flex flex-wrap items-start justify-between gap-3 px-4 pt-4 sm:px-5 sm:pt-5;
+  }
+  .console-card-title {
+    @apply text-sm font-semibold text-[#080808];
+  }
+  .console-card-sub {
+    @apply mt-0.5 text-xs text-gray-500;
+  }
+  .console-card-body {
+    @apply px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4;
+  }
+  .console-panel-row {
+    @apply flex items-center justify-between gap-3 border-b border-gray-100 py-2.5 last:border-0;
+  }
+  .console-dot {
+    @apply h-2 w-2 flex-shrink-0 rounded-full;
+  }
+  .console-scroll {
+    @apply max-h-[18rem] overflow-y-auto pr-1;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(8, 8, 8, 0.18) transparent;
+    overscroll-behavior: contain;
+  }
+  .console-scroll::-webkit-scrollbar {
+    width: 0.375rem;
+    height: 0.375rem;
+  }
+  .console-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .console-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(8, 8, 8, 0.12);
+    border-radius: 999rem;
+  }
+  .console-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(211, 155, 35, 0.45);
+  }
+  .console-empty {
+    @apply flex flex-col items-center justify-center px-4 py-10 text-center;
+  }
+
+  /* Accès rapides compacts */
+  .console-quick {
+    @apply flex items-center gap-3 rounded-2xl border border-gray-200/70 bg-white p-3 shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-pharaoh-gold/40 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold/50 sm:p-4;
+  }
+  .console-quick-icon {
+    @apply flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#FBF3E6] text-[#885910] transition-colors duration-200 group-hover:bg-pharaoh-gold group-hover:text-white;
+  }
+}
+
+/* Voile clair posé sur la photo de fond partagée par tous les rôles */
+.console-veil {
+  background:
+    radial-gradient(90% 60% at 100% 0%, rgba(211, 155, 35, 0.10) 0%, rgba(248, 248, 248, 0) 55%),
+    linear-gradient(180deg, rgba(248, 248, 248, 0.90) 0%, rgba(243, 243, 241, 0.94) 100%);
+}
+
+/* Défilement doux des onglets d'ancrage */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Respect des préférences de mouvement réduit */
@@ -289,7 +473,7 @@ html[data-theme="dark"] {
   --surface: #121215;          /* Elevated surface card bg */
   --bg-surface-hover: #19191e;  /* Lighter card hover bg */
   --border: #222227;           /* Subtle elegant border */
-  
+
   --text-primary: #f4f4f5;     /* Warm white */
   --text-secondary: #a1a1aa;   /* Muted grey */
   --text-muted: #62626e;       /* Muted gray text */
@@ -406,9 +590,24 @@ html[data-theme="dark"] .pharaoh-card,
 html[data-theme="dark"] .stat-card,
 html[data-theme="dark"] .card,
 html[data-theme="dark"] .form-card,
-html[data-theme="dark"] .table-wrap {
+html[data-theme="dark"] .table-wrap,
+html[data-theme="dark"] .console-card,
+html[data-theme="dark"] .console-kpi,
+html[data-theme="dark"] .console-quick {
   background-color: var(--surface) !important;
   border-color: var(--border) !important;
+}
+
+/* La plaque du logo reste noire : le PNG est détouré, l'or ressort sur le fond sombre */
+html[data-theme="dark"] .console-brand-plate {
+  background-color: #050505 !important;
+}
+
+/* Voile de fond adapté au thème sombre */
+html[data-theme="dark"] .console-veil {
+  background:
+    radial-gradient(90% 60% at 100% 0%, rgba(211, 155, 35, 0.08) 0%, rgba(9, 9, 11, 0) 55%),
+    linear-gradient(180deg, rgba(9, 9, 11, 0.92) 0%, rgba(9, 9, 11, 0.95) 100%) !important;
 }
 
 /* Forms input fields */

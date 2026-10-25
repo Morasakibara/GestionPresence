@@ -3,15 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\Commande;
-use App\Models\ServiceFourni;
-use App\Models\Retrait;
-use App\Models\StockTshirt;
-use App\Models\StockPapier;
-use App\Models\Utilisateur;
 use App\Models\Presence;
-use App\Models\Evaluation;
+use App\Models\Retrait;
+use App\Models\StockPapier;
+use App\Models\StockTshirt;
+use App\Models\Utilisateur;
 use App\Models\WorkplaceLocation;
+use App\Notifications\StockAlertNotification;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -25,6 +25,7 @@ class E2ESuperviseurFlowTest extends TestCase
     use DatabaseTransactions;
 
     private const PARIS_LAT = 48.856613;
+
     private const PARIS_LON = 2.352222;
 
     protected function setUp(): void
@@ -32,7 +33,7 @@ class E2ESuperviseurFlowTest extends TestCase
         parent::setUp();
         Notification::fake();
 
-        if (!WorkplaceLocation::where('actif', true)->exists()) {
+        if (! WorkplaceLocation::where('actif', true)->exists()) {
             WorkplaceLocation::create([
                 'nom' => 'Siège Le Pharaon (test E2E)',
                 'latitude' => self::PARIS_LAT,
@@ -50,15 +51,17 @@ class E2ESuperviseurFlowTest extends TestCase
             ->value('id');
         $this->assertNotNull($supId, "Superviseur '$type' absent.");
         $sup = Utilisateur::find($supId);
-        \Illuminate\Support\Facades\Auth::login($sup);
+        Auth::login($sup);
         session(['current_role' => 'Superviseur']);
+
         return $sup;
     }
 
     private function loginAdmin(): Utilisateur
     {
         $admin = Utilisateur::where('role', 'Administrateur')->first();
-        \Illuminate\Support\Facades\Auth::login($admin);
+        Auth::login($admin);
+
         return $admin;
     }
 
@@ -74,7 +77,7 @@ class E2ESuperviseurFlowTest extends TestCase
         $r = $this->get('/superviseur/supdashboard');
         $r->assertOk();
         $r->assertSee('Tableau de bord');
-        $r->assertSee('stat-card');
+        $r->assertSee('console-kpi');
 
         // 2. Suivi des présences
         $r = $this->get('/superviseur/followPresence');
@@ -82,12 +85,12 @@ class E2ESuperviseurFlowTest extends TestCase
 
         // 3. Détails d'un employé
         $employe = Utilisateur::where('role', 'Employer')->first();
-        $r = $this->get('/superviseur/getUserDetails/' . $employe->id);
+        $r = $this->get('/superviseur/getUserDetails/'.$employe->id);
         $r->assertOk();
         $r->assertJsonStructure(['detailsHtml', 'viewMoreUrl']);
 
         // 4. Fiche de détails
-        $r = $this->get('/superviseur/viewUser/' . $employe->id);
+        $r = $this->get('/superviseur/viewUser/'.$employe->id);
         $r->assertOk();
         $r->assertSee($employe->nom);
 
@@ -112,11 +115,11 @@ class E2ESuperviseurFlowTest extends TestCase
         ]);
 
         // 7. Rendements d'équipe
-        $r = $this->get('/superviseur/rendements?date=' . now()->toDateString());
+        $r = $this->get('/superviseur/rendements?date='.now()->toDateString());
         $r->assertOk();
 
         // 8. Export CSV rendements
-        $r = $this->get('/superviseur/rendements/export?debut=' . now()->startOfMonth()->toDateString() . '&fin=' . now()->toDateString());
+        $r = $this->get('/superviseur/rendements/export?debut='.now()->startOfMonth()->toDateString().'&fin='.now()->toDateString());
         $r->assertOk();
 
         // 9. Export PDF comparatif
@@ -185,7 +188,7 @@ class E2ESuperviseurFlowTest extends TestCase
         $cmdPartielle = Commande::where('superviseur_id', $sup->id)
             ->where('statut_paiement', 'partiel')->first();
         if ($cmdPartielle) {
-            $r = $this->put('/directrice/commandes/' . $cmdPartielle->id, [
+            $r = $this->put('/directrice/commandes/'.$cmdPartielle->id, [
                 'type' => 'photocopie',
                 'montant' => 8000,
                 'montant_paye' => 8000,
@@ -195,7 +198,7 @@ class E2ESuperviseurFlowTest extends TestCase
         }
 
         // 8. Éditer une commande
-        $r = $this->get('/directrice/commandes/' . $cmdId . '/edit');
+        $r = $this->get('/directrice/commandes/'.$cmdId.'/edit');
         $r->assertOk();
 
         // 9. Services
@@ -282,7 +285,7 @@ class E2ESuperviseurFlowTest extends TestCase
         // 4. Modifier une commande
         $cmdPartielle = Commande::where('superviseur_id', $sup->id)
             ->where('statut_paiement', 'partiel')->first();
-        $r = $this->put('/secretaire/commandes/' . $cmdPartielle->id, [
+        $r = $this->put('/secretaire/commandes/'.$cmdPartielle->id, [
             'type' => 'montage_photos',
             'montant' => 15000,
             'montant_paye' => 15000,
@@ -315,7 +318,7 @@ class E2ESuperviseurFlowTest extends TestCase
         $cmdToDelete = Commande::where('superviseur_id', $sup->id)
             ->where('statut_paiement', 'a_payer')->first();
         if ($cmdToDelete) {
-            $r = $this->delete('/secretaire/commandes/' . $cmdToDelete->id);
+            $r = $this->delete('/secretaire/commandes/'.$cmdToDelete->id);
             $r->assertStatus(302);
             $this->assertSoftDeleted('commandes', ['id' => $cmdToDelete->id]);
         }
@@ -345,7 +348,7 @@ class E2ESuperviseurFlowTest extends TestCase
             ->where('couleur', 'Noir')->first();
 
         // Modifier
-        $r = $this->put('/gestionnaire/tshirts/' . $tshirt->id, [
+        $r = $this->put('/gestionnaire/tshirts/'.$tshirt->id, [
             'quantite' => 45,
         ]);
         $r->assertStatus(302);
@@ -358,7 +361,7 @@ class E2ESuperviseurFlowTest extends TestCase
         $r->assertSee('Noir');
 
         // Supprimer
-        $r = $this->delete('/gestionnaire/tshirts/' . $tshirt->id);
+        $r = $this->delete('/gestionnaire/tshirts/'.$tshirt->id);
         $r->assertStatus(302);
         $this->assertDatabaseMissing('stock_tshirts', ['id' => $tshirt->id]);
 
@@ -372,7 +375,7 @@ class E2ESuperviseurFlowTest extends TestCase
         $r->assertStatus(302);
         Notification::assertSentTo(
             Utilisateur::where('role', 'Administrateur')->first(),
-            \App\Notifications\StockAlertNotification::class
+            StockAlertNotification::class
         );
 
         // 4. Papier — CRUD complet
@@ -386,7 +389,7 @@ class E2ESuperviseurFlowTest extends TestCase
         $papier = StockPapier::where('superviseur_id', $sup->id)->first();
 
         // Modifier
-        $r = $this->put('/gestionnaire/papier/' . $papier->id, [
+        $r = $this->put('/gestionnaire/papier/'.$papier->id, [
             'metres_restants' => 150,
         ]);
         $r->assertStatus(302);
@@ -398,7 +401,7 @@ class E2ESuperviseurFlowTest extends TestCase
         $r->assertOk();
 
         // Supprimer
-        $r = $this->delete('/gestionnaire/papier/' . $papier->id);
+        $r = $this->delete('/gestionnaire/papier/'.$papier->id);
         $r->assertStatus(302);
         $this->assertDatabaseMissing('stock_papier', ['id' => $papier->id]);
     }
@@ -441,7 +444,7 @@ class E2ESuperviseurFlowTest extends TestCase
 
         // La directrice ne peut PAS modifier la commande de la secrétaire
         $this->loginSuperviseur('directrice');
-        $r = $this->put('/directrice/commandes/' . $cmdSecretaire->id, [
+        $r = $this->put('/directrice/commandes/'.$cmdSecretaire->id, [
             'type' => 'impression',
             'montant' => 1,
             'montant_paye' => 1,
@@ -482,7 +485,7 @@ class E2ESuperviseurFlowTest extends TestCase
     public function test_e2e_employe_pointage_complet(): void
     {
         $employe = Utilisateur::where('role', 'Employer')->first();
-        \Illuminate\Support\Facades\Auth::login($employe);
+        Auth::login($employe);
         session(['current_role' => 'Employer']);
 
         // 1. Voir la page de présence

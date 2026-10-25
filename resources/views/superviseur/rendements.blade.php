@@ -1,32 +1,36 @@
-@extends('layouts.app')
+@extends('layouts.dashboard')
 
 @section('title', 'Rendement de l\'équipe')
+@section('breadcrumb', 'Rendements')
+
+@section('header')
+    <div>
+        <span>Rendement de l'équipe</span>
+        <p class="console-subtitle">Fiches de rendement remplies par les membres de votre équipe.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+        <form method="GET" action="{{ route('superviseur.rendements') }}" class="flex items-center gap-2">
+            <label for="date" class="sr-only">Jour</label>
+            <input type="date" name="date" id="date" value="{{ $date }}" class="input-field py-2 text-sm">
+            <button type="submit" class="btn-secondary">Filtrer</button>
+        </form>
+        <a href="{{ route('superviseur.rendements.export', ['debut' => $date, 'fin' => $date]) }}" class="btn-gold">
+            <svg class="-ml-1 mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Export Excel
+        </a>
+    </div>
+@endsection
+
+@section('content_shell', 'flush')
 
 @section('content')
-<div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    <div class="page-heading mb-6">
-        <div>
-            <h1 class="page-heading-title">Rendement de l'équipe</h1>
-            <p class="page-heading-sub">Fiches de rendement remplies par les membres de votre équipe.</p>
-        </div>
-        <div class="flex flex-wrap items-center gap-3">
-            <form method="GET" action="{{ route('superviseur.rendements') }}" class="flex items-center gap-2">
-                <label for="date" class="text-sm text-gray-600">Jour :</label>
-                <input type="date" name="date" id="date" value="{{ $date }}" class="rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-pharaoh-gold focus:ring-1 focus:ring-pharaoh-gold">
-                <button type="submit" class="btn-secondary">Filtrer</button>
-            </form>
-            <a href="{{ route('superviseur.rendements.export', ['debut' => $date, 'fin' => $date]) }}" class="btn-gold">
-                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export Excel
-            </a>
-        </div>
-    </div>
+<div class="space-y-5">
 
     <!-- Membres n'ayant pas encore rempli leur fiche -->
     @if($membresSansFiche->isNotEmpty())
-    <div class="alert alert-warning mb-6">
+    <div class="alert alert-warning">
         <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
         <div>
             <p class="font-semibold">Membres sans fiche de rendement ce jour-là</p>

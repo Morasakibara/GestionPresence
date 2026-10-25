@@ -1,81 +1,89 @@
-@extends('layouts.app')
+@extends('layouts.dashboard')
 
 @section('title', 'Notifications')
+@section('breadcrumb', 'Notifications')
 
-@section('content')
-<div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-[#080808] sm:text-3xl">Notifications</h1>
+@section('header')
+    <div>
+        <span>Notifications</span>
+        <p class="console-subtitle">Alertes de présence, congés et activité de votre périmètre.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
         <form action="{{ route('notifications.readAll') }}" method="POST">
             @csrf
-            <button type="submit" class="btn-gold btn-press">
+            <button type="submit" class="btn-gold">
                 Marquer tout comme lu
             </button>
         </form>
     </div>
+@endsection
 
-    <div class="overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-card">
-        <ul role="list" class="divide-y divide-gray-200">
+@section('content_shell', 'flush')
+
+@section('content')
+    <div class="console-card">
+        <ul role="list" class="divide-y divide-gray-100">
             @forelse($notifications as $notification)
-                <li class="px-4 py-5 sm:px-6 transition-colors duration-150 {{ $notification->read_at ? 'bg-gray-50' : 'bg-white hover:bg-gray-50/60' }}">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center">
-                                @if(isset($notification->data['type']) && $notification->data['type'] === 'absence')
-                                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
-                                        <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                @elseif(isset($notification->data['type']) && $notification->data['type'] === 'retard')
-                                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-yellow-100">
-                                        <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                @else
-                                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-pharaoh-gold-light/20">
-                                        <svg class="h-6 w-6 text-pharaoh-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                        </svg>
-                                    </div>
-                                @endif
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-900">{{ isset($notification->data['message']) ? $notification->data['message'] : 'Notification' }}</p>
-                                    <p class="text-sm text-gray-500">
-                                        {{ \Carbon\Carbon::parse($notification->created_at)->format('d/m/Y H:i') }}
-                                    </p>
+                <li class="px-4 py-4 transition-colors duration-150 sm:px-5 {{ $notification->read_at ? 'bg-white' : 'bg-[#FDF8EF]' }}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex min-w-0 flex-1 items-start gap-3">
+                            @if(isset($notification->data['type']) && $notification->data['type'] === 'absence')
+                                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
+                                    <svg class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
                                 </div>
+                            @elseif(isset($notification->data['type']) && $notification->data['type'] === 'retard')
+                                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
+                                    <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                            @else
+                                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-pharaoh-gold-light/20">
+                                    <svg class="h-5 w-5 text-pharaoh-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                </div>
+                            @endif
+
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-900">{{ isset($notification->data['message']) ? $notification->data['message'] : 'Notification' }}</p>
+                                <p class="mt-0.5 text-xs text-gray-500">
+                                    {{ \Carbon\Carbon::parse($notification->created_at)->format('d/m/Y H:i') }}
+                                </p>
                             </div>
                         </div>
+
                         @if(!$notification->read_at)
-                            <form action="{{ route('notifications.read', $notification->id) }}" method="POST">
+                            <form action="{{ route('notifications.read', $notification->id) }}" method="POST" class="flex-shrink-0">
                                 @csrf
-                                <button type="submit" class="btn-press inline-flex items-center rounded-lg bg-pharaoh-gold/10 px-3 py-1.5 text-xs font-semibold text-pharaoh-bronze-dark transition-colors duration-150 hover:bg-pharaoh-gold/20 focus:outline-none focus:ring-2 focus:ring-pharaoh-gold focus:ring-offset-2">
+                                <button type="submit" class="inline-flex items-center rounded-lg bg-pharaoh-gold/10 px-3 py-1.5 text-xs font-semibold text-pharaoh-bronze-dark transition-colors duration-150 hover:bg-pharaoh-gold/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-pharaoh-gold">
                                     Marquer comme lu
                                 </button>
                             </form>
                         @else
-                            <span class="inline-flex items-center rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-500">
-                                Lu
-                            </span>
+                            <span class="badge badge-info flex-shrink-0">Lu</span>
                         @endif
                     </div>
                 </li>
             @empty
-                <li class="px-4 py-10 sm:px-6 text-center">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune notification</h3>
+                <li class="console-empty">
+                    <span class="empty-state-icon">
+                        <svg class="h-6 w-6 text-[#B77F1D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                    </span>
+                    <h3 class="mt-3 text-sm font-semibold text-gray-900">Aucune notification</h3>
                     <p class="mt-1 text-sm text-gray-500">Vous n'avez aucune notification pour le moment.</p>
                 </li>
             @endforelse
         </ul>
 
-        <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-            {{ $notifications->links() }}
-        </div>
+        @if(method_exists($notifications, 'hasPages') && $notifications->hasPages())
+            <div class="border-t border-gray-100 px-4 py-3 sm:px-5">
+                {{ $notifications->links() }}
+            </div>
+        @endif
     </div>
-</div>
 @endsection

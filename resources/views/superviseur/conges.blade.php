@@ -1,6 +1,16 @@
-@extends('layouts.app')
+@extends('layouts.dashboard')
 
-@section('header', 'Gestion des Congés & Absences')
+@section('title', 'Gestion des Congés & Absences')
+@section('breadcrumb', 'Congés de l\'équipe')
+
+@section('header')
+    <div>
+        <span>Gestion des Congés & Absences</span>
+        <p class="console-subtitle">Demandes de votre équipe : à approuver ou à refuser.</p>
+    </div>
+@endsection
+
+@section('content_shell', 'flush')
 
 @section('content')
 @php
@@ -8,155 +18,131 @@
     $typeFilter = request('type');
 @endphp
 
-<!-- Stats -->
-<div class="grid grid-cols-2 gap-4 mb-6 sm:grid-cols-4">
-    <div class="stat-card border border-white/20 bg-gradient-to-br from-white/90 to-white/70">
-        <div class="stat-card-icon bg-pharaoh-gold/10 text-pharaoh-gold">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-        </div>
-        <div class="stat-card-value">{{ $stats['total'] }}</div>
-        <div class="stat-card-label">Total demandes</div>
+<div class="space-y-5">
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        @include('partials.dashboard.kpi', ['label' => 'Total demandes', 'value' => $stats['total'], 'meta' => 'Toutes périodes', 'tone' => 'gold'])
+        @include('partials.dashboard.kpi', ['label' => 'En attente', 'value' => $stats['en_attente'], 'meta' => 'À traiter', 'tone' => 'warning'])
+        @include('partials.dashboard.kpi', ['label' => 'Approuvés', 'value' => $stats['approuves'], 'meta' => 'Validés', 'tone' => 'success'])
+        @include('partials.dashboard.kpi', ['label' => 'Refusés', 'value' => $stats['refuses'], 'meta' => 'Non accordés', 'tone' => 'danger'])
     </div>
-    <div class="stat-card border border-amber-300/30 bg-gradient-to-br from-amber-50/90 to-amber-50/70">
-        <div class="stat-card-icon bg-amber-500/10 text-amber-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        </div>
-        <div class="stat-card-value text-amber-600">{{ $stats['en_attente'] }}</div>
-        <div class="stat-card-label">En attente</div>
-    </div>
-    <div class="stat-card border border-emerald-300/30 bg-gradient-to-br from-emerald-50/90 to-emerald-50/70">
-        <div class="stat-card-icon bg-emerald-500/10 text-emerald-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-        </div>
-        <div class="stat-card-value text-emerald-600">{{ $stats['approuves'] }}</div>
-        <div class="stat-card-label">Approuvés</div>
-    </div>
-    <div class="stat-card border border-red-300/30 bg-gradient-to-br from-red-50/90 to-red-50/70">
-        <div class="stat-card-icon bg-red-500/10 text-red-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </div>
-        <div class="stat-card-value text-red-600">{{ $stats['refuses'] }}</div>
-        <div class="stat-card-label">Refusés</div>
-    </div>
-</div>
 
-<!-- Filtres -->
-<div class="flex flex-wrap items-center gap-3 mb-6">
-    <a href="{{ route('superviseur.conges.index') }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ !$statutFilter ? 'bg-pharaoh-gold text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
-        Tous
-    </a>
-    <a href="{{ route('superviseur.conges.index', ['statut' => 'en_attente']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'en_attente' ? 'bg-amber-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
-        En attente
-    </a>
-    <a href="{{ route('superviseur.conges.index', ['statut' => 'approuve']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'approuve' ? 'bg-emerald-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
-        Approuvés
-    </a>
-    <a href="{{ route('superviseur.conges.index', ['statut' => 'refuse']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'refuse' ? 'bg-red-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
-        Refusés
-    </a>
-</div>
+    <div class="console-card">
+        <div class="console-card-head">
+            <div>
+                <h2 class="console-card-title">Demandes de congé</h2>
+                <p class="console-card-sub">Filtrez puis traitez les demandes de votre équipe.</p>
+            </div>
+        </div>
 
-<!-- Tableau des demandes -->
-<div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-card">
-    <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-            <thead class="bg-[#080808] text-white">
-                <tr>
-                    <th class="px-4 py-3 font-semibold">Employé</th>
-                    <th class="px-4 py-3 font-semibold">Type</th>
-                    <th class="px-4 py-3 font-semibold">Période</th>
-                    <th class="px-4 py-3 font-semibold">Jours</th>
-                    <th class="px-4 py-3 font-semibold">Motif</th>
-                    <th class="px-4 py-3 font-semibold">Statut</th>
-                    <th class="px-4 py-3 font-semibold">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @forelse($conges as $conge)
-                <tr class="hover:bg-pharaoh-gold/5 transition-colors">
-                    <td class="px-4 py-3">
-                        <div class="font-medium text-gray-900">{{ $conge->employe->nom ?? 'N/A' }}</div>
-                        <div class="text-xs text-gray-500">{{ $conge->date_debut->format('d/m/Y') }}</div>
-                    </td>
-                    <td class="px-4 py-3">
-                        <span class="text-sm">{{ $conge->typeLabel() }}</span>
-                    </td>
-                    <td class="px-4 py-3 text-sm">
-                        <span class="font-medium">{{ $conge->date_debut->format('d/m') }}</span>
-                        →
-                        <span class="font-medium">{{ $conge->date_fin->format('d/m/Y') }}</span>
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-pharaoh-gold/10 text-sm font-bold text-pharaoh-gold">{{ $conge->dureeJours() }}</span>
-                    </td>
-                    <td class="px-4 py-3 max-w-xs">
-                        <p class="text-sm text-gray-600 truncate" title="{{ $conge->motif }}">{{ $conge->motif }}</p>
-                    </td>
-                    <td class="px-4 py-3">{!! $conge->statutBadge() !!}</td>
-                    <td class="px-4 py-3">
-                        @if($conge->statut === 'en_attente')
-                        <div class="flex items-center gap-2">
-                            <form action="{{ route('superviseur.conges.approuver', $conge->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition-colors inline-flex items-center gap-1" onclick="return confirm('Approuver cette demande ?')">
-                                    <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+        <div class="flex flex-wrap items-center gap-2 px-4 pt-4 sm:px-5">
+            <a href="{{ route('superviseur.conges.index') }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ !$statutFilter ? 'bg-pharaoh-gold text-white' : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100' }}">
+                Tous
+            </a>
+            <a href="{{ route('superviseur.conges.index', ['statut' => 'en_attente']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'en_attente' ? 'bg-pharaoh-gold text-white' : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100' }}">
+                En attente
+            </a>
+            <a href="{{ route('superviseur.conges.index', ['statut' => 'approuve']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'approuve' ? 'bg-pharaoh-gold text-white' : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100' }}">
+                Approuvés
+            </a>
+            <a href="{{ route('superviseur.conges.index', ['statut' => 'refuse']) }}" class="rounded-full px-4 py-1.5 text-sm font-medium {{ $statutFilter === 'refuse' ? 'bg-pharaoh-gold text-white' : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100' }}">
+                Refusés
+            </a>
+        </div>
+
+        <div class="table-scroll mt-4">
+            <table class="min-w-full text-sm">
+                <thead class="table-head">
+                    <tr>
+                        <th scope="col">Employé</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Période</th>
+                        <th scope="col">Jours</th>
+                        <th scope="col">Motif</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="table-body divide-y divide-gray-100 bg-white">
+                    @forelse($conges as $conge)
+                    <tr>
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-gray-900">{{ $conge->employe->nom ?? 'N/A' }}</div>
+                            <div class="text-xs text-gray-500">{{ $conge->date_debut->format('d/m/Y') }}</div>
+                        </td>
+                        <td class="px-4 py-3 text-gray-700">{{ $conge->typeLabel() }}</td>
+                        <td class="whitespace-nowrap px-4 py-3 text-gray-700">
+                            <span class="font-medium">{{ $conge->date_debut->format('d/m') }}</span>
+                            →
+                            <span class="font-medium">{{ $conge->date_fin->format('d/m/Y') }}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-pharaoh-gold/10 text-sm font-bold text-pharaoh-gold">{{ $conge->dureeJours() }}</span>
+                        </td>
+                        <td class="max-w-xs px-4 py-3">
+                            <p class="truncate text-gray-600" title="{{ $conge->motif }}">{{ $conge->motif }}</p>
+                        </td>
+                        <td class="px-4 py-3">{!! $conge->statutBadge() !!}</td>
+                        <td class="px-4 py-3">
+                            @if($conge->statut === 'en_attente')
+                            <div class="flex items-center gap-2">
+                                <form action="{{ route('superviseur.conges.approuver', $conge->id) }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="btn-success px-3 py-1.5 text-xs" onclick="return confirm('Approuver cette demande ?')">
+                                        <svg class="mr-1 h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>Approuver</span>
+                                    </button>
+                                </form>
+                                <button type="button" onclick="openRefusModal({{ $conge->id }})" class="btn-danger px-3 py-1.5 text-xs">
+                                    <svg class="mr-1 h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
-                                    <span>Approuver</span>
+                                    <span>Refuser</span>
                                 </button>
-                            </form>
-                            <button onclick="openRefusModal({{ $conge->id }})" class="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 transition-colors inline-flex items-center gap-1">
-                                <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                <span>Refuser</span>
-                            </button>
-                        </div>
-                        @elseif($conge->statut === 'refuse')
-                        <span class="text-xs text-gray-500" title="{{ $conge->commentaire_admin }}">{{ \Illuminate\Support\Str::limit($conge->commentaire_admin ?? '', 30) }}</span>
-                        @else
-                        <span class="text-xs text-gray-400">Traité</span>
-                        @endif
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="7" class="px-4 py-12 text-center text-gray-500">
-                        <div class="flex flex-col items-center justify-center">
-                            <svg class="h-10 w-10 text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span class="text-sm">Aucune demande de congé ou d'absence.</span>
-                        </div>
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                            </div>
+                            @elseif($conge->statut === 'refuse')
+                            <span class="text-xs text-gray-500" title="{{ $conge->commentaire_admin }}">{{ \Illuminate\Support\Str::limit($conge->commentaire_admin ?? '', 30) }}</span>
+                            @else
+                            <span class="text-xs text-gray-400">Traité</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <svg class="h-7 w-7 text-[#B77F1D]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <h3 class="mt-4 text-sm font-semibold text-gray-900">Aucune demande</h3>
+                                <p class="mt-1 text-sm text-gray-500">Aucune demande de congé ou d'absence.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if($conges->hasPages())
+        <div class="border-t border-gray-200 bg-gray-50 px-4 py-3">
+            {{ $conges->links() }}
+        </div>
+        @endif
     </div>
-    @if($conges->hasPages())
-    <div class="px-4 py-3 border-t border-gray-200 bg-gray-50">
-        {{ $conges->links() }}
-    </div>
-    @endif
 </div>
 
 <!-- Modal Refus -->
-<div id="refusModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen px-4">
+<div id="refusModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-modal="true" role="dialog" aria-labelledby="refusModalTitle">
+    <div class="flex min-h-screen items-center justify-center px-4">
         <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="closeRefusModal()"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h3 class="text-lg font-bold text-[#080808] mb-4 flex items-center gap-2">
-                <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 id="refusModalTitle" class="mb-4 flex items-center gap-2 text-lg font-bold text-[#080808]">
+                <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <span>Refuser la demande</span>
@@ -165,18 +151,20 @@
                 @csrf
                 @method('PATCH')
                 <div class="mb-4">
-                    <label for="commentaire" class="block text-sm font-medium text-gray-700 mb-1">Motif du refus *</label>
-                    <textarea name="commentaire" id="commentaire" rows="3" required class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all" placeholder="Expliquez pourquoi cette demande est refusée..."></textarea>
+                    <label for="commentaire" class="input-label mb-1">Motif du refus *</label>
+                    <textarea name="commentaire" id="commentaire" rows="3" required class="input-field" placeholder="Expliquez pourquoi cette demande est refusée..."></textarea>
                 </div>
                 <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeRefusModal()" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
-                    <button type="submit" class="rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600">Confirmer le refus</button>
+                    <button type="button" onclick="closeRefusModal()" class="btn-secondary">Annuler</button>
+                    <button type="submit" class="btn-danger">Confirmer le refus</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+@endsection
 
+@push('scripts')
 <script>
 function openRefusModal(id) {
     document.getElementById('refusForm').action = '/superviseur/conges/' + id + '/refuser';
@@ -188,4 +176,4 @@ function closeRefusModal() {
     document.body.classList.remove('overflow-hidden');
 }
 </script>
-@endsection
+@endpush
