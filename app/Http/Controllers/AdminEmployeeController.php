@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Employer;
 use App\Models\Superviseur;
 use App\Models\Utilisateur;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
 
 class AdminEmployeeController extends Controller
 {
@@ -98,22 +98,19 @@ class AdminEmployeeController extends Controller
 
         $user = Utilisateur::where('email', $request->email)->first();
 
-        if ($user) {
-            $this->authorize('delete', $user);
-
-            if ($user->role == 'Superviseur') {
-                Employer::where('Sup_id', $user->id)->delete();
-                Superviseur::where('id', $user->id)->delete();
-            } elseif ($user->role == 'Employer') {
-                Employer::where('id', $user->id)->delete();
-            }
-
-            $user->delete();
-
-            return redirect()->route('admin.deleteEmployee')->with('success', 'Employé ou superviseur supprimé avec succès');
+        if (! $user) {
+            return redirect()->route('admin.deleteEmployee')->with('error', 'Aucun utilisateur trouvé avec cet email');
         }
 
-        return redirect()->route('admin.deleteEmployee')->with('error', 'Aucun utilisateur trouvé avec cet email');
+        $this->authorize('delete', $user);
+
+        $error = DB::transaction(fn () => $this->deleteManagedUser($user));
+
+        if ($error) {
+            return redirect()->route('admin.deleteEmployee')->with('error', $error);
+        }
+
+        return redirect()->route('admin.deleteEmployee')->with('success', 'Employé ou superviseur supprimé avec succès');
     }
 
     public function deleteEmployeeFromList(Request $request)
@@ -124,20 +121,45 @@ class AdminEmployeeController extends Controller
 
         $user = Utilisateur::where('email', $request->email)->first();
 
-        if ($user) {
-            if ($user->role == 'Superviseur') {
-                Employer::where('Sup_id', $user->id)->delete();
-                Superviseur::where('id', $user->id)->delete();
-            } elseif ($user->role == 'Employer') {
-                Employer::where('id', $user->id)->delete();
-            }
-
-            $user->delete();
-
-            return redirect()->route('admin.showEmployeeList')->with('success', 'Employé ou superviseur supprimé avec succès');
+        if (! $user) {
+            return redirect()->route('admin.showEmployeeList')->with('error', 'Aucun utilisateur trouvé avec cet email');
         }
 
-        return redirect()->route('admin.showEmployeeList')->with('error', 'Aucun utilisateur trouvé avec cet email');
+        $this->authorize('delete', $user);
+
+        $error = DB::transaction(fn () => $this->deleteManagedUser($user));
+
+        if ($error) {
+            return redirect()->route('admin.showEmployeeList')->with('error', $error);
+        }
+
+        return redirect()->route('admin.showEmployeeList')->with('success', 'Employé ou superviseur supprimé avec succès');
+    }
+
+    /**
+     * Supprime le profil métier puis le compte. Retourne un message d'erreur si la suppression est refusée.
+     */
+    private function deleteManagedUser(Utilisateur $user): ?string
+    {
+        if (! in_array($user->role, ['Employer', 'Superviseur'], true)) {
+            return 'Seuls les employés et superviseurs peuvent être supprimés depuis cette page.';
+        }
+
+        if ($user->role === 'Superviseur') {
+            $teamCount = Employer::where('Sup_id', $user->id)->count();
+
+            if ($teamCount > 0) {
+                return "Ce superviseur encadre encore {$teamCount} employé(s). Réaffectez-les avant de le supprimer.";
+            }
+
+            Superviseur::whereKey($user->id)->delete();
+        } else {
+            Employer::whereKey($user->id)->delete();
+        }
+
+        $user->delete();
+
+        return null;
     }
 
     public function showEmployeeList(Request $request)
@@ -148,13 +170,14 @@ class AdminEmployeeController extends Controller
 
         $query = DB::table('utilisateur')
             ->whereIn('role', ['Superviseur', 'Employer'])
+            ->whereNull('deleted_at')
             ->select('nom', 'role', 'email');
 
         if ($roles) {
             $query->whereIn('role', $roles);
         }
         if ($search) {
-            $query->where('nom', 'like', '%' . $search . '%');
+            $query->where('nom', 'like', '%'.$search.'%');
         }
 
         $employees = $query->get();
