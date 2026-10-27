@@ -27,15 +27,21 @@ class PharaonFeaturesTest extends TestCase
         parent::setUp();
         Notification::fake();
         // Créer un lieu de travail actif aux coordonnées de Paris pour les tests de géolocalisation
-        if (! WorkplaceLocation::where('actif', true)->exists()) {
-            WorkplaceLocation::create([
-                'nom' => 'Siège Le Pharaon (test)',
+        WorkplaceLocation::updateOrCreate(
+            ['nom' => 'Siège Le Pharaon (test)'],
+            [
                 'latitude' => self::PARIS_LAT,
                 'longitude' => self::PARIS_LON,
                 'rayon' => 5000, // 5 km pour les tests
                 'actif' => true,
-            ]);
-        }
+            ]
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        WorkplaceLocation::where('nom', 'Siège Le Pharaon (test)')->delete();
+        parent::tearDown();
     }
 
     private const PARIS_LAT = 48.856613;
@@ -285,7 +291,7 @@ class PharaonFeaturesTest extends TestCase
         // Graphique de comparaison des évaluations (toute l'entreprise)
         $response->assertSee('Évolution des évaluations');
         $response->assertSee('companyEvaluationChart');
-        $response->assertSee('chart.js');
+        $response->assertSee('chart.umd.min.js');
     }
 
     /** Le rapport superviseur inclut réalisations et évaluations. */
@@ -317,7 +323,7 @@ class PharaonFeaturesTest extends TestCase
         // Graphique de comparaison des évaluations de l'équipe
         $response->assertSee('Évolution des évaluations');
         $response->assertSee('teamEvaluationChart');
-        $response->assertSee('chart.js');
+        $response->assertSee('chart.umd.min.js');
     }
 
     /** S1 — L'employé consulte l'historique de ses fiches de rendement. */
@@ -663,7 +669,7 @@ class PharaonFeaturesTest extends TestCase
         $response->assertSee('6 mois');
         $response->assertSee('/20');
         $response->assertSee('evaluationChart'); // graphique Chart.js
-        $response->assertSee('chart.js');
+        $response->assertSee('chart.umd.min.js');
     }
 
     /** S13 — La page des lieux de travail (admin) rend avec la charte Pharaon. */

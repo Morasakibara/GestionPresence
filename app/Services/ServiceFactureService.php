@@ -62,7 +62,6 @@ class ServiceFactureService
 
         // Aucun acompte sur les services : paiement intégral immédiat.
         $acompte = $montant;
-        $comptant = true;
 
         $service = DB::transaction(function () use ($request, $montant, $acompte, $facturable) {
             $numero = $facturable ? self::genererNumeroService() : null;

@@ -25,10 +25,15 @@ class EnsureSingleSession
         if ($user && method_exists($user, 'jetonSessionValide')) {
             $jetonSession = $request->session()->get('session_token');
 
-            // Jeton de session absent : session émise avant ce mécanisme (ou test),
-            // rien à comparer — on laisse passer jusqu'à la prochaine connexion.
-            // Désaccord avec la base : une connexion a eu lieu ailleurs → on ferme.
-            if ($jetonSession !== null && ! $user->jetonSessionValide($jetonSession)) {
+            // Jeton absent en session ET en base : session antérieure au mécanisme
+            // (ou test actingAs) — rien à comparer, on laisse passer.
+            // Sinon tout désaccord (session sans jeton alors que la base en porte un
+            // actif, ou jeton périmé par une connexion sur un autre appareil) : on ferme.
+            $desaccord = $jetonSession === null
+                ? $user->session_token !== null
+                : ! $user->jetonSessionValide($jetonSession);
+
+            if ($desaccord) {
                 PinController::clearPinSession();
                 PinController::forgetRecoveryCookie();
 

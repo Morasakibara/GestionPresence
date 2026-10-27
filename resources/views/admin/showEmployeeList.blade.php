@@ -20,6 +20,11 @@
 
 @section('content')
 <div class="space-y-5">
+    @if ($errors->any())
+        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+            {{ $errors->first() }}
+        </div>
+    @endif
     <div class="rounded-2xl border border-gray-200/70 bg-white p-4 shadow-card sm:p-6">
         <form method="GET" action="{{ route('admin.showEmployeeList') }}" class="space-y-4">
             @csrf
@@ -88,7 +93,7 @@
                             <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                 @php $managed = $employee->role === 'Superviseur' ? (int) ($managedCounts[$employee->id] ?? 0) : 0; @endphp
                                 <button type="button"
-                                        onclick="ouvrirSuppressionModal({ id: {{ $employee->id }}, email: '{{ e($employee->email) }}', nom: '{{ e($employee->nom) }}', role: '{{ e($employee->role) }}', encadrés: {{ $managed }} })"
+                                        onclick="ouvrirSuppressionModal(@js(['id' => $employee->id, 'email' => $employee->email, 'nom' => $employee->nom, 'role' => $employee->role, 'encadrés' => $managed]))"
                                         class="btn-danger-soft ring-1 ring-inset ring-red-600/20">
                                     <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     Supprimer

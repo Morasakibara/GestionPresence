@@ -30,15 +30,21 @@ class SuperviseurModulesTest extends TestCase
         parent::setUp();
         Notification::fake();
 
-        if (! WorkplaceLocation::where('actif', true)->exists()) {
-            WorkplaceLocation::create([
-                'nom' => 'Siège Le Pharaon (test)',
+        WorkplaceLocation::updateOrCreate(
+            ['nom' => 'Siège Le Pharaon (test)'],
+            [
                 'latitude' => self::PARIS_LAT,
                 'longitude' => self::PARIS_LON,
                 'rayon' => 5000,
                 'actif' => true,
-            ]);
-        }
+            ]
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        WorkplaceLocation::where('nom', 'Siège Le Pharaon (test)')->delete();
+        parent::tearDown();
     }
 
     /**
@@ -326,6 +332,7 @@ class SuperviseurModulesTest extends TestCase
         $response = $this->post('/directrice/services', [
             'type' => 'impression',
             'montant' => 2500,
+            'numero_whatsapp' => '+237690123456',
             'details' => 'Impression planche A3.',
         ]);
         $response->assertStatus(302);
@@ -334,6 +341,7 @@ class SuperviseurModulesTest extends TestCase
             'superviseur_id' => $sup->id,
             'type' => 'impression',
             'montant' => 2500,
+            'statut_paiement' => 'paye',
         ]);
     }
 
@@ -528,6 +536,7 @@ class SuperviseurModulesTest extends TestCase
         $response = $this->post('/secretaire/services', [
             'type' => 'montage_photos',
             'montant' => 8000,
+            'numero_whatsapp' => '+237690123456',
             'details' => 'Montage album mariage.',
         ]);
         $response->assertStatus(302);

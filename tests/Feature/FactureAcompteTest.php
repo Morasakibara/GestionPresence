@@ -27,12 +27,12 @@ class FactureAcompteTest extends TestCase
         $directrice = $this->loginDirectrice();
 
         $response = $this->post('/directrice/commandes', [
-            'type'            => 'impression',
-            'montant'         => 10000,
-            'acompte'         => 4000,
-            'client_nom'      => 'Mme Bela',
+            'type' => 'impression',
+            'montant' => 10000,
+            'acompte' => 4000,
+            'client_nom' => 'Mme Bela',
             'numero_whatsapp' => '+237690123456',
-            'details'         => 'Flyers A5',
+            'details' => 'Flyers A5',
         ]);
 
         $response->assertRedirect('/directrice/commandes');
@@ -65,9 +65,9 @@ class FactureAcompteTest extends TestCase
         $directrice = $this->loginDirectrice();
 
         $this->post('/directrice/commandes', [
-            'type'            => 'photocopie',
-            'montant'         => 5000,
-            'acompte'         => 5000,
+            'type' => 'photocopie',
+            'montant' => 5000,
+            'acompte' => 5000,
             'numero_whatsapp' => '+237690123456',
         ])->assertRedirect('/directrice/commandes');
 
@@ -78,17 +78,23 @@ class FactureAcompteTest extends TestCase
         $this->assertEquals('+237690123456', $facture->client_whatsapp);
     }
 
-    /** WhatsApp sans indicatif international → refusé (pattern E.164) */
-    public function test_whatsapp_sans_indicatif_refuse(): void
+    /** WhatsApp sans indicatif international → +237 ajouté par défaut puis accepté */
+    public function test_whatsapp_sans_indicatif_normalise(): void
     {
         $directrice = $this->loginDirectrice();
 
+        // Règle métier : le préfixe +237 est ajouté par défaut avant validation,
+        // un numéro saisi sans indicatif est donc accepté et normalisé.
         $this->post('/directrice/commandes', [
-            'type'            => 'photocopie',
-            'montant'         => 5000,
-            'acompte'         => 5000,
+            'type' => 'photocopie',
+            'montant' => 5000,
+            'acompte' => 5000,
             'numero_whatsapp' => '690123456',
-        ])->assertSessionHasErrors('numero_whatsapp');
+        ])->assertSessionMissing('errors');
+
+        $this->assertDatabaseHas('commandes', [
+            'numero_whatsapp' => '+237690123456',
+        ]);
     }
 
     /** WhatsApp invalide → refusé */
@@ -97,9 +103,9 @@ class FactureAcompteTest extends TestCase
         $directrice = $this->loginDirectrice();
 
         $this->post('/directrice/commandes', [
-            'type'            => 'impression',
-            'montant'         => 10000,
-            'acompte'         => 4000,
+            'type' => 'impression',
+            'montant' => 10000,
+            'acompte' => 4000,
             'numero_whatsapp' => 'abc',
         ])->assertSessionHasErrors('numero_whatsapp');
     }
@@ -112,9 +118,9 @@ class FactureAcompteTest extends TestCase
         $avant = Commande::where('superviseur_id', $directrice->id)->count();
 
         $this->post('/directrice/commandes', [
-            'type'            => 'impression',
-            'montant'         => 5000,
-            'acompte'         => 8000,
+            'type' => 'impression',
+            'montant' => 5000,
+            'acompte' => 8000,
             'numero_whatsapp' => '+237690123456',
         ])->assertSessionHasErrors('acompte');
         // (aucune commande ne doit être créée)
@@ -133,9 +139,9 @@ class FactureAcompteTest extends TestCase
         $directrice = $this->loginDirectrice();
 
         $this->post('/directrice/commandes', [
-            'type'            => 'photocopie',
-            'montant'         => 700,
-            'acompte'         => 700,
+            'type' => 'photocopie',
+            'montant' => 700,
+            'acompte' => 700,
             'numero_whatsapp' => '+237690123456',
         ])->assertRedirect('/directrice/commandes');
 
@@ -154,9 +160,9 @@ class FactureAcompteTest extends TestCase
         $directrice = $this->loginDirectrice();
 
         $this->post('/directrice/commandes', [
-            'type'          => 'impression',
-            'montant'       => 7000,
-            'montant_paye'  => 7000,
+            'type' => 'impression',
+            'montant' => 7000,
+            'montant_paye' => 7000,
             'statut_paiement' => 'paye',
         ])->assertRedirect('/directrice/commandes');
 

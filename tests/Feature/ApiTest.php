@@ -2,8 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Commande;
-use App\Models\Presence;
 use App\Models\Utilisateur;
 use App\Models\WorkplaceLocation;
 use Illuminate\Support\Facades\Notification;
@@ -13,6 +11,7 @@ use Tests\TestCase;
 class ApiTest extends TestCase
 {
     private const PARIS_LAT = 48.856613;
+
     private const PARIS_LON = 2.352222;
 
     protected function setUp(): void
@@ -20,15 +19,23 @@ class ApiTest extends TestCase
         parent::setUp();
         Notification::fake();
 
-        if (!WorkplaceLocation::where('actif', true)->exists()) {
-            WorkplaceLocation::create([
-                'nom' => 'Siège Le Pharaon (test API)',
+        // Lieu de test aux coordonnées de Paris, indépendant de l'état de la base
+        // de dev (d'autres lieux actifs peuvent exister).
+        WorkplaceLocation::updateOrCreate(
+            ['nom' => 'Siège Le Pharaon (test API)'],
+            [
                 'latitude' => self::PARIS_LAT,
                 'longitude' => self::PARIS_LON,
                 'rayon' => 5000,
                 'actif' => true,
-            ]);
-        }
+            ]
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        WorkplaceLocation::where('nom', 'Siège Le Pharaon (test API)')->delete();
+        parent::tearDown();
     }
 
     // ═══════════════ AUTH ═══════════════
@@ -61,7 +68,7 @@ class ApiTest extends TestCase
         $employe = Utilisateur::where('role', 'Employer')->first();
         $token = $employe->createToken('test-token')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/logout');
         $response->assertOk();
     }

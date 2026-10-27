@@ -33,15 +33,21 @@ class E2ESuperviseurFlowTest extends TestCase
         parent::setUp();
         Notification::fake();
 
-        if (! WorkplaceLocation::where('actif', true)->exists()) {
-            WorkplaceLocation::create([
-                'nom' => 'Siège Le Pharaon (test E2E)',
+        WorkplaceLocation::updateOrCreate(
+            ['nom' => 'Siège Le Pharaon (test E2E)'],
+            [
                 'latitude' => self::PARIS_LAT,
                 'longitude' => self::PARIS_LON,
                 'rayon' => 5000,
                 'actif' => true,
-            ]);
-        }
+            ]
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        WorkplaceLocation::where('nom', 'Siège Le Pharaon (test E2E)')->delete();
+        parent::tearDown();
     }
 
     private function loginSuperviseur(string $type): Utilisateur

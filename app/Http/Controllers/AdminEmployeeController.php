@@ -197,8 +197,14 @@ class AdminEmployeeController extends Controller
                 ->groupBy('Sup_id')
                 ->pluck('c', 'Sup_id');
 
-        // Superviseurs cibles possibles pour la réaffectation.
-        $superviseurs = $employees->where('role', 'Superviseur')->values();
+        // Superviseurs cibles possibles pour la réaffectation : liste complète,
+        // indépendante du filtre de recherche de la page.
+        $superviseurs = DB::table('utilisateur')
+            ->where('role', 'Superviseur')
+            ->whereNull('deleted_at')
+            ->select('id', 'nom', 'role', 'email')
+            ->orderBy('nom')
+            ->get();
 
         return view('admin.showEmployeeList', compact(
             'employees', 'search', 'roles', 'managedCounts', 'superviseurs'

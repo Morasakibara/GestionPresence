@@ -32,3 +32,5 @@ andrej-karpathy-skills-main/
 
 # Configuration Qoder locale
 /.qoder/settings.local.json
+
+review_diff_*.txt

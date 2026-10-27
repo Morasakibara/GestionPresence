@@ -80,9 +80,13 @@ class CaisseFlowTest extends TestCase
     {
         $this->actingAs($this->directrice);
         session(['current_role' => 'Superviseur']);
+        // Règle métier : un service n'accepte pas d'acompte — il est payé en
+        // totalité dès la saisie. Au-dessus du seuil de facturation, le numéro
+        // WhatsApp du client est exigé pour établir la facture.
         $this->post('/directrice/services', [
             'type' => 'photocopie',
             'montant' => 3000,
+            'numero_whatsapp' => '+237690123456',
             'description' => '50 photocopies',
         ])
             ->assertRedirect();
@@ -91,6 +95,7 @@ class CaisseFlowTest extends TestCase
             'superviseur_id' => $this->directrice->id,
             'type' => 'photocopie',
             'montant' => 3000,
+            'statut_paiement' => 'paye',
         ]);
     }
 
