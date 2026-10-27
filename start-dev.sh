@@ -26,14 +26,16 @@ else
     if [ ! -f "vendor/autoload.php" ]; then
         echo "    !! vendor/ manquant — lancez d'abord : composer install"
     else
-        echo "    Démarrage du serveur Laravel sur http://127.0.0.1:8000"
-        (php -S 127.0.0.1:8000 -t public > /tmp/laravel_server.log 2>&1 &)
+        echo "    Démarrage du serveur Laravel sur http://0.0.0.0:8000 (accessible depuis le réseau local)"
+        # --host=0.0.0.0 : indispensable pour que les autres appareils du Wi-Fi
+        # (192.168.x.x:8000) atteignent l'application, sinon 127.0.0.1 est local-only.
+        (php artisan serve --host=0.0.0.0 --port=8000 > /tmp/laravel_server.log 2>&1 &)
         sleep 2
     fi
 fi
 
 echo ""
 echo "=================================================================="
-echo "  Application :  http://127.0.0.1:8000"
+echo "  Application :  http://127.0.0.1:8000  (réseau local : http://<IP>:8000)"
 echo "  Mailpit      :  http://127.0.0.1:8025"
 echo "=================================================================="

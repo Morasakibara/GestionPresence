@@ -88,6 +88,7 @@ Route::middleware(['isAdmin', 'role:Administrateur'])->prefix('admin')->name('ad
     Route::post('/update-profile', [AdminController::class, 'updateProfile'])->name('updateProfile');
     Route::get('/update-profile', [AdminController::class, 'showProfileForm'])->name('showProfile');
     Route::post('delete-employee-from-list', [AdminEmployeeController::class, 'deleteEmployeeFromList'])->name('deleteEmployee.fromList');
+    Route::post('reassign-employees', [AdminEmployeeController::class, 'reassignEmployees'])->name('reassignEmployees');
     Route::resource('workplace-locations', WorkplaceLocationController::class);
   });
 

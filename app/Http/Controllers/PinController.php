@@ -146,6 +146,7 @@ class PinController extends Controller
         // Reconnexion complète équivalente : session fraîche + PIN approuvé
         Auth::login($user);
         session()->regenerate();
+        $user->emettreJetonSession(); // session unique : expulse les autres appareils
         session([
             'pin_verified'    => true,
             'pin_verified_at' => now()->timestamp,

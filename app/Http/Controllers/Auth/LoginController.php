@@ -80,6 +80,12 @@ class LoginController extends Controller
             RateLimiter::clear($throttleKey);
             $this->loginAttempts->reset($email);
             Auth::login($user);
+            session()->regenerate();
+
+            // Session unique : un nouveau jeton est émis à chaque connexion et stocké
+            // en base + en session. Les sessions des autres appareils (ancien jeton)
+            // sont automatiquement invalidées au prochain passage du middleware.
+            $this->emettreJetonSession($user);
 
             // Le PIN ne doit être demandé qu'à l'expiration de la session :
             // une connexion email + mot de passe est un jeton plus fort que le PIN.
@@ -165,7 +171,29 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         \App\Http\Controllers\PinController::clearPinSession();
+
+        // Invalidation complète : on vide la session, régénère l'ID et le jeton CSRF,
+        // et on rend le jeton de session unique obsolète (aucune reprise par bouton
+        // « retour » / bfcache n'est possible — la page no-store l'empêche aussi).
+        $user = Auth::user();
+        if ($user) {
+            $user->forceFill(['session_token' => null])->save();
+        }
+
         Auth::logout();
-        return redirect('/login');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        // Message visible sur la page de login (le dashboard n'est plus accessible).
+        return redirect('/login')->with('success', 'Vous êtes déconnecté. Votre session a été fermée.');
+    }
+
+    /**
+     * Émet un jeton de session unique : la dernière connexion prend la main et
+     * expulse les sessions ouvertes sur d'autres appareils.
+     */
+    private function emettreJetonSession(Utilisateur $user): void
+    {
+        $user->emettreJetonSession();
     }
 }

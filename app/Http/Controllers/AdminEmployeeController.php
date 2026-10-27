@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employer;
 use App\Models\Superviseur;
 use App\Models\Utilisateur;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -171,17 +172,79 @@ class AdminEmployeeController extends Controller
         $query = DB::table('utilisateur')
             ->whereIn('role', ['Superviseur', 'Employer'])
             ->whereNull('deleted_at')
-            ->select('nom', 'role', 'email');
+            ->select('id', 'nom', 'role', 'email', 'avatar');
 
         if ($roles) {
             $query->whereIn('role', $roles);
         }
         if ($search) {
-            $query->where('nom', 'like', '%'.$search.'%');
+            $query->where(function ($q) use ($search) {
+                $q->where('nom', 'like', '%' . $search . '%')
+                  ->orWhere('email', 'like', '%' . $search . '%');
+            });
         }
 
-        $employees = $query->get();
+        $employees = $query->orderBy('nom')->get();
 
-        return view('admin.showEmployeeList', compact('employees', 'search', 'roles'));
+        // Nombre d'employés encadrés par chaque superviseur (pour bloquer/guider la
+        // suppression et alimenter la réaffectation depuis le modal).
+        $supIds = $employees->where('role', 'Superviseur')->pluck('id');
+        $managedCounts = $supIds->isEmpty()
+            ? collect()
+            : DB::table('employer')
+                ->whereIn('Sup_id', $supIds)
+                ->selectRaw('Sup_id, count(*) as c')
+                ->groupBy('Sup_id')
+                ->pluck('c', 'Sup_id');
+
+        // Superviseurs cibles possibles pour la réaffectation.
+        $superviseurs = $employees->where('role', 'Superviseur')->values();
+
+        return view('admin.showEmployeeList', compact(
+            'employees', 'search', 'roles', 'managedCounts', 'superviseurs'
+        ));
+    }
+
+    /**
+     * Réaffecte tous les employés d'un superviseur vers un autre avant suppression.
+     * Déplace Sup_id et l'équipe pour rester cohérent avec le nouveau superviseur.
+     */
+    public function reassignEmployees(Request $request)
+    {
+        $this->authorize('viewAny', Utilisateur::class);
+
+        $data = $request->validate([
+            'from_superviseur_id' => ['required', 'integer', 'exists:superviseur,id'],
+            'to_superviseur_id'   => ['required', 'integer', 'different:from_superviseur_id', 'exists:superviseur,id'],
+        ], [
+            'to_superviseur_id.different' => 'Choisissez un superviseur différent de celui à supprimer.',
+        ]);
+
+        $cible = Superviseur::findOrFail($data['to_superviseur_id']);
+
+        $moved = DB::transaction(function () use ($data, $cible) {
+            $miseAJour = ['Sup_id' => $cible->id];
+            // La table employer porte une colonne equipe ; on l'aligne sur le nouveau superviseur.
+            if (DB::getSchemaBuilder()->hasColumn('employer', 'equipe')) {
+                $miseAJour['equipe'] = $cible->equipe;
+            }
+
+            return DB::table('employer')
+                ->where('Sup_id', $data['from_superviseur_id'])
+                ->update($miseAJour);
+        });
+
+        AuditService::updated(
+            'admin',
+            "Réaffectation de {$moved} employé(s) du superviseur #{$data['from_superviseur_id']} vers #{$cible->id}",
+            ['from_superviseur_id' => $data['from_superviseur_id']],
+            ['to_superviseur_id' => $cible->id, 'moved' => $moved],
+            $request
+        );
+
+        $nomCible = Utilisateur::where('id', $cible->id)->value('nom') ?: ('#' . $cible->id);
+
+        return redirect()->route('admin.showEmployeeList')
+            ->with('success', "{$moved} employé(s) réaffecté(s) à « {$nomCible} ». Vous pouvez maintenant supprimer l'ancien superviseur.");
     }
 }

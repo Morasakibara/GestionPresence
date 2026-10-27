@@ -27,43 +27,38 @@ class ServiceFactureService
     /*────────────── Étape 2.1 — Saisie initiale (acompte) ──────────────*/
 
     /**
-     * Crée le service + facture d'acompte via le formulaire de facturation.
+     * Crée le service + facture via le formulaire de facturation.
      *
-     * Champs identiques au flux commandes : montant (total), acompte,
-     * numero_whatsapp (obligatoire, format +237...), client_nom, details.
+     * RÈGLE MÉTIER : sur un SERVICE, on ne prend PAS d'acompte — le service est
+     * payé en totalité dès la saisie. Tout « acompte » partiel transmis est ignoré
+     * et le montant est réputé encaissé (phase « solde », statut « paye »).
      */
     public function creerAcompte(Request $request): ServiceFourni
     {
         $montant    = round((float) $request->montant, 2);
         $facturable = FactureService::doitFacturer($montant);
 
+        // +237 par défaut : normalisation AVANT validation (oubli d'indicatif pays).
+        if ($request->filled('numero_whatsapp')) {
+            $request->merge([
+                'numero_whatsapp' => FactureService::normaliserTelephone((string) $request->input('numero_whatsapp')),
+            ]);
+        }
+
         $request->validate([
             'montant'         => 'required|numeric|min:1|max:100000000',
-            'acompte'         => $facturable
-                ? 'required|numeric|min:1|max:100000000'
-                : 'nullable|numeric|min:0|max:100000000',
             'client_nom'      => 'nullable|string|max:100',
             'numero_whatsapp' => $facturable
                 ? ['required', 'string', 'regex:' . config('facture.whatsapp_regex')]
                 : ['nullable', 'string', 'regex:' . config('facture.whatsapp_regex')],
             'details'         => 'nullable|string|max:1000',
         ], [
-            'acompte.required' => 'L\'acompte est obligatoire.',
-            'acompte.min'      => 'L\'acompte doit être supérieur à 0.',
             'numero_whatsapp.required' => 'Le numéro WhatsApp du client est obligatoire.',
         ]);
 
-        // Montants <= 1 000 FCFA : service enregistré sans facture PDF ni WhatsApp
-        $acompte  = round((float) ($request->acompte ?? $montant), 2);
-
-        if ($acompte > $montant) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'acompte' => "L'acompte (" . number_format($acompte, 0, ',', '.') .
-                    ") ne peut pas dépasser le montant total (" . number_format($montant, 0, ',', '.') . ").",
-            ]);
-        }
-
-        $comptant = $acompte >= $montant;
+        // Aucun acompte sur les services : paiement intégral immédiat.
+        $acompte  = $montant;
+        $comptant = true;
 
         $service = DB::transaction(function () use ($request, $montant, $acompte, $comptant, $facturable) {
             $numero = $facturable ? self::genererNumeroService() : null;
@@ -73,7 +68,7 @@ class ServiceFactureService
                 'type'            => $request->type,
                 'montant'         => $montant,
                 'montant_paye'    => $acompte,
-                'statut_paiement' => $comptant ? 'paye' : ServiceFourni::STATUT_EN_ATTENTE_SOLDE,
+                'statut_paiement' => 'paye',
                 'details'         => $request->details,
                 'date'            => now()->toDateString(),
                 'numero_whatsapp' => $request->filled('numero_whatsapp')
@@ -81,15 +76,11 @@ class ServiceFactureService
                     : null,
                 'client_nom'      => $request->client_nom,
                 'numero_facture'  => $numero,
-                'prix_verrouille' => $facturable, // verrou dès le premier versement
+                'prix_verrouille' => $facturable, // verrou dès la saisie
             ]);
 
             if ($facturable) {
-                FacturePdfService::figerService(
-                    $service,
-                    $numero,
-                    $comptant ? Facture::PHASE_SOLDE : Facture::PHASE_ACOMPTE
-                );
+                FacturePdfService::figerService($service, $numero, Facture::PHASE_SOLDE);
             }
 
             return $service;
@@ -98,8 +89,8 @@ class ServiceFactureService
         AuditService::created(
             $this->module,
             $facturable
-                ? "Facture {$service->numero_facture} — acompte " . number_format($acompte, 0, ',', '.') .
-                    " FCFA sur " . number_format($montant, 0, ',', '.') . " FCFA (WhatsApp {$service->numero_whatsapp})"
+                ? "Facture {$service->numero_facture} — service payé " . number_format($montant, 0, ',', '.') .
+                    " FCFA (WhatsApp {$service->numero_whatsapp})"
                 : "Service {$request->type} de " . number_format($montant, 0, ',', '.') . " FCFA (sans facture, montant ≤ " . number_format((float) config('facture.montant_minimum', 1000), 0, ',', '.') . " FCFA)",
             $service->toArray(),
             $request
@@ -107,7 +98,7 @@ class ServiceFactureService
 
         // Étape 4.2 — envoi WhatsApp automatique dès la confirmation du paiement
         if ($facturable) {
-            $this->envoyerWhatsApp($service->numero_facture, Facture::PHASE_ACOMPTE);
+            $this->envoyerWhatsApp($service->numero_facture, Facture::PHASE_SOLDE);
         }
 
         return $service;

@@ -50,12 +50,7 @@
                 <div class="form-group">
                     <label class="input-label">Montant total (FCFA)</label>
                     <input type="number" name="montant" id="montant" class="input-field" min="1" step="any" value="{{ old('montant') }}" required placeholder="0">
-                    <p class="text-xs text-gray-400 mt-1">Facture PDF générée uniquement au-delà de 1 000 FCFA.</p>
-                </div>
-                <div class="form-group">
-                    <label class="input-label">Acompte versé (FCFA)</label>
-                    <input type="number" name="acompte" id="acompte" class="input-field" min="1" step="any" value="{{ old('acompte') }}" placeholder="0">
-                    <p class="text-xs mt-1 font-medium" id="soldeInfo"></p>
+                    <p class="text-xs text-gray-400 mt-1">Payé intégralement à la saisie — aucun acompte sur les services. Facture PDF au-delà de 1 000 FCFA.</p>
                 </div>
                 <div class="form-group">
                     <label class="input-label">Détails (facultatif)</label>
@@ -63,7 +58,7 @@
                 </div>
                 <button type="submit" class="btn-primary gap-2">
                     <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" /></svg>
-                    <span>Valider l'acompte</span>
+                    <span>Valider le service</span>
                 </button>
             </form>
         </div>
@@ -265,31 +260,16 @@ function closeDeleteServiceModal() {
     document.body.style.overflow = '';
 }
 
-// ═══ Acompte : calcul automatique du solde restant ═══
+// ═══ Services : aucun acompte — paiement intégral dès la saisie ═══
 document.addEventListener('DOMContentLoaded', () => {
     const total = document.getElementById('montant');
-    const acompte = document.getElementById('acompte');
-    const info = document.getElementById('soldeInfo');
-    function majSolde() {
+    if (!total) return;
+    total.addEventListener('input', () => {
         const t = parseFloat(total.value) || 0;
-        const a = parseFloat(acompte.value) || 0;
-        const reste = t - a;
-        if (!t) { info.textContent = ''; info.className = 'text-xs mt-1 font-medium'; return; }
-        if (reste < 0) { info.textContent = "⚠️ L'acompte dépasse le montant total."; info.className = 'text-xs mt-1 font-medium text-red-600'; return; }
-        if (t <= 1000) {
-            info.textContent = 'Petit montant (≤ 1 000 FCFA) — enregistré sans facture PDF.';
-            info.className = 'text-xs mt-1 font-medium text-gray-500';
-            return;
+        if (t > 0 && t <= 1000) {
+            total.closest('.form-group').querySelector('p')?.classList.remove('text-gray-400');
         }
-        if (!a) { info.textContent = 'Acompte + WhatsApp requis pour facturer ce service.'; info.className = 'text-xs mt-1 font-medium text-pharaoh-gold'; return; }
-        info.textContent = reste === 0
-            ? '✅ Comptant — la facture sera créée payée.'
-            : 'Solde restant : ' + reste.toLocaleString('fr-FR') + ' FCFA (verrouillé)';
-        info.className = 'text-xs mt-1 font-medium text-pharaoh-gold';
-    }
-    total.addEventListener('input', majSolde);
-    acompte.addEventListener('input', majSolde);
-    majSolde();
+    });
 });
 
 document.addEventListener('click', function(e) { if (['soldeServiceModal','deleteServiceModal'].includes(e.target.id)) closeModal(e.target.id); });

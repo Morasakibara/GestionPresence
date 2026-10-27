@@ -47,6 +47,14 @@ class FactureService
         $montant     = round((float) $request->montant, 2);
         $facturable  = self::doitFacturer($montant);
 
+        // +237 par défaut : on normalise le numéro AVANT validation pour éviter
+        // l'erreur « format invalide » quand l'utilisateur oublie l'indicatif pays.
+        if ($request->filled('numero_whatsapp')) {
+            $request->merge([
+                'numero_whatsapp' => self::normaliserTelephone((string) $request->input('numero_whatsapp')),
+            ]);
+        }
+
         $request->validate([
             'type'            => 'required|string',
             'montant'         => 'required|numeric|min:1|max:100000000',
@@ -67,6 +75,18 @@ class FactureService
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'acompte' => "L'acompte (" . number_format($acompte, 0, ',', '.') . ") ne peut pas dépasser le montant total (" . number_format($montant, 0, ',', '.') . ").",
             ]);
+        }
+
+        // Acompte minimal : au moins X% du montant total sur une commande facturée.
+        if ($facturable) {
+            $pct  = (float) config('facture.acompte_minimum_pct', 35);
+            $mini = round($montant * $pct / 100, 2);
+            if ($acompte < $mini) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'acompte' => "L'acompte doit être supérieur ou égal à {$pct}% du montant total, soit au minimum "
+                        . number_format($mini, 0, ',', '.') . " FCFA.",
+                ]);
+            }
         }
 
         $comptant = $acompte >= $montant;
@@ -238,6 +258,9 @@ class FactureService
     /** Format international E.164 (ex: 690123456 → +237690123456). */
     public static function normaliserTelephone(string $brut): string
     {
+        $prefixe = (string) config('facture.prefixe_defaut', '+237');
+        $indicatif = ltrim($prefixe, '+'); // « 237 »
+
         $tel = preg_replace('/[^0-9+]/', '', trim($brut));
 
         if (str_starts_with($tel, '+')) {
@@ -246,11 +269,12 @@ class FactureService
         if (str_starts_with($tel, '00')) {
             return '+' . substr($tel, 2);
         }
-        if (in_array(substr($tel, 0, 3), ['237', '236', '225', '226', '229', '00237'], true) && strlen($tel) >= 10) {
+        // Numéro déjà saisi avec l'indicatif pays sans le « + » (ex: 237690123456).
+        if (str_starts_with($tel, $indicatif) && strlen($tel) >= 10) {
             return '+' . ltrim($tel, '0');
         }
 
-        return '+237' . $tel;
+        return $prefixe . $tel;
     }
 
     /** Téléphone compatible passerelle (meta/twilio : sans le « + »). */

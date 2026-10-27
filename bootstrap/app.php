@@ -21,6 +21,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'superadmin' => \App\Http\Middleware\SuperAdminOnly::class,
         ]);
 
+        // Pages authentifiées en no-store (bouton « retour » après logout renvoie au
+        // login) + connexion unique par compte (une seule session active à la fois).
+        $middleware->web(append: [
+            \App\Http\Middleware\NoCacheBackend::class,
+            \App\Http\Middleware\EnsureSingleSession::class,
+        ]);
+
         // Remplacer le CSRF natif par notre version (désactive en testing)
         $middleware->replaceInGroup(
             'web',

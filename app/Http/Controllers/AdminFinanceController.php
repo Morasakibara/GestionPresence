@@ -16,30 +16,53 @@ use Illuminate\Support\Facades\DB;
 class AdminFinanceController extends Controller
 {
     /**
-     * Vue admin : état de la caisse (directrice + secrétaire)
+     * Vue admin : état de la caisse (directrice + secrétaire).
+     *
+     * Agrège TOUS les superviseurs d'un même type (plusieurs comptes « secretaire »
+     * peuvent exister) et accepte un filtre de date (?date=YYYY-MM-DD). Sans données
+     * pour le jour choisi, on affiche aussi le cumul historique pour que la page ne
+     * soit jamais vide alors que la base contient des écritures.
      */
-    public function etatCaisse()
+    public function etatCaisse(Request $request)
     {
-        $today = now()->toDateString();
+        $date = $request->query('date');
+        // Repli sur aujourd'hui si la date est absente ou invalide.
+        if (!$date || !\DateTime::createFromFormat('Y-m-d', $date)) {
+            $date = now()->toDateString();
+        }
 
-        $directrice = Superviseur::where('type_superviseur', 'directrice')->first();
-        $secretaire = Superviseur::where('type_superviseur', 'secretaire')->first();
-
+        $libelles = ['directrice' => 'Directrice', 'secretaire' => 'Secrétaire'];
         $data = [];
-        foreach (['directrice' => $directrice, 'secretaire' => $secretaire] as $label => $sup) {
-            if (!$sup) continue;
-            $totalCommandes = Commande::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
-            $totalServices = ServiceFourni::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
-            $totalRetraits = Retrait::where('superviseur_id', $sup->id)->whereDate('date', $today)->sum('montant');
-            $data[$label] = [
-                'nom' => Utilisateur::find($sup->id)->nom ?? $label,
-                'entrees' => $totalCommandes + $totalServices,
-                'sorties' => $totalRetraits,
-                'chiffre_affaire' => $totalCommandes + $totalServices - $totalRetraits,
+
+        foreach ($libelles as $type => $label) {
+            // Tous les superviseurs de ce type (la base peut en contenir plusieurs).
+            $supIds = Superviseur::where('type_superviseur', $type)->pluck('id');
+            if ($supIds->isEmpty()) {
+                continue;
+            }
+
+            $nom = Utilisateur::whereIn('id', $supIds)->pluck('nom')->implode(', ');
+
+            $entreesJour = Commande::whereIn('superviseur_id', $supIds)->whereDate('date', $date)->sum('montant')
+                + ServiceFourni::whereIn('superviseur_id', $supIds)->whereDate('date', $date)->sum('montant');
+            $sortiesJour = Retrait::whereIn('superviseur_id', $supIds)->whereDate('date', $date)->sum('montant');
+
+            $entreesTotal = Commande::whereIn('superviseur_id', $supIds)->sum('montant')
+                + ServiceFourni::whereIn('superviseur_id', $supIds)->sum('montant');
+            $sortiesTotal = Retrait::whereIn('superviseur_id', $supIds)->sum('montant');
+
+            $data[$type] = [
+                'nom' => $nom ?: $label,
+                'entrees' => (float) $entreesJour,
+                'sorties' => (float) $sortiesJour,
+                'chiffre_affaire' => (float) ($entreesJour - $sortiesJour),
+                'entrees_total' => (float) $entreesTotal,
+                'sorties_total' => (float) $sortiesTotal,
+                'chiffre_affaire_total' => (float) ($entreesTotal - $sortiesTotal),
             ];
         }
 
-        return view('admin.etat_caisse', compact('data'));
+        return view('admin.etat_caisse', compact('data', 'date'));
     }
 
     /**

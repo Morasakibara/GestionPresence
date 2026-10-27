@@ -117,6 +117,18 @@ class CongeController extends Controller
 
         $employeId = Auth::id();
 
+        // Garde d'intégrité : conges.employer_id est une clé étrangère vers la table
+        // `employer`. Un Superviseur en mode « Employer » (ou un compte sans profil
+        // employé) n'a pas de ligne correspondante → violation 1452 sinon. On refuse
+        // proprement avec un message clair plutôt que de laisser planter l'INSERT.
+        if (!DB::table('employer')->where('id', $employeId)->exists()) {
+            return redirect()->back()->with(
+                'error',
+                'Aucun profil employé n\'est associé à votre compte : la demande de congé est réservée aux employés. ' .
+                'Si vous êtes superviseur, repassez en mode superviseur depuis le changement de rôle.'
+            );
+        }
+
         // Vérifier pas de chevauchement
         $chevauchement = Conge::where('employer_id', $employeId)
             ->where('statut', '!=', 'refuse')

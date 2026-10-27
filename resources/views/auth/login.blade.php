@@ -47,6 +47,18 @@
     </div>
 
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+      @if (session('success'))
+      <div class="bg-green-600/10 border-2 border-green-600 text-green-700 px-4 py-3 rounded-md mb-6 shadow-md">
+        {{ session('success') }}
+      </div>
+      @endif
+
+      @if (session('error'))
+      <div class="bg-red-600/10 border-2 border-red-600 text-red-600 px-4 py-3 rounded-md mb-6 shadow-md">
+        {{ session('error') }}
+      </div>
+      @endif
+
       @if ($errors->any())
       <div class="bg-red-600/10 border-2 border-red-600 text-red-600 px-4 py-3 rounded-md mb-6 shadow-md">
         <ul class="list-disc list-inside">

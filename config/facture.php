@@ -20,6 +20,13 @@ return [
     // En dessous ou égal, la vente est simplement enregistrée sans facture.
     'montant_minimum' => 1000,
 
+    // Pourcentage minimal d'acompte exigé sur une COMMANDES facturée
+    // (uniquement les commandes — les services ne prennent pas d'acompte).
+    'acompte_minimum_pct' => 35,
+
+    // Préfixe téléphonique ajouté automatiquement quand l'oubli du pays est probable.
+    'prefixe_defaut' => '+237',
+
     // Numérotation séquentielle annuelle : FAC-2026-00001 (commandes), SVC-2026-00001 (services)
     'numerotation' => [
         'prefixe'         => 'FAC-',

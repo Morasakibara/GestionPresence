@@ -14,6 +14,12 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <meta name="theme-color" content="#080808">
 
+    {{-- Polices chargées de façon non bloquante : la page s'affiche aussitôt avec
+         la pile système, les polices Google s'appliquent si le réseau les fournit. --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+
     @vite('resources/css/app.css')
 
     {{-- Applique le thème enregistré avant le rendu pour éviter tout clignotement. --}}
@@ -514,6 +520,9 @@
 
 {{-- Mêmes effets de formulaire que la connexion (œil sur les mots de passe) --}}
 <script src="{{ asset('js/forms.js') }}"></script>
+
+{{-- Synchronisation des dashboards : rechargement toutes les 15 s (auto-gaté). --}}
+<script src="{{ asset('js/auto-refresh.js') }}"></script>
 
 <!-- Additional Scripts -->
 @stack('scripts')

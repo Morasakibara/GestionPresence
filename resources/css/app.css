@@ -1,5 +1,9 @@
-/* Polices Le Pharaon — doit précéder tout le reste */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
+/* Polices Le Pharaon.
+   L'@import Google Fonts est REMU car il est render-blocking : sur un réseau
+   local sans Internet il retarde l'affichage de toutes les pages le temps du
+   timeout. Les <link> non bloquantes (media=print/onload) sont désormais posées
+   dans resources/views/layouts/app.blade.php et dashboard.blade.php, avec repli
+   immédiat sur la pile système définie dans tailwind.config.js. */
 /* L'ancien login.css n'est plus importé : ses règles globales non layerisées
    (Arial sur body, carte blanche et max-width sur tous les <form>, bordure 1px
    des champs email/mot de passe, boutons submit pleine largeur) écrasaient la
@@ -13,6 +17,31 @@
 
 [x-cloak]{
     display: none!important;
+}
+
+/* ============================================================
+   Modals — centrage fiable et défilement sur mobile
+   ------------------------------------------------------------
+   Les overlays partagent la structure « fixed inset-0 … flex
+   items-center justify-center ». Quand le panneau est plus haut
+   que le viewport (conf de suppression, formulaire long), un simple
+   align-items:center coupe le haut et rend la saisie impossible.
+   On laisse l'en-tête scroller et on recentre via marges auto :
+   l'objet flex reste centré ET atteignable de bout en bout.
+   Sélecteur par token de classe → s'applique à tous les modals de
+   l'app (commandes, services, retraits, pinModal, modals admin…).
+   ============================================================ */
+[class~="inset-0"][class~="justify-center"] {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 1rem;
+}
+[class~="inset-0"][class~="justify-center"] > * {
+    margin-top: auto;
+    margin-bottom: auto;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 /* ============================================================

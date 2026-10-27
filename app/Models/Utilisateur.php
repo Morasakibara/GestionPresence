@@ -22,8 +22,36 @@ class Utilisateur extends Authenticatable
     ];
 
     protected $hidden = [
-        'motDePasse', 'remember_token', 'pin_code',
+        'motDePasse', 'remember_token', 'pin_code', 'session_token',
     ];
+
+    /**
+     * Session unique : émet un jeton aléatoire, n'en stocke que l'empreinte SHA-256
+     * et place le jeton en clair dans la session courante. La connexion précédente
+     * (autre appareil) porte désormais une empreinte différente → invalidée.
+     *
+     * @return string le jeton brut à placer en session
+     */
+    public function emettreJetonSession(): string
+    {
+        $jeton = (string) \Illuminate\Support\Str::uuid();
+        $this->forceFill(['session_token' => hash('sha256', $jeton)])->save();
+        session(['session_token' => $jeton]);
+
+        return $jeton;
+    }
+
+    /**
+     * La session courante porte-t-elle le jeton actuellement actif en base ?
+     */
+    public function jetonSessionValide(?string $jetonBrut): bool
+    {
+        if (!$jetonBrut || !$this->session_token) {
+            return false;
+        }
+
+        return hash_equals((string) $this->session_token, hash('sha256', $jetonBrut));
+    }
 
     /**
      * Super administrateur (développeur) : accès aux métriques système.

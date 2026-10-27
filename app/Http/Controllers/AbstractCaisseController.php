@@ -280,6 +280,13 @@ abstract class AbstractCaisseController extends Controller
             ->with('facture')
             ->firstOrFail();
 
+        // +237 par défaut : normaliser avant validation (oubli d'indicatif pays).
+        if ($request->filled('numero_whatsapp')) {
+            $request->merge([
+                'numero_whatsapp' => FactureService::normaliserTelephone((string) $request->input('numero_whatsapp')),
+            ]);
+        }
+
         $request->validate(['numero_whatsapp' => ['required', 'string', 'regex:' . config('facture.whatsapp_regex')]]);
 
         $envoi->update([
@@ -328,10 +335,10 @@ abstract class AbstractCaisseController extends Controller
     }
 
     /**
-     * Étape 2.1 services — même flux que les commandes : si le formulaire de
-     * facturation est utilisé (numero_whatsapp + acompte), le service passe
-     * par ServiceFactureService (PDF + WhatsApp automatiques). Sinon, chemin
-     * historique (API mobile, scripts) conservé.
+     * Étape 2.1 services — un service n'accepte JAMAIS d'acompte : il est payé en
+     * totalité dès la saisie. On route donc systématiquement par ServiceFactureService
+     * (génère facture PDF + WhatsApp si le montant dépasse le seuil, sinon simple vente
+     * réglée). L'ancien chemin « acompte partiel » n'existe plus pour les services.
      */
     public function storeService(Request $request)
     {
@@ -341,21 +348,10 @@ abstract class AbstractCaisseController extends Controller
             'details' => 'nullable|string|max:1000',
         ]);
 
-        if ($request->filled('numero_whatsapp') || $request->filled('acompte')) {
-            $this->serviceFacturation()->creerAcompte($request);
-        } else {
-            $svc = ServiceFourni::create([
-                'superviseur_id' => Auth::id(),
-                'type'           => $request->type,
-                'montant'        => $request->montant,
-                'details'        => $request->details,
-                'date'           => now()->toDateString(),
-            ]);
-            AuditService::created($this->module(), "Service {$request->type} de {$request->montant} FCFA", $svc->toArray(), $request);
-        }
+        $this->serviceFacturation()->creerAcompte($request);
 
         $this->flushDashboardCache();
-        return redirect()->route("{$this->module()}.services")->with('success', "Facture d'acompte du service enregistrée.");
+        return redirect()->route("{$this->module()}.services")->with('success', 'Service enregistré et payé intégralement.');
     }
 
     /** ───────── Étape 2.2 services — Clôture du solde (montant verrouillé) ──────── */

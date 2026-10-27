@@ -99,7 +99,7 @@
 </div>
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('js/chart.umd.min.js') }}"></script>
 <script src="{{ asset('js/pharaoh-charts.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {

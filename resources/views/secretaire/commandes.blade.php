@@ -90,7 +90,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="acompte" class="input-label">Acompte versé (FCFA)</label>
+                    <label for="acompte" class="input-label">Acompte versé (FCFA) <span class="text-gray-400 font-normal">(min. 35% du total)</span></label>
                     <input type="number" id="acompte" name="acompte" min="1" step="any" value="{{ old('acompte') }}" class="input-field" placeholder="0">
                     <p class="text-xs mt-1 font-medium" id="soldeInfo"></p>
                 </div>
@@ -408,11 +408,12 @@ function showRenvoyerModal(envoiId, tel, erreur) {
 document.addEventListener('click', e => { if (['soldeModal','verrouModal','renvoyerModal'].includes(e.target.id)) closeModal(e.target.id); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') ['soldeModal','verrouModal','renvoyerModal'].forEach(closeModal); });
 
-// ═══ Acompte : calcul automatique du solde restant ═══
+// ═══ Acompte : calcul automatique du solde restant + minimum 35% ═══
 document.addEventListener('DOMContentLoaded', () => {
     const total = document.getElementById('montant');
     const acompte = document.getElementById('acompte');
     const info = document.getElementById('soldeInfo');
+    const PCT = {{ (int) config('facture.acompte_minimum_pct', 35) }}; // acompte minimal (commandes)
     function majSolde() {
         const t = parseFloat(total.value) || 0;
         const a = parseFloat(acompte.value) || 0;
@@ -424,7 +425,9 @@ document.addEventListener('DOMContentLoaded', () => {
             info.className = 'text-xs mt-1 font-medium text-gray-500';
             return;
         }
-        if (!a) { info.textContent = 'Acompte + WhatsApp requis pour facturer cette commande.'; info.className = 'text-xs mt-1 font-medium text-pharaoh-gold'; return; }
+        const mini = Math.round(t * PCT / 100);
+        if (!a) { info.textContent = `Acompte minimum ${PCT}% : ${mini.toLocaleString('fr-FR')} FCFA.`; info.className = 'text-xs mt-1 font-medium text-pharaoh-gold'; return; }
+        if (a < mini) { info.textContent = `⚠️ Acompte trop faible : minimum ${PCT}% du total, soit ${mini.toLocaleString('fr-FR')} FCFA.`; info.className = 'text-xs mt-1 font-medium text-red-600'; return; }
         info.textContent = reste === 0
             ? '✅ Comptant — la facture sera créée payée.'
             : 'Solde restant : ' + reste.toLocaleString('fr-FR') + ' FCFA (verrouillé)';
