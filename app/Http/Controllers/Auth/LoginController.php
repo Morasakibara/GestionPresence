@@ -1,15 +1,17 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
+use App\Http\Controllers\PinController;
 use App\Models\Utilisateur;
 use App\Services\LoginAttemptService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
@@ -23,7 +25,7 @@ class LoginController extends Controller
     public function showLoginForm(Request $request)
     {
         // Session expirée + cookie de récupération → panneau « déverrouillage par PIN »
-        $pinRecovery = \App\Http\Controllers\PinController::recoveryUser($request);
+        $pinRecovery = PinController::recoveryUser($request);
 
         return view('auth.login', [
             'pinRecovery' => $pinRecovery ? ['email' => $pinRecovery->email] : null,
@@ -42,20 +44,20 @@ class LoginController extends Controller
         }
 
         // ─── 2. Throttle classique Laravel (5/min par email+IP) ──────────
-        $throttleKey = 'login:' . ($email ?: $request->ip());
+        $throttleKey = 'login:'.($email ?: $request->ip());
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             throw ValidationException::withMessages([
-                'email' => ['Trop de tentatives. Réessayez dans ' . $seconds . ' secondes.'],
+                'email' => ['Trop de tentatives. Réessayez dans '.$seconds.' secondes.'],
             ]);
         }
 
         $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ], [
-            'email.required'    => 'Veuillez saisir votre adresse email.',
-            'email.email'       => 'Veuillez saisir une adresse email valide.',
+            'email.required' => 'Veuillez saisir votre adresse email.',
+            'email.email' => 'Veuillez saisir une adresse email valide.',
             'password.required' => 'Veuillez saisir votre mot de passe.',
         ]);
 
@@ -64,7 +66,7 @@ class LoginController extends Controller
         // ─── 3. Recherche de l'utilisateur ───────────────────────────────
         $user = Utilisateur::where('email', $email)->first();
 
-        if (!$user) {
+        if (! $user) {
             Log::warning('Utilisateur non trouvé', ['email' => $email]);
             $this->recordFailure($email, $throttleKey);
             throw ValidationException::withMessages([
@@ -97,7 +99,7 @@ class LoginController extends Controller
             ]);
 
             // Cookie permettant de se relogger au seul PIN si la session expire.
-            \App\Http\Controllers\PinController::issueRecoveryCookie($user);
+            PinController::issueRecoveryCookie($user);
 
             Log::info('Utilisateur connecté avec succès', ['id' => $user->id, 'role' => $user->role]);
 
@@ -105,6 +107,7 @@ class LoginController extends Controller
                 return $this->showRoleSelectionModal($user);
             } elseif ($user->role === 'Employer') {
                 session(['current_role' => 'Employer']);
+
                 return redirect()->intended('/user/dashboard');
             } elseif ($user->role === 'Administrateur') {
                 return redirect()->intended('/admin/dashboard');
@@ -142,12 +145,13 @@ class LoginController extends Controller
     public function showRoleSelectionModal()
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect('/login');
         }
 
         if ($user->role !== 'Superviseur') {
             session(['current_role' => $user->role]);
+
             return redirect()->intended($user->role === 'Employer' ? '/user/dashboard' : '/admin/dashboard');
         }
 
@@ -160,8 +164,9 @@ class LoginController extends Controller
 
         if ($role === 'Employer' || $role === 'Superviseur') {
             session(['current_role' => $role]);
+
             return response()->json([
-                'redirect' => $role === 'Employer' ? '/user/dashboard' : '/superviseur/supdashboard'
+                'redirect' => $role === 'Employer' ? '/user/dashboard' : '/superviseur/supdashboard',
             ]);
         }
 
@@ -170,7 +175,7 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        \App\Http\Controllers\PinController::clearPinSession();
+        PinController::clearPinSession();
 
         // Invalidation complète : on vide la session, régénère l'ID et le jeton CSRF,
         // et on rend le jeton de session unique obsolète (aucune reprise par bouton

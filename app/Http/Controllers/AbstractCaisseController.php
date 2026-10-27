@@ -5,17 +5,21 @@ namespace App\Http\Controllers;
 use App\Jobs\EnvoyerFactureWhatsAppJob;
 use App\Models\Commande;
 use App\Models\Facture;
-use App\Models\ServiceFourni;
 use App\Models\Retrait;
+use App\Models\ServiceFourni;
 use App\Models\Superviseur;
 use App\Models\WhatsappEnvoi;
 use App\Services\AuditService;
+use App\Services\CaisseService;
 use App\Services\CommandeSuperviseurService;
+use App\Services\ExportService;
 use App\Services\FacturePdfService;
 use App\Services\FactureService;
+use App\Services\RapportCaissePdfService;
 use App\Services\ServiceFactureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -49,26 +53,26 @@ abstract class AbstractCaisseController extends Controller
 
     protected function cachePrefix(): string
     {
-        return $this->module() . '_';
+        return $this->module().'_';
     }
 
     protected function flushDashboardCache(): void
     {
         $id = Auth::id();
         $prefix = $this->cachePrefix();
-        \Illuminate\Support\Facades\Cache::forget("{$prefix}dash_{$id}");
-        \Illuminate\Support\Facades\Cache::forget("{$prefix}types_{$id}_" . now()->toDateString());
+        Cache::forget("{$prefix}dash_{$id}");
+        Cache::forget("{$prefix}types_{$id}_".now()->toDateString());
     }
 
     protected function serviceFacture(): FactureService
     {
-        return new FactureService(Auth::id(), 'facture_' . $this->module());
+        return new FactureService(Auth::id(), 'facture_'.$this->module());
     }
 
     /** Service de facturation des services fournis (Étape 2 services). */
     protected function serviceFacturation(): ServiceFactureService
     {
-        return new ServiceFactureService(Auth::id(), 'facture_' . $this->module());
+        return new ServiceFactureService(Auth::id(), 'facture_'.$this->module());
     }
 
     protected function caisseType(): string
@@ -90,20 +94,20 @@ abstract class AbstractCaisseController extends Controller
         $prefix = $this->cachePrefix();
         $cacheKey = "{$prefix}dash_{$superviseur->id}";
 
-        $superviseurInfo = \Illuminate\Support\Facades\Cache::remember(
+        $superviseurInfo = Cache::remember(
             "superviseur_info_{$superviseur->id}",
             600,
-            fn() => Superviseur::where('id', $superviseur->id)->first()
+            fn () => Superviseur::where('id', $superviseur->id)->first()
         );
 
-        $data = \Illuminate\Support\Facades\Cache::remember($cacheKey, 60, fn() => $this->service()->dashboardData());
+        $data = Cache::remember($cacheKey, 60, fn () => $this->service()->dashboardData());
 
         // Les commandes par type viennent déjà du dashboardData caché (60 s)
         $today = now()->toDateString();
-        $data['servicesParType'] = \Illuminate\Support\Facades\Cache::remember(
+        $data['servicesParType'] = Cache::remember(
             "{$prefix}services_types_{$superviseur->id}_{$today}",
             60,
-            fn() => ServiceFourni::where('superviseur_id', $superviseur->id)
+            fn () => ServiceFourni::where('superviseur_id', $superviseur->id)
                 ->whereDate('date', $today)
                 ->selectRaw('type, SUM(montant) as total')
                 ->groupBy('type')->pluck('total', 'type')
@@ -148,6 +152,7 @@ abstract class AbstractCaisseController extends Controller
         }
 
         $this->flushDashboardCache();
+
         return redirect()->route("{$this->module()}.commandes")->with('success', "Facture d'acompte enregistrée.");
     }
 
@@ -155,6 +160,7 @@ abstract class AbstractCaisseController extends Controller
     {
         $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
         $this->authorize('update', $commande);
+
         return view("{$this->viewPrefix()}.commandes_edit", compact('commande'))
             ->with($this->typesViewKey(), $this->types());
     }
@@ -162,29 +168,34 @@ abstract class AbstractCaisseController extends Controller
     public function updateCommande(Request $request, $id)
     {
         $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->first();
-        if ($commande) $this->authorize('update', $commande);
+        if ($commande) {
+            $this->authorize('update', $commande);
+        }
 
         // Verrou (Étape 1.2) : une facture déjà encaissée ne bouge pas sans le mot de passe administrateur
         if ($commande && $commande->estVerrouillee()) {
             $autorisation = $this->serviceFacture()->autoriserMouvement($commande, 'modification', $request->input('manager_password'));
-            if (!$autorisation['authorized']) {
+            if (! $autorisation['authorized']) {
                 return redirect()->back()->with('error', 'Modification bloquée : cette facture a un acompte. Mot de passe administrateur requis.');
             }
         }
 
         $this->service()->modifierCommande($request, $id);
         $this->flushDashboardCache();
+
         return redirect()->route("{$this->module()}.commandes")->with('success', 'Commande mise à jour.');
     }
 
     public function destroyCommande(Request $request, $id)
     {
         $commande = Commande::where('id', $id)->where('superviseur_id', Auth::id())->first();
-        if ($commande) $this->authorize('delete', $commande);
+        if ($commande) {
+            $this->authorize('delete', $commande);
+        }
 
         if ($commande) {
             $autorisation = $this->serviceFacture()->autoriserMouvement($commande, 'suppression', $request->input('manager_password'));
-            if (!$autorisation['authorized']) {
+            if (! $autorisation['authorized']) {
                 return redirect()->back()->with('error', 'Suppression bloquée : mot de passe administrateur requis pour une facture encaissée.');
             }
         }
@@ -220,23 +231,23 @@ abstract class AbstractCaisseController extends Controller
         $this->authorize('update', $commande);
 
         $autorisation = $this->serviceFacture()->autoriserMouvement($commande, 'annulation', $request->input('manager_password'));
-        if (!$autorisation['authorized']) {
+        if (! $autorisation['authorized']) {
             return redirect()->back()->with('error', 'Annulation bloquée : mot de passe administrateur requis pour une facture encaissée.');
         }
 
         $this->service()->annulerCommande($id);
         $this->flushDashboardCache();
+
         return redirect()->route("{$this->module()}.commandes")->with('success', 'Commande annulée.');
     }
 
     /** ───────── Étape 2.2 — Clôture du solde (montant verrouillé) ──────── */
-
     public function encaisserSolde(Request $request, $id)
     {
         $resultat = $this->serviceFacture()->encaisserSolde((int) $id, $request);
         $this->flushDashboardCache();
 
-        if (!$resultat['success']) {
+        if (! $resultat['success']) {
             return redirect()->route("{$this->module()}.commandes")->with('error', $resultat['error']);
         }
 
@@ -244,21 +255,20 @@ abstract class AbstractCaisseController extends Controller
     }
 
     /** ───────── Étape 3.1 — Facture PDF en lecture seule ───────────── */
-
     public function facturePdf(int $factureId)
     {
         $facture = Facture::whereKey($factureId)
             ->where(function ($q) {
-                $q->whereHas('commande', fn($c) => $c->where('superviseur_id', Auth::id()))
-                  ->orWhereHas('service', fn($s) => $s->where('superviseur_id', Auth::id()));
+                $q->whereHas('commande', fn ($c) => $c->where('superviseur_id', Auth::id()))
+                    ->orWhereHas('service', fn ($s) => $s->where('superviseur_id', Auth::id()));
             })
             ->firstOrFail();
 
-        if (!Storage::disk('local')->exists($facture->pdf_path)) {
+        if (! Storage::disk('local')->exists($facture->pdf_path)) {
             abort(404, 'PDF introuvable.');
         }
 
-        if (!FacturePdfService::integrity($facture)) {
+        if (! FacturePdfService::integrity($facture)) {
             abort(412, 'Facture altérée — contrôle d’empreinte SHA-256 en échec.');
         }
 
@@ -267,12 +277,11 @@ abstract class AbstractCaisseController extends Controller
             basename($facture->pdf_path),
             ['Content-Type' => 'application/pdf']
         )
-        ->header('Cache-Control', 'no-store, private')
-        ->header('X-Content-Type-Options', 'nosniff');
+            ->header('Cache-Control', 'no-store, private')
+            ->header('X-Content-Type-Options', 'nosniff');
     }
 
     /** ───────── Étape 4.2 — Alertes d'envoi WhatsApp ───────────────── */
-
     public function renvoyerWhatsApp(Request $request, int $envoiId)
     {
         $envoi = WhatsappEnvoi::where('id', $envoiId)
@@ -287,12 +296,12 @@ abstract class AbstractCaisseController extends Controller
             ]);
         }
 
-        $request->validate(['numero_whatsapp' => ['required', 'string', 'regex:' . config('facture.whatsapp_regex')]]);
+        $request->validate(['numero_whatsapp' => ['required', 'string', 'regex:'.config('facture.whatsapp_regex')]]);
 
         $envoi->update([
             'telephone' => FactureService::normaliserTelephone($request->numero_whatsapp),
-            'statut'    => WhatsappEnvoi::STATUT_EN_ATTENTE,
-            'erreur'    => null,
+            'statut' => WhatsappEnvoi::STATUT_EN_ATTENTE,
+            'erreur' => null,
             'tentative' => $envoi->tentative + 1,
         ]);
 
@@ -309,7 +318,8 @@ abstract class AbstractCaisseController extends Controller
 
         $this->flushDashboardCache();
         $page = $envoi->service ? 'services' : 'commandes';
-        return redirect()->route("{$this->module()}.{$page}")->with('success', 'Nouvel envoi WhatsApp programmé sur ' . $envoi->telephone . '.');
+
+        return redirect()->route("{$this->module()}.{$page}")->with('success', 'Nouvel envoi WhatsApp programmé sur '.$envoi->telephone.'.');
     }
 
     // ─── ENCAISSEMENT ──────────────────────────────────────────────
@@ -319,9 +329,10 @@ abstract class AbstractCaisseController extends Controller
         $result = $this->service()->encaisserReste($request);
         $this->flushDashboardCache();
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return redirect()->route("{$this->module()}.dashboard")->with('error', $result['error']);
         }
+
         return redirect()->route("{$this->module()}.dashboard")->with('success', $result['message']);
     }
 
@@ -330,6 +341,7 @@ abstract class AbstractCaisseController extends Controller
     public function showServices()
     {
         $services = ServiceFourni::where('superviseur_id', Auth::id())->orderByDesc('created_at')->get();
+
         return view("{$this->viewPrefix()}.services", compact('services'))
             ->with($this->typesViewKey(), $this->types());
     }
@@ -343,7 +355,7 @@ abstract class AbstractCaisseController extends Controller
     public function storeService(Request $request)
     {
         $request->validate([
-            'type'    => 'required|string|in:' . implode(',', array_keys($this->types())),
+            'type' => 'required|string|in:'.implode(',', array_keys($this->types())),
             'montant' => 'required|numeric|min:0.01|max:100000000',
             'details' => 'nullable|string|max:1000',
         ]);
@@ -351,17 +363,17 @@ abstract class AbstractCaisseController extends Controller
         $this->serviceFacturation()->creerAcompte($request);
 
         $this->flushDashboardCache();
+
         return redirect()->route("{$this->module()}.services")->with('success', 'Service enregistré et payé intégralement.');
     }
 
     /** ───────── Étape 2.2 services — Clôture du solde (montant verrouillé) ──────── */
-
     public function encaisserSoldeService(Request $request, $id)
     {
         $resultat = $this->serviceFacturation()->encaisserSolde((int) $id, $request);
         $this->flushDashboardCache();
 
-        if (!$resultat['success']) {
+        if (! $resultat['success']) {
             return redirect()->route("{$this->module()}.services")->with('error', $resultat['error']);
         }
 
@@ -372,6 +384,7 @@ abstract class AbstractCaisseController extends Controller
     {
         $service = ServiceFourni::where('id', $id)->where('superviseur_id', Auth::id())->firstOrFail();
         $this->authorize('update', $service);
+
         return view("{$this->viewPrefix()}.services_edit", compact('service'))
             ->with($this->typesViewKey(), $this->types());
     }
@@ -389,7 +402,7 @@ abstract class AbstractCaisseController extends Controller
         // Verrou (Étape 1.2) : un service déjà encaissé ne bouge pas sans le mot de passe administrateur
         if ($service->estVerrouillee()) {
             $autorisation = $this->serviceFacturation()->autoriserMouvement($service, 'modification', $request->input('manager_password'));
-            if (!$autorisation['authorized']) {
+            if (! $autorisation['authorized']) {
                 return redirect()->back()->with('error', 'Modification bloquée : cette facture a un acompte. Mot de passe administrateur requis.');
             }
         }
@@ -407,13 +420,14 @@ abstract class AbstractCaisseController extends Controller
 
         if ($service->estVerrouillee()) {
             $autorisation = $this->serviceFacturation()->autoriserMouvement($service, 'suppression', $request->input('manager_password'));
-            if (!$autorisation['authorized']) {
+            if (! $autorisation['authorized']) {
                 return redirect()->back()->with('error', 'Suppression bloquée : mot de passe administrateur requis pour une facture encaissée.');
             }
         }
 
         $service->delete();
         $this->flushDashboardCache();
+
         return redirect()->route("{$this->module()}.services")->with('success', 'Service supprimé.');
     }
 
@@ -422,7 +436,7 @@ abstract class AbstractCaisseController extends Controller
     public function showRetraits()
     {
         $retraits = Retrait::where('superviseur_id', Auth::id())->orderByDesc('created_at')->get();
-        $caisse = new \App\Services\CaisseService(Auth::id(), $this->caisseType());
+        $caisse = new CaisseService(Auth::id(), $this->caisseType());
         $soldeArr = $caisse->solde();
         $solde = $soldeArr['en_caisse'];
         $totalEntrees = $soldeArr['total_commandes_paye'] + $soldeArr['total_services'];
@@ -436,22 +450,22 @@ abstract class AbstractCaisseController extends Controller
     {
         $request->validate([
             'montant' => 'required|numeric|min:0.01|max:100000000',
-            'motif'   => 'required|string|max:500',
+            'motif' => 'required|string|max:500',
         ]);
 
-        $caisse = new \App\Services\CaisseService(Auth::id(), $this->caisseType());
+        $caisse = new CaisseService(Auth::id(), $this->caisseType());
         $solde = $caisse->solde()['en_caisse'];
 
         if ($request->montant > $solde) {
             return redirect()->route("{$this->module()}.retraits")
-                ->with('error', 'Le retrait (' . number_format($request->montant, 0, ',', '.') . ' FCFA) dépasse le solde disponible (' . number_format($solde, 0, ',', '.') . ' FCFA).');
+                ->with('error', 'Le retrait ('.number_format($request->montant, 0, ',', '.').' FCFA) dépasse le solde disponible ('.number_format($solde, 0, ',', '.').' FCFA).');
         }
 
         $rt = Retrait::create([
             'superviseur_id' => Auth::id(),
-            'montant'        => $request->montant,
-            'motif'          => $request->motif,
-            'date'           => now()->toDateString(),
+            'montant' => $request->montant,
+            'motif' => $request->motif,
+            'date' => now()->toDateString(),
         ]);
 
         AuditService::created($this->module(), "Retrait de {$request->montant} FCFA — {$request->motif}", $rt->toArray(), $request);
@@ -465,11 +479,11 @@ abstract class AbstractCaisseController extends Controller
     public function rapport(Request $request)
     {
         $dateDebut = $request->input('date_debut', now()->startOfMonth()->toDateString());
-        $dateFin   = $request->input('date_fin', now()->toDateString());
+        $dateFin = $request->input('date_fin', now()->toDateString());
 
         $filters = [
-            'type'        => $request->input('type', ''),
-            'statut'      => $request->input('statut', ''),
+            'type' => $request->input('type', ''),
+            'statut' => $request->input('statut', ''),
             'montant_min' => $request->input('montant_min', ''),
             'montant_max' => $request->input('montant_max', ''),
         ];
@@ -486,11 +500,11 @@ abstract class AbstractCaisseController extends Controller
     public function exportCsv(Request $request)
     {
         $dateDebut = $request->input('date_debut', now()->startOfMonth()->toDateString());
-        $dateFin   = $request->input('date_fin', now()->toDateString());
+        $dateFin = $request->input('date_fin', now()->toDateString());
 
         $data = $this->service()->rapportCsvData($dateDebut, $dateFin);
 
-        return \App\Services\ExportService::rapport(
+        return ExportService::rapport(
             $dateDebut, $dateFin,
             $data['commandes'], $data['services'], $data['retraits'],
             $this->types(), $this->module()
@@ -503,11 +517,11 @@ abstract class AbstractCaisseController extends Controller
     public function exportHtml(Request $request)
     {
         $dateDebut = $request->input('date_debut', now()->startOfMonth()->toDateString());
-        $dateFin   = $request->input('date_fin', now()->toDateString());
+        $dateFin = $request->input('date_fin', now()->toDateString());
 
         $data = $this->service()->rapportCsvData($dateDebut, $dateFin);
 
-        return \App\Services\ExportService::rapportHtml(
+        return ExportService::rapportHtml(
             $dateDebut, $dateFin,
             $data['commandes'], $data['services'], $data['retraits'],
             $this->types(), $this->module()
@@ -520,17 +534,18 @@ abstract class AbstractCaisseController extends Controller
     public function exportPdf(Request $request)
     {
         $dateDebut = $request->input('date_debut', now()->startOfMonth()->toDateString());
-        $dateFin   = $request->input('date_fin', now()->toDateString());
+        $dateFin = $request->input('date_fin', now()->toDateString());
 
         $data = $this->service()->rapportCsvData($dateDebut, $dateFin);
 
-        $pdf = \App\Services\RapportCaissePdfService::generate(
+        $pdf = RapportCaissePdfService::generate(
             $dateDebut, $dateFin,
             $data['commandes'], $data['services'], $data['retraits'],
             $this->types(), $this->module()
         );
 
-        $filename = 'rapport_' . $this->module() . '_' . $dateDebut . '_' . $dateFin . '.pdf';
+        $filename = 'rapport_'.$this->module().'_'.$dateDebut.'_'.$dateFin.'.pdf';
+
         return $pdf->download($filename);
     }
 }

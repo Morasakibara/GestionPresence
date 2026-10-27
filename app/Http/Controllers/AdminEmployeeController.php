@@ -179,8 +179,8 @@ class AdminEmployeeController extends Controller
         }
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('nom', 'like', '%' . $search . '%')
-                  ->orWhere('email', 'like', '%' . $search . '%');
+                $q->where('nom', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%');
             });
         }
 
@@ -215,7 +215,7 @@ class AdminEmployeeController extends Controller
 
         $data = $request->validate([
             'from_superviseur_id' => ['required', 'integer', 'exists:superviseur,id'],
-            'to_superviseur_id'   => ['required', 'integer', 'different:from_superviseur_id', 'exists:superviseur,id'],
+            'to_superviseur_id' => ['required', 'integer', 'different:from_superviseur_id', 'exists:superviseur,id'],
         ], [
             'to_superviseur_id.different' => 'Choisissez un superviseur différent de celui à supprimer.',
         ]);
@@ -242,7 +242,7 @@ class AdminEmployeeController extends Controller
             $request
         );
 
-        $nomCible = Utilisateur::where('id', $cible->id)->value('nom') ?: ('#' . $cible->id);
+        $nomCible = Utilisateur::where('id', $cible->id)->value('nom') ?: ('#'.$cible->id);
 
         return redirect()->route('admin.showEmployeeList')
             ->with('success', "{$moved} employé(s) réaffecté(s) à « {$nomCible} ». Vous pouvez maintenant supprimer l'ancien superviseur.");

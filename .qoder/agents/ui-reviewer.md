@@ -2,7 +2,6 @@
 name: ui-reviewer
 description: Revue UI en lecture seule pour GestionPresence. Use when changing or reviewing Blade views, Tailwind CSS, Alpine interactions, navigation, PDF layouts or accessibility, to enforce the noir et or charte and design-engineering rules.
 tools: Read, Grep, Glob
-model: inherit
 color: purple
 skills:
   - pharaon-ui

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Utilisateur;
-use Illuminate\Cookie\CookieJar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -50,7 +49,7 @@ class PinController extends Controller
     public static function recoveryUser(Request $request): ?Utilisateur
     {
         $raw = $request->cookie(self::COOKIE_NAME);
-        if (!is_string($raw) || $raw === '') {
+        if (! is_string($raw) || $raw === '') {
             return null;
         }
 
@@ -60,7 +59,7 @@ class PinController extends Controller
             return null;
         }
 
-        if (!is_array($payload) || !isset($payload['id'], $payload['iat'])) {
+        if (! is_array($payload) || ! isset($payload['id'], $payload['iat'])) {
             return null;
         }
 
@@ -70,7 +69,7 @@ class PinController extends Controller
         }
 
         $user = Utilisateur::find((int) $payload['id']);
-        if (!$user || !$user->pin_required || !$user->pin_code) {
+        if (! $user || ! $user->pin_required || ! $user->pin_code) {
             return null;
         }
 
@@ -87,15 +86,15 @@ class PinController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'Non authentifié.'], 401);
         }
 
-        if (!$user->pin_required || !$user->pin_code) {
+        if (! $user->pin_required || ! $user->pin_code) {
             return response()->json(['error' => 'PIN non configuré.'], 422);
         }
 
-        if (!Hash::check($request->pin, $user->pin_code)) {
+        if (! Hash::check($request->pin, $user->pin_code)) {
             return response()->json(['error' => 'Code PIN incorrect.'], 422);
         }
 
@@ -120,24 +119,26 @@ class PinController extends Controller
         $request->validate(['pin' => 'required|string|size:4']);
 
         $user = self::recoveryUser($request);
-        if (!$user) {
+        if (! $user) {
             return response()->json(
                 ['error' => 'Récupération indisponible — connectez-vous avec email et mot de passe.'],
                 401
             );
         }
 
-        $key = 'pin-recovery:' . $user->id;
+        $key = 'pin-recovery:'.$user->id;
         if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
             self::forgetRecoveryCookie();
+
             return response()->json(
                 ['error' => 'Trop de tentatives. Connectez-vous avec votre email et mot de passe.'],
                 429
             );
         }
 
-        if (!Hash::check($request->pin, $user->pin_code)) {
+        if (! Hash::check($request->pin, $user->pin_code)) {
             RateLimiter::hit($key, 3600);
+
             return response()->json(['error' => 'Code PIN incorrect.'], 422);
         }
 
@@ -148,13 +149,13 @@ class PinController extends Controller
         session()->regenerate();
         $user->emettreJetonSession(); // session unique : expulse les autres appareils
         session([
-            'pin_verified'    => true,
+            'pin_verified' => true,
             'pin_verified_at' => now()->timestamp,
-            'current_role'    => $user->role === 'Superviseur' ? 'Superviseur' : $user->role,
+            'current_role' => $user->role === 'Superviseur' ? 'Superviseur' : $user->role,
         ]);
 
         return response()->json([
-            'success'  => true,
+            'success' => true,
             'redirect' => $this->redirectPath($user),
         ]);
     }
@@ -166,18 +167,18 @@ class PinController extends Controller
     {
         $request->validate([
             'current_password' => 'required',
-            'pin'              => 'required|string|size:4|digits:4',
+            'pin' => 'required|string|size:4|digits:4',
             'pin_confirmation' => 'required|same:pin',
         ]);
 
         $user = Auth::user();
 
-        if (!Hash::check($request->current_password, $user->motDePasse)) {
+        if (! Hash::check($request->current_password, $user->motDePasse)) {
             return redirect()->back()->with('error', 'Mot de passe actuel incorrect.');
         }
 
         $user->update([
-            'pin_code'     => Hash::make($request->pin),
+            'pin_code' => Hash::make($request->pin),
             'pin_required' => true,
         ]);
 
@@ -195,12 +196,12 @@ class PinController extends Controller
 
         $user = Auth::user();
 
-        if (!Hash::check($request->current_password, $user->motDePasse)) {
+        if (! Hash::check($request->current_password, $user->motDePasse)) {
             return redirect()->back()->with('error', 'Mot de passe actuel incorrect.');
         }
 
         $user->update([
-            'pin_code'     => null,
+            'pin_code' => null,
             'pin_required' => false,
         ]);
 
@@ -213,15 +214,15 @@ class PinController extends Controller
     public function checkStatus()
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['pin_required' => false]);
         }
 
-        $needsPin = $user->pin_required && !$this->isPinVerified($user->id);
+        $needsPin = $user->pin_required && ! $this->isPinVerified($user->id);
 
         return response()->json([
             'pin_required' => $needsPin,
-            'has_pin'      => (bool) $user->pin_code,
+            'has_pin' => (bool) $user->pin_code,
         ]);
     }
 
@@ -249,8 +250,8 @@ class PinController extends Controller
     {
         return match ($user->role) {
             'Administrateur' => '/admin/dashboard',
-            'Employer'       => '/user/dashboard',
-            'Superviseur'    => session('current_role') === 'Employer'
+            'Employer' => '/user/dashboard',
+            'Superviseur' => session('current_role') === 'Employer'
                 ? '/user/dashboard'
                 : '/superviseur/supdashboard',
             default => '/dashboard',

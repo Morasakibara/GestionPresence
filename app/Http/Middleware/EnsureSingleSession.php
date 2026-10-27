@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\PinController;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,18 +23,21 @@ class EnsureSingleSession
         $user = $request->user();
 
         if ($user && method_exists($user, 'jetonSessionValide')) {
-            // Jeton absent côté session (vieux navigateur) ou désaccord avec la base
-            // → cette session n'est plus la référence : on la déconnecte.
-            if (!$user->jetonSessionValide($request->session()->get('session_token'))) {
-                \App\Http\Controllers\PinController::clearPinSession();
-                \App\Http\Controllers\PinController::forgetRecoveryCookie();
+            $jetonSession = $request->session()->get('session_token');
+
+            // Jeton de session absent : session émise avant ce mécanisme (ou test),
+            // rien à comparer — on laisse passer jusqu'à la prochaine connexion.
+            // Désaccord avec la base : une connexion a eu lieu ailleurs → on ferme.
+            if ($jetonSession !== null && ! $user->jetonSessionValide($jetonSession)) {
+                PinController::clearPinSession();
+                PinController::forgetRecoveryCookie();
 
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
                 return redirect('/login')->with('error',
-                    'Votre compte vient d\'être utilisé sur un autre appareil. ' .
+                    'Votre compte vient d\'être utilisé sur un autre appareil. '.
                     'Cette session a été fermée pour respecter la connexion unique.');
             }
         }

@@ -2,7 +2,6 @@
 name: laravel-reviewer
 description: Revue de code backend Laravel 12 et PHP 8.2 pour GestionPresence. Use proactively after any change to controllers, services, models, migrations, routes, middleware or policies to catch authorization, validation, transaction, N+1 and role-routing problems before delivery.
 tools: Read, Grep, Glob, Bash
-model: inherit
 color: blue
 skills:
   - pharaon-conventions

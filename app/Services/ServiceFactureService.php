@@ -2,12 +2,16 @@
 
 namespace App\Services;
 
+use App\Jobs\EnvoyerFactureWhatsAppJob;
 use App\Models\Facture;
 use App\Models\ServiceFourni;
 use App\Models\Utilisateur;
 use App\Models\WhatsappEnvoi;
+use App\Notifications\PaiementServiceNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Étapes 2.1 / 2.2 — Facturation des services fournis.
@@ -21,10 +25,10 @@ class ServiceFactureService
     public function __construct(
         private readonly int $superviseurId,
         private readonly string $module,
-        private readonly ManagerAuthService $managerAuth = new ManagerAuthService(),
+        private readonly ManagerAuthService $managerAuth = new ManagerAuthService,
     ) {}
 
-    /*────────────── Étape 2.1 — Saisie initiale (acompte) ──────────────*/
+    /* ────────────── Étape 2.1 — Saisie initiale (acompte) ────────────── */
 
     /**
      * Crée le service + facture via le formulaire de facturation.
@@ -35,7 +39,7 @@ class ServiceFactureService
      */
     public function creerAcompte(Request $request): ServiceFourni
     {
-        $montant    = round((float) $request->montant, 2);
+        $montant = round((float) $request->montant, 2);
         $facturable = FactureService::doitFacturer($montant);
 
         // +237 par défaut : normalisation AVANT validation (oubli d'indicatif pays).
@@ -46,36 +50,36 @@ class ServiceFactureService
         }
 
         $request->validate([
-            'montant'         => 'required|numeric|min:1|max:100000000',
-            'client_nom'      => 'nullable|string|max:100',
+            'montant' => 'required|numeric|min:1|max:100000000',
+            'client_nom' => 'nullable|string|max:100',
             'numero_whatsapp' => $facturable
-                ? ['required', 'string', 'regex:' . config('facture.whatsapp_regex')]
-                : ['nullable', 'string', 'regex:' . config('facture.whatsapp_regex')],
-            'details'         => 'nullable|string|max:1000',
+                ? ['required', 'string', 'regex:'.config('facture.whatsapp_regex')]
+                : ['nullable', 'string', 'regex:'.config('facture.whatsapp_regex')],
+            'details' => 'nullable|string|max:1000',
         ], [
             'numero_whatsapp.required' => 'Le numéro WhatsApp du client est obligatoire.',
         ]);
 
         // Aucun acompte sur les services : paiement intégral immédiat.
-        $acompte  = $montant;
+        $acompte = $montant;
         $comptant = true;
 
-        $service = DB::transaction(function () use ($request, $montant, $acompte, $comptant, $facturable) {
+        $service = DB::transaction(function () use ($request, $montant, $acompte, $facturable) {
             $numero = $facturable ? self::genererNumeroService() : null;
 
             $service = ServiceFourni::create([
-                'superviseur_id'  => $this->superviseurId,
-                'type'            => $request->type,
-                'montant'         => $montant,
-                'montant_paye'    => $acompte,
+                'superviseur_id' => $this->superviseurId,
+                'type' => $request->type,
+                'montant' => $montant,
+                'montant_paye' => $acompte,
                 'statut_paiement' => 'paye',
-                'details'         => $request->details,
-                'date'            => now()->toDateString(),
+                'details' => $request->details,
+                'date' => now()->toDateString(),
                 'numero_whatsapp' => $request->filled('numero_whatsapp')
                     ? FactureService::normaliserTelephone($request->numero_whatsapp)
                     : null,
-                'client_nom'      => $request->client_nom,
-                'numero_facture'  => $numero,
+                'client_nom' => $request->client_nom,
+                'numero_facture' => $numero,
                 'prix_verrouille' => $facturable, // verrou dès la saisie
             ]);
 
@@ -89,9 +93,9 @@ class ServiceFactureService
         AuditService::created(
             $this->module,
             $facturable
-                ? "Facture {$service->numero_facture} — service payé " . number_format($montant, 0, ',', '.') .
+                ? "Facture {$service->numero_facture} — service payé ".number_format($montant, 0, ',', '.').
                     " FCFA (WhatsApp {$service->numero_whatsapp})"
-                : "Service {$request->type} de " . number_format($montant, 0, ',', '.') . " FCFA (sans facture, montant ≤ " . number_format((float) config('facture.montant_minimum', 1000), 0, ',', '.') . " FCFA)",
+                : "Service {$request->type} de ".number_format($montant, 0, ',', '.').' FCFA (sans facture, montant ≤ '.number_format((float) config('facture.montant_minimum', 1000), 0, ',', '.').' FCFA)',
             $service->toArray(),
             $request
         );
@@ -104,7 +108,7 @@ class ServiceFactureService
         return $service;
     }
 
-    /*────────────── Étape 2.2 — Clôture (solde) ──────────────*/
+    /* ────────────── Étape 2.2 — Clôture (solde) ────────────── */
 
     /**
      * Encaisse le solde exact d'un service en attente — même verrou que les
@@ -118,17 +122,18 @@ class ServiceFactureService
 
         if ($service->statut_paiement === 'paye') {
             $label = $service->numero_facture ? "La facture {$service->numero_facture}" : "Le service #{$service->id}";
+
             return ['success' => false, 'error' => "{$label} est déjà payé."];
         }
         if (in_array($service->statut_paiement, ['annule'], true)) {
-            return ['success' => false, 'error' => "Service annulé — encaissement impossible."];
+            return ['success' => false, 'error' => 'Service annulé — encaissement impossible.'];
         }
 
         $solde = round($service->solde, 2);
 
         $ancien = $service->toArray();
         $service->update([
-            'montant_paye'    => round((float) $service->montant, 2),
+            'montant_paye' => round((float) $service->montant, 2),
             'statut_paiement' => 'paye',
         ]);
 
@@ -148,10 +153,10 @@ class ServiceFactureService
         try {
             $admin = Utilisateur::where('role', 'Administrateur')->orderBy('id')->first();
             if ($admin) {
-                $admin->notify(new \App\Notifications\PaiementServiceNotification($service, $solde, 'paye'));
+                $admin->notify(new PaiementServiceNotification($service, $solde, 'paye'));
             }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Notification paiement échouée: ' . $e->getMessage());
+            Log::warning('Notification paiement échouée: '.$e->getMessage());
         }
 
         if ($service->numero_facture) {
@@ -160,12 +165,12 @@ class ServiceFactureService
 
         return [
             'success' => true,
-            'message' => ($service->numero_facture ? "Facture {$service->numero_facture}" : "Service #{$service->id}") . ' payé — solde ' .
-                number_format($solde, 0, ',', '.') . ' FCFA encaissé.',
+            'message' => ($service->numero_facture ? "Facture {$service->numero_facture}" : "Service #{$service->id}").' payé — solde '.
+                number_format($solde, 0, ',', '.').' FCFA encaissé.',
         ];
     }
 
-    /*────────────── Verrou manager (Étape 1.2) ──────────────*/
+    /* ────────────── Verrou manager (Étape 1.2) ────────────── */
 
     /**
      * Vérifie l'autorisation manager sur un service verrouillé.
@@ -174,7 +179,7 @@ class ServiceFactureService
      */
     public function autoriserMouvement(ServiceFourni $service, string $action, ?string $motDePasseManager): array
     {
-        if (!$service->estVerrouillee()) {
+        if (! $service->estVerrouillee()) {
             return ['authorized' => true, 'gestionnaire' => null];
         }
 
@@ -184,19 +189,19 @@ class ServiceFactureService
             "caisse.{$action}",
             "{$action} sur la facture verrouillée {$service->numero_facture}",
             $gestionnaire,
-            \Illuminate\Support\Facades\Auth::user()
+            Auth::user()
         );
 
         return ['authorized' => $gestionnaire !== null, 'gestionnaire' => $gestionnaire];
     }
 
-    /*────────────── Aides ──────────────*/
+    /* ────────────── Aides ────────────── */
 
     /** Numéro séquentiel annuel : SVC-2026-00001. */
     public static function genererNumeroService(): string
     {
         $prefixe = (string) config('facture.numerotation.prefixe_service', 'SVC-');
-        $annee   = now()->format('Y');
+        $annee = now()->format('Y');
         $longueur = (int) config('facture.numerotation.longueur', 5);
 
         $dernier = ServiceFourni::whereYear('created_at', $annee)
@@ -208,11 +213,11 @@ class ServiceFactureService
             ? (int) substr((string) $dernier, -1 * $longueur) + 1
             : 1;
 
-        $numero = "{$prefixe}{$annee}-" . str_pad((string) $sequence, $longueur, '0', STR_PAD_LEFT);
+        $numero = "{$prefixe}{$annee}-".str_pad((string) $sequence, $longueur, '0', STR_PAD_LEFT);
 
         // L'index unique inclut les lignes supprimées (SoftDeletes) — vérifier avec withTrashed()
         if (ServiceFourni::withTrashed()->where('numero_facture', $numero)->exists()) {
-            $numero = "{$prefixe}{$annee}-" . str_pad((string) random_int(1, (int) str_repeat('9', $longueur)), $longueur, '0', STR_PAD_LEFT);
+            $numero = "{$prefixe}{$annee}-".str_pad((string) random_int(1, (int) str_repeat('9', $longueur)), $longueur, '0', STR_PAD_LEFT);
         }
 
         return $numero;
@@ -223,19 +228,19 @@ class ServiceFactureService
     {
         $facture = Facture::where('numero', $numeroFacture)->where('phase', $phase)->first();
 
-        if (!$facture) {
+        if (! $facture) {
             return;
         }
 
         WhatsappEnvoi::create([
-            'facture_id'     => $facture->id,
-            'service_id'     => $facture->service_id,
+            'facture_id' => $facture->id,
+            'service_id' => $facture->service_id,
             'superviseur_id' => $this->superviseurId,
-            'telephone'      => $facture->client_whatsapp,
-            'canal'          => config('services.whatsapp.driver', 'log'),
-            'statut'         => WhatsappEnvoi::STATUT_EN_ATTENTE,
+            'telephone' => $facture->client_whatsapp,
+            'canal' => config('services.whatsapp.driver', 'log'),
+            'statut' => WhatsappEnvoi::STATUT_EN_ATTENTE,
         ]);
 
-        \App\Jobs\EnvoyerFactureWhatsAppJob::dispatch($facture->id);
+        EnvoyerFactureWhatsAppJob::dispatch($facture->id);
     }
 }

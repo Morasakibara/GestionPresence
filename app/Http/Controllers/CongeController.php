@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conge;
-use App\Models\Utilisateur;
 use App\Models\Superviseur;
+use App\Models\Utilisateur;
+use App\Notifications\CongeNotification;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\AuditService;
 
 class CongeController extends Controller
 {
@@ -20,7 +21,7 @@ class CongeController extends Controller
         $superviseur = Auth::user();
         $supInfo = Superviseur::where('id', $superviseur->id)->first();
 
-        if (!$supInfo) {
+        if (! $supInfo) {
             return redirect()->back()->with('error', 'Profil superviseur introuvable.');
         }
 
@@ -71,10 +72,11 @@ class CongeController extends Controller
         // Notifier l'employé
         $employe = Utilisateur::find($conge->employer_id);
         if ($employe) {
-            $employe->notify(new \App\Notifications\CongeNotification($conge, 'approuve'));
+            $employe->notify(new CongeNotification($conge, 'approuve'));
         }
 
         $nom = $employe->nom ?? 'l\'employé';
+
         return redirect()->back()->with('success', "Demande de congé de {$nom} approuvée.");
     }
 
@@ -97,10 +99,10 @@ class CongeController extends Controller
 
         $employe = Utilisateur::find($conge->employer_id);
         if ($employe) {
-            $employe->notify(new \App\Notifications\CongeNotification($conge, 'refuse'));
+            $employe->notify(new CongeNotification($conge, 'refuse'));
         }
 
-        return redirect()->back()->with('success', "Demande de congé refusée.");
+        return redirect()->back()->with('success', 'Demande de congé refusée.');
     }
 
     /**
@@ -121,10 +123,10 @@ class CongeController extends Controller
         // `employer`. Un Superviseur en mode « Employer » (ou un compte sans profil
         // employé) n'a pas de ligne correspondante → violation 1452 sinon. On refuse
         // proprement avec un message clair plutôt que de laisser planter l'INSERT.
-        if (!DB::table('employer')->where('id', $employeId)->exists()) {
+        if (! DB::table('employer')->where('id', $employeId)->exists()) {
             return redirect()->back()->with(
                 'error',
-                'Aucun profil employé n\'est associé à votre compte : la demande de congé est réservée aux employés. ' .
+                'Aucun profil employé n\'est associé à votre compte : la demande de congé est réservée aux employés. '.
                 'Si vous êtes superviseur, repassez en mode superviseur depuis le changement de rôle.'
             );
         }
@@ -134,11 +136,11 @@ class CongeController extends Controller
             ->where('statut', '!=', 'refuse')
             ->where(function ($q) use ($request) {
                 $q->whereBetween('date_debut', [$request->date_debut, $request->date_fin])
-                  ->orWhereBetween('date_fin', [$request->date_debut, $request->date_fin])
-                  ->orWhere(function ($q2) use ($request) {
-                      $q2->where('date_debut', '<=', $request->date_debut)
-                         ->where('date_fin', '>=', $request->date_fin);
-                  });
+                    ->orWhereBetween('date_fin', [$request->date_debut, $request->date_fin])
+                    ->orWhere(function ($q2) use ($request) {
+                        $q2->where('date_debut', '<=', $request->date_debut)
+                            ->where('date_fin', '>=', $request->date_fin);
+                    });
             })
             ->exists();
 
@@ -155,7 +157,7 @@ class CongeController extends Controller
             'statut' => 'en_attente',
         ]);
 
-        AuditService::created('conges', "Nouvelle demande de congé soumise", [
+        AuditService::created('conges', 'Nouvelle demande de congé soumise', [
             'employer_id' => $employeId,
             'date_debut' => $request->date_debut,
             'date_fin' => $request->date_fin,

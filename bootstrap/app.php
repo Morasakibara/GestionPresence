@@ -1,8 +1,19 @@
 <?php
 
+use App\Http\Middleware\CheckUserRoleAndNetwork;
+use App\Http\Middleware\EnsureSingleSession;
+use App\Http\Middleware\IsAdmin;
+use App\Http\Middleware\NoCacheBackend;
+use App\Http\Middleware\RegistrationAccessMiddleware;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SuperAdminOnly;
+use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,25 +25,25 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Aliases de middlewares personnalisés de l'application
         $middleware->alias([
-            'isAdmin' => \App\Http\Middleware\IsAdmin::class,
-            'check.role.network' => \App\Http\Middleware\CheckUserRoleAndNetwork::class,
-            'registration.access' => \App\Http\Middleware\RegistrationAccessMiddleware::class,
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
-            'superadmin' => \App\Http\Middleware\SuperAdminOnly::class,
+            'isAdmin' => IsAdmin::class,
+            'check.role.network' => CheckUserRoleAndNetwork::class,
+            'registration.access' => RegistrationAccessMiddleware::class,
+            'role' => RoleMiddleware::class,
+            'superadmin' => SuperAdminOnly::class,
         ]);
 
         // Pages authentifiées en no-store (bouton « retour » après logout renvoie au
         // login) + connexion unique par compte (une seule session active à la fois).
         $middleware->web(append: [
-            \App\Http\Middleware\NoCacheBackend::class,
-            \App\Http\Middleware\EnsureSingleSession::class,
+            NoCacheBackend::class,
+            EnsureSingleSession::class,
         ]);
 
         // Remplacer le CSRF natif par notre version (désactive en testing)
         $middleware->replaceInGroup(
             'web',
-            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
-            \App\Http\Middleware\VerifyCsrfToken::class
+            ValidateCsrfToken::class,
+            VerifyCsrfToken::class
         );
     })
     ->withSchedule(function ($schedule) {
@@ -47,7 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Rediriger les rate-limits vers la page de login avec un message clair
-        $exceptions->renderable(function (\Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException $e, \Illuminate\Http\Request $request) {
+        $exceptions->renderable(function (TooManyRequestsHttpException $e, Request $request) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Trop de requêtes. Réessayez dans quelques instants.',

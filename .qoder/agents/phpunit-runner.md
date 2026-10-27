@@ -2,7 +2,6 @@
 name: phpunit-runner
 description: Spécialiste PHPUnit pour GestionPresence. Use when tests fail, after a backend change, or before delivery to run the relevant tests, diagnose failures, apply minimal fixes and rerun the PHPUnit suite.
 tools: Bash, Read, Edit, Write, Grep, Glob
-model: inherit
 color: green
 skills:
   - pharaon-testing

@@ -9,9 +9,9 @@
 
 return [
     'societe' => [
-        'nom'     => 'Le Pharaon',
+        'nom' => 'Le Pharaon',
         'adresse' => 'Salle de jeux Le Pharaon',
-        'phone'   => '+2376XXXXXXX',
+        'phone' => '+2376XXXXXXX',
     ],
 
     'devise' => 'FCFA',
@@ -29,9 +29,9 @@ return [
 
     // Numérotation séquentielle annuelle : FAC-2026-00001 (commandes), SVC-2026-00001 (services)
     'numerotation' => [
-        'prefixe'         => 'FAC-',
+        'prefixe' => 'FAC-',
         'prefixe_service' => 'SVC-',
-        'longueur'        => 5,
+        'longueur' => 5,
     ],
 
     // Validation stricte du numéro WhatsApp (format international E.164, ex: +2376XXXXXXX)

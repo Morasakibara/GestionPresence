@@ -10,6 +10,7 @@ use App\Models\StockPapier;
 use App\Models\StockTshirt;
 use App\Models\Superviseur;
 use App\Models\Utilisateur;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -27,7 +28,7 @@ class AdminFinanceController extends Controller
     {
         $date = $request->query('date');
         // Repli sur aujourd'hui si la date est absente ou invalide.
-        if (!$date || !\DateTime::createFromFormat('Y-m-d', $date)) {
+        if (! $date || ! \DateTime::createFromFormat('Y-m-d', $date)) {
             $date = now()->toDateString();
         }
 
@@ -92,10 +93,14 @@ class AdminFinanceController extends Controller
         $directrice = Superviseur::where('type_superviseur', 'directrice')->first();
 
         $supIds = collect();
-        if ($secretaire) $supIds->push($secretaire->id);
-        if ($directrice) $supIds->push($directrice->id);
+        if ($secretaire) {
+            $supIds->push($secretaire->id);
+        }
+        if ($directrice) {
+            $supIds->push($directrice->id);
+        }
 
-        $paiements = Commande::when($supIds->isNotEmpty(), fn($q) => $q->whereIn('superviseur_id', $supIds))
+        $paiements = Commande::when($supIds->isNotEmpty(), fn ($q) => $q->whereIn('superviseur_id', $supIds))
             ->select('statut_paiement', DB::raw('count(*) as total'), DB::raw('sum(montant) as montant_total'), DB::raw('sum(montant_paye) as montant_paye'))
             ->groupBy('statut_paiement')
             ->get();
@@ -121,14 +126,14 @@ class AdminFinanceController extends Controller
         for ($i = 29; $i >= 0; $i--) {
             $jour = now()->subDays($i)->toDateString();
             $labels[] = now()->subDays($i)->format('d/m');
-            $dayQuery = Commande::when($supIds->isNotEmpty(), fn($q) => $q->whereIn('superviseur_id', $supIds))
+            $dayQuery = Commande::when($supIds->isNotEmpty(), fn ($q) => $q->whereIn('superviseur_id', $supIds))
                 ->whereDate('created_at', $jour);
             $payes[] = (clone $dayQuery)->where('statut_paiement', 'paye')->count();
             $partiels[] = (clone $dayQuery)->where('statut_paiement', 'partiel')->count();
             $aPayer[] = (clone $dayQuery)->where('statut_paiement', 'a_payer')->count();
         }
 
-        $topCommandes = Commande::when($supIds->isNotEmpty(), fn($q) => $q->whereIn('superviseur_id', $supIds))
+        $topCommandes = Commande::when($supIds->isNotEmpty(), fn ($q) => $q->whereIn('superviseur_id', $supIds))
             ->orderByDesc('montant')
             ->limit(10)
             ->get();
@@ -136,7 +141,9 @@ class AdminFinanceController extends Controller
         $caParPoste = [];
         foreach (['directrice' => 'Imprimerie', 'secretaire' => 'Photo'] as $type => $label) {
             $sup = Superviseur::where('type_superviseur', $type)->first();
-            if (!$sup) continue;
+            if (! $sup) {
+                continue;
+            }
             $total = (float) Commande::where('superviseur_id', $sup->id)->sum('montant');
             $paye = (float) Commande::where('superviseur_id', $sup->id)->sum('montant_paye');
             $caParPoste[$label] = ['total' => $total, 'paye' => $paye, 'restant' => $total - $paye];
@@ -154,7 +161,7 @@ class AdminFinanceController extends Controller
     public function auditLogs(Request $request)
     {
         $module = $request->input('module');
-        $query = \App\Services\AuditService::query($module, null, 200);
+        $query = AuditService::query($module, null, 200);
         $logs = $query->paginate(50);
 
         $modules = AuditLog::distinct()->pluck('module')->filter()->values();

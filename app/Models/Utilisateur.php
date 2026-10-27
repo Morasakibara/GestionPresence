@@ -7,12 +7,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class Utilisateur extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes, HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     protected $table = 'utilisateur';
 
@@ -34,7 +34,7 @@ class Utilisateur extends Authenticatable
      */
     public function emettreJetonSession(): string
     {
-        $jeton = (string) \Illuminate\Support\Str::uuid();
+        $jeton = (string) Str::uuid();
         $this->forceFill(['session_token' => hash('sha256', $jeton)])->save();
         session(['session_token' => $jeton]);
 
@@ -46,7 +46,7 @@ class Utilisateur extends Authenticatable
      */
     public function jetonSessionValide(?string $jetonBrut): bool
     {
-        if (!$jetonBrut || !$this->session_token) {
+        if (! $jetonBrut || ! $this->session_token) {
             return false;
         }
 
@@ -80,13 +80,13 @@ class Utilisateur extends Authenticatable
     /**
      * Set the password using the correct hashing method.
      *
-     * @param string $password
+     * @param  string  $password
      * @return void
      */
     public function setMotDePasseAttribute($value)
     {
         // Vérifier si le mot de passe est déjà hashé
-        if (strlen($value) < 60 || !preg_match('/^\$2y\$/', $value)) {
+        if (strlen($value) < 60 || ! preg_match('/^\$2y\$/', $value)) {
             $this->attributes['motDePasse'] = Hash::make($value);
         } else {
             $this->attributes['motDePasse'] = $value;

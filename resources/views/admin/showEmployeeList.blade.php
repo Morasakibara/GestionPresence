@@ -121,4 +121,138 @@
         @endif
     </div>
 </div>
+
+{{-- ═══ MODAL : Suppression (employé ou superviseur) ═══ --}}
+<div id="deleteUserModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden" onclick="event.stopPropagation()">
+        <div class="bg-[#080808] px-6 py-5 text-center">
+            <div class="mx-auto w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
+                <svg class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white uppercase">Confirmer la suppression</h3>
+            <p class="text-sm text-gray-400 mt-1">Cette action est irréversible.</p>
+        </div>
+        <div class="px-6 py-5">
+            <p class="text-sm text-gray-700 mb-4">
+                Supprimer définitivement
+                <b id="duNom" class="text-[#080808]">—</b>
+                <span id="duRole" class="badge badge-warning ml-1"></span> ?
+            </p>
+
+            {{-- Bloc réaffectation : visible si le superviseur encadre encore des employés --}}
+            <div id="duReassign" class="hidden bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 mb-4">
+                <p class="text-sm font-semibold text-amber-800 mb-1">
+                    ⚠️ Ce superviseur encadre encore <span id="duCount">0</span> employé(s).
+                </p>
+                <p class="text-xs text-amber-700 mb-3">Réaffectez-les à un autre superviseur avant de supprimer ce compte.</p>
+                <button type="button" onclick="ouvrirReassignationModal()" class="btn-gold btn-sm w-full">
+                    Réaffecter les employés
+                </button>
+            </div>
+
+            <form id="duForm" method="POST" action="{{ route('admin.deleteEmployee.fromList') }}">
+                @csrf
+                <input type="hidden" name="email" id="duEmail">
+                <div class="flex gap-3">
+                    <button type="button" onclick="fermerModal('deleteUserModal')" class="btn-secondary btn-lg flex-1">Annuler</button>
+                    <button type="submit" id="duSubmit" class="btn-danger btn-lg flex-1">Oui, supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ═══ MODAL : Réaffectation des employés d'un superviseur ═══ --}}
+<div id="reassignModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden" onclick="event.stopPropagation()">
+        <div class="bg-[#080808] px-6 py-5 text-center">
+            <div class="mx-auto w-14 h-14 rounded-full bg-pharaoh-gold/15 flex items-center justify-center mb-3">
+                <svg class="h-8 w-8 text-pharaoh-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white uppercase">Réaffecter les employés</h3>
+            <p class="text-sm text-gray-400 mt-1">Vers quel superviseur transférer cette équipe ?</p>
+        </div>
+        <div class="px-6 py-5">
+            <form id="rsForm" method="POST" action="{{ route('admin.reassignEmployees') }}" class="space-y-4">
+                @csrf
+                <input type="hidden" name="from_superviseur_id" id="rsFrom">
+                <div>
+                    <label for="rsTo" class="input-label">Nouveau superviseur</label>
+                    <select id="rsTo" name="to_superviseur_id" required class="select-field">
+                        <option value="">— Choisir un superviseur —</option>
+                        @foreach($superviseurs as $sup)
+                            <option value="{{ $sup->id }}" data-nom="{{ e($sup->nom) }}">{{ $sup->nom }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-gray-400 mt-1">Les employés changeront de superviseur et d'équipe.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="fermerModal('reassignModal')" class="btn-secondary btn-lg flex-1">Annuler</button>
+                    <button type="submit" class="btn-gold btn-lg flex-1">Réaffecter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    const superviseurId = { value: null };
+
+    window.ouvrirSuppressionModal = function (u) {
+        document.getElementById('duNom').textContent = u.nom;
+        document.getElementById('duRole').textContent = u.role === 'Superviseur' ? 'Superviseur' : 'Employé';
+        document.getElementById('duEmail').value = u.email;
+        superviseurId.value = u.role === 'Superviseur' ? u.id : null;
+
+        const bloc = document.getElementById('duReassign');
+        const submit = document.getElementById('duSubmit');
+        if (u.role === 'Superviseur' && u['encadrés'] > 0) {
+            document.getElementById('duCount').textContent = u['encadrés'];
+            bloc.classList.remove('hidden');
+            // La suppression sera refusée côté serveur tant que l'équipe n'est pas vide :
+            // on désactive le bouton pour forcer la réaffectation d'abord.
+            submit.disabled = true;
+            submit.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            bloc.classList.add('hidden');
+            submit.disabled = false;
+            submit.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+        ouvrirModal('deleteUserModal');
+    };
+
+    window.ouvrirReassignationModal = function () {
+        document.getElementById('rsFrom').value = superviseurId.value;
+        // Retirer le superviseur à supprimer de la liste des cibles possibles.
+        document.querySelectorAll('#rsTo option').forEach(function (opt) {
+            opt.disabled = opt.value !== '' && String(opt.value) === String(superviseurId.value);
+        });
+        ouvrirModal('reassignModal');
+    };
+
+    window.ouvrirModal = function (id) {
+        const m = document.getElementById(id);
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    };
+    window.fermerModal = function (id) {
+        const m = document.getElementById(id);
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+        document.body.style.overflow = '';
+    };
+
+    document.addEventListener('click', function (e) {
+        if (e.target.id === 'deleteUserModal') fermerModal('deleteUserModal');
+        if (e.target.id === 'reassignModal') fermerModal('reassignModal');
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { fermerModal('deleteUserModal'); fermerModal('reassignModal'); }
+    });
+})();
+</script>
+@endpush
